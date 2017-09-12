@@ -30,12 +30,14 @@ class Transport:
 
         self.bulk_concentrations=np.array([0.1,0.1])
         self.dOHP = 1.0
-        self.eps = 80.0
-        self.charges=np.array([1,-1])
+        self.eps = 80.0*unit_eps0
+        #eps=80*unit_eps0
+        self.charges=np.array([1,-1])*unit_e
         self.T = 300
         self.u = [0.0,0.0] #001]
         self.D = np.array([0.276,0.5])/100**2 #in cm2/s
         self.nspecies=len(self.D)
+        self.beta = self.T * unit_R
         
         c0 = np.zeros((len(self.tmesh),)) # initial condition
         c0 = 10 * 10**3 #in mol/L
@@ -81,8 +83,6 @@ class Transport:
             bc_val=[0.0,0.0] #value in mol/L /(s or m)
 
             z=1*unit_e
-            eps=80*unit_eps0
-            beta = self.T * unit_R
             T=300
             j=-2
             for k in range(0,self.nspecies):
@@ -104,9 +104,9 @@ class Transport:
                             (\
                             -self.u[k]*dc_dx \
                             +self.D[k]*(\
-                                dc_dx_2# \
+                                dc_dx_2 \
                                 -dc_dx**2/c[j]\
-                                +z*beta*c[j]/eps*z*c[j]\
+                                +self.charges[k]*self.beta*c[j]/self.eps*self.charges[k]*c[j]\
                             )\
                             )
             return dc_dt
