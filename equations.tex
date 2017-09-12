@@ -1,0 +1,75 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\begin{document}
+
+\section{The Transport Model}
+
+We do everything in SI units:
+
+\begin{itemize}
+\item $c_i$ is in $c_i[1/\mathrm{m}^3] = N_\mathrm{A} 10^3 c_i$[mol/L]
+\item $D_i$ is in $D_i$[m$^2$/s]$ = 1/100^2 D_i$[cm$^2$/s]
+\item $\varepsilon = \varepsilon_r \varepsilon_0$ with $\varepsilon_0 = 8.854187817\cdot 10^{-12}$\,F/m
+\item $z_i = q_i e$ with $e = 1.60217662\cdot 10^{-19}$\,C
+\item $\beta = (k_\mathrm{B}T)$ with $k_\mathrm{B} = 1.38064852\cdot 10^{-23}$\,J/K
+\item $v$ is in $v[J/C]$
+\item $u$ is in $u[m/s]$
+\end{itemize}
+
+
+The coupled transport-PNP equations read:
+
+\begin{equation}
+\dot{c}_i =  -u c'_i + D_i c''_i + D_i z_i \beta \left[c'_i v' + c_i v'' \right] + R_i
+\end{equation}
+
+with $v$ and $c_i$ connected via the PBE:
+
+\begin{equation}
+v'' = \left.
+\begin{cases}
+\varepsilon_\mathrm{s}^{-1} \sum\limits_i z_i c_i,& \mathrm{for}~ x > 0\\
+0, & \mathrm{for}~ 0 \geq x > -d_\mathrm{OHP}
+\end{cases}
+\right.
+\end{equation}
+
+The concentrations at $x>0$ are given by:
+
+\begin{equation}
+c_i = c_{i,\mathrm{s}} \exp\left(-z_i \beta v\right), \quad \mathrm{for}~ x > 0
+\end{equation}
+
+So we can also calculate $v$ from an arbitrary $c_i$:
+
+\begin{equation}
+v = -\left(z_i \beta\right)^{-1}\ln\left(\frac{c_i}{c_{i,\mathrm{s}}}\right), \quad \mathrm{for}~ x > 0
+\end{equation}
+
+This gives us $v'$ from $c'_i$ as
+
+\begin{equation}
+v' = \frac{\partial v}{\partial c_i} c'_i = -\left(z_i \beta\right)^{-1} c_i^{-1} c'_i, \quad \mathrm{for}~ x > 0
+\end{equation}
+
+For the second case that we are at the inside of the OHP, $v'$ which depicts the electric field, is constant and we can therefore set it to the value of $v'$ at $x=0$. In total we then get:
+
+\begin{equation}
+\dot{c}_i =\left.
+\begin{cases}
+-u c'_i + D_i \left[c''_i - c_i^{-1} {c'_i}^2 + z_i \beta c_i \varepsilon_\mathrm{s}^{-1} \sum\limits_i z_i c_i\right] + R_i,& \mathrm{for}~ x > 0\\
+-u c'_i + D_i \left[c''_i - \left.\frac{c'_i}{c_i}\right|_{x=0} c'_i\right] + R_i, & \mathrm{for}~ 0 \geq x > -d_\mathrm{OHP}
+\end{cases}
+\right.
+\end{equation}
+
+Check the units!
+
+What is remaining now are the initial and boundary conditions.
+
+\section{Discretization}
+
+\end{document}
