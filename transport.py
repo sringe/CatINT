@@ -21,7 +21,7 @@ class Transport:
     def __init__(self):
         
         self.dt=2.e-2
-        self.dx=2.e-2
+        self.dx=0.5e-2
         self.tmax=10
         self.xmax=0.5
         self.tmesh=np.arange(0,self.tmax+self.dt,self.dt)
@@ -105,8 +105,8 @@ class Transport:
                             -self.u[k]*dc_dx \
                             +self.D[k]*(\
                                 dc_dx_2# \
-                        #        -dc_dx**2/c[j]\
-                        #        +z*beta*c[j]/eps*z*c[j]\
+                                -dc_dx**2/c[j]\
+                                +z*beta*c[j]/eps*z*c[j]\
                             )\
                             )
             return dc_dt
@@ -116,9 +116,10 @@ class Transport:
         bc_kind='dirichlet'
         bc_pos=self.xmesh[-2]
         bc_val=[10.0,10.0]
-        c0=np.array([0.0]*nx*self.nspecies) #value at t=0 for all x-values
+        c0=np.array([1.0*10**3]*nx*self.nspecies) #value at t=0 for all x-values
         for k in range(0,self.nspecies):
             c0[k*nx+int(((bc_pos-min(self.xmesh))/dx))]=bc_val[k]*10**3 #value at t=0 and x=0
+        print 'c at t = 0:',c0
         print 'Applying bc c(x=',round(bc_pos,3),',t=0) = ',bc_val, 'mol/L (zero for all other x)'
         #solve time problem
         sol = integrate.odeint(ode_func, c0, range(0,nt-1)) #, args=(b, c))
