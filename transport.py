@@ -20,8 +20,8 @@ class Transport:
 
     def __init__(self):
         
-        self.dt=0.5e-2
-        self.dx=0.5e-2
+        self.dt=2.e-2
+        self.dx=2.e-2
         self.tmax=10
         self.xmax=0.5
         self.tmesh=np.arange(0,self.tmax+self.dt,self.dt)
@@ -57,7 +57,7 @@ class Transport:
                     color=str(brightness)
                 elif k==1:
                     color=(brightness,1.,1.)
-                plt.plot(self.xmesh[:-1],c[k*len(self.xmesh):k*len(self.xmesh)+len(self.xmesh)-1] //10**3,'-',color=color,linewidth=1.5)
+                plt.plot(self.xmesh[:-1],c[k*len(self.xmesh):k*len(self.xmesh)+len(self.xmesh)-1] /10**3,'-',color=color,linewidth=1.5)
         #c=self.integrate_FTCS(self.dt,self.dx)
         #for t in np.arange(0.0,1.,0.1):
         #    plt.plot(self.xmesh,c[int(t/self.dt),:],'-o',label=str(t))
@@ -119,7 +119,6 @@ class Transport:
         c0=np.array([0.0]*nx*self.nspecies) #value at t=0 for all x-values
         for k in range(0,self.nspecies):
             c0[k*nx+int(((bc_pos-min(self.xmesh))/dx))]=bc_val[k]*10**3 #value at t=0 and x=0
-        print 'c0 = ',c0
         print 'Applying bc c(x=',round(bc_pos,3),',t=0) = ',bc_val, 'mol/L (zero for all other x)'
         #solve time problem
         sol = integrate.odeint(ode_func, c0, range(0,nt-1)) #, args=(b, c))
