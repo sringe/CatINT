@@ -21,7 +21,7 @@ class Transport:
     def __init__(self):
         
         self.dt=2.e-2
-        self.dx=0.5e-2
+        self.dx=1.e-2
         self.tmax=10
         self.xmax=0.5
         self.tmesh=np.arange(0,self.tmax+self.dt,self.dt)
@@ -36,6 +36,7 @@ class Transport:
         self.T = 300
         self.u = [0.0,0.0] #001]
         self.D = np.array([0.276,0.5])/100**2 #in cm2/s
+        self.D *= 0.0
         self.nspecies=len(self.D)
         self.beta = self.T * unit_R
         
@@ -43,6 +44,10 @@ class Transport:
         c0 = 10 * 10**3 #in mol/L
 
         colorlist=cycle(['b','k'])
+
+        ax1=plt.subplot('221')
+        ax2=plt.subplot('222')
+        ax3=plt.subplot('223')
 
         #cout,s=self.diffusion_Crank_Nicolson(self.dx,len(self.xmesh),self.dt,\
         #        len(self.tmesh),self.D,c0,10)
@@ -59,13 +64,28 @@ class Transport:
                     color=str(brightness)
                 elif k==1:
                     color=(brightness,1.,1.)
-                plt.plot(self.xmesh[:-1],c[k*len(self.xmesh):k*len(self.xmesh)+len(self.xmesh)-1] /10**3,'-',color=color,linewidth=1.5)
+                ax1.plot(self.xmesh[:-1],c[k*len(self.xmesh):k*len(self.xmesh)+len(self.xmesh)-1] /10**3,'-',color=color,linewidth=1.5)
+        ax1.legend()
+        ax1.set_xlabel('x (m)')
+        ax1.set_ylabel('c (mol/L)')
         #c=self.integrate_FTCS(self.dt,self.dx)
         #for t in np.arange(0.0,1.,0.1):
         #    plt.plot(self.xmesh,c[int(t/self.dt),:],'-o',label=str(t))
-        plt.legend()
-        plt.xlabel('x')
-        plt.ylabel('c')
+        ax2.plot(self.xmesh[:-1],self.efield*1e10,'-')
+        ax2.set_title('Electric field')
+        ax2.set_xlabel('x (m)')
+        ax2.set_ylabel('E (V/Ang)')
+
+        ax3.set_title('Potential')
+        self.potential=np.zeros([len(self.xmesh)-1])
+        integral=0.0
+        for i in range(len(self.xmesh)-1):
+            integral-=self.efield[i]*self.dx
+            self.potential[i]+=integral
+        ax3.plot(self.xmesh[:-1],self.potential,'-')
+        ax3.set_ylabel('v (V)')
+        ax3.set_xlabel('x (m)')
+        plt.tight_layout()
         plt.show()
     #    self.integrate_pb()
 
@@ -82,7 +102,22 @@ class Transport:
             bc_pos=self.xmesh[-2] #x-position of boundary condition
             bc_val=[0.0,0.0] #value in mol/L /(s or m)
 
-            z=1*unit_e
+            #first determine E = int E' = 1/eps int sum c_i z_i by numerical integration over the grid
+            j=-2
+            self.efield=np.zeros([nx-1]) 
+            self.defield_dx=np.zeros([nx-1])
+            external_charge=np.array([\
+                    self.charges[0]*1./np.sqrt(2.*np.pi)*np.exp(-0.5*(self.xmesh[i]-0.2)**2)\
+                    for i in range(0,nx-1)])
+            #(corresponds to setting the efield to zero at the left side)
+            for k in range(0,self.nspecies):
+                j+=1
+                total_int=0.0
+                for i in range(0,nx-1):
+                    j+=1
+                    total_int+=(self.charges[k]*c[j]+1./self.nspecies*external_charge[i])*dx/self.eps
+                    self.efield[i]+=total_int
+                    self.defield_dx[i]+=(self.charges[k]*c[j]+1./self.nspecies*external_charge[i])/self.eps
             T=300
             j=-2
             for k in range(0,self.nspecies):
@@ -105,8 +140,10 @@ class Transport:
                             -self.u[k]*dc_dx \
                             +self.D[k]*(\
                                 dc_dx_2 \
-                                -dc_dx**2/c[j]\
-                                +self.charges[k]*self.beta*c[j]/self.eps*self.charges[k]*c[j]\
+                                +self.charges[k]*self.beta*dc_dx*self.efield[i]\
+                                +self.charges[k]*self.beta*c[j]*self.defield_dx[i]\
+                                #-dc_dx**2/c[j]\
+                                #+self.charges[k]*self.beta*c[j]/self.eps*sum(self.charges*c[j])\
                             )\
                             )
             return dc_dt
@@ -115,8 +152,8 @@ class Transport:
         cout=[]
         bc_kind='dirichlet'
         bc_pos=self.xmesh[-2]
-        bc_val=[10.0,10.0]
-        c0=np.array([1.0*10**3]*nx*self.nspecies) #value at t=0 for all x-values
+        bc_val=[0.1,0.1]
+        c0=np.array([0.0*10**3]*nx*self.nspecies) #value at t=0 for all x-values
         for k in range(0,self.nspecies):
             c0[k*nx+int(((bc_pos-min(self.xmesh))/dx))]=bc_val[k]*10**3 #value at t=0 and x=0
         print 'c at t = 0:',c0
