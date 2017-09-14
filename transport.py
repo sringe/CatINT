@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from scipy.sparse import diags
 from units import *
 from itertools import cycle
-
+import sys
 
 class Transport:
 #just a few variables which can be hopefully later taken from catmap
@@ -34,25 +34,31 @@ class Transport:
         #eps=80*unit_eps0
         self.charges=np.array([1,-1])*unit_e
         self.T = 300
-        self.u = [0.0,0.0] #001]
-        self.D = np.array([0.276,0.5])/100**2 #in cm2/s
-        self.D *= 0.0
+        self.u = np.array([0.0,0.0])
+        self.D = np.array([0.276,0.276])/100**2 #in cm2/s
         self.nspecies=len(self.D)
         self.beta = self.T * unit_R
+
+        self.set_initial_conditions(
+                c_general={'all':0.1},
+                c_specific={'all':{'0':0.1}})
+
+        self.set_boundary_conditions(\
+                c_boundary={},\
+                dc_dt_boundary={'all':{'value':0.0,'dir':'l'}},\
+                efield_boundary={'all':{'value':0.0,'dir':'l'}})
+
+        cout=self.integrate_pnp(self.dx,len(self.xmesh),self.dt,\
+                len(self.tmesh),self.D,10)
         
-        c0 = np.zeros((len(self.tmesh),)) # initial condition
-        c0 = 10 * 10**3 #in mol/L
 
         colorlist=cycle(['b','k'])
 
         ax1=plt.subplot('221')
         ax2=plt.subplot('222')
         ax3=plt.subplot('223')
-
-        #cout,s=self.diffusion_Crank_Nicolson(self.dx,len(self.xmesh),self.dt,\
-        #        len(self.tmesh),self.D,c0,10)
-        cout=self.diffusion_FTCS_odeint(self.dx,len(self.xmesh),self.dt,\
-                len(self.tmesh),self.D,c0,10)
+        ax4=plt.subplot('224')
+    
         color_offset=0.1
         for k in range(0,self.nspecies):
             color=next(colorlist)
@@ -71,7 +77,7 @@ class Transport:
         #c=self.integrate_FTCS(self.dt,self.dx)
         #for t in np.arange(0.0,1.,0.1):
         #    plt.plot(self.xmesh,c[int(t/self.dt),:],'-o',label=str(t))
-        ax2.plot(self.xmesh[:-1],self.efield*1e10,'-')
+        ax2.plot(self.xmesh[:-1],self.efield*1e10/unit_NA,'-')
         ax2.set_title('Electric field')
         ax2.set_xlabel('x (m)')
         ax2.set_ylabel('E (V/Ang)')
@@ -80,61 +86,158 @@ class Transport:
         self.potential=np.zeros([len(self.xmesh)-1])
         integral=0.0
         for i in range(len(self.xmesh)-1):
-            integral-=self.efield[i]*self.dx
+            integral-=self.efield[i]*self.dx/unit_NA
             self.potential[i]+=integral
         ax3.plot(self.xmesh[:-1],self.potential,'-')
         ax3.set_ylabel('v (V)')
         ax3.set_xlabel('x (m)')
+        ax4.plot(self.xmesh[:-1],self.external_charge/10**3/self.charges[0],'-')
+        ax4.set_ylabel('c_ext (mol/L)')
         plt.tight_layout()
         plt.show()
     #    self.integrate_pb()
 
+    def get_initial_conditions(self):
+        return self.c0 
 
-    def diffusion_FTCS_odeint(self,dx,nx,dt,nt,D,c0,ntout):
+    def set_initial_conditions(self,
+        c_general={},\
+        c_specific={}):
+        """accepts the initial concentrations of all species in the c_general list (all in mol/L), 
+        the c_specific dictionary allows to parse specific values of the concentrations at 
+        specific grid points (1st key is species index, 2nd is xmesh index, 
+        value is concentration)."""
+        c0=np.zeros([self.nspecies*len(self.xmesh)])
+        j=-1
+        for k in range(self.nspecies):
+            for i in range(len(self.xmesh)):
+                j+=1
+                if str(k) in c_general:
+                    c0[j]=c_general[k]
+                else:
+                    c0[j]=0.0
+                if (str(k) in c_specific and str(i) in c_specific[str(k)]):
+                    c0[j]=c_specific[str(k)][str(i)]
+                if ('all' in c_specific and str(i) in c_specific['all']):
+                    c0[j]=c_specific['all'][str(i)]
 
-        self.bc_outputted=False
+        c0=np.array(c0)
+        c0*=10**3 #multiply by 1000 to get m^-3
+        self.c0=c0
+
+
+    def get_boundary_conditions(self):
+        return self.c_bound,self.dc_dt_bound,self.efield_bound
+
+    def set_boundary_conditions(self,\
+        c_boundary={},\
+        dc_dt_boundary={},\
+        efield_boundary={}):
+
+        """allows to set boundary conditions in the concentrations themselves (c_boundary) 
+        and the derivatives dc_dx_boundary and the efield. first key is the species, 2nd 
+        is either 'dir' for selecting left or right direction (l/r) or 'value' for setting
+        a particular value"""
+
+        c_bound=np.zeros([self.nspecies])
+        dc_dt_bound=np.zeros([self.nspecies])
+        efield_bound=np.zeros([self.nspecies])
+        c_bound_dir=['r']*self.nspecies
+        dc_dt_bound_dir=['r']*self.nspecies
+        efield_bound_dir=['r']*self.nspecies
+
+        if (len(c_boundary)>0):
+            print('c_boundary not implemented')
+            sys.exit()
+        j=-1
+        for k in range(self.nspecies):
+            for dic,l in zip([c_boundary,dc_dt_boundary,efield_boundary],\
+                    [c_bound_dir,dc_dt_bound_dir,efield_bound_dir]):
+                if str(k) in dic and 'dir' in dic[(str(k))]:
+                    l[k]=dic[str(k)]['dir']
+                if 'all' in dic and 'dir' in dic['all']:
+                    print dic
+                    l[k]=dic['all']['dir']
+            for dic,l in zip([c_boundary,dc_dt_boundary,efield_boundary],\
+                    [c_bound,dc_dt_bound,efield_bound]):
+                    if (str(k) in dic and 'value' in dic[(str(k))]):
+                        l[k]=dic[str(k)]['value']
+                    if ('all' in dic and 'value' in dic['all']):
+                        l[k]=dic['all']['value']
+        for l in [c_bound,dc_dt_bound,efield_bound]:
+            l=np.array(l)
+        self.c_bound=c_bound
+        self.dc_dt_bound=dc_dt_bound
+        self.efield_bound=efield_bound
+        self.c_bound_dir=c_bound_dir
+        self.dc_dt_bound_dir=dc_dt_bound_dir
+        self.efield_bound_dir=efield_bound_dir
+        
+
+    def gaussian(self,sigma=0.01,z=1,mu=0.2):
+        gaussian=np.zeros([len(self.xmesh)-1])
+        for i in range(0,len(self.xmesh)-1):
+            gaussian[i]=10**3*z*unit_e\
+                    *1./(sigma*np.sqrt(2.*np.pi))\
+                    *np.exp(-0.5*((self.xmesh[i]-mu)/sigma)**2)
+        return gaussian
+
+    def integrate_pnp(self,dx,nx,dt,nt,D,ntout):
+
+        #check some conditions before calculating
+        if ((len(self.c_bound)==0 and len(self.dc_dt_bound)==0) or len(self.c0)==0 or \
+                len(self.efield_bound)==0):
+            print('Either boundary or initial conditions were not set. Stopping here.')
+            sys.exit()
+
 
         def ode_func(c,t):
-            dc_dt = np.zeros([nx*self.nspecies])
 
-            #boundary condition for dc/dt
-            bc_kind='neumann'
-            bc_pos=self.xmesh[-2] #x-position of boundary condition
-            bc_val=[0.0,0.0] #value in mol/L /(s or m)
+            dc_dt = np.zeros([nx*self.nspecies])
 
             #first determine E = int E' = 1/eps int sum c_i z_i by numerical integration over the grid
             j=-2
-            self.efield=np.zeros([nx-1]) 
-            self.defield_dx=np.zeros([nx-1])
-            external_charge=np.array([\
-                    self.charges[0]*1./np.sqrt(2.*np.pi)*np.exp(-0.5*(self.xmesh[i]-0.2)**2)\
-                    for i in range(0,nx-1)])
+            self.efield=np.zeros([nx])
+            self.defield_dx=np.zeros([nx])
+
+            self.external_charge=self.gaussian(sigma=0.01,z=1,mu=0.2) 
+
+            
+
+            #INTEGRATION OF PBE: get electric field
             #(corresponds to setting the efield to zero at the left side)
             for k in range(0,self.nspecies):
                 j+=1
-                total_int=0.0
-                for i in range(0,nx-1):
-                    j+=1
-                    total_int+=(self.charges[k]*c[j]+1./self.nspecies*external_charge[i])*dx/self.eps
+                total_int=self.efield_bound[k]
+                if self.efield_bound_dir[k] == 'r':
+                    ll=reversed(range(0,nx-1))
+                elif self.efield_bound_dir[k] == 'l':
+                    ll=range(0,nx-1)
+                for i1,i2 in zip(ll1,ll2):
+                    
+                    current_charge=self.charges[k]*c[j]
+                    if k==0:
+                        current_charge+=self.external_charge[i]
+                    total_int+=current_charge*dx/self.eps
                     self.efield[i]+=total_int
-                    self.defield_dx[i]+=(self.charges[k]*c[j]+1./self.nspecies*external_charge[i])/self.eps
+                    self.defield_dx[i]+=current_charge/self.eps
+
+            #IMPLEMENTATION OF FLOWS
             T=300
             j=-2
             for k in range(0,self.nspecies):
                 j+=1
-                for i in range(0,nx-1): # space
+                if self.dc_dt_bound_dir[k] == 'r':
+                    ll=reversed(range(0,nx-1))
+                elif self.dc_dt_bound_dir[k] == 'l':
+                    ll=range(0,nx-1)
+                for i in ll: # space
                     j+=1
                     dc_dx=(c[j+1]-c[j-1])/(2.*dx)
                     dc_dx_2=(c[j-1]-2*c[j]+c[j+1])/dx**2
-                    if i==int(((bc_pos-min(self.xmesh))/dx)):
-                        if not self.bc_outputted:
-                            print 'species ',k,': Applying bc dc/dt(x=',round(bc_pos,3),',t) = ', bc_val, ' (mol/L)/s'
-                            if k==self.nspecies-1:
-                                self.bc_outputted=True
-                        if bc_kind=='neumann':
-                            #von-Neumann boundary condition in t-dimension
-                            dc_dt[j] =bc_val[k] *10**3
-                            continue
+                    if i==0:
+                        dc_dt[j] = self.dc_dt_bound[k]
+                        continue
                     dc_dt[j] =\
                             (\
                             -self.u[k]*dc_dx \
@@ -150,16 +253,22 @@ class Transport:
 
         #boundary condition for c
         cout=[]
-        bc_kind='dirichlet'
-        bc_pos=self.xmesh[-2]
-        bc_val=[0.1,0.1]
-        c0=np.array([0.0*10**3]*nx*self.nspecies) #value at t=0 for all x-values
-        for k in range(0,self.nspecies):
-            c0[k*nx+int(((bc_pos-min(self.xmesh))/dx))]=bc_val[k]*10**3 #value at t=0 and x=0
-        print 'c at t = 0:',c0
-        print 'Applying bc c(x=',round(bc_pos,3),',t=0) = ',bc_val, 'mol/L (zero for all other x)'
+#        bc_kind='dirichlet'
+#        bc_pos=self.xmesh[-2]
+#        bc_val=np.array([0.1,0.1])*10**3
+#        c0=np.zeros([nx*self.nspecies])
+#        j=-1
+#        for k in range(self.nspecies):
+#            for i in range(nx):
+#                j+=1
+#                if i==int(((bc_pos-min(self.xmesh))/dx)):
+#                    c0[j]=bc_val[k]
+#                else:
+#                    c0[j]=self.itial_concentrations[k]
+        
+
         #solve time problem
-        sol = integrate.odeint(ode_func, c0, range(0,nt-1)) #, args=(b, c))
+        sol = integrate.odeint(ode_func, self.c0, range(0,nt-1)) #, args=(b, c))
 
         #return the results
         for n in range(0,nt-1):
