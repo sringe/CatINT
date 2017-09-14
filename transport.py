@@ -40,17 +40,20 @@ class Transport:
         self.beta = self.T * unit_R
 
         self.set_initial_conditions(
-                c_general={'all':0.1},
-                c_specific={'all':{'0':0.1}})
+                c_initial_general={'all':0.1},
+                c_initial_specific={'all':{'0':0.5}})
 
         self.set_boundary_conditions(\
                 c_boundary={},\
                 dc_dt_boundary={'all':{'value':0.0,'dir':'l'}},\
                 efield_boundary={'all':{'value':0.0,'dir':'l'}})
 
-        cout=self.integrate_pnp(self.dx,len(self.xmesh),self.dt,\
+    def run(self):
+
+        self.cout=self.integrate_pnp(self.dx,len(self.xmesh),self.dt,\
                 len(self.tmesh),self.D,10)
-        
+       
+    def plot(self):
 
         colorlist=cycle(['b','k'])
 
@@ -63,9 +66,9 @@ class Transport:
         for k in range(0,self.nspecies):
             color=next(colorlist)
             i=-1
-            for c in cout:
+            for c in self.cout:
                 i+=1
-                brightness=1.-(color_offset+(i*1.)/len(cout)*(1.-color_offset))
+                brightness=1.-(color_offset+(i*1.)/len(self.cout)*(1.-color_offset))
                 if k==0:
                     color=str(brightness)
                 elif k==1:
@@ -77,21 +80,21 @@ class Transport:
         #c=self.integrate_FTCS(self.dt,self.dx)
         #for t in np.arange(0.0,1.,0.1):
         #    plt.plot(self.xmesh,c[int(t/self.dt),:],'-o',label=str(t))
-        ax2.plot(self.xmesh[:-1],self.efield*1e10/unit_NA,'-')
+        ax2.plot(self.xmesh[:-1],self.efield[:-1]*1e10/unit_NA,'-')
         ax2.set_title('Electric field')
         ax2.set_xlabel('x (m)')
         ax2.set_ylabel('E (V/Ang)')
 
         ax3.set_title('Potential')
-        self.potential=np.zeros([len(self.xmesh)-1])
+        self.potential=np.zeros([len(self.xmesh)])
         integral=0.0
-        for i in range(len(self.xmesh)-1):
+        for i in range(len(self.xmesh)):
             integral-=self.efield[i]*self.dx/unit_NA
             self.potential[i]+=integral
-        ax3.plot(self.xmesh[:-1],self.potential,'-')
+        ax3.plot(self.xmesh[:-1],self.potential[:-1],'-')
         ax3.set_ylabel('v (V)')
         ax3.set_xlabel('x (m)')
-        ax4.plot(self.xmesh[:-1],self.external_charge/10**3/self.charges[0],'-')
+        ax4.plot(self.xmesh[:-1],self.external_charge[:-1]/10**3/self.charges[0],'-')
         ax4.set_ylabel('c_ext (mol/L)')
         plt.tight_layout()
         plt.show()
@@ -100,9 +103,9 @@ class Transport:
     def get_initial_conditions(self):
         return self.c0 
 
-    def set_initial_conditions(self,
-        c_general={},\
-        c_specific={}):
+    def set_initial_conditions(self,\
+        c_initial_general={},\
+        c_initial_specific={}):
         """accepts the initial concentrations of all species in the c_general list (all in mol/L), 
         the c_specific dictionary allows to parse specific values of the concentrations at 
         specific grid points (1st key is species index, 2nd is xmesh index, 
@@ -112,14 +115,16 @@ class Transport:
         for k in range(self.nspecies):
             for i in range(len(self.xmesh)):
                 j+=1
-                if str(k) in c_general:
-                    c0[j]=c_general[k]
+                if str(k) in c_initial_general:
+                    c0[j]=c_initial_general[k]
+                elif 'all' in c_initial_general:
+                    c0[j]=c_initial_general['all']
                 else:
                     c0[j]=0.0
-                if (str(k) in c_specific and str(i) in c_specific[str(k)]):
-                    c0[j]=c_specific[str(k)][str(i)]
-                if ('all' in c_specific and str(i) in c_specific['all']):
-                    c0[j]=c_specific['all'][str(i)]
+                if (str(k) in c_initial_specific and str(i) in c_initial_specific[str(k)]):
+                    c0[j]=c_initial_specific[str(k)][str(i)]
+                if ('all' in c_initial_specific and str(i) in c_initial_specific['all']):
+                    c0[j]=c_initial_specific['all'][str(i)]
 
         c0=np.array(c0)
         c0*=10**3 #multiply by 1000 to get m^-3
@@ -166,8 +171,8 @@ class Transport:
                         l[k]=dic['all']['value']
         for l in [c_bound,dc_dt_bound,efield_bound]:
             l=np.array(l)
-        self.c_bound=c_bound
-        self.dc_dt_bound=dc_dt_bound
+        self.c_bound=c_bound*10**3
+        self.dc_dt_bound=dc_dt_bound*10**3
         self.efield_bound=efield_bound
         self.c_bound_dir=c_bound_dir
         self.dc_dt_bound_dir=dc_dt_bound_dir
@@ -175,8 +180,8 @@ class Transport:
         
 
     def gaussian(self,sigma=0.01,z=1,mu=0.2):
-        gaussian=np.zeros([len(self.xmesh)-1])
-        for i in range(0,len(self.xmesh)-1):
+        gaussian=np.zeros([len(self.xmesh)])
+        for i in range(0,len(self.xmesh)):
             gaussian[i]=10**3*z*unit_e\
                     *1./(sigma*np.sqrt(2.*np.pi))\
                     *np.exp(-0.5*((self.xmesh[i]-mu)/sigma)**2)
@@ -196,25 +201,22 @@ class Transport:
             dc_dt = np.zeros([nx*self.nspecies])
 
             #first determine E = int E' = 1/eps int sum c_i z_i by numerical integration over the grid
-            j=-2
             self.efield=np.zeros([nx])
             self.defield_dx=np.zeros([nx])
 
-            self.external_charge=self.gaussian(sigma=0.01,z=1,mu=0.2) 
+            self.external_charge=self.gaussian(sigma=0.01,z=1.0,mu=0.2) 
 
             
 
             #INTEGRATION OF PBE: get electric field
-            #(corresponds to setting the efield to zero at the left side)
             for k in range(0,self.nspecies):
-                j+=1
                 total_int=self.efield_bound[k]
                 if self.efield_bound_dir[k] == 'r':
-                    ll=reversed(range(0,nx-1))
+                    ll=range(nx,0)
                 elif self.efield_bound_dir[k] == 'l':
-                    ll=range(0,nx-1)
-                for i1,i2 in zip(ll1,ll2):
-                    
+                    ll=range(0,nx)
+                for i in ll:
+                    j=k*nx+i
                     current_charge=self.charges[k]*c[j]
                     if k==0:
                         current_charge+=self.external_charge[i]
@@ -223,54 +225,38 @@ class Transport:
                     self.defield_dx[i]+=current_charge/self.eps
 
             #IMPLEMENTATION OF FLOWS
-            T=300
-            j=-2
+            #go over all point in space and all species
             for k in range(0,self.nspecies):
-                j+=1
                 if self.dc_dt_bound_dir[k] == 'r':
-                    ll=reversed(range(0,nx-1))
+                    ll=range(nx-1,0)
                 elif self.dc_dt_bound_dir[k] == 'l':
                     ll=range(0,nx-1)
-                for i in ll: # space
-                    j+=1
-                    dc_dx=(c[j+1]-c[j-1])/(2.*dx)
-                    dc_dx_2=(c[j-1]-2*c[j]+c[j+1])/dx**2
-                    if i==0:
+                m=-1
+                for i in ll:
+                    m+=1
+                    j=k*nx+i
+
+                    if m==0:
                         dc_dt[j] = self.dc_dt_bound[k]
-                        continue
-                    dc_dt[j] =\
+                    else:
+                        dc_dx=(c[j+1]-c[j-1])/(2.*dx)
+                        dc_dx_2=(c[j-1]-2*c[j]+c[j+1])/dx**2
+
+                        dc_dt[j] =\
                             (\
                             -self.u[k]*dc_dx \
                             +self.D[k]*(\
                                 dc_dx_2 \
                                 +self.charges[k]*self.beta*dc_dx*self.efield[i]\
                                 +self.charges[k]*self.beta*c[j]*self.defield_dx[i]\
-                                #-dc_dx**2/c[j]\
-                                #+self.charges[k]*self.beta*c[j]/self.eps*sum(self.charges*c[j])\
                             )\
                             )
             return dc_dt
 
-        #boundary condition for c
-        cout=[]
-#        bc_kind='dirichlet'
-#        bc_pos=self.xmesh[-2]
-#        bc_val=np.array([0.1,0.1])*10**3
-#        c0=np.zeros([nx*self.nspecies])
-#        j=-1
-#        for k in range(self.nspecies):
-#            for i in range(nx):
-#                j+=1
-#                if i==int(((bc_pos-min(self.xmesh))/dx)):
-#                    c0[j]=bc_val[k]
-#                else:
-#                    c0[j]=self.itial_concentrations[k]
-        
-
-        #solve time problem
         sol = integrate.odeint(ode_func, self.c0, range(0,nt-1)) #, args=(b, c))
 
         #return the results
+        cout = []
         for n in range(0,nt-1):
             for j in range(1,nx-1):
                 if n % int(nt/float(ntout)) == 0 or n==nt-1:
