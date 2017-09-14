@@ -36,11 +36,12 @@ class Transport:
         self.charges=np.array([1,-1])*unit_F
         self.T = 300
         self.u = np.array([0.0,0.0])
-        self.D = np.array([0.276,0.5])/100**2 #in cm2/s
+        self.D = np.array([0.276,0.276])/100**2 #in cm2/s
         self.nspecies=len(self.D)
-        self.beta = self.T * unit_R
-        self.external_charge=np.zeros([len(self.xmesh)]) 
-#        self.external_charge=self.gaussian(sigma=0.2,z=1.0,mu=5.0,c=1.) 
+        self.beta = 1./(self.T * unit_R)
+        self.external_charge=np.zeros([len(self.xmesh)])
+#        self.external_charge=self.gaussian(sigma=1.0,z=1.0,mu=3.0,cmax=0.1) 
+
 
         #BOUNDARY AND INITIAL CONDITIONS
         self.set_initial_conditions(
@@ -49,7 +50,7 @@ class Transport:
 
         self.set_boundary_conditions(\
                 dc_dt_boundary={'all':{'all':0.0}},     #in mol/l/s
-                efield_boundary={'l':0.0})    #in V/Ang
+                efield_boundary={'l':1.0})    #in V/Ang
 
     def run(self):
 
@@ -137,10 +138,9 @@ class Transport:
                     c0[j]=c_initial_specific['all'][str(i)]
 
         c0=np.array(c0)
-        c0=[1+0.57*self.xmesh]+[len(self.xmesh)*[1.]]
+        c0=[0.1+0.1*self.xmesh]+[0.1+0.1*self.xmesh]
         c0=np.array([item for sublist in c0 for item in sublist])
         c0*=10**3 #multiply by 1000 to get m^-3
-        print np.shape(c0)
         self.c0=c0
 
 
@@ -200,15 +200,15 @@ class Transport:
                 self.efield_bound+=[e*1e10]
         self.efield_bound=np.array(self.efield_bound)
 
-    def gaussian(self,sigma=0.01,z=1,mu=0.2,c=1):
+    def gaussian(self,sigma=0.01,z=1,mu=0.2,cmax=1):
         """define gaussian charge density. c is in molar"""
-        #maxval=40.
-        #sigma=1./(np.sqrt(2.*np.pi))*1/maxval
+#        sigma=1./(np.sqrt(2.*np.pi))*1/cmax
         gaussian=np.zeros([len(self.xmesh)])
         for i in range(0,len(self.xmesh)):
-            gaussian[i]=c*10**3*z*unit_F\
-                    *1./(sigma*np.sqrt(2.*np.pi))\
+            gaussian[i]=\
+                    1./(sigma*np.sqrt(2.*np.pi))\
                     *np.exp(-0.5*((self.xmesh[i]-mu)/sigma)**2)
+        gaussian=gaussian/max(gaussian)*cmax*10**3*z*unit_F
         return gaussian
 
     def integrate_pnp(self,dx,nx,dt,nt,D,ntout):
@@ -230,6 +230,8 @@ class Transport:
                 #integration from the left
                 ll=range(0,nx)
 
+            self.total_concentrations=np.zeros([self.nspecies+1,nx])
+
             for k in range(0,self.nspecies):
                 total_int=0.0 #self.efield_bound
                 m=-1
@@ -240,9 +242,18 @@ class Transport:
                     if k==0:
                         current_charge+=self.external_charge[i]
                     self.total_charge[i]+=current_charge
+                    self.total_concentrations[k,i]+=c[j]
                     total_int+=current_charge*dx/self.eps
                     self.efield[i]+=total_int
                     self.defield_dx[i]+=current_charge/self.eps
+
+            self.total_concentrations[-1,:]=self.external_charge/unit_F
+
+            #plt.plot(self.xmesh,self.total_charge/10**3/unit_F)
+            #for t in self.total_concentrations:
+            #    plt.plot(self.xmesh,t/10**3)
+            #plt.show()
+            #sys.exit()
 
             if self.efield_bound[1] != None:
                 #we integrated from right to left, so we have to switch the sign
@@ -255,7 +266,6 @@ class Transport:
             #IMPLEMENTATION OF FLOWS
             #go over all point in space and all species
 
-            j=-1
             for k in range(0,self.nspecies):
                 m=-1
                 for i in range(0,nx):
@@ -277,8 +287,8 @@ class Transport:
                         -self.u[k]*dc_dx \
                         +self.D[k]*(\
                             dc_dx_2 \
-                #            +self.charges[k]*self.beta*dc_dx*self.efield[i]\
-                #            +self.charges[k]*self.beta*c[j]*self.defield_dx[i]\
+                            +self.charges[k]*self.beta*dc_dx*self.efield[i]\
+                            +self.charges[k]*self.beta*c[j]*self.defield_dx[i]\
                         )\
                         )
             return dc_dt
