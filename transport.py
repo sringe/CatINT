@@ -18,10 +18,10 @@ class Transport:
 
 #self.diffusion_dict{['
 
-    def __init__(self):
+    def __init__(self,integrator='FTCS-odeint'):
 
         #THE MESH
-        self.dt=5.e-2
+        self.dt=5.e-3
         self.dx=5.e-2 #*1e-10
         self.tmax=10
         self.xmax=10 #*1e-10
@@ -29,6 +29,7 @@ class Transport:
         self.xmesh=np.arange(0,self.xmax+self.dx,self.dx)
 
         #A FEW VARIABLES
+        self.integrator=integrator
         self.bulk_concentrations=np.array([0.1,0.1])
         self.dOHP = 1.0
         self.eps = 80.0*unit_eps0
@@ -36,17 +37,19 @@ class Transport:
         self.charges=np.array([1,-1])*unit_F
         self.T = 300
         self.u = np.array([0.0,0.0])
-        self.D = np.array([0.276,0.5])/100**2 #in cm2/s
+        self.D = np.array([0.276])/100**2 #in cm2/s
         self.nspecies=len(self.D)
         self.beta = 1./(self.T * unit_R)
         self.external_charge=np.zeros([len(self.xmesh)])
         self.external_charge=self.gaussian(sigma=0.3,z=1.0,mu=3.0,cmax=0.1) 
-
+        self.count=1
+        self.ax1=plt.subplot('211')
+        self.ax2=plt.subplot('212')
 
         #BOUNDARY AND INITIAL CONDITIONS
         self.set_initial_conditions(
                 c_initial_general={'all':0.1},
-                c_initial_specific={'0':{'0':0.5},'1':{'0':0.3}})
+                c_initial_specific={'0':{'0':0.5}})#,'1':{'0':0.3}})
 
         self.set_boundary_conditions(\
                 dc_dt_boundary={'all':{'all':0.0}},     #in mol/l/s
@@ -55,7 +58,7 @@ class Transport:
     def run(self):
 
         self.cout=self.integrate_pnp(self.dx,len(self.xmesh),self.dt,\
-                len(self.tmesh),self.D,10)
+                len(self.tmesh),10,method=self.integrator)
        
     def plot(self):
 
@@ -212,7 +215,7 @@ class Transport:
         gaussian=gaussian/max(gaussian)*cmax*10**3*z*unit_F
         return gaussian
 
-    def integrate_pnp(self,dx,nx,dt,nt,D,ntout):
+    def integrate_pnp(self,dx,nx,dt,nt,ntout,method='FTCS'):
 
         def ode_func(c,t):
 
@@ -223,17 +226,40 @@ class Transport:
             self.defield_dx=np.zeros([nx])
 
             self.total_charge=np.zeros([nx])
-            #INTEGRATION OF PBE: get electric field
-            if self.efield_bound[1] !=None:
-                #integration from the right
-                ll=reversed(range(0,nx))
-            elif self.efield_bound[0] !=None:
-                #integration from the left
-                ll=range(0,nx)
 
             self.total_concentrations=np.zeros([self.nspecies+1,nx])
 
-            for k in range(0,self.nspecies):
+
+#            #position of test charge
+#            for i in range(0,nx):
+#                #integrate over grid
+#                for ii in range(0,nx):
+#                    for k in range(0,self.nspecies):
+#                        if ii==i:
+#                            continue
+#                        j=k*nx+ii
+#                        dist_sq=(self.xmesh[ii]-self.xmesh[i])**2
+#                        current_charge=self.charges[k]*c[j]
+#                        if k==0:
+#                            current_charge+=self.external_charge[j]
+#                        self.efield[i]+=current_charge*dx/self.eps/dist_sq
+#            
+#            for k in range(0,self.nspecies):
+#                for i in range(0,nx):
+#                    j=k*nx+i
+#                    current_charge=self.charges[k]*c[j]
+#                    if k==0:
+#                        current_charge+=self.external_charge[j]
+#                    self.defield_dx[i]+=current_charge/self.eps
+
+            for k in range(self.nspecies):
+                #INTEGRATION OF PBE: get electric field
+                if self.efield_bound[1] !=None:
+                    #integration from the right
+                    ll=reversed(range(0,nx))
+                elif self.efield_bound[0] !=None:
+                    #integration from the left
+                    ll=range(0,nx)
                 total_int=0.0
                 m=-1
                 for i in ll:
@@ -270,6 +296,11 @@ class Transport:
             #constant shift of electric field due to boundary conditions
             self.efield += [e for e in self.efield_bound if e!=None][0]
 
+#            plt.plot(self.xmesh,(self.charges[0]*c[:len(self.xmesh)]+self.charges[1]*c[len(self.xmesh):])/self.eps,'o')
+#            plt.plot(self.xmesh,self.external_charge/self.eps,'o')
+##            plt.plot(self.xmesh,self.efield,label='e')
+#            plt.plot(self.xmesh,self.defield_dx,label='de/dx')
+#            plt.legend()
 
             #IMPLEMENTATION OF FLOWS
             #go over all point in space and all species
@@ -295,88 +326,84 @@ class Transport:
                         -self.u[k]*dc_dx \
                         +self.D[k]*(\
                             dc_dx_2 \
-                            +self.charges[k]*self.beta*dc_dx*self.efield[i]\
-                            +self.charges[k]*self.beta*c[j]*self.defield_dx[i]\
+        #                    +self.charges[k]*self.beta*dc_dx*self.efield[i]\
+        #                    +self.charges[k]*self.beta*c[j]*self.defield_dx[i]\
                         )\
                         )
+
+         #   if self.count in range(50,100):
+         #       self.ax1.plot(self.xmesh,dc_dt[:len(self.xmesh)]/10**3*dt,'-',linewidth=0.3,color='r')
+         #       self.ax1.plot(self.xmesh,dc_dt[len(self.xmesh):]/10**3*dt,'-',linewidth=0.3,color='k')
+         #       self.ax2.plot(self.xmesh,c[:len(self.xmesh)]/10**3,'-',linewidth=0.3,color='r')
+         #       self.ax2.plot(self.xmesh,c[len(self.xmesh):]/10**3,'-',linewidth=0.3,color='k')
+         #   self.count+=1
+         #   if self.count==100:
+         #       plt.show()
+         #       sys.exit()
             return dc_dt
 
-        sol = integrate.odeint(ode_func, self.c0, range(0,nt-1)) #, args=(b, c))
-
-        #return the results
-        cout = []
-        for n in range(0,nt-1):
-            for j in range(1,nx-1):
+        def integrate_FTCS_odeint(dx,nx,dt,nt,c0,ntout):
+            print np.shape(c0)
+            sol = integrate.odeint(ode_func, c0, range(0,nt)) #, args=(b, c))
+            print np.shape(sol)
+            #return the results
+            cout = []
+            for n in range(0,nt):
                 if n % int(nt/float(ntout)) == 0 or n==nt-1:
                     cout.append(sol[n,:].copy()) # numpy arrays are mutable, 
+            return cout
+
+        def integrate_FTCS(dt,dx,nt,nx,V0):
+            # diffusion number (has to be less than 0.5 for the 
+            # solution to be stable):
+            s = self.D[0]*dt/dx**2
+            V = np.zeros([nt,nx])
+            V[:,0] = [V0[0]]*(nt)       #boundary left  (dc_dt=0)
+            V[:,-1] = [V0[-1]]*(nt)     #boundary right (dc_dt=0)
+            V[0,:]=V0                   #initial
+            for n in range(0,nt-1): # time
+                for j in range(1,nx-1): # space
+                    V[n+1,j] = V[n,j] + s*(V[n,j-1] -
+                        2*V[n,j] + V[n,j+1]) 
+            cout=V[-1,:]
+            return cout
+
+        def integrate_Crank_Nicolson(dx,nx,dt,nt,c,ntout):
+            """only for dc_dt=0 at both boundary sites implemented yet"""
+            cout = [] # list for storing c arrays at certain time steps
+            c0 = c[0] # boundary condition on left side
+            c1 = c[-1] # boundary condition on right side
+            s = self.D[0]*dt/dx**2  # diffusion number
+            # create coefficient matrix:
+            A = diags([-0.5*s, 1+s, -0.5*s], [-1, 0, 1], 
+                  shape=(nx-2, nx-2)).toarray() 
+            B1 = diags([0.5*s, 1-s, 0.5*s],[-1, 0, 1], shape=(nx-2, nx-2)).toarray()
+            for n in range(1,nt): # time is going from second time step to last
+                cn = c
+                B = np.dot(cn[1:-1],B1)
+                B[0] = B[0]+0.5*s*(c0+c0)
+                B[-1] = B[-1]+0.5*s*(c1+c1)
+                c[1:-1] = np.linalg.solve(A,B)
+                if n % int(nt/float(ntout)) == 0 or n==nt-1:
+                    cout.append(c.copy()) # numpy arrays are mutable, 
+                    #so we need to write out a copy of c, not c itself
+            return cout,s
+
+        if method=='FTCS-odeint':
+            cout=integrate_FTCS_odeint(dx,nx,dt,nt,self.c0,ntout)
+            print np.shape(cout)
+            dataplot=cout[-1][:nx]
+        elif method=='FTCS':
+            cout=integrate_FTCS(dt,dx,nt,nx,self.c0[:nx])
+            dataplot=cout
+        elif method=='Crank-Nicolson':
+            cout,s=integrate_Crank_Nicolson(dx,nx,dt,nt,self.c0[:nx],ntout)
+            dataplot=cout[-1]
+        plt.plot(self.xmesh,dataplot/10**3,'-')
+        plt.show()
+        sys.exit()
         return cout
 
-    def diffusion_FTCS(self,dx,nx,dt,nt,D,c0,ntout):
-        # diffusion number (has to be less than 0.5 for the
-        # solution to be stable):
-        cout = []
-        s = D*dt/dx**2
-        c = np.zeros([nt,nx])
-        c[:,0] = c0
-        u=0.0 #1e-4
-        z=1*unit_e
-        eps=80*unit_eps0
-        beta = self.T * unit_R
-        T=300
-        for n in range(0,nt-1): # time
-            for j in range(1,nx-1): # space
-                dc_dx=(c[n,j+1]-c[n,j-1])/(2.*dx)
-                dc_dx_2=(c[n,j-1]-2*c[n,j]+c[n,j+1])/dx**2
-                c[n+1,j] = c[n,j] + dt*\
-                        (\
-                        -u*dc_dx \
-                        +D*(\
-                            dc_dx_2 \
-                            -dc_dx**2/c[n,j]\
-                            +z*beta*c[n,j]/eps*z*c[n,j]\
-                        )\
-                        )
-                if n % int(nt/float(ntout)) == 0 or n==nt-1:
-                    cout.append(c[n,:].copy()) # numpy arrays are mutable, 
-        return cout,s
-    # note that this can be written without the for-loop
-    # in space, but it is easier to read it this way
-
-    def diffusion_Crank_Nicolson(self,dx,nx,dt,nt,D,c,ntout):
-        cout = [] # list for storing c arrays at certain time steps
-        c0 = c[0] # boundary condition on left side
-        c1 = c[-1] # boundary condition on right side
-        s = D*dt/dx**2  # diffusion number
-        # create coefficient matrix:
-        A = diags([-0.5*s, 1+s, -0.5*s], [-1, 0, 1], 
-              shape=(nx-2, nx-2)).toarray() 
-        B1 = diags([0.5*s, 1-s, 0.5*s],[-1, 0, 1], shape=(nx-2, nx-2)).toarray()
-        for n in range(1,nt): # time is going from second time step to last
-            cn = c
-            B = np.dot(cn[1:-1],B1) 
-            B[0] = B[0]+0.5*s*(c0+c0)
-            B[-1] = B[-1]+0.5*s*(c1+c1)
-            c[1:-1] = np.linalg.solve(A,B)
-            if n % int(nt/float(ntout)) == 0 or n==nt-1:
-                cout.append(c.copy()) # numpy arrays are mutable, 
-                #so we need to write out a copy of c, not c itself
-        return cout,s
-
-
-    def integrate_FTCS(self,dt,dx):
-        c=np.zeros([len(self.tmesh),len(self.xmesh)])
-        #c[0,:] = 1.0 #initial concentrations
-        c[:,0] = 10.0 #fix concentrations at x=0
-#        dc_dv=self.bulk_concentrations * (-self.charges/units.kB/T) * np.exp(-self.charges * potential/units.kB/T)
-        for it in range(0,len(self.tmesh)-1):
-            for ix in range(1,len(self.xmesh)-1):
-                c[it+1,ix] = c[it,ix] \
-                    + self.D * (c[it,ix+1]-2*c[it,ix]+c[it,ix-1]) * dt/dx**2 #\
-                # - 0.5 * self.u * (c[it,ix+1]-c[it,ix-1]) * dt/dx \
-                  #      + self.D*self.charges[k]/units.kB/self.T * (c[t,x+1]-c[t,x-1])**2 / dc_dv * dt/dx**2
-#c[t+dt,x] = c[t,x] + 1/2 * u * (c[t,x+dx]-c[t,x-dx]) * dt/dx - D * (c[t,x+dx]-2c[t,x]+c[t,x-dx]) * dt/dx^2 
-#	+ const. * (c[t,x+dx]-c[t,x-dx])^2/dcv * dt/(dx)^2  + const * c[t,x]^2 = R
-        return c
 #    def update():
 #
 #        self.rates = []
@@ -389,36 +416,6 @@ class Transport:
     #        for i in self.xmesh:
     #            rates[i] = self.D*self.z/unit.kB/self.T*concentraitions*
     #    return rates
-
-    def ionic_charge(self,pot):
-        charge=0.0
-        for j,z in enumerate(self.charges):
-            charge+=z*self.bulk_concentrations[j]*\
-            np.exp(-self.charges[j]*pot/(units.kB * self.T))
-        return charge
-
-    def integrate_pbe(self):
-        """This function integrates the 1d PBE and solves for the electric field:
-            int (sum_i z_i q c_i) dz
-            solution is performed with finite differences"""
-
-        def d(z, t):
-            #z = [v',v]
-            return np.array((
-                -1./self.eps*self.ionic_charge(z[1]),       #this is z[0]'
-                z[0]                                        #this is z[1]'
-                ))
-
-        sol = integrate.odeint(d,[0.,0.],self.xmesh)
-        
-        plt.plot(self.xmesh, sol[:, 0], 'b', label='v(x)')
-        plt.plot(self.xmesh, sol[:, 1], 'g', label='E(x)')
-        plt.legend(loc='best')
-        plt.xlabel('t')
-        plt.ylim([-2,2])
-
-        plt.grid()
-        plt.show()
 
 
 
