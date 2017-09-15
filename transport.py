@@ -36,21 +36,21 @@ class Transport:
         self.charges=np.array([1,-1])*unit_F
         self.T = 300
         self.u = np.array([0.0,0.0])
-        self.D = np.array([0.276,0.276])/100**2 #in cm2/s
+        self.D = np.array([0.276,0.5])/100**2 #in cm2/s
         self.nspecies=len(self.D)
         self.beta = 1./(self.T * unit_R)
         self.external_charge=np.zeros([len(self.xmesh)])
-#        self.external_charge=self.gaussian(sigma=1.0,z=1.0,mu=3.0,cmax=0.1) 
+        self.external_charge=self.gaussian(sigma=0.3,z=1.0,mu=3.0,cmax=0.1) 
 
 
         #BOUNDARY AND INITIAL CONDITIONS
         self.set_initial_conditions(
-                c_initial_general={'all':0.1})#,
-#                c_initial_specific={'all':{'0':0.5}})
+                c_initial_general={'all':0.1},
+                c_initial_specific={'0':{'0':0.5},'1':{'0':0.3}})
 
         self.set_boundary_conditions(\
                 dc_dt_boundary={'all':{'all':0.0}},     #in mol/l/s
-                efield_boundary={'l':1.0})    #in V/Ang
+                efield_boundary={'r':0.0})    #in V/Ang
 
     def run(self):
 
@@ -125,6 +125,7 @@ class Transport:
         value is concentration)."""
         c0=np.zeros([self.nspecies*len(self.xmesh)])
         j=-1
+
         for k in range(self.nspecies):
             for i in range(len(self.xmesh)):
                 j+=1
@@ -138,8 +139,8 @@ class Transport:
                     c0[j]=c_initial_specific['all'][str(i)]
 
         c0=np.array(c0)
-        c0=[0.1+0.1*self.xmesh]+[0.1+0.1*self.xmesh]
-        c0=np.array([item for sublist in c0 for item in sublist])
+#        c0=[0.1+0.1*self.xmesh]+[0.1+0.1*self.xmesh]
+#        c0=np.array([item for sublist in c0 for item in sublist])
         c0*=10**3 #multiply by 1000 to get m^-3
         self.c0=c0
 
@@ -233,7 +234,7 @@ class Transport:
             self.total_concentrations=np.zeros([self.nspecies+1,nx])
 
             for k in range(0,self.nspecies):
-                total_int=0.0 #self.efield_bound
+                total_int=0.0
                 m=-1
                 for i in ll:
                     m+=1
@@ -241,11 +242,18 @@ class Transport:
                     current_charge=self.charges[k]*c[j]
                     if k==0:
                         current_charge+=self.external_charge[i]
-                    self.total_charge[i]+=current_charge
-                    self.total_concentrations[k,i]+=c[j]
                     total_int+=current_charge*dx/self.eps
                     self.efield[i]+=total_int
                     self.defield_dx[i]+=current_charge/self.eps
+                    #others:
+                    self.total_charge[i]+=current_charge
+                    self.total_concentrations[k,i]+=c[j]
+
+            ##integrate charge with Gaussian quadrature, default order=5
+            #for k in range(0,self.nspecies):
+            #    func=self.charges[k]*c[k*nx:(k+1)*nx]
+            #    #integrate.fixed_quad(func,min(func),max(func))
+            #    integral+=integrate.simps(func,self.xmesh)
 
             self.total_concentrations[-1,:]=self.external_charge/unit_F
 
