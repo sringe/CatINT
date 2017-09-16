@@ -55,12 +55,12 @@ class Transport:
 
         self.set_boundary_conditions(\
                 dc_dt_boundary={'all':{'all':0.0}},     #in mol/l/s
-                efield_boundary={'r':0.0})    #in V/Ang
+                efield_boundary={'l':0.0})    #in V/Ang
 
     def run(self):
 
         self.cout=self.integrate_pnp(self.dx,len(self.xmesh),self.dt,\
-                len(self.tmesh),2,method=self.integrator)
+                len(self.tmesh),5,method=self.integrator)
        
     def plot(self):
 
@@ -372,7 +372,7 @@ class Transport:
                 j=-1
                 for k in range(self.nspecies):
                     for i in range(nx):
-                        if (i+1)%nx!=0 and i%nx!=0:
+                        if i!=0 and i!=nx-1:
                             j+=1
                             cout.append(ctmp[j])
                         elif i==0:
@@ -390,22 +390,25 @@ class Transport:
 
                 for i in range((nx-2)*self.nspecies):
                     for j in [i-1,i,i+1]: #range((nx-2)*self.nspecies):
-                        if i==0 and j==i-1:
+                        if (i%(nx-2)==0 and j==i-1):
+                            #beginning of new species. should not calculate derivative
+                            #using last position
                             continue
-                        if i==(nx-2)*self.nspecies-1 and j==i+1:
-                            break
-                        ii=i-(i//(nx-2))*(nx-2)
-                        for k in range(self.nspecies):
-                            value=self.charges[k]*self.beta*dt*self.D[k]
-                            if i==j:
-                                B1[i,j]+=value*self.defield_dx[ii+1]
-                            if abs(i-j)==1:
-                                if j<i:
-                                    B1[i,j]-=value*self.efield[ii+1]/4./dx
-                                    A[i,j]+=value*self.efield[ii+1]/4./dx
-                                elif i<j:
-                                    B1[i,j]+=value*self.efield[ii+1]/4./dx
-                                    A[i,j]-=value*self.efield[ii+1]/4./dx
+                        if (i+1)%(nx-2)==0 and j==i+1:
+                            #end of species. should not use next position
+                            continue
+                        k=i//(nx-2)     #current species
+                        ii=i-k*(nx-2)   #current i index
+                        value=self.charges[k]*self.beta*dt*self.D[k]
+                        if i==j:
+                            B1[i,j]+=value*self.defield_dx[ii+1]
+                        if abs(i-j)==1:
+                            if j<i:
+                                B1[i,j]-=value*self.efield[ii+1]/4./dx
+                                A[i,j]+=value*self.efield[ii+1]/4./dx
+                            elif i<j:
+                                B1[i,j]+=value*self.efield[ii+1]/4./dx
+                                A[i,j]-=value*self.efield[ii+1]/4./dx
 
                 #print '-'*50
                 #print('\n'.join([''.join(['{:4}'.format(item) for item in row])
@@ -418,12 +421,12 @@ class Transport:
                 B = np.dot(cn_slice,B1)
                 for k in range(self.nspecies):
                     B[k*(nx-2)] += 0.5*s[k]*(c0[k]+c0[k])-\
-                        self.charges[k]*self.beta*dt*self.D[k]*self.efield[0]/4./dx
+                        2*self.charges[k]*self.beta*dt*self.D[k]*self.efield[0]/4./dx
                     B[(k+1)*(nx-2)-1] += 0.5*s[k]*(c1[k]+c1[k])+\
-                        self.charges[k]*self.beta*dt*self.D[k]*self.efield[-1]/4./dx
+                        2*self.charges[k]*self.beta*dt*self.D[k]*self.efield[-1]/4./dx
                 ctmp = np.linalg.solve(A,B) #this gives vector without initial and final elements
-                c = unpack(ctmp,c0,c1,nx) #add initial and final elements back
-                if n % int(nt/float(ntout)) == 0 or n==nt-1:
+                c = unpack(ctmp,c0,c1,nx) #add left and right boundary values back
+                if n % int(nt/float(ntout)) == 0 or n==nt-1: # or True:
                     cout.append(c.copy()) # numpy arrays are mutable, 
                     #so we need to write out a copy of c, not c itself
             return cout,s
@@ -473,11 +476,11 @@ class Transport:
         elif method=='Crank-Nicolson':
             cout,s=integrate_Crank_Nicolson_pnp(dx,nx,dt,nt,self.c0,ntout)
             dataplot=cout[-1]
-        print dataplot
-        plt.plot(self.xmesh,dataplot[:nx]/10**3,'-')
-        plt.plot(self.xmesh,dataplot[nx:]/10**3,'-')
-        plt.show()
-        sys.exit()
+        #print dataplot
+        #plt.plot(self.xmesh,dataplot[:nx]/10**3,'-')
+        #plt.plot(self.xmesh,dataplot[nx:]/10**3,'-')
+        #plt.show()
+        #sys.exit()
         return cout
 
 #    def update():
