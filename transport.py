@@ -23,9 +23,9 @@ class Transport:
     def __init__(self,integrator='FTCS-odeint'):
 
         #THE MESH
-        self.dt=5.e-3
+        self.dt=1.0 #5.e-3
         self.dx=5.e-2 
-        self.tmax=10
+        self.tmax=2024.2369851 #10
         self.xmax=10 #*1e-10
         self.tmesh=np.arange(0,self.tmax+self.dt,self.dt)
         self.xmesh=np.arange(0,self.xmax+self.dx,self.dx)
@@ -36,14 +36,14 @@ class Transport:
         self.dOHP = 1.0
         self.eps = 80.0*unit_eps0
         #eps=80*unit_eps0
-        self.charges=np.array([1,-1])*unit_F
+        self.charges=np.array([0,0])*unit_F
         self.T = 300
         self.u = np.array([0.0,0.0])
         self.D = np.array([8.0,16.0])/100**2 #in cm2/s
         self.nspecies=len(self.D)
         self.beta = 1./(self.T * unit_R)
-        self.external_charge=np.zeros([len(self.xmesh)])
-        self.external_charge=self.gaussian(sigma=0.3,z=1.0,mu=3.0,cmax=0.1) 
+        self.external_charge=np.zeros([len(self.xmesh)-2])
+        #self.external_charge=self.gaussian(sigma=0.3,z=1.0,mu=3.0,cmax=0.1) 
         self.count=1
         self.ax1=plt.subplot('211')
         self.ax2=plt.subplot('212')
@@ -377,6 +377,23 @@ class Transport:
             for n in range(1,nt): # time is going from second time step to last
                 cn = c
                 cn_slice=[cc for ic,cc in enumerate(cn) if ((ic+1)%nx!=0 and (ic)%nx!=0)]
+
+                #PNP electric field modifications
+                self.efield,self.defield_dx=calculate_efield(nx-2,cn_slice)
+                #add this to B1 matrix (sadly this induces a time variation of this matrix and makes the whole problem non-linear)
+                for i in range((nx-2)*self.nspecies):
+                    for j in [i-1,i,i+1]: #range((nx-2)*self.nspecies):
+                        if j==(nx-2)*self.nspecies:
+                            break
+                        ii=i-i//(nx-2)*(nx-2)
+                        for k in range(self.nspecies):
+                            if i==j:
+                                B1[i,j]+=self.charges[k]*self.beta*self.defield_dx[ii]*dt
+                            if abs(i-j)==1:
+                                B1[i,j]-=self.charges[k]*self.beta*self.efield[ii]*dt/4.
+                                A[i,j]+=self.charges[k]*self.beta*self.efield[ii]*dt/4.
+                #end electric field modifications
+
                 B = np.dot(cn_slice,B1)
                 for k in range(self.nspecies):
                     B[k*(nx-2)] += 0.5*s*(c0[k]+c0[k])
