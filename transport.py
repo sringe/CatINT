@@ -36,13 +36,13 @@ class Transport:
         self.dOHP = 1.0
         self.eps = 80.0*unit_eps0
         #eps=80*unit_eps0
-        self.charges=np.array([0,0])*unit_F
+        self.charges=np.array([1,-1])*unit_F
         self.T = 300
         self.u = np.array([0.0,0.0])
-        self.D = np.array([8.0,16.0])/100**2 #in cm2/s
+        self.D = np.array([0.2,0.5])/100**2 #in cm2/s
         self.nspecies=len(self.D)
         self.beta = 1./(self.T * unit_R)
-        self.external_charge=np.zeros([len(self.xmesh)-2])
+        self.external_charge=np.zeros([len(self.xmesh)])
         #self.external_charge=self.gaussian(sigma=0.3,z=1.0,mu=3.0,cmax=0.1) 
         self.count=1
         self.ax1=plt.subplot('211')
@@ -60,7 +60,7 @@ class Transport:
     def run(self):
 
         self.cout=self.integrate_pnp(self.dx,len(self.xmesh),self.dt,\
-                len(self.tmesh),10,method=self.integrator)
+                len(self.tmesh),2,method=self.integrator)
        
     def plot(self):
 
@@ -343,21 +343,28 @@ class Transport:
             cout = [] # list for storing c arrays at certain time steps
             c0 = np.zeros([self.nspecies])
             c1 = np.zeros([self.nspecies])
+            s = np.zeros([self.nspecies])
             for k in range(self.nspecies):
                 c0[k] = c[k*nx] # boundary condition on left side
                 c1[k] = c[(k+1)*nx-1] # boundary condition on right side
-            s = self.D[0]*dt/dx**2  # diffusion number
+                s[k] = self.D[k]*dt/dx**2  # diffusion number
             # create coefficient matrix:
-            A = diags([-0.5*s, 1+s, -0.5*s], [-1, 0, 1], 
+            def a_matrix(s):
+                return diags([-0.5*s, 1+s, -0.5*s], [-1, 0, 1], 
                   shape=(nx-2, nx-2)).toarray() 
+
+            A=a_matrix(s[0])
             Atot=deepcopy(A)
             for k in range(self.nspecies-1):
-                Atot=block_diag(Atot,A)
+                Atot=block_diag(Atot,a_matrix(s[k+1]))
             A=Atot
-            B1 = diags([0.5*s, 1-s, 0.5*s],[-1, 0, 1], shape=(nx-2,nx-2)).toarray()
+            def b1_matrix(s):
+                return diags([0.5*s, 1-s, 0.5*s],[-1, 0, 1], shape=(nx-2,nx-2)).toarray()
+
+            B1=b1_matrix(s[0])
             B1tot=deepcopy(B1)
             for k in range(self.nspecies-1):
-                B1tot=block_diag(B1tot,B1)
+                B1tot=block_diag(B1tot,b1_matrix(s[k+1]))
             B1=B1tot
 
             def unpack(ctmp,c0,c1,nx):
@@ -376,28 +383,44 @@ class Transport:
 
             for n in range(1,nt): # time is going from second time step to last
                 cn = c
+                #PNP electric field modifications
+                self.efield,self.defield_dx=calculate_efield(nx,cn)
                 cn_slice=[cc for ic,cc in enumerate(cn) if ((ic+1)%nx!=0 and (ic)%nx!=0)]
 
-                #PNP electric field modifications
-                self.efield,self.defield_dx=calculate_efield(nx-2,cn_slice)
-                #add this to B1 matrix (sadly this induces a time variation of this matrix and makes the whole problem non-linear)
+
                 for i in range((nx-2)*self.nspecies):
                     for j in [i-1,i,i+1]: #range((nx-2)*self.nspecies):
-                        if j==(nx-2)*self.nspecies:
+                        if i==0 and j==i-1:
+                            continue
+                        if i==(nx-2)*self.nspecies-1 and j==i+1:
                             break
-                        ii=i-i//(nx-2)*(nx-2)
+                        ii=i-(i//(nx-2))*(nx-2)
                         for k in range(self.nspecies):
+                            value=self.charges[k]*self.beta*dt*self.D[k]
                             if i==j:
-                                B1[i,j]+=self.charges[k]*self.beta*self.defield_dx[ii]*dt
+                                B1[i,j]+=value*self.defield_dx[ii+1]
                             if abs(i-j)==1:
-                                B1[i,j]-=self.charges[k]*self.beta*self.efield[ii]*dt/4.
-                                A[i,j]+=self.charges[k]*self.beta*self.efield[ii]*dt/4.
+                                if j<i:
+                                    B1[i,j]-=value*self.efield[ii+1]/4./dx
+                                    A[i,j]+=value*self.efield[ii+1]/4./dx
+                                elif i<j:
+                                    B1[i,j]+=value*self.efield[ii+1]/4./dx
+                                    A[i,j]-=value*self.efield[ii+1]/4./dx
+
+                #print '-'*50
+                #print('\n'.join([''.join(['{:4}'.format(item) for item in row])
+                #    for row in A]))
+                #print('\n'.join([''.join(['{:4}'.format(item) for item in row])
+                #    for row in B1]))
+                #print '-'*50
                 #end electric field modifications
 
                 B = np.dot(cn_slice,B1)
                 for k in range(self.nspecies):
-                    B[k*(nx-2)] += 0.5*s*(c0[k]+c0[k])
-                    B[(k+1)*(nx-2)-1] += 0.5*s*(c1[k]+c1[k])
+                    B[k*(nx-2)] += 0.5*s[k]*(c0[k]+c0[k])-\
+                        self.charges[k]*self.beta*dt*self.D[k]*self.efield[0]/4./dx
+                    B[(k+1)*(nx-2)-1] += 0.5*s[k]*(c1[k]+c1[k])+\
+                        self.charges[k]*self.beta*dt*self.D[k]*self.efield[-1]/4./dx
                 ctmp = np.linalg.solve(A,B) #this gives vector without initial and final elements
                 c = unpack(ctmp,c0,c1,nx) #add initial and final elements back
                 if n % int(nt/float(ntout)) == 0 or n==nt-1:
@@ -450,6 +473,7 @@ class Transport:
         elif method=='Crank-Nicolson':
             cout,s=integrate_Crank_Nicolson_pnp(dx,nx,dt,nt,self.c0,ntout)
             dataplot=cout[-1]
+        print dataplot
         plt.plot(self.xmesh,dataplot[:nx]/10**3,'-')
         plt.plot(self.xmesh,dataplot[nx:]/10**3,'-')
         plt.show()
