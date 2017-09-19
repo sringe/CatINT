@@ -23,9 +23,9 @@ class Transport:
     def __init__(self,integrator='FTCS-odeint'):
 
         #THE MESH
-        self.dt=10e-6 #1.0 #5.e-3
-        self.dx=80.e-8
-        self.tmax=20e-3 #2024.2369851 #10
+        self.dt=5e-6 #1.0 #5.e-3
+        self.dx=40.e-8
+        self.tmax=100e-3 #2024.2369851 #10
         self.xmax=80.e-6 #*1e-10
         self.tmesh=np.arange(0,self.tmax+self.dt,self.dt)
         self.xmesh=np.arange(0,self.xmax+self.dx,self.dx)
@@ -34,7 +34,7 @@ class Transport:
         self.integrator=integrator
         self.bulk_concentrations=np.array([0.1,0.1])
         self.dOHP = 1.0
-        self.eps = 80.0*unit_eps0
+        self.eps = 80.0#*1e-4#*unit_eps0
         #eps=80*unit_eps0
         self.charges=np.array([1,-1])*unit_F
         self.T = 300
@@ -43,7 +43,7 @@ class Transport:
         self.nspecies=len(self.D)
         self.beta = 1./(self.T * unit_R)
         #self.external_charge=np.zeros([len(self.xmesh)])
-        self.external_charge=self.gaussian(sigma=30e-6,z=1.0,mu=40.e-6,cmax=0.2)
+        self.external_charge=self.gaussian(sigma=5e-6,z=1.0,mu=4.e-5,cmax=0.1)
         self.count=1
         self.ax1=plt.subplot('311')
         self.ax2=plt.subplot('312')
@@ -473,21 +473,22 @@ class Transport:
             for k in range(self.nspecies):
                 s[k] = self.D[k]*dt/dx**2
                 ee[k] = self.charges[k]*self.beta*dt*self.D[k]
-                V[:,0] = [V0[k*nx]]*(nt)       #boundary left  (dc_dt=0)
-                V[:,-1] = [V0[(k+1)*nx-1]]*(nt)     #boundary right (dc_dt=0)
+                V[:,k*nx] = [V0[k*nx]]*(nt)       #boundary left  (dc_dt=0)
+                V[:,(k+1)*nx-1] = [V0[(k+1)*nx-1]]*(nt)     #boundary right (dc_dt=0)
             V[0,:]=V0                   #initia
             cout=[]
+            print nx,np.shape(V)
             for n in range(0,nt-1): # time
                 self.efield,self.defield_dx=calculate_efield(nx,V[n,:])
-                for j in range((nx-2)*self.nspecies): # space
-                    k=j//(nx-2)
-                    ii=j-k*(nx-2)   #current i index
-                    V[n+1,j] = V[n,j] + s[k]*(V[n,j-1] -
-                        2*V[n,j] + V[n,j+1]) #+ ee[k]*\
- #                       (self.efield[ii]*(V[n,j+1]-V[n,j-1])/(2.*dx)+\
- #                       self.defield_dx[ii]*V[n,j])
+                for k in range(self.nspecies):
+                    for i in range(1,nx-1): #k*nx+1,(k+1)*nx-1): # space
+                        j=k*nx+i
+                        V[n+1,j] = V[n,j] + s[k]*(V[n,j-1] -
+                            2*V[n,j] + V[n,j+1]) + ee[k]*\
+                        (self.efield[i]*(V[n,j+1]-V[n,j-1])/(2.*dx)+\
+                        self.defield_dx[i]*V[n,j])
                 if n % int(nt/float(ntout)) == 0 or n==nt-1:
-                    cout.append(V.copy())
+                    cout.append(V[n,:].copy())
             return cout
 
         def integrate_Crank_Nicolson(dx,nx,dt,nt,c,ntout):
