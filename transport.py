@@ -23,8 +23,8 @@ class Transport:
     def __init__(self,integrator='FTCS-odeint'):
 
         #THE MESH
-        self.dt=5e-6 #1.0 #5.e-3
-        self.dx=40.e-8
+        self.dt=10e-6 #1.0 #5.e-3
+        self.dx=80.e-8
         self.tmax=100e-3 #2024.2369851 #10
         self.xmax=80.e-6 #*1e-10
         self.tmesh=np.arange(0,self.tmax+self.dt,self.dt)
@@ -34,7 +34,7 @@ class Transport:
         self.integrator=integrator
         self.bulk_concentrations=np.array([0.1,0.1])
         self.dOHP = 1.0
-        self.eps = 80.0#*1e-4#*unit_eps0
+        self.eps = 80.0 *unit_eps0
         #eps=80*unit_eps0
         self.charges=np.array([1,-1])*unit_F
         self.T = 300
@@ -42,8 +42,8 @@ class Transport:
         self.D = np.array([1.96e-9,1.2e-9])
         self.nspecies=len(self.D)
         self.beta = 1./(self.T * unit_R)
-        #self.external_charge=np.zeros([len(self.xmesh)])
-        self.external_charge=self.gaussian(sigma=5e-6,z=1.0,mu=4.e-5,cmax=0.1)
+        self.external_charge=np.zeros([len(self.xmesh)])
+        #self.external_charge=self.gaussian(sigma=5e-6,z=1.0,mu=4.e-5,cmax=0.1)
         self.count=1
         self.ax1=plt.subplot('311')
         self.ax2=plt.subplot('312')
@@ -51,11 +51,11 @@ class Transport:
 
         #BOUNDARY AND INITIAL CONDITIONS
         self.set_initial_conditions(
-                c_initial_general={'all':0.1},
-                c_initial_specific={'0':{'0':0.2},'1':{'0':0.2}})
+                c_initial_general={'all':0.0},
+                c_initial_specific={'0':{'0':0.0},'1':{'0':0.0}})
 
         self.set_boundary_conditions(\
-                dc_dt_boundary={'all':{'all':0.0}},     #in mol/l/s
+                dc_dt_boundary={'all':{'0':0.1}},     #in mol/l/s
                 efield_boundary={'r':0.0})    #in V/Ang
 
         self.initialize='bla' #diffusion' #initialize with with diffusion or nothing
@@ -473,14 +473,26 @@ class Transport:
             for k in range(self.nspecies):
                 s[k] = self.D[k]*dt/dx**2
                 ee[k] = self.charges[k]*self.beta*dt*self.D[k]
-                V[:,k*nx] = [V0[k*nx]]*(nt)       #boundary left  (dc_dt=0)
-                V[:,(k+1)*nx-1] = [V0[(k+1)*nx-1]]*(nt)     #boundary right (dc_dt=0)
+                V[:,k*nx] = [V0[k*nx]]*(nt)       #boundary left (
+                V[:,(k+1)*nx-1] = [V0[(k+1)*nx-1]]*(nt)     #boundary right 
+
+            #initial conditions
             V[0,:]=V0                   #initia
             cout=[]
-            print nx,np.shape(V)
+
+            #boundary conditions for change in concentrations
+            dV=np.zeros([self.nspecies*nx])
+            for k in range(self.nspecies):
+                dV[k*nx]=self.dc_dt_bound[k,0]*dt
+                dV[(k+1)*nx-1]=self.dc_dt_bound[k,1]*dt
+
             for n in range(0,nt-1): # time
                 self.efield,self.defield_dx=calculate_efield(nx,V[n,:])
                 for k in range(self.nspecies):
+                    #update concentrations at the boundaries (from boundary condition)
+                    V[n+1,k*nx]=V[n,k*nx]+dV[k*nx]
+                for k in range(self.nspecies):
+                   # V[n+1,(k+1)*nx-1]=V[n,(k+1)*nx-1]*dV[(k+1)*nx-1]
                     for i in range(1,nx-1): #k*nx+1,(k+1)*nx-1): # space
                         j=k*nx+i
                         V[n+1,j] = V[n,j] + s[k]*(V[n,j-1] -
