@@ -23,10 +23,10 @@ class Transport:
     def __init__(self,integrator='FTCS-odeint'):
 
         #THE MESH
-        self.dt=1.0 #5.e-3
-        self.dx=5.e-2 
-        self.tmax=2024.2369851 #10
-        self.xmax=10 #*1e-10
+        self.dt=5e-6 #1.0 #5.e-3
+        self.dx=80.e-8
+        self.tmax=20e-3 #2024.2369851 #10
+        self.xmax=80.e-6 #*1e-10
         self.tmesh=np.arange(0,self.tmax+self.dt,self.dt)
         self.xmesh=np.arange(0,self.xmax+self.dx,self.dx)
 
@@ -39,23 +39,26 @@ class Transport:
         self.charges=np.array([1,-1])*unit_F
         self.T = 300
         self.u = np.array([0.0,0.0])
-        self.D = np.array([0.2,0.5])/100**2 #in cm2/s
+        self.D = np.array([1.96e-9,1.2e-9]) #np.array([1.5,10.0])/100**2 #in cm2/s
         self.nspecies=len(self.D)
         self.beta = 1./(self.T * unit_R)
         self.external_charge=np.zeros([len(self.xmesh)])
         #self.external_charge=self.gaussian(sigma=0.3,z=1.0,mu=3.0,cmax=0.1) 
         self.count=1
-        self.ax1=plt.subplot('211')
-        self.ax2=plt.subplot('212')
+        self.ax1=plt.subplot('311')
+        self.ax2=plt.subplot('312')
+        self.ax3=plt.subplot('313')
 
         #BOUNDARY AND INITIAL CONDITIONS
         self.set_initial_conditions(
                 c_initial_general={'all':0.1},
-                c_initial_specific={'0':{'0':0.5},'1':{'0':0.3}})
+                c_initial_specific={'0':{'0':0.2},'1':{'0':0.2}})
 
         self.set_boundary_conditions(\
                 dc_dt_boundary={'all':{'all':0.0}},     #in mol/l/s
-                efield_boundary={'l':0.0})    #in V/Ang
+                efield_boundary={'r':0.0})    #in V/Ang
+
+        self.initialize='diffusion' #initialize with with diffusion or nothing
 
     def run(self):
 
@@ -250,7 +253,8 @@ class Transport:
                     #others:
                     self.total_charge[i]+=current_charge
                     self.total_concentrations[k,i]+=c[j]
-
+            self.total_charge=(self.charges[0]*c[:nx]+self.charges[1]*c[nx:])/self.eps
+            self.defield_dx=self.total_charge
             ##integrate charge with Gaussian quadrature, default order=5
             #for k in range(0,self.nspecies):
             #    func=self.charges[k]*c[k*nx:(k+1)*nx]
@@ -271,6 +275,14 @@ class Transport:
                 efield = -efield
             #constant shift of electric field due to boundary conditions
             efield += [e for e in self.efield_bound if e!=None][0]
+            #if self.count<200:
+            #    self.ax1.plot(self.xmesh,efield,'-')
+            #    self.ax2.plot(self.xmesh,self.charges[0]*c[:nx]+self.charges[1]*c[nx:],'-')
+            #else:
+            #    plt.show()
+            #    sys.exit()
+            #self.count+=1
+
             return efield,defield_dx
 
         def ode_func(c,t):
@@ -380,13 +392,21 @@ class Transport:
                         elif i==nx-1:
                             cout.append(c1[k])
                 return np.array(cout)
-
+            
             for n in range(1,nt): # time is going from second time step to last
+                #self.ax1.plot(self.xmesh,c[:nx],'-')
+                if n<3 and abs(self.charges[0])>0.0:
+                    self.ax1.plot(self.xmesh,c[:nx],self.xmesh,c[nx:])
+                if n==3 and abs(self.charges[0])>0.0:
+                    plt.show()
+                    sys.exit()
                 cn = c
                 #PNP electric field modifications
                 self.efield,self.defield_dx=calculate_efield(nx,cn)
+                if n<3 and abs(self.charges[0])>0.0:
+                    self.ax2.plot(self.xmesh,self.efield[:nx],'-')
+                    self.ax3.plot(self.xmesh,self.defield_dx[:nx],'-')
                 cn_slice=[cc for ic,cc in enumerate(cn) if ((ic+1)%nx!=0 and (ic)%nx!=0)]
-
 
                 for i in range((nx-2)*self.nspecies):
                     for j in [i-1,i,i+1]: #range((nx-2)*self.nspecies):
@@ -399,7 +419,7 @@ class Transport:
                             continue
                         k=i//(nx-2)     #current species
                         ii=i-k*(nx-2)   #current i index
-                        value=self.charges[k]*self.beta*dt*self.D[k]
+                        value=self.charges[k]*self.beta*dt*self.D[k]#*unit_F
                         if i==j:
                             B1[i,j]+=value*self.defield_dx[ii+1]
                         if abs(i-j)==1:
@@ -409,7 +429,6 @@ class Transport:
                             elif i<j:
                                 B1[i,j]+=value*self.efield[ii+1]/4./dx
                                 A[i,j]-=value*self.efield[ii+1]/4./dx
-
                 #print '-'*50
                 #print('\n'.join([''.join(['{:4}'.format(item) for item in row])
                 #    for row in A]))
@@ -420,10 +439,10 @@ class Transport:
 
                 B = np.dot(cn_slice,B1)
                 for k in range(self.nspecies):
-                    B[k*(nx-2)] += 0.5*s[k]*(c0[k]+c0[k])-\
-                        2*self.charges[k]*self.beta*dt*self.D[k]*self.efield[0]/4./dx
-                    B[(k+1)*(nx-2)-1] += 0.5*s[k]*(c1[k]+c1[k])+\
-                        2*self.charges[k]*self.beta*dt*self.D[k]*self.efield[-1]/4./dx
+                    B[k*(nx-2)] += (0.5*s[k]+\
+                        self.charges[k]*self.beta*dt*self.D[k]*self.efield[0]/4./dx)*(c0[k]+c0[k])
+                    B[(k+1)*(nx-2)-1] += (0.5*s[k]-\
+                        self.charges[k]*self.beta*dt*self.D[k]*self.efield[-1]/4./dx)*(c1[k]+c1[k])
                 ctmp = np.linalg.solve(A,B) #this gives vector without initial and final elements
                 c = unpack(ctmp,c0,c1,nx) #add left and right boundary values back
                 if n % int(nt/float(ntout)) == 0 or n==nt-1: # or True:
@@ -474,7 +493,18 @@ class Transport:
             cout=integrate_FTCS(dt,dx,nt,nx,self.c0[:nx])
             dataplot=cout
         elif method=='Crank-Nicolson':
-            cout,s=integrate_Crank_Nicolson_pnp(dx,nx,dt,nt,self.c0,ntout)
+            if self.initialize=='diffusion':
+                charges_tmp=self.charges
+                self.charges=np.array([0.0]*len(self.charges))
+                cout,s=integrate_Crank_Nicolson_pnp(dx,nx,dt,nt,self.c0,ntout)
+                self.charges=charges_tmp
+                print np.shape(cout)
+                self.ax1.plot(self.xmesh,cout[-1][:nx],'-r')
+                self.ax1.set_ylim([min(cout[-1][:nx]),max(cout[-1][:nx])])
+                cout,s=integrate_Crank_Nicolson_pnp(dx,nx,dt,nt,cout[-1],ntout)
+            else:
+                print 'not diff'
+                cout,s=integrate_Crank_Nicolson_pnp(dx,nx,dt,nt,self.c0,ntout)
             dataplot=cout[-1]
         #print dataplot
         #plt.plot(self.xmesh,dataplot[:nx]/10**3,'-')
