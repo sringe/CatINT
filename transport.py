@@ -13,6 +13,8 @@ from units import *
 from itertools import cycle
 import sys
 from copy import deepcopy
+from scipy.optimize import minimize
+
 
 class Transport:
 #just a few variables which can be hopefully later taken from catmap
@@ -23,13 +25,14 @@ class Transport:
     def __init__(self,integrator='FTCS-odeint'):
 
         #THE MESH
-        self.dt=10e-6 #1.0 #5.e-3
+        self.dt=1e-13 #1.0 #5.e-3
         self.dx=80.e-8
-        self.tmax=100e-3 #2024.2369851 #10
+        self.tmax=1e-8 #2024.2369851 #10
         self.xmax=80.e-6 #*1e-10
         self.tmesh=np.arange(0,self.tmax+self.dt,self.dt)
         self.xmesh=np.arange(0,self.xmax+self.dx,self.dx)
-
+        print len(self.tmesh)
+        print len(self.xmesh)
         #A FEW VARIABLES
         self.integrator=integrator
         self.bulk_concentrations=np.array([0.1,0.1])
@@ -43,7 +46,7 @@ class Transport:
         self.nspecies=len(self.D)
         self.beta = 1./(self.T * unit_R)
         self.external_charge=np.zeros([len(self.xmesh)])
-        #self.external_charge=self.gaussian(sigma=5e-6,z=1.0,mu=4.e-5,cmax=0.1)
+        #self.external_charge=self.gaussian(sigma=5e-6,z=1.0,mu=4.e-5,cmax=5e-5)+self.gaussian(sigma=5e-6,z=-1.0,mu=5.e-5,cmax=5e-5)
         self.count=1
         self.ax1=plt.subplot('311')
         self.ax2=plt.subplot('312')
@@ -51,14 +54,42 @@ class Transport:
 
         #BOUNDARY AND INITIAL CONDITIONS
         self.set_initial_conditions(
-                c_initial_general={'all':0.0},
-                c_initial_specific={'0':{'0':0.0},'1':{'0':0.0}})
+                c_initial_general={'all':0.1},
+                c_initial_specific={'0':{'0':0.2},'1':{'0':0.2}})
 
         self.set_boundary_conditions(\
-                dc_dt_boundary={'all':{'0':0.1}},     #in mol/l/s
+                dc_dt_boundary={'all':{'0':0.0}},     #in mol/l/s
                 efield_boundary={'r':0.0})    #in V/Ang
 
         self.initialize='bla' #diffusion' #initialize with with diffusion or nothing
+        #c_inf=self.get_static_concentrations()
+
+
+    def get_static_concentrations(self):
+        """solves the PBE in order to get the static limit for the concentrations"""
+        def d(z, x):
+            zold=z
+            z=[]
+            #z[0] = phi'
+            #z[1] = phi
+            #first block defines z[0]' which is d^2/dx^2 phi as function of
+            #second block defines z[1]' which is phi, so z[0]
+            z.append(-1./self.eps*self.external_charge_func(x)) #(sum([charge*unit_F*0.1*10**3*np.exp(-self.beta*unit_F*charge*zold[1]) for charge in self.charges])+self.external_charge_func(x)))
+            z.append(zold[0])
+            return z
+
+        v0=np.zeros([2]) #this is phi' and phi at x=0
+        sol,output = integrate.odeint(d, v0, self.xmesh,full_output=True) #, args=(b, c))
+        print np.shape(sol)
+        print sol[:,0]
+        #b_min = minimize(func, b0, args=(z0, m, k, g, a), constraints=cons)
+        self.ax1.plot(self.xmesh,sol[:,0]/1e10,'-',label='E (V/Ang)')
+        self.ax2.plot(self.xmesh,sol[:,1],'-',label='phi (V)')
+        self.ax1.legend()
+        self.ax2.legend()
+        plt.show()
+        sys.exit()
+        return sol
 
     def run(self):
 
@@ -220,7 +251,135 @@ class Transport:
         gaussian=gaussian/max(gaussian)*cmax*10**3*z*unit_F
         return gaussian
 
+    def external_charge_func(self,x):
+        return self.gaussian_func(x,sigma=5e-6,z=1.0,mu=4.e-5,cmax=5e-5)+self.gaussian_func(x,sigma=5e-6,z=-1.0,mu=5.e-5,cmax=5e-5)
+
+    def gaussian_func(self,x,sigma=0.01,z=1,mu=0.2,cmax=1):
+        """define gaussian charge density. c is in molar"""
+#        sigma=1./(np.sqrt(2.*np.pi))*1/cmax
+        gaussian=\
+             1./(sigma*np.sqrt(2.*np.pi))\
+             *np.exp(-0.5*((x-mu)/sigma)**2)
+        gaussian=gaussian*cmax*10**3*z*unit_F
+        return gaussian
+
     def integrate_pnp(self,dx,nx,dt,nt,ntout,method='FTCS'):
+
+        def calculate_efield_FD(nx,c):
+            #solve A * u = f for u
+            efield=np.zeros([nx])
+            defield_dx=np.zeros([nx])
+            #sum up all charges in order to get derivative of e-field
+            for k in range(self.nspecies):
+                defield_dx+=self.charges[k]*c[k*nx:(k+1)*nx]
+            #add external charge
+            defield_dx+=self.external_charge
+            #devide by eps
+            defield_dx/=self.eps
+            #now perform FD scheme in order to solve d/dx efield = rho for efield:
+            A = diags([-1, 0, 1], [-1, 0, 1], 
+                  shape=(nx-2, nx-2)).toarray()
+            A/=(2*dx)
+            print('\n'.join([''.join(['{:10}'.format(item) for item in row])
+      for row in A]))
+            #RHS vector:
+            f=[]
+            for k in range(self.nspecies):
+                f.extend(defield_dx[k*nx+1:(k+1)*nx-1])
+            print f
+            print np.linalg.det(A)
+            tmp = np.linalg.solve(A,f) #this gives vector without initial and final elements
+            for k in range(self.nspecies):
+                efield[k*nx]=0.0
+                efield[(k+1)*nx-1]=0.0
+                efield[k*nx+1,(k+1)*nx-1]=tmp
+            return efield, defield_dx
+
+        def calculate_efield_both_sites(nx,c):
+            #first determine E = int E' = 1/eps int sum c_i z_i by numerical integration over the grid
+            efield=np.zeros([nx])
+            defield_dx=np.zeros([nx])
+
+            self.total_charge=np.zeros([nx])
+
+            self.total_concentrations=np.zeros([self.nspecies+1,nx])
+            for k in range(self.nspecies):
+                defield_dx+=self.charges[k]*c[k*nx:(k+1)*nx]
+            #add external charge
+            defield_dx+=self.external_charge
+            self.total_charge=defield_dx
+            #devide by eps
+            defield_dx/=self.eps
+
+            for k in range(self.nspecies):
+                #INTEGRATION OF PBE: get electric field
+                if self.efield_bound[1] !=None:
+                    #integration from the right
+                    ll=reversed(range(0,nx))
+                elif self.efield_bound[0] !=None:
+                    #integration from the left
+                    ll=range(0,nx)
+                total_int=0.0
+                m=-1
+                for i in ll:
+                    m+=1
+                    j=k*nx+i
+                    current_charge=self.charges[k]*c[j]
+                    if k==0:
+                        current_charge+=self.external_charge[i]
+                    total_int+=current_charge*dx
+                    efield[i]+=total_int
+
+            for k in range(self.nspecies):
+                #INTEGRATION OF PBE: get electric field
+                if self.efield_bound[1] !=None:
+                    #integration from the right
+                    ll=range(0,nx)
+                elif self.efield_bound[0] !=None:
+                    #integration from the left
+                    ll=reversed(range(0,nx))
+                total_int=0.0
+                m=-1
+                for i in ll:
+                    m+=1
+                    j=k*nx+i
+                    current_charge=self.charges[k]*c[j]
+                    if k==0:
+                        current_charge+=self.external_charge[i]
+                    total_int+=current_charge*dx
+                    efield[i]+=total_int
+            efield/=self.eps
+#            self.total_charge=(self.charges[0]*c[:nx]+self.charges[1]*c[nx:])/self.eps
+#            self.defield_dx=self.total_charge
+            ##integrate charge with Gaussian quadrature, default order=5
+            #for k in range(0,self.nspecies):
+            #    func=self.charges[k]*c[k*nx:(k+1)*nx]
+            #    #integrate.fixed_quad(func,min(func),max(func))
+            #    integral+=integrate.simps(func,self.xmesh)
+
+            self.total_concentrations[-1,:]=self.external_charge/unit_F
+
+            #plt.plot(self.xmesh,self.total_charge/10**3/unit_F)
+            #for t in self.total_concentrations:
+            #    plt.plot(self.xmesh,t/10**3)
+            #plt.show()
+            #sys.exit()
+
+            if self.efield_bound[1] != None:
+                #we integrated from right to left, so we have to switch the sign
+                #of the efield here
+                efield = -efield
+            #constant shift of electric field due to boundary conditions
+            efield += [e for e in self.efield_bound if e!=None][0]
+            #if self.count<200:
+            #    self.ax1.plot(self.xmesh,efield,'-')
+            #    self.ax2.plot(self.xmesh,self.charges[0]*c[:nx]+self.charges[1]*c[nx:],'-')
+            #else:
+            #    plt.show()
+            #    sys.exit()
+            #self.count+=1
+
+            return efield,defield_dx
 
         def calculate_efield(nx,c):
             #first determine E = int E' = 1/eps int sum c_i z_i by numerical integration over the grid
@@ -501,6 +660,8 @@ class Transport:
                         self.defield_dx[i]*V[n,j])
                 if n % int(nt/float(ntout)) == 0 or n==nt-1:
                     cout.append(V[n,:].copy())
+                #if n==100:
+                #    return cout
             return cout
 
         def integrate_Crank_Nicolson(dx,nx,dt,nt,c,ntout):
