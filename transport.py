@@ -25,9 +25,9 @@ class Transport:
     def __init__(self,integrator='FTCS-odeint'):
 
         #THE MESH
-        self.dt=1e-13 #1.0 #5.e-3
+        self.dt=5e-6 #1.0 #5.e-3
         self.dx=80.e-8
-        self.tmax=1e-8 #2024.2369851 #10
+        self.tmax=100e-3 #2024.2369851 #10
         self.xmax=80.e-6 #*1e-10
         self.tmesh=np.arange(0,self.tmax+self.dt,self.dt)
         self.xmesh=np.arange(0,self.xmax+self.dx,self.dx)
@@ -37,12 +37,12 @@ class Transport:
         self.integrator=integrator
         self.bulk_concentrations=np.array([0.1,0.1])
         self.dOHP = 1.0
-        self.eps = 80.0 *unit_eps0
+        self.eps = 80.0 *1e-3#*unit_eps0 #1.1e11 #*unit_eps0
         #eps=80*unit_eps0
-        self.charges=np.array([1,-1])*unit_F
+        self.charges=np.array([-1,1])*unit_F
         self.T = 300
         self.u = np.array([0.0,0.0])
-        self.D = np.array([1.96e-9,1.2e-9])
+        self.D = np.array([1.96e-9,1.2e-9])  #m^2/s
         self.nspecies=len(self.D)
         self.beta = 1./(self.T * unit_R)
         self.external_charge=np.zeros([len(self.xmesh)])
@@ -53,11 +53,13 @@ class Transport:
         self.ax3=plt.subplot('313')
 
         #BOUNDARY AND INITIAL CONDITIONS
+
         self.set_initial_conditions(
                 c_initial_general={'all':0.1},
-                c_initial_specific={'0':{'0':0.2},'1':{'0':0.2}})
+                c_initial_specific={'0':{'0':0.1},'1':{'0':0.1}})
 
         self.set_boundary_conditions(\
+                flux_boundary={'0':{'1':5e-8},'1':{'1':0.0}},         #in mol/s/cm^2
                 dc_dt_boundary={'all':{'0':0.0}},     #in mol/l/s
                 efield_boundary={'r':0.0})    #in V/Ang
 
@@ -188,6 +190,7 @@ class Transport:
         return self.c_bound,self.dc_dt_bound,self.efield_bound
 
     def set_boundary_conditions(self,\
+        flux_boundary={},\
         dc_dt_boundary={},\
         efield_boundary={}):
 
@@ -195,6 +198,15 @@ class Transport:
         and the derivatives dc_dx_boundary and the efield. 
         species, direction, value"""
 
+        if len(flux_boundary)>0:
+            self.boundary_type='flux'
+        elif len(dc_dt_boundary)>0:
+            self.boundary_type='dc_dt'
+        else:
+            print('No boundary conditions defined, stopping here.')
+            sys.exit()
+
+        flux_bound=np.zeros([self.nspecies,2])
         dc_dt_bound=np.zeros([self.nspecies,2])
         efield_bound=np.array([None,None])
 
@@ -214,23 +226,29 @@ class Transport:
         for key in efield_boundary:
             efield_bound[key_to_index(key)]=efield_boundary[key]
 
-        for key1_raw in dc_dt_boundary:
-            if key1_raw=='all':
-                keys1=map(str,range(self.nspecies))
-            else:
-                keys1=[str(key1_raw)]
-            for key1 in keys1:
-                for key2_raw in dc_dt_boundary[key1_raw]:
-                    if key2_raw=='all':
-                        keys2=map(str,range(2))
-                    else:
-                        keys2=[str(key2_raw)]
-                    for key2 in keys2:
-                        dc_dt_bound[int(key1),int(key2)]=dc_dt_boundary[key1_raw][key2_raw]
+        def allocate_fluxes(array_in,array_out):
+            for key1_raw in array_in:
+                if key1_raw=='all':
+                    keys1=map(str,range(self.nspecies))
+                else:
+                    keys1=[str(key1_raw)]
+                for key1 in keys1:
+                    for key2_raw in array_in[key1_raw]:
+                        if key2_raw=='all':
+                            keys2=map(str,range(2))
+                        else:
+                            keys2=[str(key2_raw)]
+                        for key2 in keys2:
+                            array_out[int(key1),int(key2)]=array_in[key1_raw][key2_raw]
+            return array_out
 
-        for l in [dc_dt_bound,efield_bound]:
+        dc_dt_bound=allocate_fluxes(dc_dt_boundary,dc_dt_bound)
+        flux_bound=allocate_fluxes(flux_boundary,flux_bound)
+
+        for l in [dc_dt_bound,efield_bound,flux_bound]:
             l=np.array(l)
 
+        self.flux_bound=flux_bound*100**2
         self.dc_dt_bound=dc_dt_bound*10**3
         self.efield_bound=[]
         for e in efield_bound:
@@ -644,20 +662,42 @@ class Transport:
             for k in range(self.nspecies):
                 dV[k*nx]=self.dc_dt_bound[k,0]*dt
                 dV[(k+1)*nx-1]=self.dc_dt_bound[k,1]*dt
+                
 
             for n in range(0,nt-1): # time
                 self.efield,self.defield_dx=calculate_efield(nx,V[n,:])
                 for k in range(self.nspecies):
                     #update concentrations at the boundaries (from boundary condition)
                     V[n+1,k*nx]=V[n,k*nx]+dV[k*nx]
+                if self.boundary_type=='flux':
+                    if sum([fb**2 for fb in self.flux_bound[:,0]])!=0.0:
+                        #left bound is defined by flux. this means that right bound will be defined by dc_dt_bound
+                        #we have to start integrating from the right
+                        #(we cannot use different flux integration for both species)
+                        xiter=reversed(range(1,nx-1))
+                    else:
+                        xiter=range(1,nx-1)
                 for k in range(self.nspecies):
+                    if self.boundary_type=='flux':
+                        flux_bound=np.sqrt(max(self.flux_bound[k,:]**2))
+                    print k, flux_bound
                    # V[n+1,(k+1)*nx-1]=V[n,(k+1)*nx-1]*dV[(k+1)*nx-1]
-                    for i in range(1,nx-1): #k*nx+1,(k+1)*nx-1): # space
+                    ii=-1
+                    for i in xiter: #k*nx+1,(k+1)*nx-1): # space
+                        ii+=1
                         j=k*nx+i
-                        V[n+1,j] = V[n,j] + s[k]*(V[n,j-1] -
-                            2*V[n,j] + V[n,j+1]) + ee[k]*\
-                        (self.efield[i]*(V[n,j+1]-V[n,j-1])/(2.*dx)+\
-                        self.defield_dx[i]*V[n,j])
+                        if self.boundary_type=='flux' and ii==nx-2:
+                            #define V update including flux boundary
+                            V[n+1,j] = V[n,j] + self.D[k]*dt/dx*(\
+                                flux_bound-(V[n,j]-V[n,j-1])/dx) +\
+                                ee[k]*\
+                                (self.efield[i]*(V[n,j+1]-V[n,j-1])/(2.*dx)+\
+                                self.defield_dx[i]*V[n,j])
+                        else:
+                            V[n+1,j] = V[n,j] + s[k]*(V[n,j-1]-\
+                                2*V[n,j] + V[n,j+1]) + ee[k]*\
+                                (self.efield[i]*(V[n,j+1]-V[n,j-1])/(2.*dx)+\
+                                self.defield_dx[i]*V[n,j])
                 if n % int(nt/float(ntout)) == 0 or n==nt-1:
                     cout.append(V[n,:].copy())
                 #if n==100:
