@@ -39,7 +39,7 @@ class Transport:
         self.dOHP = 1.0
         self.eps = 80.0 *1e-3#*unit_eps0 #1.1e11 #*unit_eps0
         #eps=80*unit_eps0
-        self.charges=np.array([-1,1])*unit_F
+        self.charges=np.array([0,0])*unit_F
         self.T = 300
         self.u = np.array([0.0,0.0])
         self.D = np.array([1.96e-9,1.2e-9])  #m^2/s
@@ -59,8 +59,8 @@ class Transport:
                 c_initial_specific={'0':{'0':0.1},'1':{'0':0.1}})
 
         self.set_boundary_conditions(\
-                flux_boundary={'0':{'1':5e-8},'1':{'1':0.0}},         #in mol/s/cm^2
-                dc_dt_boundary={'all':{'0':0.0}},     #in mol/l/s
+                flux_boundary={'0':{'l':5e-8},'1':{'l':0.0}},         #in mol/s/cm^2
+                dc_dt_boundary={'all':{'r':0.0}},     #in mol/l/s
                 efield_boundary={'r':0.0})    #in V/Ang
 
         self.initialize='bla' #diffusion' #initialize with with diffusion or nothing
@@ -237,7 +237,7 @@ class Transport:
                         if key2_raw=='all':
                             keys2=map(str,range(2))
                         else:
-                            keys2=[str(key2_raw)]
+                            keys2=[key_to_index(key2_raw)]
                         for key2 in keys2:
                             array_out[int(key1),int(key2)]=array_in[key1_raw][key2_raw]
             return array_out
@@ -664,29 +664,33 @@ class Transport:
                 dV[(k+1)*nx-1]=self.dc_dt_bound[k,1]*dt
                 
 
+            
+
             for n in range(0,nt-1): # time
                 self.efield,self.defield_dx=calculate_efield(nx,V[n,:])
-                for k in range(self.nspecies):
-                    #update concentrations at the boundaries (from boundary condition)
-                    V[n+1,k*nx]=V[n,k*nx]+dV[k*nx]
                 if self.boundary_type=='flux':
                     if sum([fb**2 for fb in self.flux_bound[:,0]])!=0.0:
                         #left bound is defined by flux. this means that right bound will be defined by dc_dt_bound
                         #we have to start integrating from the right
                         #(we cannot use different flux integration for both species)
-                        xiter=reversed(range(1,nx-1))
+                        xiter=reversed(range(0,nx-1))
                     else:
-                        xiter=range(1,nx-1)
+                        xiter=range(1,nx)
+                else:
+                    xiter=range(1,nx-1)
+                for k in range(self.nspecies):
+                    #update concentrations at the boundaries (from boundary condition)
+                    V[n+1,k*nx]=V[n,k*nx]+dV[k*nx]
+                    V[n+1,(k+1)*nx-1]=V[n,(k+1)*nx-1]+dV[(k+1)*nx-1]
                 for k in range(self.nspecies):
                     if self.boundary_type=='flux':
                         flux_bound=np.sqrt(max(self.flux_bound[k,:]**2))
-                    print k, flux_bound
                    # V[n+1,(k+1)*nx-1]=V[n,(k+1)*nx-1]*dV[(k+1)*nx-1]
-                    ii=-1
+                    ii=0
                     for i in xiter: #k*nx+1,(k+1)*nx-1): # space
                         ii+=1
                         j=k*nx+i
-                        if self.boundary_type=='flux' and ii==nx-2:
+                        if self.boundary_type=='flux' and ii==nx-1:
                             #define V update including flux boundary
                             V[n+1,j] = V[n,j] + self.D[k]*dt/dx*(\
                                 flux_bound-(V[n,j]-V[n,j-1])/dx) +\
