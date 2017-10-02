@@ -39,7 +39,7 @@ class Transport:
 
         #THE MESH
         self.dt=1e-12 #5e-6 #1.0 #5.e-3
-        self.tmax=2e-10 #100e-3 #2024.2369851 #10
+        self.tmax=5e-10 #100e-3 #2024.2369851 #10
         self.tmesh=np.arange(0,self.tmax+self.dt,self.dt)
         self.dx=self.debye_length/10.
         #self.xmax=80.e-6 #*1e-10
@@ -671,19 +671,26 @@ class Transport:
                 i_step+=1
                 for i in range(1,nx-1):
                     v[i] = 1/2.*(dx**2*rhs[i]+v_old[i+1]+v_old[i-1])
-                error=sum((v_old-v)**2)
+                error=sum((v_old-v)**2/len(v))
                 v_old=deepcopy(v)
             grad_v=np.zeros([nx])
             for i in range(1,nx-1):
                 grad_v[i] = 1./(2*dx)*(v[i+1]-v[i-1])
+            #linearly extrapolate to get derivative at boundaries:
+            grad_v[0] = grad_v[1]-(grad_v[2]-grad_v[1])
+            grad_v[-1] = grad_v[-2]-(grad_v[-2]-grad_v[-3])
             return v,grad_v
 
         def integrate_FTCS(dt,dx,nt,nx,C0,ntout):
+            """Integrates PNP equations, BCs:
+                        concentrations      potential
+                left    ROBIN j=0           DIRICHLET vzeta
+                right   DIRICHLET cbulk     DIRICHLET 0.0
+            """
+
             # diffusion number (has to be less than 0.5 for the 
             # solution to be stable):
             C = np.zeros([self.nspecies,nx])
-            sum_over_charges=np.zeros([self.nspecies])
-            sum_over_charges_after=np.zeros([self.nspecies])
             COUT=[]
 
             #initial conditions for concentrations
@@ -700,7 +707,6 @@ class Transport:
                         (-4*self.D[k]+self.mu[k]*(v[1]-self.vzeta))*C[k,1]
                     #Dirichlet BC for concentrations on right side (bulk)
                     C[k,-1]=C0[(k+1)*nx-1]
-                    sum_over_charges[k]=sum(C[k,:])
                     temp = np.zeros([nx])
                     temp[0]=C[k,0]
                     temp[-1]=C[k,-1]
@@ -712,7 +718,6 @@ class Transport:
                             dt/(2.*dx)*self.mu[k]*grad_v[i-1]+0.5
                         temp[i] = E * C[k,i-1] + M * C[k,i] + W * C[k,i+1]
                     C[k,:]=temp
-                    sum_over_charges_after[k]=sum(C[k,:])
                 if n % int(nt/float(ntout)) == 0 or n==nt-1:
                     COUT.append(np.ndarray.flatten(C))
                 self.efield=grad_v
