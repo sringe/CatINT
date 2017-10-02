@@ -39,7 +39,7 @@ class Transport:
 
         #THE MESH
         self.dt=1e-12 #5e-6 #1.0 #5.e-3
-        self.tmax=5e-10 #100e-3 #2024.2369851 #10
+        self.tmax=1e-10 #100e-3 #2024.2369851 #10
         self.tmesh=np.arange(0,self.tmax+self.dt,self.dt)
         self.dx=self.debye_length/10.
         #self.xmax=80.e-6 #*1e-10
@@ -543,7 +543,101 @@ class Transport:
                     cout.append(sol[n,:].copy()) # numpy arrays are mutable, 
             return cout
 
-        def integrate_Crank_Nicolson_pnp(dx,nx,dt,nt,c,ntout):
+        def integrate_Crank_Nicolson_pnp(dx,nx,dt,nt,C0,ntout):
+            """Integrates PNP equations, BCs:
+                        concentrations      potential
+                left    ROBIN j=0           DIRICHLET vzeta
+                right   DIRICHLET cbulk     DIRICHLET 0.0
+            """
+            #if true add an artifical diffusion term which enhances the stability of the solution
+            self.use_lax_friedrichs=True
+
+            # create coefficient matrix:
+            def a_matrix(s):
+                if self.use_lax_friedrichs:
+                    corr=1.0
+                else:
+                    corr=0.0
+                return diags([-0.5*(s+corr), 1+(s+corr), -0.5*(s+corr)], [-1, 0, 1],\
+                    shape=(nx-2, nx-2)).toarray()
+
+            def b1_matrix(s):
+                if self.use_lax_friedrichs:
+                    corr=1.0
+                else:
+                    corr=0.0
+                return diags([0.5*(s+corr), 1-(s+corr), 0.5*(s+corr)],[-1, 0, 1],\
+                    shape=(nx-2,nx-2)).toarray()
+
+            def add_field(B1,A,grad_v,lapl_v,ee):
+                for i in range(nx-2):
+                    if i==0:
+                        jvalues=[i,i+1]
+                    elif i==nx-3:
+                        jvalues=[i-1,i]
+                    else:
+                        jvalues=[i-1,i,i+1]
+                    for j in jvalues:
+                        if i==j:
+                            B1[i,j]+=ee*lapl_v[i]
+                        if abs(i-j)==1:
+                            if j<i:
+                                B1[i,j]-=ee*grad_v[i]/4./dx
+                                A[i,j]+=ee*grad_v[i]/4./dx
+                            elif i<j:
+                                B1[i,j]+=ee*grad_v[i]/4./dx
+                                A[i,j]-=ee*grad_v[i]/4./dx
+                return B1,A
+
+            def add_boundary_values(B,grad_v,s,ee,C0,C1,C00,C10):
+                #C0 and C1 are the current boundary values
+                #C00 and C10 are the initial boundary values
+                if self.use_lax_friedrichs:
+                    corr=1.0
+                else:
+                    corr=0.0
+                B[0] += (0.5*(s+corr)+\
+                    ee*grad_v[0]/4./dx)*(C0+C00)
+                B[-1] += (0.5*(s+corr)-\
+                    ee*grad_v[-1]/4./dx)*(C1+C10)
+                return B
+
+            C = np.zeros([self.nspecies,nx])
+            COUT=[]
+
+            #initial conditions for concentrations
+            for k in range(self.nspecies):
+                C[k,:] = C0[k*nx:(k+1)*nx]
+
+            #time iteration
+            for n in range(1,nt):
+                print 'time step = ',n
+                v,grad_v,lapl_v=get_potential_and_gradient(C,dx,nx)
+                for k in range(self.nspecies):
+                    #Robin BC for concentrations on left side (wall)
+                    C[k,0] =\
+                        (-4*self.D[k]-self.mu[k]*(v[1]-self.vzeta))/\
+                        (-4*self.D[k]+self.mu[k]*(v[1]-self.vzeta))*C[k,1]
+                    #Dirichlet BC for concentrations on right side (bulk)
+                    C[k,-1]=C0[(k+1)*nx-1]
+
+                    s = self.D[k]*dt/dx**2  # diffusion number
+                    ee = self.charges[k]*self.beta*dt*self.D[k]
+
+                    A=a_matrix(s)
+                    B1=b1_matrix(s)
+                    B1,A=add_field(B1,A,grad_v,lapl_v,ee)
+                    B = np.dot(C[k,1:-1],B1)
+                    B=add_boundary_values(B,grad_v,s,ee,C[k,0],C[k,-1],C0[k*nx],C0[(k+1)*nx-1])
+                    CTMP = np.linalg.solve(A,B) #this gives vector without initial and final elements
+                    C[k,1:-1] = CTMP
+
+                if n % int(nt/float(ntout)) == 0 or n==nt-1: # or True:
+                    COUT.append(np.ndarray.flatten(C)) # numpy arrays are mutable, 
+                    #so we need to write out a copy of c, not c itself
+            return COUT,s
+
+        def integrate_Crank_Nicolson_pnp_old(dx,nx,dt,nt,c,ntout):
             """only for dc_dt=0 at both boundary sites implemented yet"""
             cout = [] # list for storing c arrays at certain time steps
             c0 = np.zeros([self.nspecies])
@@ -656,11 +750,13 @@ class Transport:
             return cout,s
 
         def get_potential_and_gradient(C,dx,nx):
-            """Calculates the potential and its gradient from the PBE by Jacobi relaxation (FD)"""
+            """Calculates the potential and its gradient (and laplacian=charge density)
+                from the PBE by Jacobi relaxation (FD)"""
             # calculate RHS of PBE
             rhs=np.zeros([nx])
             for k in range(self.nspecies):
                 rhs+=self.charges[k]*C[k,:]/self.eps
+            lapl_v=-rhs
             v=np.zeros([nx])
             v[0]=self.vzeta
             v_old=deepcopy(v)
@@ -679,7 +775,10 @@ class Transport:
             #linearly extrapolate to get derivative at boundaries:
             grad_v[0] = grad_v[1]-(grad_v[2]-grad_v[1])
             grad_v[-1] = grad_v[-2]-(grad_v[-2]-grad_v[-3])
-            return v,grad_v
+            self.efield=grad_v
+            self.potential=v
+            self.total_charge=lapl_v*self.eps
+            return v,grad_v,lapl_v
 
         def integrate_FTCS(dt,dx,nt,nx,C0,ntout):
             """Integrates PNP equations, BCs:
@@ -688,8 +787,6 @@ class Transport:
                 right   DIRICHLET cbulk     DIRICHLET 0.0
             """
 
-            # diffusion number (has to be less than 0.5 for the 
-            # solution to be stable):
             C = np.zeros([self.nspecies,nx])
             COUT=[]
 
@@ -699,7 +796,7 @@ class Transport:
 
             for n in range(0,nt):
                 print 'time step = ',n
-                v,grad_v=get_potential_and_gradient(C,dx,nx)
+                v,grad_v,lapl_v=get_potential_and_gradient(C,dx,nx)
                 for k in range(self.nspecies):
                     #Robin BC for concentrations on left side (wall)
                     C[k,0] =\
@@ -720,9 +817,6 @@ class Transport:
                     C[k,:]=temp
                 if n % int(nt/float(ntout)) == 0 or n==nt-1:
                     COUT.append(np.ndarray.flatten(C))
-                self.efield=grad_v
-                self.potential=v
-                self.total_charge=sum([C[k,:]*self.charges[k] for k in range(self.nspecies)])
                 #if n==100:
                 #    return cout
             return COUT
