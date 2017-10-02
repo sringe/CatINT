@@ -24,27 +24,32 @@ class Transport:
 
     def __init__(self,integrator='FTCS-odeint'):
 
+        self.eps = 80.0*unit_eps0 #1.1e11 #*unit_eps0
+        self.T = 300
+        self.beta = 1./(self.T * unit_R)
+        self.vzeta=-0.025 #Volt
+        self.charges=np.array([-1,1])*unit_F
+        self.bulk_concentrations=np.array([0.001,0.001])*10**3 #in mol/m^3
+        self.debye_length = np.sqrt( self.eps/self.beta / sum(self.charges**2*self.bulk_concentrations)) #in m
+
+        self.u = np.array([0.0,0.0]) #
+        self.D = np.array([1.96e-9,1.2e-9])  #diffusion coefficient in m^2/s
+        self.mu = self.D * self.charges *self.beta  #ion mobilities according to Einstein relation
+        
+
         #THE MESH
-        self.dt=5e-6 #1.0 #5.e-3
-        self.dx=80.e-8
-        self.tmax=100e-3 #2024.2369851 #10
-        self.xmax=80.e-6 #*1e-10
+        self.dt=1e-12 #5e-6 #1.0 #5.e-3
+        self.tmax=2e-10 #100e-3 #2024.2369851 #10
         self.tmesh=np.arange(0,self.tmax+self.dt,self.dt)
+        self.dx=self.debye_length/10.
+        #self.xmax=80.e-6 #*1e-10
+        self.xmax=10*self.debye_length
         self.xmesh=np.arange(0,self.xmax+self.dx,self.dx)
-        print len(self.tmesh)
-        print len(self.xmesh)
+
         #A FEW VARIABLES
         self.integrator=integrator
-        self.bulk_concentrations=np.array([0.1,0.1])
-        self.dOHP = 1.0
-        self.eps = 80.0 *1e-3#*unit_eps0 #1.1e11 #*unit_eps0
         #eps=80*unit_eps0
-        self.charges=np.array([0,0])*unit_F
-        self.T = 300
-        self.u = np.array([0.0,0.0])
-        self.D = np.array([1.96e-9,1.2e-9])  #m^2/s
         self.nspecies=len(self.D)
-        self.beta = 1./(self.T * unit_R)
         self.external_charge=np.zeros([len(self.xmesh)])
         #self.external_charge=self.gaussian(sigma=5e-6,z=1.0,mu=4.e-5,cmax=5e-5)+self.gaussian(sigma=5e-6,z=-1.0,mu=5.e-5,cmax=5e-5)
         self.count=1
@@ -55,13 +60,14 @@ class Transport:
         #BOUNDARY AND INITIAL CONDITIONS
 
         self.set_initial_conditions(
-                c_initial_general={'all':0.1},
-                c_initial_specific={'0':{'0':0.1},'1':{'0':0.1}})
+                c_initial_general={'all':self.bulk_concentrations[0]})
+                #c_initial_specific={'0':{'0':0.1},'1':{'0':0.1}})
 
         self.set_boundary_conditions(\
-                flux_boundary={'0':{'l':5e-8},'1':{'l':0.0}},         #in mol/s/cm^2
-                dc_dt_boundary={'all':{'r':0.0}},     #in mol/l/s
-                efield_boundary={'r':0.0})    #in V/Ang
+                flux_boundary={'0':{'r':5e-8},'1':{'r':0.0}},         #in mol/s/cm^2
+                dc_dt_boundary={'all':{'l':0.0}},     #in mol/l/s #give either left OR right boundary condition here
+                #integration will start at the site where dc_dt is defined
+                efield_boundary={'l':0.0})    #in V/Ang
 
         self.initialize='bla' #diffusion' #initialize with with diffusion or nothing
         #c_inf=self.get_static_concentrations()
@@ -98,6 +104,13 @@ class Transport:
         self.cout=self.integrate_pnp(self.dx,len(self.xmesh),self.dt,\
                 len(self.tmesh),5,method=self.integrator)
        
+    def gouy_chapman(self,x):
+        term1 = 1.+np.tanh(self.vzeta*self.beta*unit_F/4.)*\
+            np.exp(-1./self.debye_length*x)
+        term2 = 1.-np.tanh(self.vzeta*self.beta*unit_F/4.)*\
+            np.exp(-1./self.debye_length*x)
+        return 2./(self.beta*unit_F)*np.log(term1/term2)
+
     def plot(self):
 
         colorlist=cycle(['b','k'])
@@ -137,12 +150,13 @@ class Transport:
         ax2.set_ylabel('E (V/Ang)')
 
         ax3.set_title('Potential')
-        self.potential=np.zeros([len(self.xmesh)])
-        integral=0.0
-        for i in range(len(self.xmesh)):
-            integral-=self.efield[i]*self.dx
-            self.potential[i]+=integral
+        #self.potential=np.zeros([len(self.xmesh)])
+        #integral=0.0
+        #for i in range(len(self.xmesh)):
+        #    integral-=self.efield[i]*self.dx
+        #    self.potential[i]+=integral
         ax3.plot(self.xmesh[:-1],self.potential[:-1],'-')
+        ax3.plot(self.xmesh[:-1],[self.gouy_chapman(x) for x in self.xmesh[:-1]],'-',color='k',linewidth=lw)
         ax3.set_ylabel('v (V)')
         ax3.set_xlabel('x (m)')
         ax4.plot(self.xmesh[:-1],self.external_charge[:-1]/10**3/unit_F, '-',label='n_ext')
@@ -182,7 +196,7 @@ class Transport:
         c0=np.array(c0)
 #        c0=[0.1+0.1*self.xmesh]+[0.1+0.1*self.xmesh]
 #        c0=np.array([item for sublist in c0 for item in sublist])
-        c0*=10**3 #multiply by 1000 to get m^-3
+        #c0*=10**3 #multiply by 1000 to get m^-3
         self.c0=c0
 
 
@@ -641,7 +655,74 @@ class Transport:
                     #so we need to write out a copy of c, not c itself
             return cout,s
 
-        def integrate_FTCS(dt,dx,nt,nx,V0,ntout):
+        def get_potential_and_gradient(C,dx,nx):
+            """Calculates the potential and its gradient from the PBE by Jacobi relaxation (FD)"""
+            # calculate RHS of PBE
+            rhs=np.zeros([nx])
+            for k in range(self.nspecies):
+                rhs+=self.charges[k]*C[k,:]/self.eps
+            v=np.zeros([nx])
+            v[0]=self.vzeta
+            v_old=deepcopy(v)
+            tau_jacobi=1e-5
+            error=np.inf
+            i_step=0
+            while error>tau_jacobi**2:# or i_step<3:
+                i_step+=1
+                for i in range(1,nx-1):
+                    v[i] = 1/2.*(dx**2*rhs[i]+v_old[i+1]+v_old[i-1])
+                error=sum((v_old-v)**2)
+                v_old=deepcopy(v)
+            grad_v=np.zeros([nx])
+            for i in range(1,nx-1):
+                grad_v[i] = 1./(2*dx)*(v[i+1]-v[i-1])
+            return v,grad_v
+
+        def integrate_FTCS(dt,dx,nt,nx,C0,ntout):
+            # diffusion number (has to be less than 0.5 for the 
+            # solution to be stable):
+            C = np.zeros([self.nspecies,nx])
+            sum_over_charges=np.zeros([self.nspecies])
+            sum_over_charges_after=np.zeros([self.nspecies])
+            COUT=[]
+
+            #initial conditions for concentrations
+            for k in range(self.nspecies):
+                C[k,:] = C0[k*nx:(k+1)*nx]
+
+            for n in range(0,nt):
+                print 'time step = ',n
+                v,grad_v=get_potential_and_gradient(C,dx,nx)
+                for k in range(self.nspecies):
+                    #Robin BC for concentrations on left side (wall)
+                    C[k,0] =\
+                        (-4*self.D[k]-self.mu[k]*(v[1]-self.vzeta))/\
+                        (-4*self.D[k]+self.mu[k]*(v[1]-self.vzeta))*C[k,1]
+                    #Dirichlet BC for concentrations on right side (bulk)
+                    C[k,-1]=C0[(k+1)*nx-1]
+                    sum_over_charges[k]=sum(C[k,:])
+                    temp = np.zeros([nx])
+                    temp[0]=C[k,0]
+                    temp[-1]=C[k,-1]
+                    for i in range(1,nx-1):
+                        W = self.D[k]*dt/dx**2-\
+                            dt/(2.*dx)*self.mu[k]*grad_v[i+1]+0.5
+                        M = -2.*self.D[k]*dt/dx**2
+                        E = self.D[k]*dt/dx**2+\
+                            dt/(2.*dx)*self.mu[k]*grad_v[i-1]+0.5
+                        temp[i] = E * C[k,i-1] + M * C[k,i] + W * C[k,i+1]
+                    C[k,:]=temp
+                    sum_over_charges_after[k]=sum(C[k,:])
+                if n % int(nt/float(ntout)) == 0 or n==nt-1:
+                    COUT.append(np.ndarray.flatten(C))
+                self.efield=grad_v
+                self.potential=v
+                self.total_charge=sum([C[k,:]*self.charges[k] for k in range(self.nspecies)])
+                #if n==100:
+                #    return cout
+            return COUT
+
+        def integrate_FTCS_old(dt,dx,nt,nx,V0,ntout):
             # diffusion number (has to be less than 0.5 for the 
             # solution to be stable):
             V = np.zeros([nt,self.nspecies*nx])
@@ -650,6 +731,9 @@ class Transport:
             for k in range(self.nspecies):
                 s[k] = self.D[k]*dt/dx**2
                 ee[k] = self.charges[k]*self.beta*dt*self.D[k]
+                #print 'before',self.charges[k]*self.beta*dt*self.D[k]
+                #ee[k] = 7.62e-8*dt
+                #print 'after',ee[k]
                 V[:,k*nx] = [V0[k*nx]]*(nt)       #boundary left (
                 V[:,(k+1)*nx-1] = [V0[(k+1)*nx-1]]*(nt)     #boundary right 
 
@@ -662,9 +746,6 @@ class Transport:
             for k in range(self.nspecies):
                 dV[k*nx]=self.dc_dt_bound[k,0]*dt
                 dV[(k+1)*nx-1]=self.dc_dt_bound[k,1]*dt
-                
-
-            
 
             for n in range(0,nt-1): # time
                 self.efield,self.defield_dx=calculate_efield(nx,V[n,:])
@@ -673,9 +754,9 @@ class Transport:
                         #left bound is defined by flux. this means that right bound will be defined by dc_dt_bound
                         #we have to start integrating from the right
                         #(we cannot use different flux integration for both species)
-                        xiter=reversed(range(0,nx-1))
+                        xiter=reversed(range(1,nx-1))
                     else:
-                        xiter=range(1,nx)
+                        xiter=range(1,nx-1)
                 else:
                     xiter=range(1,nx-1)
                 for k in range(self.nspecies):
@@ -690,7 +771,7 @@ class Transport:
                     for i in xiter: #k*nx+1,(k+1)*nx-1): # space
                         ii+=1
                         j=k*nx+i
-                        if self.boundary_type=='flux' and ii==nx-1:
+                        if self.boundary_type=='flux' and ii==nx-2:
                             #define V update including flux boundary
                             V[n+1,j] = V[n,j] + self.D[k]*dt/dx*(\
                                 flux_bound-(V[n,j]-V[n,j-1])/dx) +\
