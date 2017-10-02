@@ -38,8 +38,8 @@ class Transport:
         
 
         #THE MESH
-        self.dt=1e-12 #5e-6 #1.0 #5.e-3
-        self.tmax=1e-10 #100e-3 #2024.2369851 #10
+        self.dt=1e-11 #5e-6 #1.0 #5.e-3
+        self.tmax=1e-8 #100e-3 #2024.2369851 #10
         self.tmesh=np.arange(0,self.tmax+self.dt,self.dt)
         self.dx=self.debye_length/10.
         #self.xmax=80.e-6 #*1e-10
