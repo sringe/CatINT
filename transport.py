@@ -554,19 +554,11 @@ class Transport:
 
             # create coefficient matrix:
             def a_matrix(s):
-                if self.use_lax_friedrichs:
-                    corr=1.0
-                else:
-                    corr=0.0
-                return diags([-0.5*(s+corr), 1+(s+corr), -0.5*(s+corr)], [-1, 0, 1],\
+                return diags([-0.5*s, 1+s, -0.5*s], [-1, 0, 1],\
                     shape=(nx-2, nx-2)).toarray()
 
             def b1_matrix(s):
-                if self.use_lax_friedrichs:
-                    corr=1.0
-                else:
-                    corr=0.0
-                return diags([0.5*(s+corr), 1-(s+corr), 0.5*(s+corr)],[-1, 0, 1],\
+                return diags([0.5*s, 1-s, 0.5*s],[-1, 0, 1],\
                     shape=(nx-2,nx-2)).toarray()
 
             def add_field(B1,A,grad_v,lapl_v,ee):
@@ -589,31 +581,32 @@ class Transport:
                                 A[i,j]-=ee*grad_v[i]/4./dx
                 return B1,A
 
-            def add_boundary_values(B,grad_v,s,ee,C0,C1,C00,C10):
+            def add_boundary_values(B,grad_v,s,ee,C0,C1,C0_old,C1_old):
                 #C0 and C1 are the current boundary values
-                #C00 and C10 are the initial boundary values
-                if self.use_lax_friedrichs:
-                    corr=1.0
-                else:
-                    corr=0.0
-                B[0] += (0.5*(s+corr)+\
-                    ee*grad_v[0]/4./dx)*(C0+C00)
-                B[-1] += (0.5*(s+corr)-\
-                    ee*grad_v[-1]/4./dx)*(C1+C10)
+                #C0_old and C1_old were the last iteration's boundary values
+                B[0] += (0.5*s+\
+                    ee*grad_v[0]/4./dx)*(C0+C0_old)
+                B[-1] += (0.5*s-\
+                    ee*grad_v[-1]/4./dx)*(C1+C1_old)
                 return B
 
             C = np.zeros([self.nspecies,nx])
+            COLD = np.zeros([self.nspecies,nx])
             COUT=[]
 
             #initial conditions for concentrations
             for k in range(self.nspecies):
                 C[k,:] = C0[k*nx:(k+1)*nx]
+    
 
             #time iteration
             for n in range(1,nt):
                 print 'time step = ',n
                 v,grad_v,lapl_v=get_potential_and_gradient(C,dx,nx)
                 for k in range(self.nspecies):
+                    if n==1:
+                        COLD[k,:]=deepcopy(C[k,:])
+
                     #Robin BC for concentrations on left side (wall)
                     C[k,0] =\
                         (-4*self.D[k]-self.mu[k]*(v[1]-self.vzeta))/\
@@ -621,16 +614,21 @@ class Transport:
                     #Dirichlet BC for concentrations on right side (bulk)
                     C[k,-1]=C0[(k+1)*nx-1]
 
+
                     s = self.D[k]*dt/dx**2  # diffusion number
+                    if self.use_lax_friedrichs:
+                        #add artificial diffusion term for better stability
+                        s+=0.5
                     ee = self.charges[k]*self.beta*dt*self.D[k]
 
                     A=a_matrix(s)
                     B1=b1_matrix(s)
                     B1,A=add_field(B1,A,grad_v,lapl_v,ee)
                     B = np.dot(C[k,1:-1],B1)
-                    B=add_boundary_values(B,grad_v,s,ee,C[k,0],C[k,-1],C0[k*nx],C0[(k+1)*nx-1])
+                    B=add_boundary_values(B,grad_v,s,ee,C[k,0],C[k,-1],COLD[k,0],COLD[k,-1])
                     CTMP = np.linalg.solve(A,B) #this gives vector without initial and final elements
                     C[k,1:-1] = CTMP
+                    COLD[k,:]=C[k,:]
 
                 if n % int(nt/float(ntout)) == 0 or n==nt-1: # or True:
                     COUT.append(np.ndarray.flatten(C)) # numpy arrays are mutable, 
