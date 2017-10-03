@@ -14,7 +14,7 @@ from itertools import cycle
 import sys
 from copy import deepcopy
 from scipy.optimize import minimize
-
+from scipy.integrate import ode
 
 class Transport:
 #just a few variables which can be hopefully later taken from catmap
@@ -35,11 +35,10 @@ class Transport:
         self.u = np.array([0.0,0.0]) #
         self.D = np.array([1.96e-9,1.2e-9])  #diffusion coefficient in m^2/s
         self.mu = self.D * self.charges *self.beta  #ion mobilities according to Einstein relation
-        
 
         #THE MESH
-        self.dt=1e-11 #5e-6 #1.0 #5.e-3
-        self.tmax=1e-8 #100e-3 #2024.2369851 #10
+        self.dt=1e-12 #1e-11 #5e-6 #1.0 #5.e-3
+        self.tmax=1e-10#1e-8 #100e-3 #2024.2369851 #10
         self.tmesh=np.arange(0,self.tmax+self.dt,self.dt)
         self.dx=self.debye_length/10.
         #self.xmax=80.e-6 #*1e-10
@@ -478,7 +477,7 @@ class Transport:
 
             return efield,defield_dx
 
-        def ode_func(c,t):
+        def ode_func_old(c,t):
 
             self.efield,self.defield_dx=calculate_efield(nx,c)
 
@@ -533,7 +532,7 @@ class Transport:
          #       sys.exit()
             return dc_dt
 
-        def integrate_FTCS_odeint(dx,nx,dt,nt,c0,ntout):
+        def integrate_FTCS_odeint_old(dx,nx,dt,nt,c0,ntout):
             sol,output = integrate.odeint(ode_func, c0, range(0,nt),full_output=True) #, args=(b, c))
             print 'Used minimal time = ',min(output['tcur']),' and maximal time = ',max(output['tcur'])
             #return the results
@@ -626,6 +625,7 @@ class Transport:
                     B1,A=add_field(B1,A,grad_v,lapl_v,ee)
                     B = np.dot(C[k,1:-1],B1)
                     B=add_boundary_values(B,grad_v,s,ee,C[k,0],C[k,-1],COLD[k,0],COLD[k,-1])
+
                     CTMP = np.linalg.solve(A,B) #this gives vector without initial and final elements
                     C[k,1:-1] = CTMP
                     COLD[k,:]=C[k,:]
@@ -777,6 +777,102 @@ class Transport:
             self.potential=v
             self.total_charge=lapl_v*self.eps
             return v,grad_v,lapl_v
+
+        def integrate_FTCS_odeint(dx,nx,dt,nt,c0,ntout):
+            """Integrates PNP equations, BCs:
+                        concentrations      potential
+                left    ROBIN j=0           DIRICHLET vzeta
+                right   DIRICHLET cbulk     DIRICHLET 0.0
+            """
+            def ode_func(c,t,dx):
+
+                #map concentrations onto 2D array:
+                C = np.zeros([self.nspecies,nx])
+                for k in range(self.nspecies):
+                    C[k,:]=c[k*nx:(k+1)*nx]
+
+                #get potential and field
+                v,grad_v,lapl_v=get_potential_and_gradient(C,dx,nx)
+
+                DC_DT = np.zeros([self.nspecies,nx])
+#                flow = np.zeros([self.nspecies,nx])
+#
+#
+#                #first tabulate D*(dc/dx + mu * c dv/dx) = flow
+#                for k in range(0,self.nspecies):
+#                    #no flow boundary condition on the left
+#                    flow[k,0]=0.0
+#                    for i in range(1,nx-1):
+#                        dc_dx=(C[k,i+1]-C[k,i-1])/(2.*dx)
+##                    if self.lax_friedrich:
+##                        corr=dc_dx/2.*dx**2/dt
+##                    else:
+##                        corr=0.0
+#                    corr=0.0
+#                    flow[k,i] =\
+#                        self.D[k]*\
+#                            (\
+#                            dc_dx\
+#                            +self.beta*self.charges[k]*C[k,i]*grad_v[i]\
+#                            )\
+#                    #extrapolate flow on the right:
+#                    flow[k,-1]=flow[k,-2]+(flow[k,-2]-flow[k,-3])
+                self.lax_friedrich=False #True
+
+                #go over the flow and calculate derivative
+                for k in range(0,self.nspecies):
+                    #set concentration to be constant on the right side
+                    DC_DT[k,-1] = 0.0
+                    for i in range(0,nx-1):
+                        #dflow_dx=(flow[k,i+1]-flow[k,i-1])/(2.*dx)
+                        dc_dx=(C[k,i+1]-C[k,i-1])/(2.*dx)
+                        dc_dx_2=(C[k,i+1]-2*C[k,i]+C[k,i-1])/(dx**2)
+                        dcgradv_dx=(C[k,i+1]*grad_v[i+1]-C[k,i-1]*grad_v[i-1])/(2.*dx)
+                        corr=0.0
+                        if i==0:
+                            if self.lax_friedrich:
+                                corr=2*(C[k,1]-C[k,0])/dt/2.
+                            #we have to consider no flow boundary condition here
+                            #setting C[k,-1]=C[k,1] considers this:
+                            DC_DT[k,i]=\
+                                corr+\
+                                self.D[k]*\
+                                    (\
+                                    2*(C[k,1]-C[k,0])/dx**2\
+                                    +self.beta*self.charges[k]*dcgradv_dx\
+                                    )
+                        else:
+                            if self.lax_friedrich:
+                                corr=dc_dx_2*dx**2/dt/2.
+                            #we can directly implement the 2nd derivatives here
+                            DC_DT[k,i]=\
+                                corr+\
+                                self.D[k]*\
+                                    (\
+                                    dc_dx_2\
+                                    +self.beta*self.charges[k]*dcgradv_dx\
+                                    )
+
+                    #extrapolate derivative on the left side
+#                    DC_DT[k,0]=DC_DT[k,1]+(DC_DT[k,1]-DC_DT[k,2])
+
+                #map dc_dt's onto output format
+                dc_dt = np.zeros([self.nspecies*nx])
+                for k in range(self.nspecies):
+                    dc_dt[k*nx:(k+1)*nx]=DC_DT[k,:]
+                return dc_dt
+
+            sol,output = integrate.odeint(ode_func, c0, self.tmesh, args=(dx,),full_output=True, ml=self.nspecies, mu=self.nspecies)
+#            sol,output = integrate.odeint(ode_func, c0, range(0,nt),full_output=True) #, args=(b, c))
+            print 'Used minimal time = ',min(output['tcur']),' and maximal time = ',max(output['tcur'])
+            #return the results
+            print np.shape(sol)
+            cout = []
+            for n in range(0,nt):
+                if n % int(nt/float(ntout)) == 0 or n==nt-1:
+                    cout.append(sol[n,:].copy()) # numpy arrays are mutable, 
+            return cout
+
 
         def integrate_FTCS(dt,dx,nt,nx,C0,ntout):
             """Integrates PNP equations, BCs:
