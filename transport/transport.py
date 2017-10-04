@@ -11,22 +11,18 @@ from units import *
 from itertools import cycle
 import sys
 from copy import deepcopy
+import collections
 
-#defines a transport object
 class Transport(object):
 
-#self.diffusion_dict{['
-
-    def __init__(self,
-            species=None,reactions=None,system=None,
-            dt=1e-12,tmax=1e-10):
+    def __init__(self, species=None,reactions=None,system=None):
 
         #go over input data and put in some defaults if none
         if not type(species)==dict:
             self.species={'species1':       {'name':r'K^+',
                                             'diffusion':1.96e-9,
                                             'bulk concentration':0.001*1000.},
-                               'species2':  {'name':r'HCO_3^-',
+                          'species2':       {'name':r'HCO_3^-',
                                             'diffusion':1.2e-9,
                                             'bulk concentration':0.001*1000.}}
         else:
@@ -79,13 +75,11 @@ class Transport(object):
 
 
         #THE MESH
-        self.dt=dt #1e-11 #5e-6 #1.0 #5.e-3
-        self.tmax=tmax  #1e-8 #100e-3 #2024.2369851 #10
-        self.tmesh=np.arange(0,self.tmax+self.dt,self.dt)
-        self.dx=self.debye_length/40.
+        self.dx=self.debye_length/10.
         #self.xmax=80.e-6 #*1e-10
-        self.xmax=40*self.debye_length
+        self.xmax=10*self.debye_length
         self.xmesh=np.arange(0,self.xmax+self.dx,self.dx)
+        self.nx=len(self.xmesh)
 
         #A FEW VARIABLES
         self.external_charge=np.zeros([len(self.xmesh)])
@@ -96,21 +90,38 @@ class Transport(object):
 
         c_initial_general={}
         for isp,sp in enumerate(self.species):
-            c_initial_general['isp']=self.species[sp]['bulk concentration']
+            c_initial_general[str(isp)]=self.species[sp]['bulk concentration']
 
         self.set_initial_conditions(
                 c_initial_general=c_initial_general)
                 #c_initial_specific={'0':{'0':0.1},'1':{'0':0.1}})
 
         self.set_boundary_conditions(\
-                flux_boundary={'0':{'l':1e-5},'1':{'l':0.0}},         #in mol/s/cm^2
+                flux_boundary={'0':{'l':0.0},'1':{'l':0.0}},         #in mol/s/cm^2
                 dc_dt_boundary={'all':{'l':0.0}},     #in mol/l/s #give either left OR right boundary condition here
                 #integration will start at the site where dc_dt is defined
                 efield_boundary={'l':0.0})    #in V/Ang
 
-        self.initialize='bla' #diffusion' #initialize with with diffusion or nothing
-        #c_inf=self.get_static_concentrations()
+    def set_initial_concentrations(self,func):
+        """we can set the initial concentrations to a particular function"""
+        if func=='Gouy-Chapman':
+            if self.nspecies!=2:
+                print('Gouy-Chapman limit only implemented for two species, cationic' 
+                        'and anionic. Not applying initialization.')
+                return
+            function=self.gouy_chapman
+        def tree():
+            return collections.defaultdict(tree)
 
+        c_initial_specific = tree() #collections.defaultdict(list)
+
+        for k,sp in enumerate(self.species):
+            for i in range(self.nx):
+                c_initial_specific[str(k)][str(i)]=\
+                    self.species[sp]['bulk concentration']*\
+                    np.exp(-self.beta*self.charges[k]*function(self.xmesh[i]))
+        self.set_initial_conditions(c_initial_specific=c_initial_specific)
+        return
 
     def get_static_concentrations(self):
         """solves the PBE in order to get the static limit for the concentrations"""
@@ -157,14 +168,15 @@ class Transport(object):
         the c_specific dictionary allows to parse specific values of the concentrations at 
         specific grid points (1st key is species index, 2nd is xmesh index, 
         value is concentration)."""
+
         c0=np.zeros([self.nspecies*len(self.xmesh)])
         j=-1
 
         for k in range(self.nspecies):
-            for i in range(len(self.xmesh)):
+            for i in range(self.nx):
                 j+=1
                 if str(k) in c_initial_general:
-                    c0[j]=c_initial_general[k]
+                    c0[j]=c_initial_general[str(k)]
                 elif 'all' in c_initial_general:
                     c0[j]=c_initial_general['all']
                 if (str(k) in c_initial_specific and str(i) in c_initial_specific[str(k)]):
@@ -173,9 +185,6 @@ class Transport(object):
                     c0[j]=c_initial_specific['all'][str(i)]
 
         c0=np.array(c0)
-#        c0=[0.1+0.1*self.xmesh]+[0.1+0.1*self.xmesh]
-#        c0=np.array([item for sublist in c0 for item in sublist])
-        #c0*=10**3 #multiply by 1000 to get m^-3
         self.c0=c0
 
 

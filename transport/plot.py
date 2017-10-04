@@ -43,7 +43,7 @@ class Plot():
                     color=str(brightness)
                 elif k==1:
                     color=(brightness,1.,1.)
-                ax1.plot(self.tp.xmesh,c[k*len(self.tp.xmesh):(k+1)*len(self.tp.xmesh)] /10**3,'-',color=color,linewidth=lw,zorder=zorder)
+                ax1.plot(self.tp.xmesh,c[k*self.tp.nx:(k+1)*self.tp.nx] /10**3,'-',color=color,linewidth=lw,zorder=zorder)
         ax1.legend()
         ax1.set_xlabel('x (m)')
         ax1.set_ylabel('c (mol/L)')
@@ -62,7 +62,7 @@ class Plot():
         #    integral-=self.efield[i]*self.dx
         #    self.potential[i]+=integral
         ax3.plot(self.tp.xmesh,self.tp.potential,'-')
-#        ax3.plot(self.xmesh,[self.gouy_chapman(x) for x in self.xmesh],'-',color='k',linewidth=lw)
+        ax3.plot(self.tp.xmesh,[self.tp.gouy_chapman(x) for x in self.tp.xmesh],'-',color='k',linewidth=lw)
         ax3.set_ylabel('v (V)')
         ax3.set_xlabel('x (m)')
         ax4.plot(self.tp.xmesh[:-1],self.tp.external_charge[:-1]/10**3/unit_F, '-',label='n_ext')

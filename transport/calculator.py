@@ -1,5 +1,6 @@
 """
 calculator class
+uses finite difference techniques to solve the PNP equations
 ---
 Stefan Ringe (stefan.ringe.tum@gmail.com)
 """
@@ -36,12 +37,15 @@ class Calculator():
         else:
             self.calc=calc
 
-        if dt!=None:
+        if dt!=None and hasattr(self.tp,'dt'):
             self.tp.dt=dt
-        if tmax!=None:
+        if tmax!=None and hasattr(self.tp,'tmax'):
             self.tp.tmax=tmax
-        self.tp.tmesh=np.arange(0,self.tp.tmax+self.tp.dt,self.tp.dt)
+        if hasattr(self.tp,'dt') and hasattr(self.tp,'tmax'):
+            self.tp.tmesh=np.arange(0,self.tp.tmax+self.tp.dt,self.tp.dt)
+
         self.tp.ntout=ntout
+        self.initialize='bla'
         return
 
     def integrate_pnp(self,dx,nx,dt,nt,ntout,method):
@@ -234,7 +238,7 @@ class Calculator():
             dc_dt = np.zeros([nx*self.tp.nspecies])
 
 
-#            plt.plot(self.tp.xmesh,(self.tp.charges[0]*c[:len(self.tp.xmesh)]+self.tp.charges[1]*c[len(self.tp.xmesh):])/self.tp.eps,'o')
+#            plt.plot(self.tp.xmesh,(self.tp.charges[0]*c[:self.tp.nx]+self.tp.charges[1]*c[self.tp.nx:])/self.tp.eps,'o')
 #            plt.plot(self.tp.xmesh,self.tp.external_charge/self.tp.eps,'o')
 ##            plt.plot(self.tp.xmesh,self.tp.efield,label='e')
 #            plt.plot(self.tp.xmesh,self.tp.defield_dx,label='de/dx')
@@ -272,10 +276,10 @@ class Calculator():
 ##            plt.show()
 #            sys.exit()
          #   if self.tp.count in range(50,100):
-         #       self.tp.ax1.plot(self.tp.xmesh,dc_dt[:len(self.tp.xmesh)]/10**3*dt,'-',linewidth=0.3,color='r')
-         #       self.tp.ax1.plot(self.tp.xmesh,dc_dt[len(self.tp.xmesh):]/10**3*dt,'-',linewidth=0.3,color='k')
-         #       self.tp.ax2.plot(self.tp.xmesh,c[:len(self.tp.xmesh)]/10**3,'-',linewidth=0.3,color='r')
-         #       self.tp.ax2.plot(self.tp.xmesh,c[len(self.tp.xmesh):]/10**3,'-',linewidth=0.3,color='k')
+         #       self.tp.ax1.plot(self.tp.xmesh,dc_dt[:self.tp.nx]/10**3*dt,'-',linewidth=0.3,color='r')
+         #       self.tp.ax1.plot(self.tp.xmesh,dc_dt[self.tp.nx:]/10**3*dt,'-',linewidth=0.3,color='k')
+         #       self.tp.ax2.plot(self.tp.xmesh,c[:self.tp.nx]/10**3,'-',linewidth=0.3,color='r')
+         #       self.tp.ax2.plot(self.tp.xmesh,c[self.tp.nx:]/10**3,'-',linewidth=0.3,color='k')
          #   self.tp.count+=1
          #   if self.tp.count==100:
          #       plt.show()
@@ -502,7 +506,7 @@ class Calculator():
             """Calculates the potential and its gradient (and laplacian=charge density)
                 from the PBE by Jacobi relaxation (FD)"""
 
-            bound_method='field' #potential'
+            bound_method='potential'
 
             def integrate_rhs(var0,rhs,n=1,inv=False):
                 #integrates any function "rhs" n times, var0 is the initial guess for the result
@@ -828,7 +832,7 @@ class Calculator():
             cout=integrate_FTCS(dt,dx,nt,nx,self.tp.c0,ntout)
             dataplot=cout
         elif method=='Crank-Nicolson':
-            if self.tp.initialize=='diffusion':
+            if self.initialize=='diffusion':
                 charges_tmp=self.tp.charges
                 self.tp.charges=np.array([0.0]*len(self.tp.charges))
                 cout,s=integrate_Crank_Nicolson_pnp(dx,nx,dt,nt,self.tp.c0,ntout)
@@ -850,6 +854,6 @@ class Calculator():
             self.tp.tmax=tmax
         self.tp.tmesh=np.arange(0,self.tp.tmax+self.tp.dt,self.tp.dt)
 
-        cout=self.integrate_pnp(self.tp.dx,len(self.tp.xmesh),self.tp.dt,\
+        cout=self.integrate_pnp(self.tp.dx,self.tp.nx,self.tp.dt,\
                 len(self.tp.tmesh),self.tp.ntout,method=self.calc)
         return cout
