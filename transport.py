@@ -22,34 +22,80 @@ class Transport:
 
 #self.diffusion_dict{['
 
-    def __init__(self,integrator='Crank-Nicolson',integrator_correction=False,dt=1e-12,tmax=1e-10):
+    def __init__(self,
+            species=None,reactions=None,system=None,
+            integrator='Crank-Nicolson',integrator_correction=False,
+            dt=1e-12,tmax=1e-10):
 
-        self.eps = 80.0*unit_eps0 #1.1e11 #*unit_eps0
-        self.T = 300
-        self.beta = 1./(self.T * unit_R)
-        self.vzeta=-0.025 #Volt
-        self.charges=np.array([-1,1])*unit_F
-        self.bulk_concentrations=np.array([0.001,0.001])*10**3 #in mol/m^3
-        self.debye_length = np.sqrt( self.eps/self.beta / sum(self.charges**2*self.bulk_concentrations)) #in m
+        #go over input data and put in some defaults if none
+        if not type(species)==dict:
+            self.species={'species1':       {'name':r'K^+',
+                                            'diffusion':1.96e-9,
+                                            'bulk concentration':0.001*1000.},
+                               'species2':  {'name':r'HCO_3^-',
+                                            'diffusion':1.2e-9,
+                                            'bulk concentration':0.001*1000.}}
+        else:
+            self.species=species
+        self.nspecies=len(self.species)
 
-        self.u = np.array([0.0,0.0]) #
-        self.D = np.array([1.96e-9,1.2e-9])  #diffusion coefficient in m^2/s
+        self.reactions=reactions
+        if not type(system)==dict:
+            self.system={'temperature': 298,
+                         'epsilon':     80,
+                         'vzeta':    -0.025}
+        else:
+            self.system=system
+
+        self.eps = self.system['epsilon']*unit_eps0 #1.1e11 #*unit_eps0
+        self.beta = 1./(self.system['temperature'] * unit_R)
+
+        #determine charges and create arrays of charges and D's
+        k=-1
+        self.charges=[]
+        self.D=[]
+        for sp in self.species:
+            k+=1
+            string=self.species[sp]['name'].split('^')
+            if len(string)>1:
+                print string
+                sign=string[-1][-1]
+                if len(string[-1])>1:
+                    no=int(string[-1][:-1])
+                else:
+                    no=1
+                if sign=='-':
+                    no*=(-1)
+            else:
+                no=0
+            self.species[sp]['charge']=no
+            #create a few shorter arrays
+            self.charges.append(no*unit_F)
+            self.D.append(self.species[sp]['diffusion'])
+        self.charges=np.array(self.charges)
+        self.D=np.array(self.D)
         self.mu = self.D * self.charges *self.beta  #ion mobilities according to Einstein relation
+
+        #Debye-Hueckel screening length
+        self.ionic_strength=0.0
+        for isp,sp in enumerate(self.species):
+            self.ionic_strength+=self.charges[isp]**2*self.species[sp]['bulk concentration']
+        self.ionic_strength*=0.5
+        self.debye_length = np.sqrt( self.eps/self.beta/2./self.ionic_strength ) #in m
+
 
         #THE MESH
         self.dt=dt #1e-11 #5e-6 #1.0 #5.e-3
         self.tmax=tmax  #1e-8 #100e-3 #2024.2369851 #10
         self.tmesh=np.arange(0,self.tmax+self.dt,self.dt)
-        self.dx=self.debye_length/100.
+        self.dx=self.debye_length/40.
         #self.xmax=80.e-6 #*1e-10
-        self.xmax=10*self.debye_length
+        self.xmax=40*self.debye_length
         self.xmesh=np.arange(0,self.xmax+self.dx,self.dx)
 
         #A FEW VARIABLES
         self.integrator=integrator
         self.use_lax_friedrich=integrator_correction
-        #eps=80*unit_eps0
-        self.nspecies=len(self.D)
         self.external_charge=np.zeros([len(self.xmesh)])
         #self.external_charge=self.gaussian(sigma=5e-6,z=1.0,mu=4.e-5,cmax=5e-5)+self.gaussian(sigma=5e-6,z=-1.0,mu=5.e-5,cmax=5e-5)
         self.count=1
@@ -59,12 +105,16 @@ class Transport:
 
         #BOUNDARY AND INITIAL CONDITIONS
 
+        c_initial_general={}
+        for isp,sp in enumerate(self.species):
+            c_initial_general['isp']=self.species[sp]['bulk concentration']
+
         self.set_initial_conditions(
-                c_initial_general={'all':self.bulk_concentrations[0]})
+                c_initial_general=c_initial_general)
                 #c_initial_specific={'0':{'0':0.1},'1':{'0':0.1}})
 
         self.set_boundary_conditions(\
-                flux_boundary={'0':{'l':5e-4},'1':{'l':0.0}},         #in mol/s/cm^2
+                flux_boundary={'0':{'l':1e-5},'1':{'l':0.0}},         #in mol/s/cm^2
                 dc_dt_boundary={'all':{'l':0.0}},     #in mol/l/s #give either left OR right boundary condition here
                 #integration will start at the site where dc_dt is defined
                 efield_boundary={'l':0.0})    #in V/Ang
@@ -105,9 +155,9 @@ class Transport:
                 len(self.tmesh),5,method=self.integrator)
        
     def gouy_chapman(self,x):
-        term1 = 1.+np.tanh(self.vzeta*self.beta*unit_F/4.)*\
+        term1 = 1.+np.tanh(self.system['vzeta']*self.beta*unit_F/4.)*\
             np.exp(-1./self.debye_length*x)
-        term2 = 1.-np.tanh(self.vzeta*self.beta*unit_F/4.)*\
+        term2 = 1.-np.tanh(self.system['vzeta']*self.beta*unit_F/4.)*\
             np.exp(-1./self.debye_length*x)
         return 2./(self.beta*unit_F)*np.log(term1/term2)
 
@@ -137,14 +187,14 @@ class Transport:
                     color=str(brightness)
                 elif k==1:
                     color=(brightness,1.,1.)
-                ax1.plot(self.xmesh[:-1],c[k*len(self.xmesh):k*len(self.xmesh)+len(self.xmesh)-1] /10**3,'-',color=color,linewidth=lw,zorder=zorder)
+                ax1.plot(self.xmesh,c[k*len(self.xmesh):(k+1)*len(self.xmesh)] /10**3,'-',color=color,linewidth=lw,zorder=zorder)
         ax1.legend()
         ax1.set_xlabel('x (m)')
         ax1.set_ylabel('c (mol/L)')
         #c=self.integrate_FTCS(self.dt,self.dx)
         #for t in np.arange(0.0,1.,0.1):
         #    plt.plot(self.xmesh,c[int(t/self.dt),:],'-o',label=str(t))
-        ax2.plot(self.xmesh[:-1],self.efield[:-1]/1e10,'-')
+        ax2.plot(self.xmesh,self.efield/1e10,'-')
         ax2.set_title('Electric field')
         ax2.set_xlabel('x (m)')
         ax2.set_ylabel('E (V/Ang)')
@@ -155,8 +205,8 @@ class Transport:
         #for i in range(len(self.xmesh)):
         #    integral-=self.efield[i]*self.dx
         #    self.potential[i]+=integral
-        ax3.plot(self.xmesh[:-1],self.potential[:-1],'-')
-        ax3.plot(self.xmesh[:-1],[self.gouy_chapman(x) for x in self.xmesh[:-1]],'-',color='k',linewidth=lw)
+        ax3.plot(self.xmesh,self.potential,'-')
+#        ax3.plot(self.xmesh,[self.gouy_chapman(x) for x in self.xmesh],'-',color='k',linewidth=lw)
         ax3.set_ylabel('v (V)')
         ax3.set_xlabel('x (m)')
         ax4.plot(self.xmesh[:-1],self.external_charge[:-1]/10**3/unit_F, '-',label='n_ext')
@@ -607,8 +657,11 @@ class Transport:
 
                     #Robin BC for concentrations on left side (wall)
                     C[k,0] =\
-                        (-4*self.D[k]-self.mu[k]*(v[1]-self.vzeta))/\
-                        (-4*self.D[k]+self.mu[k]*(v[1]-self.vzeta))*C[k,1]
+                        (-4*self.D[k]-self.mu[k]*(v[1]-self.system['vzeta']))/\
+                        (-4*self.D[k]+self.mu[k]*(v[1]-self.system['vzeta']))*C[k,1]\
+                        -4*self.flux_bound[k,0]*dx/\
+                        (-4*self.D[k]+self.mu[k]*(v[1]-self.system['vzeta']))
+
                     #Dirichlet BC for concentrations on right side (bulk)
                     C[k,-1]=C0[(k+1)*nx-1]
 
@@ -750,25 +803,39 @@ class Transport:
             """Calculates the potential and its gradient (and laplacian=charge density)
                 from the PBE by Jacobi relaxation (FD)"""
 
-            bound_method='potential'
+            bound_method='field' #potential'
 
-            def integrate_rhs(var0,rhs,n=1):
+            def integrate_rhs(var0,rhs,n=1,inv=False):
                 #integrates any function "rhs" n times, var0 is the initial guess for the result
-                tau_jacobi=1e-5
                 var_old=deepcopy(var0)
                 var=deepcopy(var0)
-                error=np.inf
-                i_step=0
-                while error>tau_jacobi**2:# or i_step<3:
-                    i_step+=1
-                    for i in range(1,nx-1):
-                        if n==2:
+                if n==2:
+                    tau_jacobi=1e-5
+                    error=np.inf
+                    i_step=0
+                    while error>tau_jacobi**2:# or i_step<3:
+                        i_step+=1
+                        if inv:
+                            iterator=reversed(range(1,nx-1))
+                        else:
+                            iterator=range(1,nx-1)
+                        for i in iterator:
                             var[i] = 1/2.*(dx**2*rhs[i]+var_old[i+1]+var_old[i-1])
-                        elif n==1:
+                        error=sum((var_old-var)**2/len(var))
+                        var_old=deepcopy(var)
+                elif n==1:
+                    if inv:
+                        iterator=reversed(range(1,nx-1))
+                    else:
+                        iterator=range(1,nx-1)
+                    for i in iterator:
+                        if inv:
+                            var[i] = var_old[i+1] - rhs[i]*dx
+                        else:
                             var[i] = var_old[i-1] + rhs[i]*dx
-                    error=sum((var_old-var)**2/len(var))
-                    var_old=deepcopy(var)
-                print 'Converged in ',i_step,' steps.'
+
+                if (n==2):
+                    print 'Converged in ',i_step,' steps.'
                 return var
 
             # calculate RHS of PBE
@@ -781,10 +848,12 @@ class Transport:
             v=np.zeros([nx])
             if bound_method=='potential':
                 #left bound
-                v[0]=self.vzeta
+                v[0]=self.system['vzeta']
                 #right bound
                 v[-1]=0.0
                 v=integrate_rhs(v,rhs,n=2)
+
+
 
             #field
             grad_v=np.zeros([nx])
@@ -797,18 +866,17 @@ class Transport:
                 grad_v[-1] = grad_v[-2]-(grad_v[-2]-grad_v[-3])
             elif bound_method=='field':
                 #left bound
-                grad_v[0]=(self.gouy_chapman(1e-10)-self.gouy_chapman(0.0))/1e-10
-                #right bound
-                grad_v[-1]=0.0
-                grad_v=integrate_rhs(grad_v,rhs,n=1)
+                grad_v[0]=0.0 #-(self.gouy_chapman(1e-10)-self.gouy_chapman(0.0))/1e-10
+                grad_v=integrate_rhs(grad_v,rhs,n=1,inv=False)
+                #right bound (extrapolation)
+                grad_v[-1] = grad_v[-2]-(grad_v[-2]-grad_v[-3])
+
                 #potential 
-                v=integrate_rhs(v,rhs=grad_v,n=1)
+                #right bound:
+                v[-1]=0.0
+                v=integrate_rhs(v,rhs=grad_v,n=1,inv=True)
                 #left bound (extrapolation)
                 v[0] = v[1] + (v[1]-v[2])
-                #right bound (extrapolation)
-                v[-1] = v[-2]-(v[-2]-v[-3])
-                v-=v[-1]
-
             #save results
             self.efield=grad_v
             self.potential=v
@@ -941,8 +1009,8 @@ class Transport:
                 for k in range(self.nspecies):
                     #Robin BC for concentrations on left side (wall)
                     C[k,0] =\
-                        (-4*self.D[k]-self.mu[k]*(v[1]-self.vzeta))/\
-                        (-4*self.D[k]+self.mu[k]*(v[1]-self.vzeta))*C[k,1]
+                        (-4*self.D[k]-self.mu[k]*(v[1]-self.system['vzeta']))/\
+                        (-4*self.D[k]+self.mu[k]*(v[1]-self.system['vzeta']))*C[k,1]
                     #Dirichlet BC for concentrations on right side (bulk)
                     C[k,-1]=C0[(k+1)*nx-1]
                     temp = np.zeros([nx])
