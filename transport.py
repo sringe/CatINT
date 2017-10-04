@@ -22,7 +22,7 @@ class Transport:
 
 #self.diffusion_dict{['
 
-    def __init__(self,integrator='FTCS-odeint'):
+    def __init__(self,integrator='Crank-Nicolson',integrator_correction=False,dt=1e-12,tmax=1e-10):
 
         self.eps = 80.0*unit_eps0 #1.1e11 #*unit_eps0
         self.T = 300
@@ -37,16 +37,17 @@ class Transport:
         self.mu = self.D * self.charges *self.beta  #ion mobilities according to Einstein relation
 
         #THE MESH
-        self.dt=1e-12 #1e-11 #5e-6 #1.0 #5.e-3
-        self.tmax=1e-10#1e-8 #100e-3 #2024.2369851 #10
+        self.dt=dt #1e-11 #5e-6 #1.0 #5.e-3
+        self.tmax=tmax  #1e-8 #100e-3 #2024.2369851 #10
         self.tmesh=np.arange(0,self.tmax+self.dt,self.dt)
-        self.dx=self.debye_length/10.
+        self.dx=self.debye_length/100.
         #self.xmax=80.e-6 #*1e-10
         self.xmax=10*self.debye_length
         self.xmesh=np.arange(0,self.xmax+self.dx,self.dx)
 
         #A FEW VARIABLES
         self.integrator=integrator
+        self.use_lax_friedrich=integrator_correction
         #eps=80*unit_eps0
         self.nspecies=len(self.D)
         self.external_charge=np.zeros([len(self.xmesh)])
@@ -63,7 +64,7 @@ class Transport:
                 #c_initial_specific={'0':{'0':0.1},'1':{'0':0.1}})
 
         self.set_boundary_conditions(\
-                flux_boundary={'0':{'r':5e-8},'1':{'r':0.0}},         #in mol/s/cm^2
+                flux_boundary={'0':{'l':5e-4},'1':{'l':0.0}},         #in mol/s/cm^2
                 dc_dt_boundary={'all':{'l':0.0}},     #in mol/l/s #give either left OR right boundary condition here
                 #integration will start at the site where dc_dt is defined
                 efield_boundary={'l':0.0})    #in V/Ang
@@ -294,7 +295,7 @@ class Transport:
         gaussian=gaussian*cmax*10**3*z*unit_F
         return gaussian
 
-    def integrate_pnp(self,dx,nx,dt,nt,ntout,method='FTCS'):
+    def integrate_pnp(self,dx,nx,dt,nt,ntout,method):
 
         def calculate_efield_FD(nx,c):
             #solve A * u = f for u
@@ -542,14 +543,12 @@ class Transport:
                     cout.append(sol[n,:].copy()) # numpy arrays are mutable, 
             return cout
 
-        def integrate_Crank_Nicolson_pnp(dx,nx,dt,nt,C0,ntout):
+        def integrate_Crank_Nicolson(dx,nx,dt,nt,C0,ntout):
             """Integrates PNP equations, BCs:
                         concentrations      potential
                 left    ROBIN j=0           DIRICHLET vzeta
                 right   DIRICHLET cbulk     DIRICHLET 0.0
             """
-            #if true add an artifical diffusion term which enhances the stability of the solution
-            self.use_lax_friedrichs=True
 
             # create coefficient matrix:
             def a_matrix(s):
@@ -615,7 +614,7 @@ class Transport:
 
 
                     s = self.D[k]*dt/dx**2  # diffusion number
-                    if self.use_lax_friedrichs:
+                    if self.use_lax_friedrich:
                         #add artificial diffusion term for better stability
                         s+=0.5
                     ee = self.charges[k]*self.beta*dt*self.D[k]
@@ -750,41 +749,79 @@ class Transport:
         def get_potential_and_gradient(C,dx,nx):
             """Calculates the potential and its gradient (and laplacian=charge density)
                 from the PBE by Jacobi relaxation (FD)"""
+
+            bound_method='potential'
+
+            def integrate_rhs(var0,rhs,n=1):
+                #integrates any function "rhs" n times, var0 is the initial guess for the result
+                tau_jacobi=1e-5
+                var_old=deepcopy(var0)
+                var=deepcopy(var0)
+                error=np.inf
+                i_step=0
+                while error>tau_jacobi**2:# or i_step<3:
+                    i_step+=1
+                    for i in range(1,nx-1):
+                        if n==2:
+                            var[i] = 1/2.*(dx**2*rhs[i]+var_old[i+1]+var_old[i-1])
+                        elif n==1:
+                            var[i] = var_old[i-1] + rhs[i]*dx
+                    error=sum((var_old-var)**2/len(var))
+                    var_old=deepcopy(var)
+                print 'Converged in ',i_step,' steps.'
+                return var
+
             # calculate RHS of PBE
             rhs=np.zeros([nx])
             for k in range(self.nspecies):
                 rhs+=self.charges[k]*C[k,:]/self.eps
             lapl_v=-rhs
+
+            #potential
             v=np.zeros([nx])
-            v[0]=self.vzeta
-            v_old=deepcopy(v)
-            tau_jacobi=1e-5
-            error=np.inf
-            i_step=0
-            while error>tau_jacobi**2:# or i_step<3:
-                i_step+=1
-                for i in range(1,nx-1):
-                    v[i] = 1/2.*(dx**2*rhs[i]+v_old[i+1]+v_old[i-1])
-                error=sum((v_old-v)**2/len(v))
-                v_old=deepcopy(v)
+            if bound_method=='potential':
+                #left bound
+                v[0]=self.vzeta
+                #right bound
+                v[-1]=0.0
+                v=integrate_rhs(v,rhs,n=2)
+
+            #field
             grad_v=np.zeros([nx])
-            for i in range(1,nx-1):
-                grad_v[i] = 1./(2*dx)*(v[i+1]-v[i-1])
-            #linearly extrapolate to get derivative at boundaries:
-            grad_v[0] = grad_v[1]-(grad_v[2]-grad_v[1])
-            grad_v[-1] = grad_v[-2]-(grad_v[-2]-grad_v[-3])
+            if bound_method=='potential':
+                for i in range(1,nx-1):
+                    grad_v[i] = 1./(2*dx)*(v[i+1]-v[i-1])
+                #left bound (extrapolation)
+                grad_v[0] = grad_v[1]-(grad_v[2]-grad_v[1])
+                #right bound (extrapolation)
+                grad_v[-1] = grad_v[-2]-(grad_v[-2]-grad_v[-3])
+            elif bound_method=='field':
+                #left bound
+                grad_v[0]=(self.gouy_chapman(1e-10)-self.gouy_chapman(0.0))/1e-10
+                #right bound
+                grad_v[-1]=0.0
+                grad_v=integrate_rhs(grad_v,rhs,n=1)
+                #potential 
+                v=integrate_rhs(v,rhs=grad_v,n=1)
+                #left bound (extrapolation)
+                v[0] = v[1] + (v[1]-v[2])
+                #right bound (extrapolation)
+                v[-1] = v[-2]-(v[-2]-v[-3])
+                v-=v[-1]
+
+            #save results
             self.efield=grad_v
             self.potential=v
             self.total_charge=lapl_v*self.eps
             return v,grad_v,lapl_v
 
-        def integrate_FTCS_odeint(dx,nx,dt,nt,c0,ntout):
+        def integrate_odeint(dx,nx,dt,nt,c0,ntout):
             """Integrates PNP equations, BCs:
                         concentrations      potential
                 left    ROBIN j=0           DIRICHLET vzeta
                 right   DIRICHLET cbulk     DIRICHLET 0.0
             """
-            def ode_func(c,t,dx):
+            def ode_func(t,c,dx,dt):
 
                 #map concentrations onto 2D array:
                 C = np.zeros([self.nspecies,nx])
@@ -817,7 +854,7 @@ class Transport:
 #                            )\
 #                    #extrapolate flow on the right:
 #                    flow[k,-1]=flow[k,-2]+(flow[k,-2]-flow[k,-3])
-                self.lax_friedrich=False #True
+                corr=0.0
 
                 #go over the flow and calculate derivative
                 for k in range(0,self.nspecies):
@@ -828,21 +865,20 @@ class Transport:
                         dc_dx=(C[k,i+1]-C[k,i-1])/(2.*dx)
                         dc_dx_2=(C[k,i+1]-2*C[k,i]+C[k,i-1])/(dx**2)
                         dcgradv_dx=(C[k,i+1]*grad_v[i+1]-C[k,i-1]*grad_v[i-1])/(2.*dx)
-                        corr=0.0
                         if i==0:
-                            if self.lax_friedrich:
-                                corr=2*(C[k,1]-C[k,0])/dt/2.
+                            if self.use_lax_friedrich:
+                                corr=(C[k,1]-C[k,0])/dt
                             #we have to consider no flow boundary condition here
                             #setting C[k,-1]=C[k,1] considers this:
                             DC_DT[k,i]=\
                                 corr+\
                                 self.D[k]*\
                                     (\
-                                    2*(C[k,1]-C[k,0])/dx**2\
+                                    2*(C[k,1]-C[k,0]-self.flux_bound[k,0]*2.*dx)/dx**2\
                                     +self.beta*self.charges[k]*dcgradv_dx\
                                     )
                         else:
-                            if self.lax_friedrich:
+                            if self.use_lax_friedrich:
                                 corr=dc_dx_2*dx**2/dt/2.
                             #we can directly implement the 2nd derivatives here
                             DC_DT[k,i]=\
@@ -862,9 +898,20 @@ class Transport:
                     dc_dt[k*nx:(k+1)*nx]=DC_DT[k,:]
                 return dc_dt
 
-            sol,output = integrate.odeint(ode_func, c0, self.tmesh, args=(dx,),full_output=True, ml=self.nspecies, mu=self.nspecies)
-#            sol,output = integrate.odeint(ode_func, c0, range(0,nt),full_output=True) #, args=(b, c))
-            print 'Used minimal time = ',min(output['tcur']),' and maximal time = ',max(output['tcur'])
+            def ode_func_inv(t,c,dx,dt):
+                return ode_func(c,t,dx,dt)
+
+            if self.integrator in ['lsoda','odeint']:
+                sol,output = integrate.odeint(ode_func_inv, c0, self.tmesh, args=(dx,dt),full_output=True, ml=self.nspecies, mu=self.nspecies)
+                print 'Used minimal time = ',min(output['tcur']),' and maximal time = ',max(output['tcur'])
+            else:
+                r = ode(ode_func).set_integrator(self.integrator) #('dopri5') #, method='bdf')
+                r.set_initial_value(c0).set_f_params(dx,dt) #c, t, dx, dt
+                sol=[]
+                while r.successful() and r.t < nt*dt:
+                    sol.append(r.integrate(r.t+dt))
+                sol=np.array(sol)
+
             #return the results
             print np.shape(sol)
             cout = []
@@ -907,6 +954,10 @@ class Transport:
                         M = -2.*self.D[k]*dt/dx**2
                         E = self.D[k]*dt/dx**2+\
                             dt/(2.*dx)*self.mu[k]*grad_v[i-1]+0.5
+                        if not self.use_lax_friedrich:
+                            W-=0.5
+                            E-=0.5
+                            M+=1
                         temp[i] = E * C[k,i-1] + M * C[k,i] + W * C[k,i+1]
                     C[k,:]=temp
                 if n % int(nt/float(ntout)) == 0 or n==nt-1:
@@ -982,7 +1033,7 @@ class Transport:
                 #    return cout
             return cout
 
-        def integrate_Crank_Nicolson(dx,nx,dt,nt,c,ntout):
+        def integrate_Crank_Nicolson_old(dx,nx,dt,nt,c,ntout):
             """only for dc_dt=0 at both boundary sites implemented yet"""
             cout = [] # list for storing c arrays at certain time steps
             c0 = c[0] # boundary condition on left side
@@ -1003,8 +1054,8 @@ class Transport:
                     #so we need to write out a copy of c, not c itself
             return cout,s
 
-        if method=='FTCS-odeint':
-            cout=integrate_FTCS_odeint(dx,nx,dt,nt,self.c0,ntout)
+        if method in ['vode','lsoda','dopri5','dop853','odeint']:
+            cout=integrate_odeint(dx,nx,dt,nt,self.c0,ntout)
             dataplot=cout
         elif method=='FTCS':
             cout=integrate_FTCS(dt,dx,nt,nx,self.c0,ntout)
@@ -1021,7 +1072,7 @@ class Transport:
                 cout,s=integrate_Crank_Nicolson_pnp(dx,nx,dt,nt,cout[-1],ntout)
             else:
                 print 'not diff'
-                cout,s=integrate_Crank_Nicolson_pnp(dx,nx,dt,nt,self.c0,ntout)
+                cout,s=integrate_Crank_Nicolson(dx,nx,dt,nt,self.c0,ntout)
             dataplot=cout[-1]
         #print dataplot
         #plt.plot(self.xmesh,dataplot[:nx]/10**3,'-')
