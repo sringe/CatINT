@@ -319,21 +319,3 @@ class Transport(object):
         """Attach calculator object."""
         self.calc=calc
 
-#    def update():
-#
-#        self.rates = []
-#        self.rates += self.migration_rates
-#        self.rates += self.diffusion_rates
-#        self.rates += self.convection_rates
-#        self.rates += self.reaction_rates
-
-    #def get_rates(self):
-    #        for i in self.xmesh:
-    #            rates[i] = self.D*self.z/unit.kB/self.T*concentraitions*
-    #    return rates
-
-
-
-#    def read_catmap():
-#        """Purpose: read the catmap input file"""
-         
