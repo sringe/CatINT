@@ -21,6 +21,7 @@ class Calculator():
 
     def __init__(self,transport=None,dt=None,tmax=None,ntout=5,calc=None,
             scale_pb_grid=1.,tau_jacobi=1e-7):
+
         if transport==None:
             print('No transport object provided for calculator. Stopping here.')
             sys.exit()
