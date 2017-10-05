@@ -15,7 +15,7 @@ import collections
 
 class Transport(object):
 
-    def __init__(self, species=None,reactions=None,system=None):
+    def __init__(self, species=None,reactions=None,system=None,pb_bound=None):
 
         #go over input data and put in some defaults if none
         if not type(species)==dict:
@@ -87,6 +87,10 @@ class Transport(object):
         self.count=1
 
         #BOUNDARY AND INITIAL CONDITIONS
+        self.set_boundary_and_initial_conditions(pb_bound)
+
+
+    def set_boundary_and_initial_conditions(self,pb_bound):
 
         c_initial_general={}
         for isp,sp in enumerate(self.species):
@@ -95,6 +99,32 @@ class Transport(object):
         self.set_initial_conditions(
                 c_initial_general=c_initial_general)
                 #c_initial_specific={'0':{'0':0.1},'1':{'0':0.1}})
+
+        def tree():
+            return collections.defaultdict(tree)
+        if pb_bound is None:
+            self.pb_bound={
+                'potential':    {'wall':    self.tp.system['vzeta'],
+                                'bulk':     None},
+                'gradient':     {'wall':    None,
+                                'bulk':     0.0}
+                }
+        else:
+            self.pb_bound=tree()
+            for key1 in ['potential','gradient']:
+                if key1 in pb_bound:
+                    for key2 in ['wall','bulk']:
+                        if key2 in pb_bound[key1]:
+                            if pb_bound[key1][key2]=='zeta':
+                                value=self.system['vzeta']
+                            else:
+                                value=pb_bound[key1][key2]
+                            self.pb_bound[key1][key2]=value
+                        else:
+                            self.pb_bound[key1][key2]=None
+                else:
+                    self.pb_bound[key1]['wall']=None
+                    self.pb_bound[key1]['bulk']=None
 
         self.set_boundary_conditions(\
                 flux_boundary={'0':{'l':0.0},'1':{'l':0.0}},         #in mol/s/cm^2
@@ -119,7 +149,7 @@ class Transport(object):
             for i in range(self.nx):
                 c_initial_specific[str(k)][str(i)]=\
                     self.species[sp]['bulk concentration']*\
-                    np.exp(-self.beta*self.charges[k]*function(self.xmesh[i]))
+                    np.exp(-self.beta*self.charges[k]*function(self.xmesh[i])[0])
         self.set_initial_conditions(c_initial_specific=c_initial_specific)
         return
 
@@ -151,12 +181,14 @@ class Transport(object):
 
        
     def gouy_chapman(self,x):
-        term1 = 1.+np.tanh(self.system['vzeta']*self.beta*unit_F/4.)*\
-            np.exp(-1./self.debye_length*x)
-        term2 = 1.-np.tanh(self.system['vzeta']*self.beta*unit_F/4.)*\
-            np.exp(-1./self.debye_length*x)
-        return 2./(self.beta*unit_F)*np.log(term1/term2)
-
+        def func(x):
+            term1 = 1.+np.tanh(self.system['vzeta']*self.beta*unit_F/4.)*\
+                np.exp(-1./self.debye_length*x)
+            term2 = 1.-np.tanh(self.system['vzeta']*self.beta*unit_F/4.)*\
+                np.exp(-1./self.debye_length*x)
+            return 2./(self.beta*unit_F)*np.log(term1/term2)
+        grad=(func(x+1e-10)-func(x-1e-10))/(2*1e-10)
+        return func(x),grad
 
     def get_initial_conditions(self):
         return self.c0 

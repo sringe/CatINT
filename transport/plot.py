@@ -43,7 +43,10 @@ class Plot():
                     color=str(brightness)
                 elif k==1:
                     color=(brightness,1.,1.)
-                ax1.plot(self.tp.xmesh,c[k*self.tp.nx:(k+1)*self.tp.nx] /10**3,'-',color=color,linewidth=lw,zorder=zorder)
+                if i==len(cout)-1:
+                    ax1.plot(self.tp.xmesh,c[k*self.tp.nx:(k+1)*self.tp.nx] /10**3,'-',color=color,linewidth=lw,zorder=zorder,label=str(int(self.tp.charges[k]/unit_F)))
+                else:
+                    ax1.plot(self.tp.xmesh,c[k*self.tp.nx:(k+1)*self.tp.nx] /10**3,'-',color=color,linewidth=lw,zorder=zorder)
         ax1.legend()
         ax1.set_xlabel('x (m)')
         ax1.set_ylabel('c (mol/L)')
@@ -51,6 +54,7 @@ class Plot():
         #for t in np.arange(0.0,1.,0.1):
         #    plt.plot(self.xmesh,c[int(t/self.dt),:],'-o',label=str(t))
         ax2.plot(self.tp.xmesh,self.tp.efield/1e10,'-')
+        ax2.plot(self.tp.xmesh,[-self.tp.gouy_chapman(x)[1]/1e10 for x in self.tp.xmesh],'-',color='k',linewidth=lw)
         ax2.set_title('Electric field')
         ax2.set_xlabel('x (m)')
         ax2.set_ylabel('E (V/Ang)')
@@ -62,7 +66,7 @@ class Plot():
         #    integral-=self.efield[i]*self.dx
         #    self.potential[i]+=integral
         ax3.plot(self.tp.xmesh,self.tp.potential,'-')
-        ax3.plot(self.tp.xmesh,[self.tp.gouy_chapman(x) for x in self.tp.xmesh],'-',color='k',linewidth=lw)
+        ax3.plot(self.tp.xmesh,[self.tp.gouy_chapman(x)[0] for x in self.tp.xmesh],'-',color='k',linewidth=lw)
         ax3.set_ylabel('v (V)')
         ax3.set_xlabel('x (m)')
         ax4.plot(self.tp.xmesh[:-1],self.tp.external_charge[:-1]/10**3/unit_F, '-',label='n_ext')

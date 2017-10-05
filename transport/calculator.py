@@ -15,10 +15,12 @@ import sys
 from copy import deepcopy
 from scipy.optimize import minimize
 from scipy.integrate import ode
+from scipy import interpolate
 
 class Calculator():
 
-    def __init__(self,transport=None,dt=None,tmax=None,ntout=5,calc=None):
+    def __init__(self,transport=None,dt=None,tmax=None,ntout=5,calc=None,
+            scale_pb_grid=1.,tau_jacobi=1e-7):
         if transport==None:
             print('No transport object provided for calculator. Stopping here.')
             sys.exit()
@@ -36,6 +38,16 @@ class Calculator():
             self.calc=string[0]
         else:
             self.calc=calc
+
+        if self.calc not in ['FTCS','Crank-Nicolson','odeint','vode','lsoda','dopri5','dop853','odeint']:
+            print('No calculator found with this name. Aborting.')
+            sys.exit()
+        
+        #use a finer grid for PBE integration (factor of scale_pb_grid smaller than
+        #normal xmesh
+        self.scale_pb_grid=scale_pb_grid
+        #accuracy of Jacoby iteration if potential needs to be outputted:
+        self.tau_jacobi=tau_jacobi
 
         if dt!=None and hasattr(self.tp,'dt'):
             self.tp.dt=dt
@@ -506,24 +518,38 @@ class Calculator():
             """Calculates the potential and its gradient (and laplacian=charge density)
                 from the PBE by Jacobi relaxation (FD)"""
 
-            bound_method='potential'
+            if self.scale_pb_grid is not None:
+                #define a finer x grid for PB integration
+                dx/=self.scale_pb_grid
+                xmesh=np.arange(0,self.tp.xmax+dx,dx)
+                nx=len(xmesh)
+                CNEW=np.zeros([self.tp.nspecies,nx])
+                #interpolate concentrations on this grid:
+                for k in range(self.tp.nspecies):
+                    f = interpolate.interp1d(self.tp.xmesh,C[k,:])
+                    CNEW[k,:]=[f(x) for x in xmesh]
+                C=CNEW
+            bounds=self.tp.pb_bound
 
-            def integrate_rhs(var0,rhs,n=1,inv=False):
+            if bounds['gradient']['wall'] is not None and bounds['gradient']['bulk'] is not None:
+                print('Cannot use two boundary conditions for gradient, quitting.')
+                sys.exit()
+
+            def integrate_1d_func(var0,integrand,n=1,inv=False):
                 #integrates any function "rhs" n times, var0 is the initial guess for the result
                 var_old=deepcopy(var0)
                 var=deepcopy(var0)
                 if n==2:
-                    tau_jacobi=1e-5
                     error=np.inf
                     i_step=0
-                    while error>tau_jacobi**2:# or i_step<3:
+                    while error>self.tau_jacobi**2:# or i_step<3:
                         i_step+=1
                         if inv:
                             iterator=reversed(range(1,nx-1))
                         else:
                             iterator=range(1,nx-1)
                         for i in iterator:
-                            var[i] = 1/2.*(dx**2*rhs[i]+var_old[i+1]+var_old[i-1])
+                            var[i] = 1/2.*(-dx**2*integrand[i]+var_old[i+1]+var_old[i-1])
                         error=sum((var_old-var)**2/len(var))
                         var_old=deepcopy(var)
                 elif n==1:
@@ -533,10 +559,9 @@ class Calculator():
                         iterator=range(1,nx-1)
                     for i in iterator:
                         if inv:
-                            var[i] = var_old[i+1] - rhs[i]*dx
+                            var[i] = var[i+1] - integrand[i]*dx
                         else:
-                            var[i] = var_old[i-1] + rhs[i]*dx
-
+                            var[i] = var[i-1] + integrand[i]*dx
                 if (n==2):
                     print 'Converged in ',i_step,' steps.'
                 return var
@@ -544,46 +569,53 @@ class Calculator():
             # calculate RHS of PBE
             rhs=np.zeros([nx])
             for k in range(self.tp.nspecies):
-                rhs+=self.tp.charges[k]*C[k,:]/self.tp.eps
-            lapl_v=-rhs
+                rhs-=self.tp.charges[k]*C[k,:]/self.tp.eps
+            lapl_v=rhs
 
-            #potential
             v=np.zeros([nx])
-            if bound_method=='potential':
-                #left bound
-                v[0]=self.tp.system['vzeta']
-                #right bound
-                v[-1]=0.0
-                v=integrate_rhs(v,rhs,n=2)
-
-
-
-            #field
             grad_v=np.zeros([nx])
-            if bound_method=='potential':
+
+            if bounds['potential']['wall'] is not None:
+                v[0]=bounds['potential']['wall']
+            if bounds['potential']['bulk'] is not None:
+                v[-1]=bounds['potential']['bulk']
+            if bounds['potential']['wall'] is not None and bounds['potential']['bulk'] is not None:
+                v=integrate_1d_func(v,rhs,n=2)
                 for i in range(1,nx-1):
                     grad_v[i] = 1./(2*dx)*(v[i+1]-v[i-1])
-                #left bound (extrapolation)
-                grad_v[0] = grad_v[1]-(grad_v[2]-grad_v[1])
-                #right bound (extrapolation)
-                grad_v[-1] = grad_v[-2]-(grad_v[-2]-grad_v[-3])
-            elif bound_method=='field':
-                #left bound
-                grad_v[0]=0.0 #-(self.tp.gouy_chapman(1e-10)-self.tp.gouy_chapman(0.0))/1e-10
-                grad_v=integrate_rhs(grad_v,rhs,n=1,inv=False)
-                #right bound (extrapolation)
-                grad_v[-1] = grad_v[-2]-(grad_v[-2]-grad_v[-3])
+                grad_v[0]=grad_v[1]+(grad_v[1]-grad_v[2])
+                grad_v[-1]=grad_v[-2]+(grad_v[-2]-grad_v[-3])
+            else:
+                #integrate once to get gradient first
+                if bounds['gradient']['wall'] is not None:
+                    grad_v[0]=bounds['gradient']['wall']
+                    grad_v=integrate_1d_func(grad_v,rhs,n=1)
+                    grad_v[-1]=grad_v[-2]+(grad_v[-2]-grad_v[-3])
+                if bounds['gradient']['bulk'] is not None:
+                    grad_v[-1]=bounds['gradient']['bulk']
+                    grad_v=integrate_1d_func(grad_v,rhs,n=1,inv=True)
+                    grad_v[0]=grad_v[1]+(grad_v[1]-grad_v[2])
+                #extrapolate boundaries and calculate potential
+                if bounds['potential']['wall'] is not None:
+                    v=integrate_1d_func(v,grad_v,n=1)
+                    v[-1]=v[-2]+(v[-2]-v[-3])
+                if bounds['potential']['bulk'] is not None:
+                    v=integrate_1d_func(v,grad_v,n=1,inv=True)
+                    v[0]=v[1]+(v[1]-v[2])
 
-                #potential 
-                #right bound:
-                v[-1]=0.0
-                v=integrate_rhs(v,rhs=grad_v,n=1,inv=True)
-                #left bound (extrapolation)
-                v[0] = v[1] + (v[1]-v[2])
+            if self.scale_pb_grid is not None:
+                #interpolate the functions back on the normal grid
+                def reinterpolate(func):
+                    f = interpolate.interp1d(xmesh,func,fill_value='extrapolate')
+                    return np.array([f(x) for x in self.tp.xmesh])
+                v=reinterpolate(v)
+                grad_v=reinterpolate(grad_v)
+                lapl_v=reinterpolate(lapl_v)
+
             #save results
-            self.tp.efield=grad_v
+            self.tp.efield=-grad_v
             self.tp.potential=v
-            self.tp.total_charge=lapl_v*self.tp.eps
+            self.tp.total_charge=-lapl_v*self.tp.eps
             return v,grad_v,lapl_v
 
         def integrate_odeint(dx,nx,dt,nt,c0,ntout):
