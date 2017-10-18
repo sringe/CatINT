@@ -61,6 +61,49 @@ class Calculator():
         self.initialize='bla'
         return
 
+    def get_rates(self,C):
+        #get list of all species names:
+        species_names=[sp for sp in self.tp.species]
+        rates=np.zeros([self.tp.nspecies,self.tp.nx])
+        for i in range(self.tp.nx):
+            for r in self.tp.reactions:
+                reaction=self.tp.reactions[r]
+                if 'rates' not in reaction:
+                    continue
+                #rates of educts:
+                for reactant in reaction['reactants'][0]:
+                    if reactant == 'H2O':
+                        continue
+                    k=species_names.index(reactant)
+                    rates[k,i]=0.0
+                    for reactant2 in reaction['reactants'][0]:
+                        if reactant2 == 'H2O':
+                            continue
+                        k2=species_names.index(reactant2)
+                        rates[k,i]-=C[k2,i]*reaction['rates'][0]
+                    for reactant2 in reaction['reactants'][1]:
+                        if reactant2 == 'H2O':
+                            continue
+                        k2=species_names.index(reactant2)
+                        rates[k,i]+=C[k2,i]*reaction['rates'][1]
+                #rates of products
+                for reactant in reaction['reactants'][1]:
+                    if reactant == 'H2O':
+                        continue
+                    k=species_names.index(reactant)
+                    rates[k,i]=0.0
+                    for reactant2 in reaction['reactants'][0]:
+                        if reactant2 == 'H2O':
+                            continue
+                        k2=species_names.index(reactant2)
+                        rates[k,i]+=C[k2,i]*reaction['rates'][0]
+                    for reactant2 in reaction['reactants'][1]:
+                        if reactant2 == 'H2O':
+                            continue
+                        k2=species_names.index(reactant2)
+                        rates[k,i]-=C[k2,i]*reaction['rates'][1]
+        return rates
+
     def integrate_pnp(self,dx,nx,dt,nt,ntout,method):
 
         def calculate_efield_FD(nx,c):
@@ -367,16 +410,23 @@ class Calculator():
             for n in range(1,nt):
                 print 'time step = ',n
                 v,grad_v,lapl_v=get_potential_and_gradient(C,dx,nx)
+                with open('results.txt','a') as outfile:
+                    outfile.write('{} {}\n'.format(n*dt,np.sqrt(sum((v-np.array([self.tp.gouy_chapman(x)[0] for x in self.tp.xmesh]))**2/len(v)))))
                 for k in range(self.tp.nspecies):
                     if n==1:
                         COLD[k,:]=deepcopy(C[k,:])
 
                     #Robin BC for concentrations on left side (wall)
                     C[k,0] =\
-                        (-4*self.tp.D[k]-self.tp.mu[k]*(v[1]-self.tp.system['vzeta']))/\
-                        (-4*self.tp.D[k]+self.tp.mu[k]*(v[1]-self.tp.system['vzeta']))*C[k,1]\
-                        -4*self.tp.flux_bound[k,0]*dx/\
-                        (-4*self.tp.D[k]+self.tp.mu[k]*(v[1]-self.tp.system['vzeta']))
+                        (-2*self.tp.D[k]-self.tp.mu[k]*(v[1]-self.tp.system['vzeta']))/\
+                        (-2*self.tp.D[k]+self.tp.mu[k]*(v[1]-self.tp.system['vzeta']))*C[k,1]\
+                        -2*self.tp.flux_bound[k,0]*dx/\
+                        (-2*self.tp.D[k]+self.tp.mu[k]*(v[1]-self.tp.system['vzeta']))
+                    #C[k,0] =\
+                    #    (-4*self.tp.D[k]-self.tp.mu[k]*grad_v[0])/\
+                    #    (-4*self.tp.D[k]+self.tp.mu[k]*grad_v[0])*C[k,1]\
+                    #    -4*self.tp.flux_bound[k,0]*dx/\
+                    #    (-4*self.tp.D[k]+self.tp.mu[k]*grad_v[0])
 
                     #Dirichlet BC for concentrations on right side (bulk)
                     C[k,-1]=C0[(k+1)*nx-1]
@@ -613,6 +663,7 @@ class Calculator():
                 grad_v=reinterpolate(grad_v)
                 lapl_v=reinterpolate(lapl_v)
 
+
             #save results
             self.tp.efield=-grad_v
             self.tp.potential=v
@@ -636,13 +687,13 @@ class Calculator():
                 v,grad_v,lapl_v=get_potential_and_gradient(C,dx,nx)
 
                 DC_DT = np.zeros([self.tp.nspecies,nx])
-#                flow = np.zeros([self.tp.nspecies,nx])
+#                flux = np.zeros([self.tp.nspecies,nx])
 #
 #
-#                #first tabulate D*(dc/dx + mu * c dv/dx) = flow
+#                #first tabulate D*(dc/dx + mu * c dv/dx) = flux
 #                for k in range(0,self.tp.nspecies):
-#                    #no flow boundary condition on the left
-#                    flow[k,0]=0.0
+#                    #no flux boundary condition on the left
+#                    flux[k,0]=0.0
 #                    for i in range(1,nx-1):
 #                        dc_dx=(C[k,i+1]-C[k,i-1])/(2.*dx)
 ##                    if self.tp.lax_friedrich:
@@ -650,29 +701,30 @@ class Calculator():
 ##                    else:
 ##                        corr=0.0
 #                    corr=0.0
-#                    flow[k,i] =\
+#                    flux[k,i] =\
 #                        self.tp.D[k]*\
 #                            (\
 #                            dc_dx\
 #                            +self.tp.beta*self.tp.charges[k]*C[k,i]*grad_v[i]\
 #                            )\
-#                    #extrapolate flow on the right:
-#                    flow[k,-1]=flow[k,-2]+(flow[k,-2]-flow[k,-3])
+#                    #extrapolate flux on the right:
+#                    flux[k,-1]=flux[k,-2]+(flux[k,-2]-flux[k,-3])
                 corr=0.0
 
-                #go over the flow and calculate derivative
+                rates=self.get_rates(C)
+
                 for k in range(0,self.tp.nspecies):
                     #set concentration to be constant on the right side
                     DC_DT[k,-1] = 0.0
                     for i in range(0,nx-1):
-                        #dflow_dx=(flow[k,i+1]-flow[k,i-1])/(2.*dx)
+                        #dflux_dx=(flux[k,i+1]-flux[k,i-1])/(2.*dx)
                         dc_dx=(C[k,i+1]-C[k,i-1])/(2.*dx)
                         dc_dx_2=(C[k,i+1]-2*C[k,i]+C[k,i-1])/(dx**2)
                         dcgradv_dx=(C[k,i+1]*grad_v[i+1]-C[k,i-1]*grad_v[i-1])/(2.*dx)
                         if i==0:
                             if self.use_lax_friedrich:
                                 corr=(C[k,1]-C[k,0])/dt
-                            #we have to consider no flow boundary condition here
+                            #we have to consider no flux boundary condition here
                             #setting C[k,-1]=C[k,1] considers this:
                             DC_DT[k,i]=\
                                 corr+\
@@ -680,7 +732,8 @@ class Calculator():
                                     (\
                                     2*(C[k,1]-C[k,0]-self.tp.flux_bound[k,0]*2.*dx)/dx**2\
                                     +self.tp.beta*self.tp.charges[k]*dcgradv_dx\
-                                    )
+                                    )+\
+                                rates[k,i]
                         else:
                             if self.use_lax_friedrich:
                                 corr=dc_dx_2*dx**2/dt/2.
@@ -691,7 +744,8 @@ class Calculator():
                                     (\
                                     dc_dx_2\
                                     +self.tp.beta*self.tp.charges[k]*dcgradv_dx\
-                                    )
+                                    )+\
+                                rates[k,i]
 
                     #extrapolate derivative on the left side
 #                    DC_DT[k,0]=DC_DT[k,1]+(DC_DT[k,1]-DC_DT[k,2])
@@ -745,8 +799,8 @@ class Calculator():
                 for k in range(self.tp.nspecies):
                     #Robin BC for concentrations on left side (wall)
                     C[k,0] =\
-                        (-4*self.tp.D[k]-self.tp.mu[k]*(v[1]-self.tp.system['vzeta']))/\
-                        (-4*self.tp.D[k]+self.tp.mu[k]*(v[1]-self.tp.system['vzeta']))*C[k,1]
+                        (-2*self.tp.D[k]-self.tp.mu[k]*(v[1]-self.tp.system['vzeta']))/\
+                        (-2*self.tp.D[k]+self.tp.mu[k]*(v[1]-self.tp.system['vzeta']))*C[k,1]
                     #Dirichlet BC for concentrations on right side (bulk)
                     C[k,-1]=C0[(k+1)*nx-1]
                     temp = np.zeros([nx])

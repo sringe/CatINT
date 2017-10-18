@@ -15,10 +15,10 @@ import collections
 
 class Transport(object):
 
-    def __init__(self, species=None,reactions=None,system=None,pb_bound=None):
+    def __init__(self, species=None,reactions=None,system=None,pb_bound=None,nx=100):
 
         #go over input data and put in some defaults if none
-        if not type(species)==dict:
+        if species is None:
             self.species={'species1':       {'name':r'K^+',
                                             'diffusion':1.96e-9,
                                             'bulk concentration':0.001*1000.},
@@ -27,43 +27,54 @@ class Transport(object):
                                             'bulk concentration':0.001*1000.}}
         else:
             self.species=species
-        self.nspecies=len(self.species)
 
-        self.reactions=reactions
-        if not type(system)==dict:
-            self.system={'temperature': 298,
-                         'epsilon':     80,
-                         'vzeta':    -0.025}
+        system_defaults={
+                'epsilon':78.36,
+                'temperature':298.14,
+                'pressure':1}
+        if system is None:
+            self.system=system_defaults
         else:
             self.system=system
+
+        for key in ['epsilon','temperature','pressure']:
+            if key not in self.system:
+                self.system[key]=system_defaults[key]
+
+        #delete species that should not be considered here
+        if 'exclude species' in self.system:
+            for es in self.system['exclude species']:
+                del self.species[es]
+
+        self.nspecies=len(self.species)
+
+        #defaults for system settings:
+        self.reactions=reactions
+
+        #add concentration = 0 for all species with no separately defined values
+        for sp in self.species:
+            if 'bulk concentration' not in self.species[sp]:
+                self.species[sp]['bulk concentration']=0.0
 
         self.eps = self.system['epsilon']*unit_eps0 #1.1e11 #*unit_eps0
         self.beta = 1./(self.system['temperature'] * unit_R)
 
-        #determine charges and create arrays of charges and D's
-        k=-1
-        self.charges=[]
+        #GET CHARGES AND NCATOMS FROM CHEMICAL SYMBOLS
+        self.charges,self.number_of_catoms=self.symbol_reader(self.species)
+
+        #DIFFUSION CONSTANTS
         self.D=[]
         for sp in self.species:
-            k+=1
-            string=self.species[sp]['name'].split('^')
-            if len(string)>1:
-                print string
-                sign=string[-1][-1]
-                if len(string[-1])>1:
-                    no=int(string[-1][:-1])
-                else:
-                    no=1
-                if sign=='-':
-                    no*=(-1)
+            if 'diffusion' in self.species[sp]:
+                self.D.append(self.species[sp]['diffusion'])
             else:
-                no=0
-            self.species[sp]['charge']=no
-            #create a few shorter arrays
-            self.charges.append(no*unit_F)
-            self.D.append(self.species[sp]['diffusion'])
-        self.charges=np.array(self.charges)
+                self.D.append(0.0)
         self.D=np.array(self.D)
+
+        if all([a in self.system for a in ['water viscosity','electrolyte viscosity']]):
+            #rescale diffusion coefficients according to ionic strength (Stokes-Einstein):
+            self.D=[d*self.system['water viscosity']/self.system['electrolyte viscosity'] for d in self.D]
+
         self.mu = self.D * self.charges *self.beta  #ion mobilities according to Einstein relation
 
         #Debye-Hueckel screening length
@@ -73,11 +84,21 @@ class Transport(object):
         self.ionic_strength*=0.5
         self.debye_length = np.sqrt( self.eps/self.beta/2./self.ionic_strength ) #in m
 
+        if 'boundary thickness' in self.system:
+            self.boundary_thickness=self.system['boundary thickness']
 
         #THE MESH
-        self.dx=self.debye_length/10.
+        self.nx=nx
+        if 'boundary thickness' in self.system:
+            self.xmax=self.boundary_thickness
+            self.dx=self.xmax/(self.nx*1.)
+        else:
+            #use debye-hueckel length to get a reasonable estimate
+            #WARNING: this can be way to small, depending on the system of interest
+            nx_mod=max(1.,self.nx/10.)
+            self.xmax=nx_mod*self.debye_length
+            self.dx=self.debye_length/nx_mod
         #self.xmax=80.e-6 #*1e-10
-        self.xmax=10*self.debye_length
         self.xmesh=np.arange(0,self.xmax+self.dx,self.dx)
         self.nx=len(self.xmesh)
 
@@ -86,11 +107,106 @@ class Transport(object):
         #self.external_charge=self.gaussian(sigma=5e-6,z=1.0,mu=4.e-5,cmax=5e-5)+self.gaussian(sigma=5e-6,z=-1.0,mu=5.e-5,cmax=5e-5)
         self.count=1
 
+        #STEADY-STATE REACTION RATES/FLUXES
+        for sp in self.species:
+            if 'flux' not in self.species[sp]:
+                self.species[sp]['flux']=0.0
+
+        tmp_co2=0.0
+        tmp_oh=0.0
+        for isp,sp in enumerate(self.species):
+            if 'zeff' in self.species[sp]:
+                crate=self.species[sp]['flux']/(unit_F*self.species[sp]['zeff'])
+                self.species[sp]['flux']=crate
+                tmp_co2+=crate*self.number_of_catoms[isp]
+                tmp_oh+=self.species[sp]['flux']*self.species[sp]['zeff']
+            elif sp=='HCO3-':
+                self.species[sp]['flux']=-self.species['H2']['flux']/(unit_F*self.species['H2']['zeff'])*2.
+
+        if 'OH-' in self.species:
+            self.species['OH-']['flux']=tmp_oh
+        if 'CO2' in self.species:
+            self.species['CO2']['flux']=-tmp_co2
+        if 'unknown' in self.species:
+            #we needed this flux only to calculate the co2 and oh- fluxes
+            self.species['unknown']['flux']=0.0
+
+        #FLUX AND FARADAIC YIELD
+        flux_bound={} 
+        for isp,sp in enumerate(self.species):
+            flux_bound[str(isp)]={}
+        for isp,sp in enumerate(self.species):
+            if 'flux' in self.species[sp]:
+                flux_bound[str(isp)]['l']=self.species[sp]['flux']
+            else:
+                flux_bound[str(isp)]['l']=0.0
+
+
         #BOUNDARY AND INITIAL CONDITIONS
-        self.set_boundary_and_initial_conditions(pb_bound)
+        self.set_boundary_and_initial_conditions(pb_bound,flux_bound)
 
 
-    def set_boundary_and_initial_conditions(self,pb_bound):
+    def symbol_reader(self,species):
+    #determine charges and create arrays of charges and D's
+        k=-1
+        charges=[]
+        number_of_catoms=[]
+        for sp in species:
+            k+=1
+            number_of_catoms.append(0.0)
+            fstring=species[sp]['symbol']
+
+            #first extract charges from array
+            string=fstring.split('^')
+            if not len(string)==1:
+                string=string[-1]
+                string=string.replace('{', '').replace('}','')
+                if string[-1]=='-':
+                    if len(string)>1:
+                        no=-int(string[:-1])
+                    else:
+                        no=-1
+                else:
+                    if string[-1]=='+':
+                        if len(string)>1:
+                            no=int(string[:-1])
+                        else:
+                            no=1
+                    else:
+                        no=int(string)
+            else:
+                no=0
+            species[sp]['charge']=no
+            #create a few shorter arrays
+            charges.append(no*unit_F)
+
+            #secondly extract number of c atoms
+            check_number=False
+            number=''
+            for s in fstring:
+                if check_number:
+                    if s=='_':
+                        continue
+                    elif s.isdigit():
+                        number+=s
+                        continue
+                    elif number!='':
+                        number_of_catoms[k]-=1
+                        number_of_catoms[k]+=int(number)
+                        check_number=False
+                    else:
+                        check_number=False
+                if s=='C':
+                    number_of_catoms[k]+=1
+                    check_number=True
+                else:
+                    check_number=False
+                    number=''
+        charges=np.array(charges)
+        number_of_catoms=np.array(number_of_catoms)
+        return charges, number_of_catoms
+
+    def set_boundary_and_initial_conditions(self,pb_bound,flux_bound):
 
         c_initial_general={}
         for isp,sp in enumerate(self.species):
@@ -100,8 +216,6 @@ class Transport(object):
                 c_initial_general=c_initial_general)
                 #c_initial_specific={'0':{'0':0.1},'1':{'0':0.1}})
 
-        def tree():
-            return collections.defaultdict(tree)
         if pb_bound is None:
             self.pb_bound={
                 'potential':    {'wall':    self.tp.system['vzeta'],
@@ -110,8 +224,9 @@ class Transport(object):
                                 'bulk':     0.0}
                 }
         else:
-            self.pb_bound=tree()
+            self.pb_bound={} 
             for key1 in ['potential','gradient']:
+                self.pb_bound[key1]={}
                 if key1 in pb_bound:
                     for key2 in ['wall','bulk']:
                         if key2 in pb_bound[key1]:
@@ -126,8 +241,9 @@ class Transport(object):
                     self.pb_bound[key1]['wall']=None
                     self.pb_bound[key1]['bulk']=None
 
+
         self.set_boundary_conditions(\
-                flux_boundary={'0':{'l':0.0},'1':{'l':0.0}},         #in mol/s/cm^2
+                flux_boundary=flux_bound,         #in mol/s/cm^2
                 dc_dt_boundary={'all':{'l':0.0}},     #in mol/l/s #give either left OR right boundary condition here
                 #integration will start at the site where dc_dt is defined
                 efield_boundary={'l':0.0})    #in V/Ang
@@ -140,12 +256,10 @@ class Transport(object):
                         'and anionic. Not applying initialization.')
                 return
             function=self.gouy_chapman
-        def tree():
-            return collections.defaultdict(tree)
 
-        c_initial_specific = tree() #collections.defaultdict(list)
-
+        c_initial_specific={}
         for k,sp in enumerate(self.species):
+            c_initial_specific[str(k)]={}
             for i in range(self.nx):
                 c_initial_specific[str(k)][str(i)]=\
                     self.species[sp]['bulk concentration']*\

@@ -1,6 +1,8 @@
-from transport import Transport
-
-#t=Transport(integrator='Crank-Nicolson')
+from transport.transport import Transport
+from transport.calculator import Calculator 
+from transport.plot import Plot
+from read_data import read_data
+import numpy as np
 
 ###########################################################################
 #REACTIONS
@@ -37,7 +39,8 @@ system=\
     'water viscosity':  8.90e-004, #Pa*s at 25C
     #calculate the electrolyte viscosity. This will be used to rescale the diffusion coefficients
     #according to Einstein-Stokes relation: D_in_electrolyte = D_in_water * mu0/mu
-    'electrolyte viscosity':    xx/1000. #Pa*s at 25C of KHCO3 solution
+    'epsilon': 78.36,
+    'exclude species': ['H+'] #exclude this species from PNP equations
     }
 ###########################################################################
 
@@ -47,7 +50,7 @@ system=\
 #set up the initial concentrationss from this constants:
 bic_i=1.0 #mol/l
 bic_i*=1000. #convert to mol/m^3
-CO2_i = 0.03419*P*1000. #initial CO2(aq) bulk concentrations at t=0 and Pressure P in [mol/m3] units
+CO2_i = 0.03419*system['pressure']*1000. #initial CO2(aq) bulk concentrations at t=0 and Pressure P in [mol/m3] units
                         #from Henry constant (29.41 atm/M
 CO32m_i = ((2*bic_i+reactions['buffer2']['constant']*CO2_i)-\
             (np.sqrt((2*bic_i+reactions['buffer2']['constant']*CO2_i)**2\
@@ -59,73 +62,145 @@ OHm_i = HCO3m_i/reactions['buffer-base']['constant']/CO2_i #initial OH- bulk con
 pH_i = 14+np.log10(OHm_i/1000.0) #initial pH (in log. arg must be conc in M)
 ###########################################################################
 
+
 ###########################################################################
 #SPECIES DATA
 ###########################################################################
 #(the charges are determined automatically from the species name)
 #diffusion          [m/s]       (infinite dilution in water at 25C)
-#bulk concentrations [mol/m^3] 
+#bulk concentrations [mol/m^3]
+#zeff number of electrons need to derive product from CO2
 #Henry              [atm/M] (from http://butane.chem.uiuc.edu/pshapley/GenChem1/L23/web-L23.pdf)
 species=\
     {
-    'K':                {   'name':                 r'K^+',
+    'K':                {   'symbol':               r'K^+',
+                            'name':                 'potassium',
                             'diffusion':            1.957e-009,
                             'bulk concentration':   K_i},
-    'CO2':              {   'name':                 r'CO_2',
+    'CO2':              {   'symbol':               r'CO_2',
+                            'name':                 'carbon dioxide',
                             'diffusion':            1.91e-009,
                             'bulk concentration':   CO2_i},
-    'CO32-':            {   'name':                 r'CO_3^{2-}',
+    'CO32-':            {   'symbol':               r'CO_3^{2-}',
+                            'name':                 'carboxylate',
                             'diffusion':            9.23e-010,
                             'bulk concentration':   CO32m_i},
-    'HCO3-':            {   'name':                 r'HCO_3^-',
+    'HCO3-':            {   'symbol':               r'HCO_3^-',
+                            'name':                 'bicarbonate',
                             'diffusion':            1.185e-009,
                             'bulk concentration':   HCO3m_i},
-    'OH-':              {   'name':                 r'OH^-',
+    'OH-':              {   'symbol':               r'OH^-',
+                            'name':                 'hydroxyl',
                             'diffusion':            5.273e-009,
                             'bulk concentraiton':   OHm_i},
-    'H+':               {   'name':                 r'H^+',
+    'H+':               {   'symbol':               r'H^+',
+                            'name':                 'hydronium',
                             'bulk concentration':   10**(-pH_i)},
-    'H2':               {   'name':                 r'H2',
+    'H2':               {   'symbol':               r'H_2',
+                            'name':                 'hydrogen',
                             'diffusion':            4.50e-009,
+                            'zeff':                 2.0,
                             'Henry':                1282.05},
-    'CO':               {   'name':                 r'CO',
+    'CO':               {   'symbol':               r'CO',
+                            'name':                 'carbon monoxide',
                             'diffusion':            2.03e-009,
+                            'zeff':                 2.0,
                             'Henry':                1052.63},
-    'CH4':              {   'name':                 r'CH_4',
+    'CH4':              {   'symbol':               r'CH_4',
+                            'name':                 'methane',
+                            'zeff':                 8.0,
                             'diffusion':            1.49e-009},
-    'C2H4':             {   'name':                 r'C_2H_4',
+    'C2H4':             {   'symbol':               r'C_2H_4',
+                            'name':                 'ethylene',
+                            'zeff':                 12.0,
                             'diffusion':            1.87e-009},
-    'HCOO-':            {   'name':                 r'HCOO^-',
+    'HCOO-':            {   'symbol':               r'HCOO^-',
+                            'name':                 'formate',
+                            'zeff':                 2.0,
                             'diffusion':            1.454e-009},
-    'etol':             {   'name':                 'Ethanol',
+    'etol':             {   'name':                 'ethanol',
+                            'symbol':               r'C_2H_5OH',
+                            'zeff':                 12.0,
                             'diffusion':            0.84e-009},
-    'propol':           {   'name':                 'n-Propanol',
+    'propol':           {   'name':                 'n-propanol',
+                            'symbol':               r'C_3H_7OH',
+                            'zeff':                 18.0,
                             'diffusion':            1.3e-009},
-    'allyl':            {   'name':                 'Allylalcohol',
+    'allyl':            {   'name':                 'allylalcohol',
+                            'symbol':               r'C_3H_5OH',
+                            'zeff':                 16.0,
                             'diffusion':            1.1e-009},
     'metol':            {   'name':                 'Methanol',
+                            'symbol':               r'CH_3OH',
+                            'zeff':                 6.0,
                             'diffusion':            0.84e-009},
-    'acet':             {   'name':                 'Acetate',
+    'acet':             {   'name':                 'acetate',
+                            'symbol':               r'CH_3COO^-',
+                            'zeff':                 8.0,
                             'diffusion':            1.089e-009},
-    'etgly':            {   'name':                 'Ethyleneglycol',
-                            'diffusion':            1.102e-009}      #at 0.02 fraction of dlycol
+    'etgly':            {   'name':                 'ethyleneglycol',
+                            'symbol':               r'C_2H_4OHOH',
+                            'zeff':                 10.0,
+                            'diffusion':            1.102e-009},      #at 0.02 fraction of dlycol
+    'unknown':          {   'name':                 'unknown',
+                            'symbol':               r'C_2H_2O_2',
+                            'zeff':                 6.0, #assumed: glyoxal
+                            'diffusion':            0.0}
     }
 ###########################################################################
+
+
+###########################################################################
+#READ FLUXs FROM FILE
+###########################################################################
+
+data_fluxes,boundary_thickness,viscosity=read_data()
+potential=str(-0.95526)
+total_flux=0.0
+for key in species:
+    if key!='unknown' and 'flux' in species[key]:
+        species[key]['flux']=data_fluxes[key][potential]
+        total_flux+=data_fluxes[key][potential]
+
+if total_flux<1.0:
+    species['unknown']['flux']=1.-total_flux
+else:
+    species['unknown']['flux']=0.0
+
+#system['electrolyte viscosity']=viscosity(species['HCO3-']['bulk concentration']), #Pa*s at 25C of KHCO3 solution
+system['boundary thickness']=boundary_thickness
+system['current density']=data_fluxes['current_density']['-0.95526']
+
+###########################################################################
+#BOUNDARY CONDITIONS FOR PBE
+###########################################################################
+
+pb_bound={
+#        'potential': {'wall':'zeta'},
+#        'gradient': {'bulk':0.0}}
+    'potential':{'bulk':0.0},
+    'gradient': {'wall':0.0}} 
 
 ###########################################################################
 #SETUP AND RUN
 ###########################################################################
-t=Transport(
+tp=Transport(
     species=species,
     reactions=reactions,
     system=system,
-    integrator='odeint', #,
-    integrator_correction=False, #True,
-    dt=1e-9,
-    tmax=1e-6)
+    pb_bound=pb_bound)
 
-#t=Transport(integrator='FTCS')
-t.run()
-t.plot()
+
+tp.set_calculator('odeint')
+#tp.set_calculator('Crank-Nicolson--LF')
+#tp.set_initial_concentrations('Gouy-Chapman')
+
+c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=2)
+#scale_pb_grid
+cout=c.run(dt=0.1,tmax=20.0)
+
+p=Plot(transport=tp)
+p.plot(cout)
+
 ###########################################################################
 
