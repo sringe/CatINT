@@ -4,6 +4,9 @@ from itertools import cycle
 from units import *
 import sys
 from matplotlib import colors as mcolors
+import matplotlib.gridspec as gridspec
+import matplotlib.ticker as mtick
+
 
 class Plot():
 
@@ -14,29 +17,26 @@ class Plot():
         else:
             self.tp=transport #transport object
 
-        self.ax1=plt.subplot('311')
-        self.ax2=plt.subplot('312')
-        self.ax3=plt.subplot('313')
+    def plot(self,cout=None):
 
-    def plot(self,cout):
+        if cout is None:
+            cout=[]
+            for t in range(1):
+                cout.append([0.0]*self.tp.nspecies*self.tp.nx)
+            cout=np.array(cout)
+
 
 #        colorlist=cycle(['b','k','])
         colors=dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
         colorlist=cycle([colors[key] for key in colors])
 
-#        ax = plt.subplot(2, 2, 1)
+        fig = plt.figure(figsize=(14,5)) #gcf()
 
-        ax1 = plt.subplot2grid((2, 4), (0, 0), colspan=2, rowspan=2,)
-        ax2 = plt.subplot2grid((2, 4), (0, 2)) 
-        ax3 = plt.subplot2grid((2, 4), (0, 3)) 
-        ax4 = plt.subplot2grid((2, 4), (1, 2)) 
-        ax5 = plt.subplot2grid((2, 4), (1, 3)) 
+        flatten = lambda l: [item for sublist in l for item in sublist]
 
-#        ax1=plt.subplot('221')
-#        ax4=plt.subplot('222')
-#        ax3=plt.subplot('223')
-#        ax2=plt.subplot('224')
-    
+        gs1 = gridspec.GridSpec(2,4)
+        ax1 = fig.add_subplot(gs1[0:2,0:2])
+
         color_offset=0.3
         for k,sp in enumerate(self.tp.species):
             color=next(colorlist)
@@ -63,6 +63,11 @@ class Plot():
         ax1.set_xlabel('x (m)')
         ax1.set_ylabel('c (mol/L)')
         ax1.set_title('Concentrations')
+
+        ax2 = fig.add_subplot(gs1[2])
+        ax3 = fig.add_subplot(gs1[3])
+        ax4 = fig.add_subplot(gs1[6])
+        ax5 = fig.add_subplot(gs1[7])
         #c=self.integrate_FTCS(self.dt,self.dx)
         #for t in np.arange(0.0,1.,0.1):
         #    plt.plot(self.xmesh,c[int(t/self.dt),:],'-o',label=str(t))
@@ -91,6 +96,10 @@ class Plot():
         ax4.set_ylabel('n_ion (e*mol/L)')
         ax4.legend()
         ax4.set_title('Charge Density')
-        #plt.tight_layout()
+
+        for ax in [ax1,ax2,ax3,ax4,ax5]:
+            ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2e'))
+
+        gs1.tight_layout(fig, rect=[0.0, 0, 1, 1], h_pad=1.0)
+
         plt.show()
-    #    self.integrate_pb()

@@ -12,29 +12,79 @@ from itertools import cycle
 import sys
 from copy import deepcopy
 import collections
+import logging
+
 
 class Transport(object):
 
     def __init__(self, species=None,reactions=None,system=None,pb_bound=None,nx=100):
 
+        # set up logging to file - see previous section for more details
+        logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+                    datefmt='%m-%d %H:%M',
+                    filename='transport.log',
+                    filemode='w')
+        # define a Handler which writes INFO messages or higher to the sys.stderr
+        console = logging.StreamHandler()
+        console.setLevel(logging.INFO)
+        # set a format which is simpler for console use
+        formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+        # tell the handler to use this format
+        console.setFormatter(formatter)
+        # add the handler to the root logger
+        logging.getLogger('').addHandler(console)
+        
+        # Now, we can log to the root logger, or any other logger. First the root...
+        logging.info('Starting Transport Calculation.')
+        
+        # Now, define a couple of other loggers which might represent areas in your
+        # application:
+        
+        self.logger_db = logging.getLogger('transport.debug')
+        self.logger = logging.getLogger('transport.info')
+        
+        #all the possible keys:
+        species_keys=['bulk concentration', 'diffusion', 'name', 'symbol', 'zeff','flux']
+        system_keys=['vzeta','temperature','pressure','water viscosity','electrolyte viscosity',\
+                'epsilon','exclude species','migration','boundary thickness','current density']
+
         #go over input data and put in some defaults if none
         if species is None:
-            self.species={'species1':       {'name':r'K^+',
+            self.species={'species1':       {'symbol':r'K^+',
+                                            'name':'potassium',
                                             'diffusion':1.96e-9,
                                             'bulk concentration':0.001*1000.},
-                          'species2':       {'name':r'HCO_3^-',
+                          'species2':       {'symbol':r'HCO_3^-',
+                                            'name':'bicarbonate',
                                             'diffusion':1.2e-9,
                                             'bulk concentration':0.001*1000.}}
         else:
+            for sp in species:
+                for key in species[sp]:
+                    if key not in species_keys:
+                        self.logger.error('No such key "'+key+'" in species list. Quitting here.')
+                        sys.exit()
             self.species=species
+
+        if pb_bound is None:
+            pb_bound={
+            'potential': {'wall':'zeta'},
+            'gradient': {'bulk':0.0}}
+
 
         system_defaults={
                 'epsilon':78.36,
                 'temperature':298.14,
+                'vzeta':-0.0125,
                 'pressure':1}
         if system is None:
             self.system=system_defaults
         else:
+            for key in system:
+                if key not in system_keys:
+                    self.logger.error('No such key "'+key+'" in system list. Quitting here.')
+                    sys.exit()
             self.system=system
 
         for key in ['epsilon','temperature','pressure']:
@@ -61,6 +111,11 @@ class Transport(object):
 
         #GET CHARGES AND NCATOMS FROM CHEMICAL SYMBOLS
         self.charges,self.number_of_catoms=self.symbol_reader(self.species)
+
+        self.use_migration=True
+        if 'migration' in self.system:
+            if not self.system['migration']:
+                self.use_migration=False
 
         #DIFFUSION CONSTANTS
         self.D=[]
@@ -95,10 +150,9 @@ class Transport(object):
         else:
             #use debye-hueckel length to get a reasonable estimate
             #WARNING: this can be way to small, depending on the system of interest
-            nx_mod=max(1.,self.nx/10.)
+            nx_mod=max(1.,np.ceil(self.nx/10.))
             self.xmax=nx_mod*self.debye_length
             self.dx=self.debye_length/nx_mod
-        #self.xmax=80.e-6 #*1e-10
         self.xmesh=np.arange(0,self.xmax+self.dx,self.dx)
         self.nx=len(self.xmesh)
 
@@ -120,8 +174,8 @@ class Transport(object):
                 self.species[sp]['flux']=crate
                 tmp_co2+=crate*self.number_of_catoms[isp]
                 tmp_oh+=self.species[sp]['flux']*self.species[sp]['zeff']
-            elif sp=='HCO3-':
-                self.species[sp]['flux']=-self.species['H2']['flux']/(unit_F*self.species['H2']['zeff'])*2.
+#            elif sp=='HCO3-':
+#                self.species[sp]['flux']=-self.species['H2']['flux']/(unit_F*self.species['H2']['zeff'])*2.
 
         if 'OH-' in self.species:
             self.species['OH-']['flux']=tmp_oh
@@ -137,13 +191,26 @@ class Transport(object):
             flux_bound[str(isp)]={}
         for isp,sp in enumerate(self.species):
             if 'flux' in self.species[sp]:
-                flux_bound[str(isp)]['l']=self.species[sp]['flux']
+                flux_bound[str(isp)]['l']=-self.species[sp]['flux']
             else:
                 flux_bound[str(isp)]['l']=0.0
 
+        #debugging fluxes
+        self.logger_db.debug("DB: FLUXES")
+        for sp in ['CO2','HCO3-','CO32-','OH-','H2','CO','CH4','C2H4','HCOO-','etol','propol','allyl','metol','acet','etgly','K']:
+            for isp2,sp2 in enumerate(self.species):
+                if sp==sp2:
+                    break
+            self.logger_db.debug('{} {}'.format(sp, flux_bound[str(isp2)]['l']))
 
         #BOUNDARY AND INITIAL CONDITIONS
         self.set_boundary_and_initial_conditions(pb_bound,flux_bound)
+
+
+        #INITIALIZE FIELD AND POTENTIAL
+        self.efield=np.zeros([self.nx])
+        self.potential=np.zeros([self.nx])
+        self.total_charge=np.zeros([self.nx])
 
 
     def symbol_reader(self,species):
@@ -248,11 +315,12 @@ class Transport(object):
                 #integration will start at the site where dc_dt is defined
                 efield_boundary={'l':0.0})    #in V/Ang
 
+
     def set_initial_concentrations(self,func):
         """we can set the initial concentrations to a particular function"""
         if func=='Gouy-Chapman':
             if self.nspecies!=2:
-                print('Gouy-Chapman limit only implemented for two species, cationic' 
+                self.logger.error('Gouy-Chapman limit only implemented for two species, cationic'+\
                         'and anionic. Not applying initialization.')
                 return
             function=self.gouy_chapman
@@ -282,8 +350,8 @@ class Transport(object):
 
         v0=np.zeros([2]) #this is phi' and phi at x=0
         sol,output = integrate.odeint(d, v0, self.xmesh,full_output=True) #, args=(b, c))
-        print np.shape(sol)
-        print sol[:,0]
+        self.logger_db.debug('Shape off solution vector = '.format(np.shape(sol)))
+        self.logger_db.debug('Initial solution vector = '.format(sol[:,0]))
         #b_min = minimize(func, b0, args=(z0, m, k, g, a), constraints=cons)
         self.ax1.plot(self.xmesh,sol[:,0]/1e10,'-',label='E (V/Ang)')
         self.ax2.plot(self.xmesh,sol[:,1],'-',label='phi (V)')
@@ -351,7 +419,7 @@ class Transport(object):
         elif len(dc_dt_boundary)>0:
             self.boundary_type='dc_dt'
         else:
-            print('No boundary conditions defined, stopping here.')
+            self.logger.error('No boundary conditions defined, stopping here.')
             sys.exit()
 
         flux_bound=np.zeros([self.nspecies,2])

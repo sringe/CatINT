@@ -23,7 +23,7 @@ class Calculator():
             scale_pb_grid=1.,tau_jacobi=1e-7):
 
         if transport==None:
-            print('No transport object provided for calculator. Stopping here.')
+            self.tp.logger.error('No transport object provided for calculator. Stopping here.')
             sys.exit()
         else:
             self.tp=transport #transport object
@@ -41,7 +41,7 @@ class Calculator():
             self.calc=calc
 
         if self.calc not in ['FTCS','Crank-Nicolson','odeint','vode','lsoda','dopri5','dop853','odeint']:
-            print('No calculator found with this name. Aborting.')
+            self.tp.logger.error('No calculator found with this name. Aborting.')
             sys.exit()
         
         #use a finer grid for PBE integration (factor of scale_pb_grid smaller than
@@ -57,6 +57,7 @@ class Calculator():
         if hasattr(self.tp,'dt') and hasattr(self.tp,'tmax'):
             self.tp.tmesh=np.arange(0,self.tp.tmax+self.tp.dt,self.tp.dt)
 
+        self.oldtime=np.inf
         self.tp.ntout=ntout
         self.initialize='bla'
         return
@@ -72,36 +73,44 @@ class Calculator():
                     continue
                 #rates of educts:
                 for reactant in reaction['reactants'][0]:
-                    if reactant == 'H2O':
+                    if reactant not in self.tp.species:
                         continue
                     k=species_names.index(reactant)
                     rates[k,i]=0.0
+                    prod=1.
                     for reactant2 in reaction['reactants'][0]:
-                        if reactant2 == 'H2O':
+                        if reactant2 not in self.tp.species:
                             continue
                         k2=species_names.index(reactant2)
-                        rates[k,i]-=C[k2,i]*reaction['rates'][0]
+                        prod*=C[k2,i]
+                    rates[k,i]-=prod*reaction['rates'][0]
+                    prod=1.
                     for reactant2 in reaction['reactants'][1]:
-                        if reactant2 == 'H2O':
+                        if reactant2 not in self.tp.species:
                             continue
                         k2=species_names.index(reactant2)
-                        rates[k,i]+=C[k2,i]*reaction['rates'][1]
+                        prod*=C[k2,i]
+                    rates[k,i]+=prod*reaction['rates'][1]
                 #rates of products
                 for reactant in reaction['reactants'][1]:
-                    if reactant == 'H2O':
+                    if reactant not in self.tp.species:
                         continue
                     k=species_names.index(reactant)
                     rates[k,i]=0.0
+                    prod=1.
                     for reactant2 in reaction['reactants'][0]:
-                        if reactant2 == 'H2O':
+                        if reactant2 not in self.tp.species:
                             continue
                         k2=species_names.index(reactant2)
-                        rates[k,i]+=C[k2,i]*reaction['rates'][0]
+                        prod*=C[k2,i]
+                    rates[k,i]+=prod*reaction['rates'][0]
+                    prod=1.
                     for reactant2 in reaction['reactants'][1]:
-                        if reactant2 == 'H2O':
+                        if reactant2 not in self.tp.species:
                             continue
                         k2=species_names.index(reactant2)
-                        rates[k,i]-=C[k2,i]*reaction['rates'][1]
+                        prod*=C[k2,i]
+                    rates[k,i]-=prod*reaction['rates'][1]
         return rates
 
     def integrate_pnp(self,dx,nx,dt,nt,ntout,method):
@@ -121,14 +130,12 @@ class Calculator():
             A = diags([-1, 0, 1], [-1, 0, 1], 
                   shape=(nx-2, nx-2)).toarray()
             A/=(2*dx)
-            print('\n'.join([''.join(['{:10}'.format(item) for item in row])
+            self.tp.logger_db.debug('\n'.join([''.join(['{:10}'.format(item) for item in row])
       for row in A]))
             #RHS vector:
             f=[]
             for k in range(self.tp.nspecies):
                 f.extend(defield_dx[k*nx+1:(k+1)*nx-1])
-            print f
-            print np.linalg.det(A)
             tmp = np.linalg.solve(A,f) #this gives vector without initial and final elements
             for k in range(self.tp.nspecies):
                 efield[k*nx]=0.0
@@ -344,7 +351,7 @@ class Calculator():
 
         def integrate_FTCS_odeint_old(dx,nx,dt,nt,c0,ntout):
             sol,output = integrate.odeint(ode_func, c0, range(0,nt),full_output=True) #, args=(b, c))
-            print 'Used minimal time = ',min(output['tcur']),' and maximal time = ',max(output['tcur'])
+            self.tp.logger.info('Used minimal time = ',min(output['tcur']),' and maximal time = ',max(output['tcur']))
             #return the results
             cout = []
             for n in range(0,nt):
@@ -408,8 +415,9 @@ class Calculator():
 
             #time iteration
             for n in range(1,nt):
-                print 'time step = ',n
-                v,grad_v,lapl_v=get_potential_and_gradient(C,dx,nx)
+                self.tp.logger.info('time step = ',n)
+                if self.tp.use_migration:
+                    v,grad_v,lapl_v=get_potential_and_gradient(C,dx,nx)
                 with open('results.txt','a') as outfile:
                     outfile.write('{} {}\n'.format(n*dt,np.sqrt(sum((v-np.array([self.tp.gouy_chapman(x)[0] for x in self.tp.xmesh]))**2/len(v)))))
                 for k in range(self.tp.nspecies):
@@ -440,7 +448,8 @@ class Calculator():
 
                     A=a_matrix(s)
                     B1=b1_matrix(s)
-                    B1,A=add_field(B1,A,grad_v,lapl_v,ee)
+                    if self.tp.use_migration:
+                        B1,A=add_field(B1,A,grad_v,lapl_v,ee)
                     B = np.dot(C[k,1:-1],B1)
                     B=add_boundary_values(B,grad_v,s,ee,C[k,0],C[k,-1],COLD[k,0],COLD[k,-1])
 
@@ -536,9 +545,9 @@ class Calculator():
                                 B1[i,j]+=ee[k]*self.tp.efield[ii+1]/4./dx
                                 A[i,j]-=ee[k]*self.tp.efield[ii+1]/4./dx
                 #print '-'*50
-                #print('\n'.join([''.join(['{:4}'.format(item) for item in row])
+                #self.tp.logger.info('\n'.join([''.join(['{:4}'.format(item) for item in row])
                 #    for row in A]))
-                #print('\n'.join([''.join(['{:4}'.format(item) for item in row])
+                #self.tp.logger.info('\n'.join([''.join(['{:4}'.format(item) for item in row])
                 #    for row in B1]))
                 #print '-'*50
                 #end electric field modifications
@@ -583,7 +592,7 @@ class Calculator():
             bounds=self.tp.pb_bound
 
             if bounds['gradient']['wall'] is not None and bounds['gradient']['bulk'] is not None:
-                print('Cannot use two boundary conditions for gradient, quitting.')
+                self.tp.logger.error('Cannot use two boundary conditions for gradient, quitting.')
                 sys.exit()
 
             def integrate_1d_func(var0,integrand,n=1,inv=False):
@@ -614,7 +623,7 @@ class Calculator():
                         else:
                             var[i] = var[i-1] + integrand[i]*dx
                 if (n==2):
-                    print 'Converged in ',i_step,' steps.'
+                    self.tp.logger.info('Converged in ',i_step,' steps.')
                 return var
 
             # calculate RHS of PBE
@@ -678,13 +687,18 @@ class Calculator():
             """
             def ode_func(t,c,dx,dt):
 
+                if self.oldtime!=t:
+                    self.tp.logger.info('Current time = {}'.format(t,max(self.tp.tmesh)))
+                self.oldtime=t
+
                 #map concentrations onto 2D array:
                 C = np.zeros([self.tp.nspecies,nx])
                 for k in range(self.tp.nspecies):
                     C[k,:]=c[k*nx:(k+1)*nx]
 
-                #get potential and field
-                v,grad_v,lapl_v=get_potential_and_gradient(C,dx,nx)
+                if self.tp.use_migration:
+                    #get potential and field
+                    v,grad_v,lapl_v=get_potential_and_gradient(C,dx,nx)
 
                 DC_DT = np.zeros([self.tp.nspecies,nx])
 #                flux = np.zeros([self.tp.nspecies,nx])
@@ -712,6 +726,13 @@ class Calculator():
                 corr=0.0
 
                 rates=self.get_rates(C)
+                self.tp.logger_db.debug('x = {}'.format(self.tp.xmesh[0]))
+
+                for sp in ['CO2','HCO3-','CO32-','OH-','H2','CO','CH4','C2H4','HCOO-','etol','propol','allyl','metol','acet','etgly','K']:
+                    for isp2,sp2 in enumerate(self.tp.species):
+                        if sp==sp2:
+                            break
+                    self.tp.logger_db.debug('{} {} {}'.format(sp, rates[isp2,0], C[isp2,0]))
 
                 for k in range(0,self.tp.nspecies):
                     #set concentration to be constant on the right side
@@ -720,18 +741,29 @@ class Calculator():
                         #dflux_dx=(flux[k,i+1]-flux[k,i-1])/(2.*dx)
                         dc_dx=(C[k,i+1]-C[k,i-1])/(2.*dx)
                         dc_dx_2=(C[k,i+1]-2*C[k,i]+C[k,i-1])/(dx**2)
-                        dcgradv_dx=(C[k,i+1]*grad_v[i+1]-C[k,i-1]*grad_v[i-1])/(2.*dx)
+                        if self.tp.use_migration:
+                            dcgradv_dx=(C[k,i+1]*grad_v[i+1]-C[k,i-1]*grad_v[i-1])/(2.*dx)
+                        else:
+                            dcgradv_dx=0.0
+                            lapl_v=[0.0]*nx
+                            grad_v=[0.0]*nx
                         if i==0:
                             if self.use_lax_friedrich:
                                 corr=(C[k,1]-C[k,0])/dt
                             #we have to consider no flux boundary condition here
                             #setting C[k,-1]=C[k,1] considers this:
+                            flux=self.tp.flux_bound[k,0] #this is dc/dx at i=0
                             DC_DT[k,i]=\
                                 corr+\
                                 self.tp.D[k]*\
                                     (\
-                                    2*(C[k,1]-C[k,0]-self.tp.flux_bound[k,0]*2.*dx)/dx**2\
-                                    +self.tp.beta*self.tp.charges[k]*dcgradv_dx\
+                                    #1st part: [dc/dx(i=1)-dc/dx(i=0)] / dx
+                                    #2*(C[k,1]-C[k,0]-self.tp.flux_bound[k,0]*2.*dx)/dx**2\
+                                    ((C[k,1]-C[k,0])/dx-flux)/dx\
+                                    #2nd part
+                                    #+self.tp.beta*self.tp.charges[k]*dcgradv_dx\
+                                    +self.tp.beta*self.tp.charges[k]*(\
+                                        C[k,0]*lapl_v[0]+flux*grad_v[0])
                                     )+\
                                 rates[k,i]
                         else:
@@ -760,8 +792,8 @@ class Calculator():
                 return ode_func(c,t,dx,dt)
 
             if self.tp.calc in ['lsoda','odeint']:
-                sol,output = integrate.odeint(ode_func_inv, c0, self.tp.tmesh, args=(dx,dt),full_output=True, ml=self.tp.nspecies, mu=self.tp.nspecies)
-                print 'Used minimal time = ',min(output['tcur']),' and maximal time = ',max(output['tcur'])
+                sol,output = integrate.odeint(ode_func_inv, c0, self.tp.tmesh, args=(dx,dt),full_output=True) #, ml=self.tp.nspecies, mu=self.tp.nspecies)
+                self.tp.logger.info('Used minimal time = ',min(output['tcur']),' and maximal time = ',max(output['tcur']))
             else:
                 r = ode(ode_func).set_integrator(self.tp.calc) #('dopri5') #, method='bdf')
                 r.set_initial_value(c0).set_f_params(dx,dt) #c, t, dx, dt
@@ -771,7 +803,7 @@ class Calculator():
                 sol=np.array(sol)
 
             #return the results
-            print np.shape(sol)
+            self.tp.logger_db.debug(np.shape(sol))
             cout = []
             for n in range(0,nt):
                 if n % int(nt/float(ntout)) == 0 or n==nt-1:
@@ -794,7 +826,7 @@ class Calculator():
                 C[k,:] = C0[k*nx:(k+1)*nx]
 
             for n in range(0,nt):
-                print 'time step = ',n
+                self.tp.logger_db.debug('time step = ',n)
                 v,grad_v,lapl_v=get_potential_and_gradient(C,dx,nx)
                 for k in range(self.tp.nspecies):
                     #Robin BC for concentrations on left side (wall)
@@ -924,12 +956,11 @@ class Calculator():
                 self.tp.charges=np.array([0.0]*len(self.tp.charges))
                 cout,s=integrate_Crank_Nicolson_pnp(dx,nx,dt,nt,self.tp.c0,ntout)
                 self.tp.charges=charges_tmp
-                print np.shape(cout)
+                self.tp.logger_db.debug(np.shape(cout))
                 self.tp.ax1.plot(self.tp.xmesh,cout[-1][:nx],'-r')
                 self.tp.ax1.set_ylim([min(cout[-1][:nx]),max(cout[-1][:nx])])
                 cout,s=integrate_Crank_Nicolson_pnp(dx,nx,dt,nt,cout[-1],ntout)
             else:
-                print 'not diff'
                 cout,s=integrate_Crank_Nicolson(dx,nx,dt,nt,self.tp.c0,ntout)
             dataplot=cout[-1]
         return cout

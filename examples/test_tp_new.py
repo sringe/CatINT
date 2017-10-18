@@ -3,6 +3,7 @@ from transport.calculator import Calculator
 from transport.plot import Plot
 from read_data import read_data
 import numpy as np
+import sys
 
 ###########################################################################
 #REACTIONS
@@ -14,20 +15,25 @@ import numpy as np
 reactions=\
     {
     'buffer':           {   'reactants':            [['CO2','H2O'],['H2CO3']],
-                            'constant':             2.63e-003},
+                            'constant':             2.63e-3},                               #KH
     'buffer-acid':      {   'reactants':            [['CO2','H2O'],['HCO3-','H+']],
-                            'constant':             (4.44e-007)*1000.0},
+                            'constant':             (4.44e-7)*1000.0},                      #K1a
     'buffer-base':      {   'reactants':            [['CO2','OH-'],['HCO3-']],
-                            'constant':             (4.44e007)/1000.0,
-                            'rates':                [(5.93e003)/1000.0,(5.93e003)/(4.44e007)]},
+                            'constant':             (4.44e7)/1000.0,                        #K1b
+                            'rates':                [(5.93e3)/1000.0,(5.93e3)/(4.44e7)]},   #"k1f, k1r"
     'buffer-base2':     {   'reactants':            [['HCO3-','OH-'],['CO32-','H2O']],
-                            'constant':             (4.66e003)/1000.0,
-                            'rates':                [(1.0e008)/1000.0,(1.0e008)/(4.66e003)]},
+                            'constant':             (4.66e3)/1000.0,
+                            'rates':                [(1.0e8)/1000.0,(1.0e8)/(4.66e3)]},     #"k2f,k2r"
     'buffer2':          {   'reactants':            [['CO2','CO32-','H2O'],['HCO3-','HCO3-']],
-                            'constant':             9.52e003}
+                            'constant':             9.52e3}                                 #K3
     }
 ###########################################################################
 
+###########################################################################
+#READ DATA FILE
+###########################################################################
+
+data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
 
 ###########################################################################
 #THERMODYNAMIC VARIABLES
@@ -40,7 +46,8 @@ system=\
     #calculate the electrolyte viscosity. This will be used to rescale the diffusion coefficients
     #according to Einstein-Stokes relation: D_in_electrolyte = D_in_water * mu0/mu
     'epsilon': 78.36,
-    'exclude species': ['H+'] #exclude this species from PNP equations
+    'exclude species': ['H+'], #exclude this species from PNP equations
+    'migration': False
     }
 ###########################################################################
 
@@ -48,8 +55,6 @@ system=\
 #INITIAL CONCENTRATIONS
 ###########################################################################
 #set up the initial concentrationss from this constants:
-bic_i=1.0 #mol/l
-bic_i*=1000. #convert to mol/m^3
 CO2_i = 0.03419*system['pressure']*1000. #initial CO2(aq) bulk concentrations at t=0 and Pressure P in [mol/m3] units
                         #from Henry constant (29.41 atm/M
 CO32m_i = ((2*bic_i+reactions['buffer2']['constant']*CO2_i)-\
@@ -92,20 +97,18 @@ species=\
     'OH-':              {   'symbol':               r'OH^-',
                             'name':                 'hydroxyl',
                             'diffusion':            5.273e-009,
-                            'bulk concentraiton':   OHm_i},
+                            'bulk concentration':   OHm_i},
     'H+':               {   'symbol':               r'H^+',
                             'name':                 'hydronium',
                             'bulk concentration':   10**(-pH_i)},
     'H2':               {   'symbol':               r'H_2',
                             'name':                 'hydrogen',
                             'diffusion':            4.50e-009,
-                            'zeff':                 2.0,
-                            'Henry':                1282.05},
+                            'zeff':                 2.0},
     'CO':               {   'symbol':               r'CO',
                             'name':                 'carbon monoxide',
                             'diffusion':            2.03e-009,
-                            'zeff':                 2.0,
-                            'Henry':                1052.63},
+                            'zeff':                 2.0},
     'CH4':              {   'symbol':               r'CH_4',
                             'name':                 'methane',
                             'zeff':                 8.0,
@@ -149,16 +152,15 @@ species=\
     }
 ###########################################################################
 
-
 ###########################################################################
-#READ FLUXs FROM FILE
+#MODIFY DATA FROM FILES
 ###########################################################################
 
-data_fluxes,boundary_thickness,viscosity=read_data()
-potential=str(-0.95526)
+
+potential=str(-1.16953) #-0.95526)
 total_flux=0.0
 for key in species:
-    if key!='unknown' and 'flux' in species[key]:
+    if key!='unknown' and key in data_fluxes: #'flux' in species[key]:
         species[key]['flux']=data_fluxes[key][potential]
         total_flux+=data_fluxes[key][potential]
 
