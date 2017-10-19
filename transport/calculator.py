@@ -16,6 +16,7 @@ from copy import deepcopy
 from scipy.optimize import minimize
 from scipy.integrate import ode
 from scipy import interpolate
+import os
 
 class Calculator():
 
@@ -31,6 +32,9 @@ class Calculator():
         if calc==None:
             calc=self.tp.calc
         
+        if os.path.exists('results.txt'):
+            os.remove('results.txt')
+
         self.use_lax_friedrich=False
         string=calc.split('--')
         if len(string)>1:
@@ -415,11 +419,23 @@ class Calculator():
 
             #time iteration
             for n in range(1,nt):
-                self.tp.logger.info('time step = ',n)
+                self.tp.logger.info('time step = {}'.format(n))
                 if self.tp.use_migration:
                     v,grad_v,lapl_v=get_potential_and_gradient(C,dx,nx)
+                import matplotlib.pyplot as plt
+                plt.plot(self.tp.xmesh,v,'o')
+                #plt.plot(self.tp.xmesh,C[1,:],'o')
+                xfine=np.linspace(min(self.tp.xmesh),max(self.tp.xmesh),1000)
+                v1=np.array([self.tp.gouy_chapman(x)[0] for x in xfine])
+                v2=np.array([self.tp.gouy_chapman(x,vzeta=self.tp.vzeta_init)[0] for x in xfine])
+                plt.plot(xfine,v1,'-')
+                plt.plot(xfine,v2,'x')
+                plt.show()
+                sys.exit()
                 with open('results.txt','a') as outfile:
-                    outfile.write('{} {}\n'.format(n*dt,np.sqrt(sum((v-np.array([self.tp.gouy_chapman(x)[0] for x in self.tp.xmesh]))**2/len(v)))))
+                    rmsd1=np.sqrt(sum((v-np.array([self.tp.gouy_chapman(x)[0] for x in self.tp.xmesh]))**2/len(v)))
+                    rmsd2=np.sqrt(sum((v-np.array([self.tp.gouy_chapman(x,vzeta=self.tp.vzeta_init)[0] for x in self.tp.xmesh]))**2/len(v)))
+                    outfile.write('{} {} {}\n'.format(n*dt,rmsd1,rmsd2))
                 for k in range(self.tp.nspecies):
                     if n==1:
                         COLD[k,:]=deepcopy(C[k,:])
@@ -595,23 +611,42 @@ class Calculator():
                 self.tp.logger.error('Cannot use two boundary conditions for gradient, quitting.')
                 sys.exit()
 
+            def solve_poisson(q,nx,dx,sol0):
+                #solve poisson equation with rhs = q
+                A=diags([1, -2, 1], [-1, 0, 1],\
+                      shape=(nx-2, nx-2)).toarray()
+                print np.shape(q),nx
+                print np.shape(q[1:nx-1])
+                b=np.array(q[1:nx-1])*dx**2
+                b[0]-=sol0[0]
+                b[-1]-=sol0[-1]
+                x=np.linalg.solve(A,b)
+                print 'Check', np.allclose(np.dot(A, x), b)
+                sol_final=[sol0[0]]
+                for s in x:
+                    sol_final.append(s)
+                sol_final.append(sol0[-1])
+                return sol_final
+
             def integrate_1d_func(var0,integrand,n=1,inv=False):
                 #integrates any function "rhs" n times, var0 is the initial guess for the result
                 var_old=deepcopy(var0)
                 var=deepcopy(var0)
                 if n==2:
-                    error=np.inf
+                    var=solve_poisson(integrand,nx,self.tp.dx,var0)
                     i_step=0
-                    while error>self.tau_jacobi**2:# or i_step<3:
-                        i_step+=1
-                        if inv:
-                            iterator=reversed(range(1,nx-1))
-                        else:
-                            iterator=range(1,nx-1)
-                        for i in iterator:
-                            var[i] = 1/2.*(-dx**2*integrand[i]+var_old[i+1]+var_old[i-1])
-                        error=sum((var_old-var)**2/len(var))
-                        var_old=deepcopy(var)
+                    #error=np.inf
+                    #i_step=0
+                    #while error>self.tau_jacobi**2:# or i_step<3:
+                    #    i_step+=1
+                    #    if inv:
+                    #        iterator=reversed(range(1,nx-1))
+                    #    else:
+                    #        iterator=range(1,nx-1)
+                    #    for i in iterator:
+                    #        var[i] = 1/2.*(-dx**2*integrand[i]+var_old[i+1]+var_old[i-1])
+                    #    error=sum((var_old-var)**2/len(var))
+                    #    var_old=deepcopy(var)
                 elif n==1:
                     if inv:
                         iterator=reversed(range(1,nx-1))
@@ -623,7 +658,7 @@ class Calculator():
                         else:
                             var[i] = var[i-1] + integrand[i]*dx
                 if (n==2):
-                    self.tp.logger.info('Converged in ',i_step,' steps.')
+                    self.tp.logger.info('Converged in {} steps.'.format(i_step))
                 return var
 
             # calculate RHS of PBE
@@ -700,6 +735,11 @@ class Calculator():
                     #get potential and field
                     v,grad_v,lapl_v=get_potential_and_gradient(C,dx,nx)
 
+                with open('results.txt','a') as outfile:
+                    rmsd1=np.sqrt(sum((v-np.array([self.tp.gouy_chapman(x)[0] for x in self.tp.xmesh]))**2/len(v)))
+                    rmsd2=np.sqrt(sum((v-np.array([self.tp.gouy_chapman(x,vzeta=self.tp.vzeta_init)[0] for x in self.tp.xmesh]))**2/len(v)))
+                    outfile.write('{} {} {}\n'.format(t,rmsd1,rmsd2))
+
                 DC_DT = np.zeros([self.tp.nspecies,nx])
 #                flux = np.zeros([self.tp.nspecies,nx])
 #
@@ -725,14 +765,17 @@ class Calculator():
 #                    flux[k,-1]=flux[k,-2]+(flux[k,-2]-flux[k,-3])
                 corr=0.0
 
-                rates=self.get_rates(C)
-                self.tp.logger_db.debug('x = {}'.format(self.tp.xmesh[0]))
+                if self.tp.use_reactions:
+                    rates=self.get_rates(C)
+                    self.tp.logger_db.debug('x = {}'.format(self.tp.xmesh[0]))
 
-                for sp in ['CO2','HCO3-','CO32-','OH-','H2','CO','CH4','C2H4','HCOO-','etol','propol','allyl','metol','acet','etgly','K']:
-                    for isp2,sp2 in enumerate(self.tp.species):
-                        if sp==sp2:
-                            break
-                    self.tp.logger_db.debug('{} {} {}'.format(sp, rates[isp2,0], C[isp2,0]))
+                    for sp in ['CO2','HCO3-','CO32-','OH-','H2','CO','CH4','C2H4','HCOO-','etol','propol','allyl','metol','acet','etgly','K']:
+                        for isp2,sp2 in enumerate(self.tp.species):
+                            if sp==sp2:
+                                break
+                        self.tp.logger_db.debug('{} {} {}'.format(sp, rates[isp2,0], C[isp2,0]))
+                else:
+                    rates=np.zeros([self.tp.nspecies,nx])
 
                 for k in range(0,self.tp.nspecies):
                     #set concentration to be constant on the right side

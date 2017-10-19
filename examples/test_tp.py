@@ -11,20 +11,22 @@ from transport.plot import Plot
 #FTCS
 #FTCS--LF
 
+
+
 pb_bound={
-        'potential': {'wall':'zeta'},
-        'gradient': {'bulk':0.0}}
+        'potential': {'wall':'zeta','bulk':0.0}}
+#        'gradient': {'bulk':0.0}}
 #pb_bound={
 #        'potential': {'wall':'zeta','bulk':0.0}}
 
-tp=Transport(pb_bound=pb_bound)
+tp=Transport(pb_bound=pb_bound,system={'vzeta':-0.25},nx=800)
 tp.set_calculator('odeint')
-#tp.set_calculator('Crank-Nicolson--LF')
-#tp.set_initial_concentrations('Gouy-Chapman')
+tp.set_calculator('Crank-Nicolson--LF')
+tp.set_initial_concentrations('Gouy-Chapman',vzeta=-0.26)
 
-c=Calculator(transport=tp,tau_jacobi=1e-5)
+c=Calculator(transport=tp,tau_jacobi=1e-7,ntout=5)
 #scale_pb_grid
-cout=c.run(dt=1e-12,tmax=1e-8)
+cout=c.run(dt=1e-13,tmax=1e-5)
 
 p=Plot(transport=tp)
 p.plot(cout)

@@ -117,6 +117,11 @@ class Transport(object):
             if not self.system['migration']:
                 self.use_migration=False
 
+        self.use_reactions=False
+        if self.reactions is not None:
+            if any(['rates' in [self.reactions[reaction] for reaction in self.reactions]]):
+                self.use_reactions=True
+
         #DIFFUSION CONSTANTS
         self.D=[]
         for sp in self.species:
@@ -191,7 +196,7 @@ class Transport(object):
             flux_bound[str(isp)]={}
         for isp,sp in enumerate(self.species):
             if 'flux' in self.species[sp]:
-                flux_bound[str(isp)]['l']=-self.species[sp]['flux']
+                flux_bound[str(isp)]['l']=self.species[sp]['flux']
             else:
                 flux_bound[str(isp)]['l']=0.0
 
@@ -308,6 +313,10 @@ class Transport(object):
                     self.pb_bound[key1]['wall']=None
                     self.pb_bound[key1]['bulk']=None
 
+        if 'vzeta' in self.system:
+            self.vzeta_init=self.system['vzeta']
+        else:
+            self.vzeta_init=None
 
         self.set_boundary_conditions(\
                 flux_boundary=flux_bound,         #in mol/s/cm^2
@@ -316,9 +325,13 @@ class Transport(object):
                 efield_boundary={'l':0.0})    #in V/Ang
 
 
-    def set_initial_concentrations(self,func):
+    def set_initial_concentrations(self,func,vzeta=None):
         """we can set the initial concentrations to a particular function"""
         if func=='Gouy-Chapman':
+            if vzeta is None:
+                vzeta=self.system['vzeta']
+            else:
+                self.vzeta_init=vzeta
             if self.nspecies!=2:
                 self.logger.error('Gouy-Chapman limit only implemented for two species, cationic'+\
                         'and anionic. Not applying initialization.')
@@ -331,7 +344,7 @@ class Transport(object):
             for i in range(self.nx):
                 c_initial_specific[str(k)][str(i)]=\
                     self.species[sp]['bulk concentration']*\
-                    np.exp(-self.beta*self.charges[k]*function(self.xmesh[i])[0])
+                    np.exp(-self.beta*self.charges[k]*function(self.xmesh[i],vzeta=vzeta)[0])
         self.set_initial_conditions(c_initial_specific=c_initial_specific)
         return
 
@@ -362,11 +375,13 @@ class Transport(object):
         return sol
 
        
-    def gouy_chapman(self,x):
+    def gouy_chapman(self,x,vzeta=None):
+        if vzeta is None:
+            vzeta=self.system['vzeta']
         def func(x):
-            term1 = 1.+np.tanh(self.system['vzeta']*self.beta*unit_F/4.)*\
+            term1 = 1.+np.tanh(vzeta*self.beta*unit_F/4.)*\
                 np.exp(-1./self.debye_length*x)
-            term2 = 1.-np.tanh(self.system['vzeta']*self.beta*unit_F/4.)*\
+            term2 = 1.-np.tanh(vzeta*self.beta*unit_F/4.)*\
                 np.exp(-1./self.debye_length*x)
             return 2./(self.beta*unit_F)*np.log(term1/term2)
         grad=(func(x+1e-10)-func(x-1e-10))/(2*1e-10)
