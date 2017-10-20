@@ -14,7 +14,6 @@ from copy import deepcopy
 import collections
 import logging
 
-
 class Transport(object):
 
     def __init__(self, species=None,reactions=None,system=None,pb_bound=None,nx=100):
@@ -76,7 +75,7 @@ class Transport(object):
         system_defaults={
                 'epsilon':78.36,
                 'temperature':298.14,
-                'vzeta':-0.0125,
+                'vzeta':0.0, #-0.0125,
                 'pressure':1}
         if system is None:
             self.system=system_defaults
@@ -87,7 +86,7 @@ class Transport(object):
                     sys.exit()
             self.system=system
 
-        for key in ['epsilon','temperature','pressure']:
+        for key in ['epsilon','temperature','pressure','vzeta']:
             if key not in self.system:
                 self.system[key]=system_defaults[key]
 
@@ -119,9 +118,9 @@ class Transport(object):
 
         self.use_reactions=False
         if self.reactions is not None:
-            if any(['rates' in [self.reactions[reaction] for reaction in self.reactions]]):
+            if any(['rates' in self.reactions[reaction] for reaction in self.reactions]):
                 self.use_reactions=True
-
+                self.logger.info('Found reactions.')
         #DIFFUSION CONSTANTS
         self.D=[]
         for sp in self.species:
@@ -156,10 +155,18 @@ class Transport(object):
             #use debye-hueckel length to get a reasonable estimate
             #WARNING: this can be way to small, depending on the system of interest
             nx_mod=max(1.,np.ceil(self.nx/10.))
-            self.xmax=nx_mod*self.debye_length
+            self.xmax=self.debye_length*nx_mod #*50. #*nx_mod
             self.dx=self.debye_length/nx_mod
         self.xmesh=np.arange(0,self.xmax+self.dx,self.dx)
         self.nx=len(self.xmesh)
+
+#        if min(self.xmesh)<=0:
+#            min_x=1e-15
+#        else:
+#            min_x=min(self.xmesh)
+#        self.xmesh=np.logspace(np.log10(min_x),np.log10(self.xmax-self.dx),self.nx)
+#        self.nx=len(self.xmesh)
+#        self.nmax=max(self.xmesh)
 
         #A FEW VARIABLES
         self.external_charge=np.zeros([len(self.xmesh)])
@@ -196,7 +203,7 @@ class Transport(object):
             flux_bound[str(isp)]={}
         for isp,sp in enumerate(self.species):
             if 'flux' in self.species[sp]:
-                flux_bound[str(isp)]['l']=self.species[sp]['flux']
+                flux_bound[str(isp)]['l']=-self.species[sp]['flux']
             else:
                 flux_bound[str(isp)]['l']=0.0
 
@@ -313,14 +320,14 @@ class Transport(object):
                     self.pb_bound[key1]['wall']=None
                     self.pb_bound[key1]['bulk']=None
 
-        if 'vzeta' in self.system:
-            self.vzeta_init=self.system['vzeta']
-        else:
-            self.vzeta_init=None
+        #if 'vzeta' in self.system:
+        #    self.vzeta_init=self.system['vzeta']
+        #else:
+        self.vzeta_init=None
 
         self.set_boundary_conditions(\
                 flux_boundary=flux_bound,         #in mol/s/cm^2
-                dc_dt_boundary={'all':{'l':0.0}},     #in mol/l/s #give either left OR right boundary condition here
+                dc_dt_boundary={'all':{'r':0.0}},     #in mol/l/s #give either left OR right boundary condition here
                 #integration will start at the site where dc_dt is defined
                 efield_boundary={'l':0.0})    #in V/Ang
 
@@ -383,7 +390,7 @@ class Transport(object):
                 np.exp(-1./self.debye_length*x)
             term2 = 1.-np.tanh(vzeta*self.beta*unit_F/4.)*\
                 np.exp(-1./self.debye_length*x)
-            return 2./(self.beta*unit_F)*np.log(term1/term2)
+            return 2./(self.beta*abs(self.charges[0]))*np.log(term1/term2)
         grad=(func(x+1e-10)-func(x-1e-10))/(2*1e-10)
         return func(x),grad
 
@@ -476,10 +483,11 @@ class Transport(object):
         dc_dt_bound=allocate_fluxes(dc_dt_boundary,dc_dt_bound)
         flux_bound=allocate_fluxes(flux_boundary,flux_bound)
 
-        for l in [dc_dt_bound,efield_bound,flux_bound]:
-            l=np.array(l)
+        dc_dt_bound=np.array(dc_dt_bound)
+        efield_bound=np.array(efield_bound)
+        flux_bound=np.array(flux_bound)
 
-        self.flux_bound=flux_bound*100**2
+        self.flux_bound=flux_bound #*100**2
         self.dc_dt_bound=dc_dt_bound*10**3
         self.efield_bound=[]
         for e in efield_bound:

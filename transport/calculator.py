@@ -21,19 +21,19 @@ import os
 class Calculator():
 
     def __init__(self,transport=None,dt=None,tmax=None,ntout=5,calc=None,
-            scale_pb_grid=1.,tau_jacobi=1e-7):
+            scale_pb_grid=None,tau_jacobi=1e-7):
 
-        if transport==None:
+        if transport is None:
             self.tp.logger.error('No transport object provided for calculator. Stopping here.')
             sys.exit()
         else:
             self.tp=transport #transport object
         
-        if calc==None:
+        if calc is None:
             calc=self.tp.calc
         
-        if os.path.exists('results.txt'):
-            os.remove('results.txt')
+#        if os.path.exists('results.txt'):
+#            os.remove('results.txt')
 
         self.use_lax_friedrich=False
         string=calc.split('--')
@@ -54,13 +54,13 @@ class Calculator():
         #accuracy of Jacoby iteration if potential needs to be outputted:
         self.tau_jacobi=tau_jacobi
 
-        if dt!=None and hasattr(self.tp,'dt'):
+        if dt is not None: # and hasattr(self.tp,'dt'):
             self.tp.dt=dt
-        if tmax!=None and hasattr(self.tp,'tmax'):
+        if tmax is not None: # and hasattr(self.tp,'tmax'):
             self.tp.tmax=tmax
-        if hasattr(self.tp,'dt') and hasattr(self.tp,'tmax'):
+       # if hasattr(self.tp,'dt') and hasattr(self.tp,'tmax'):
+        if tmax is not None or dt is not None:
             self.tp.tmesh=np.arange(0,self.tp.tmax+self.tp.dt,self.tp.dt)
-
         self.oldtime=np.inf
         self.tp.ntout=ntout
         self.initialize='bla'
@@ -422,20 +422,13 @@ class Calculator():
                 self.tp.logger.info('time step = {}'.format(n))
                 if self.tp.use_migration:
                     v,grad_v,lapl_v=get_potential_and_gradient(C,dx,nx)
-                import matplotlib.pyplot as plt
-                plt.plot(self.tp.xmesh,v,'o')
-                #plt.plot(self.tp.xmesh,C[1,:],'o')
-                xfine=np.linspace(min(self.tp.xmesh),max(self.tp.xmesh),1000)
-                v1=np.array([self.tp.gouy_chapman(x)[0] for x in xfine])
-                v2=np.array([self.tp.gouy_chapman(x,vzeta=self.tp.vzeta_init)[0] for x in xfine])
-                plt.plot(xfine,v1,'-')
-                plt.plot(xfine,v2,'x')
-                plt.show()
-                sys.exit()
-                with open('results.txt','a') as outfile:
-                    rmsd1=np.sqrt(sum((v-np.array([self.tp.gouy_chapman(x)[0] for x in self.tp.xmesh]))**2/len(v)))
-                    rmsd2=np.sqrt(sum((v-np.array([self.tp.gouy_chapman(x,vzeta=self.tp.vzeta_init)[0] for x in self.tp.xmesh]))**2/len(v)))
-                    outfile.write('{} {} {}\n'.format(n*dt,rmsd1,rmsd2))
+#                plt.plot(self.tp.xmesh,v,'o')
+#                plt.show()
+#                sys.exit()
+#                with open('results.txt','a') as outfile:
+#                    rmsd1=np.sqrt(sum((v-np.array([self.tp.gouy_chapman(x)[0] for x in self.tp.xmesh]))**2/len(v)))
+#                    rmsd2=np.sqrt(sum((v-np.array([self.tp.gouy_chapman(x,vzeta=self.tp.vzeta_init)[0] for x in self.tp.xmesh]))**2/len(v)))
+#                    outfile.write('{} {} {}\n'.format(n*dt,rmsd1,rmsd2))
                 for k in range(self.tp.nspecies):
                     if n==1:
                         COLD[k,:]=deepcopy(C[k,:])
@@ -590,21 +583,37 @@ class Calculator():
                     #so we need to write out a copy of c, not c itself.tp
             return cout,s
 
+
         def get_potential_and_gradient(C,dx,nx):
             """Calculates the potential and its gradient (and laplacian=charge density)
-                from the PBE by Jacobi relaxation (FD)"""
+                from the PBE by Jacobi relaxation (FD)""" 
 
             if self.scale_pb_grid is not None:
                 #define a finer x grid for PB integration
-                dx/=self.scale_pb_grid
-                xmesh=np.arange(0,self.tp.xmax+dx,dx)
+                if self.scale_pb_grid == 'linear':
+                    dx/=self.scale_pb_grid
+                    xmesh=np.arange(0,self.tp.xmax+dx,dx)
+                elif self.scale_pb_grid == 'log':
+                    if min(self.tp.xmesh)<=0:
+                        min_x=1e-15
+                    else:
+                        min_x=min(self.tp.xmesh)
+                    xmesh=np.logspace(np.log10(min_x),np.log10(self.tp.xmax-dx),self.tp.nx)
                 nx=len(xmesh)
                 CNEW=np.zeros([self.tp.nspecies,nx])
                 #interpolate concentrations on this grid:
                 for k in range(self.tp.nspecies):
                     f = interpolate.interp1d(self.tp.xmesh,C[k,:])
                     CNEW[k,:]=[f(x) for x in xmesh]
+                #plt.plot(xmesh,CNEW[0,:],'x',label='interpolated 1')
+                #plt.plot(xmesh,CNEW[1,:],'x',label='interpolated 2')
+                #plt.plot(self.tp.xmesh,C[0,:],'-',label='before 1')
+                #plt.plot(self.tp.xmesh,C[1,:],'-',label='before 2')
+                #plt.plot(self.tp.xmesh,np.sum([self.tp.charges[k]*C[k,:] for k in range(self.tp.nspecies)],axis=0)/unit_F,'-',label='charge')
+                #plt.legend()
                 C=CNEW
+                #plt.show()
+                #sys.exit()
             bounds=self.tp.pb_bound
 
             if bounds['gradient']['wall'] is not None and bounds['gradient']['bulk'] is not None:
@@ -613,10 +622,9 @@ class Calculator():
 
             def solve_poisson(q,nx,dx,sol0):
                 #solve poisson equation with rhs = q
+                #rescale xmesh to be linear:
                 A=diags([1, -2, 1], [-1, 0, 1],\
                       shape=(nx-2, nx-2)).toarray()
-                print np.shape(q),nx
-                print np.shape(q[1:nx-1])
                 b=np.array(q[1:nx-1])*dx**2
                 b[0]-=sol0[0]
                 b[-1]-=sol0[-1]
@@ -634,6 +642,7 @@ class Calculator():
                 var=deepcopy(var0)
                 if n==2:
                     var=solve_poisson(integrand,nx,self.tp.dx,var0)
+                    #interpolate var and 
                     i_step=0
                     #error=np.inf
                     #i_step=0
@@ -663,8 +672,9 @@ class Calculator():
 
             # calculate RHS of PBE
             rhs=np.zeros([nx])
-            for k in range(self.tp.nspecies):
-                rhs-=self.tp.charges[k]*C[k,:]/self.tp.eps
+            for i in range(nx):
+                for k in range(self.tp.nspecies):
+                    rhs[i]-=self.tp.charges[k]*C[k,i]/self.tp.eps
             lapl_v=rhs
 
             v=np.zeros([nx])
@@ -676,6 +686,7 @@ class Calculator():
                 v[-1]=bounds['potential']['bulk']
             if bounds['potential']['wall'] is not None and bounds['potential']['bulk'] is not None:
                 v=integrate_1d_func(v,rhs,n=2)
+                v=np.array(v)
                 for i in range(1,nx-1):
                     grad_v[i] = 1./(2*dx)*(v[i+1]-v[i-1])
                 grad_v[0]=grad_v[1]+(grad_v[1]-grad_v[2])
@@ -735,10 +746,10 @@ class Calculator():
                     #get potential and field
                     v,grad_v,lapl_v=get_potential_and_gradient(C,dx,nx)
 
-                with open('results.txt','a') as outfile:
-                    rmsd1=np.sqrt(sum((v-np.array([self.tp.gouy_chapman(x)[0] for x in self.tp.xmesh]))**2/len(v)))
-                    rmsd2=np.sqrt(sum((v-np.array([self.tp.gouy_chapman(x,vzeta=self.tp.vzeta_init)[0] for x in self.tp.xmesh]))**2/len(v)))
-                    outfile.write('{} {} {}\n'.format(t,rmsd1,rmsd2))
+                #with open('results.txt','a') as outfile:
+                #    rmsd1=np.sqrt(sum((v-np.array([self.tp.gouy_chapman(x)[0] for x in self.tp.xmesh]))**2/len(v)))
+                #    rmsd2=np.sqrt(sum((v-np.array([self.tp.gouy_chapman(x,vzeta=self.tp.vzeta_init)[0] for x in self.tp.xmesh]))**2/len(v)))
+                #    outfile.write('{} {} {}\n'.format(t,rmsd1,rmsd2))
 
                 DC_DT = np.zeros([self.tp.nspecies,nx])
 #                flux = np.zeros([self.tp.nspecies,nx])
@@ -776,7 +787,7 @@ class Calculator():
                         self.tp.logger_db.debug('{} {} {}'.format(sp, rates[isp2,0], C[isp2,0]))
                 else:
                     rates=np.zeros([self.tp.nspecies,nx])
-
+                
                 for k in range(0,self.tp.nspecies):
                     #set concentration to be constant on the right side
                     DC_DT[k,-1] = 0.0
@@ -798,17 +809,16 @@ class Calculator():
                             flux=self.tp.flux_bound[k,0] #this is dc/dx at i=0
                             DC_DT[k,i]=\
                                 corr+\
-                                self.tp.D[k]*\
                                     (\
                                     #1st part: [dc/dx(i=1)-dc/dx(i=0)] / dx
                                     #2*(C[k,1]-C[k,0]-self.tp.flux_bound[k,0]*2.*dx)/dx**2\
-                                    ((C[k,1]-C[k,0])/dx-flux)/dx\
+                                    (self.tp.D[k]*(C[k,1]-C[k,0])/dx-flux)/dx\
                                     #2nd part
                                     #+self.tp.beta*self.tp.charges[k]*dcgradv_dx\
                                     +self.tp.beta*self.tp.charges[k]*(\
                                         C[k,0]*lapl_v[0]+flux*grad_v[0])
-                                    )+\
-                                rates[k,i]
+                                    )#+\
+                    #            rates[k,i]
                         else:
                             if self.use_lax_friedrich:
                                 corr=dc_dx_2*dx**2/dt/2.
@@ -824,7 +834,6 @@ class Calculator():
 
                     #extrapolate derivative on the left side
 #                    DC_DT[k,0]=DC_DT[k,1]+(DC_DT[k,1]-DC_DT[k,2])
-
                 #map dc_dt's onto ouself.tput format
                 dc_dt = np.zeros([self.tp.nspecies*nx])
                 for k in range(self.tp.nspecies):
@@ -835,7 +844,7 @@ class Calculator():
                 return ode_func(c,t,dx,dt)
 
             if self.tp.calc in ['lsoda','odeint']:
-                sol,output = integrate.odeint(ode_func_inv, c0, self.tp.tmesh, args=(dx,dt),full_output=True) #, ml=self.tp.nspecies, mu=self.tp.nspecies)
+                sol,output = integrate.odeint(ode_func_inv, c0, self.tp.tmesh, args=(dx,dt),full_output=True, ml=self.tp.nspecies, mu=self.tp.nspecies)
                 self.tp.logger.info('Used minimal time = ',min(output['tcur']),' and maximal time = ',max(output['tcur']))
             else:
                 r = ode(ode_func).set_integrator(self.tp.calc) #('dopri5') #, method='bdf')
@@ -856,9 +865,9 @@ class Calculator():
 
         def integrate_FTCS(dt,dx,nt,nx,C0,ntout):
             """Integrates PNP equations, BCs:
-                        concentrations      potential
-                left    ROBIN j=0           DIRICHLET vzeta
-                right   DIRICHLET cbulk     DIRICHLET 0.0
+                        concentrations      
+                left    ROBIN j=j0          
+                right   DIRICHLET cbulk     
             """
 
             C = np.zeros([self.tp.nspecies,nx])
@@ -869,13 +878,22 @@ class Calculator():
                 C[k,:] = C0[k*nx:(k+1)*nx]
 
             for n in range(0,nt):
-                self.tp.logger_db.debug('time step = ',n)
-                v,grad_v,lapl_v=get_potential_and_gradient(C,dx,nx)
+                self.tp.logger.info('time step = {}'.format(n))
+                if self.tp.use_migration:
+                    v,grad_v,lapl_v=get_potential_and_gradient(C,dx,nx)
+                else:
+                    v=np.zeros([nx])
+                    grad_v=np.zeros([nx])
+                    lapl_v=np.zeros([nx])
+                rates=self.get_rates(C)
                 for k in range(self.tp.nspecies):
+                    #get the flux
+                    flux=self.tp.flux_bound[k,0] #this is dc/dx at i=0
                     #Robin BC for concentrations on left side (wall)
-                    C[k,0] =\
-                        (-2*self.tp.D[k]-self.tp.mu[k]*(v[1]-self.tp.system['vzeta']))/\
-                        (-2*self.tp.D[k]+self.tp.mu[k]*(v[1]-self.tp.system['vzeta']))*C[k,1]
+                    divisor=(2*self.tp.D[k]-self.tp.mu[k]*(v[1]-self.tp.system['vzeta']))
+                    C[k,0] =(\
+                        (2*self.tp.D[k]+self.tp.mu[k]*(v[1]-self.tp.system['vzeta']))*C[k,1]+\
+                        flux*2.*dx)/divisor
                     #Dirichlet BC for concentrations on right side (bulk)
                     C[k,-1]=C0[(k+1)*nx-1]
                     temp = np.zeros([nx])
@@ -891,7 +909,7 @@ class Calculator():
                             W-=0.5
                             E-=0.5
                             M+=1
-                        temp[i] = E * C[k,i-1] + M * C[k,i] + W * C[k,i+1]
+                        temp[i] = E * C[k,i-1] + M * C[k,i] + W * C[k,i+1] + rates[k,i]*dt
                     C[k,:]=temp
                 if n % int(nt/float(ntout)) == 0 or n==nt-1:
                     COUT.append(np.ndarray.flatten(C))

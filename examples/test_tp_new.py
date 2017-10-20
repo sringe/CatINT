@@ -14,7 +14,7 @@ import sys
 
 reactions=\
     {
-    'buffer':           {   'reactants':            [['CO2','H2O'],['H2CO3']],
+    'buffe':           {   'reactants':            [['CO2','H2O'],['H2CO3']],
                             'constant':             2.63e-3},                               #KH
     'buffer-acid':      {   'reactants':            [['CO2','H2O'],['HCO3-','H+']],
                             'constant':             (4.44e-7)*1000.0},                      #K1a
@@ -78,75 +78,75 @@ pH_i = 14+np.log10(OHm_i/1000.0) #initial pH (in log. arg must be conc in M)
 #Henry              [atm/M] (from http://butane.chem.uiuc.edu/pshapley/GenChem1/L23/web-L23.pdf)
 species=\
     {
-    'K':                {   'symbol':               r'K^+',
+    'K':                {   'symbol':               'K^+',
                             'name':                 'potassium',
                             'diffusion':            1.957e-009,
                             'bulk concentration':   K_i},
-    'CO2':              {   'symbol':               r'CO_2',
+    'CO2':              {   'symbol':               'CO_2',
                             'name':                 'carbon dioxide',
                             'diffusion':            1.91e-009,
                             'bulk concentration':   CO2_i},
-    'CO32-':            {   'symbol':               r'CO_3^{2-}',
+    'CO32-':            {   'symbol':               'CO_3^{2-}',
                             'name':                 'carboxylate',
                             'diffusion':            9.23e-010,
                             'bulk concentration':   CO32m_i},
-    'HCO3-':            {   'symbol':               r'HCO_3^-',
+    'HCO3-':            {   'symbol':               'HCO_3^-',
                             'name':                 'bicarbonate',
                             'diffusion':            1.185e-009,
                             'bulk concentration':   HCO3m_i},
-    'OH-':              {   'symbol':               r'OH^-',
+    'OH-':              {   'symbol':               'OH^-',
                             'name':                 'hydroxyl',
                             'diffusion':            5.273e-009,
                             'bulk concentration':   OHm_i},
-    'H+':               {   'symbol':               r'H^+',
+    'H+':               {   'symbol':               'H^+',
                             'name':                 'hydronium',
                             'bulk concentration':   10**(-pH_i)},
-    'H2':               {   'symbol':               r'H_2',
+    'H2':               {   'symbol':               'H_2',
                             'name':                 'hydrogen',
                             'diffusion':            4.50e-009,
                             'zeff':                 2.0},
-    'CO':               {   'symbol':               r'CO',
+    'CO':               {   'symbol':               'CO',
                             'name':                 'carbon monoxide',
                             'diffusion':            2.03e-009,
                             'zeff':                 2.0},
-    'CH4':              {   'symbol':               r'CH_4',
+    'CH4':              {   'symbol':               'CH_4',
                             'name':                 'methane',
                             'zeff':                 8.0,
                             'diffusion':            1.49e-009},
-    'C2H4':             {   'symbol':               r'C_2H_4',
+    'C2H4':             {   'symbol':               'C_2H_4',
                             'name':                 'ethylene',
                             'zeff':                 12.0,
                             'diffusion':            1.87e-009},
-    'HCOO-':            {   'symbol':               r'HCOO^-',
+    'HCOO-':            {   'symbol':               'HCOO^-',
                             'name':                 'formate',
                             'zeff':                 2.0,
                             'diffusion':            1.454e-009},
     'etol':             {   'name':                 'ethanol',
-                            'symbol':               r'C_2H_5OH',
+                            'symbol':               'C_2H_5OH',
                             'zeff':                 12.0,
                             'diffusion':            0.84e-009},
     'propol':           {   'name':                 'n-propanol',
-                            'symbol':               r'C_3H_7OH',
+                            'symbol':               'C_3H_7OH',
                             'zeff':                 18.0,
                             'diffusion':            1.3e-009},
     'allyl':            {   'name':                 'allylalcohol',
-                            'symbol':               r'C_3H_5OH',
+                            'symbol':               'C_3H_5OH',
                             'zeff':                 16.0,
                             'diffusion':            1.1e-009},
     'metol':            {   'name':                 'Methanol',
-                            'symbol':               r'CH_3OH',
+                            'symbol':               'CH_3OH',
                             'zeff':                 6.0,
                             'diffusion':            0.84e-009},
     'acet':             {   'name':                 'acetate',
-                            'symbol':               r'CH_3COO^-',
+                            'symbol':               'CH_3COO^-',
                             'zeff':                 8.0,
                             'diffusion':            1.089e-009},
     'etgly':            {   'name':                 'ethyleneglycol',
-                            'symbol':               r'C_2H_4OHOH',
+                            'symbol':               'C_2H_4OHOH',
                             'zeff':                 10.0,
                             'diffusion':            1.102e-009},      #at 0.02 fraction of dlycol
     'unknown':          {   'name':                 'unknown',
-                            'symbol':               r'C_2H_2O_2',
+                            'symbol':               'C_2H_2O_2',
                             'zeff':                 6.0, #assumed: glyoxal
                             'diffusion':            0.0}
     }
@@ -190,16 +190,17 @@ tp=Transport(
     species=species,
     reactions=reactions,
     system=system,
-    pb_bound=pb_bound)
+    pb_bound=pb_bound,
+    nx=300)
 
 
 tp.set_calculator('odeint')
 #tp.set_calculator('Crank-Nicolson--LF')
 #tp.set_initial_concentrations('Gouy-Chapman')
 
-c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=2)
+c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1)
 #scale_pb_grid
-cout=c.run(dt=0.1,tmax=20.0)
+cout=c.run(dt=1e-5,tmax=20.0) #1.0)
 
 p=Plot(transport=tp)
 p.plot(cout)
