@@ -13,7 +13,7 @@ import sys
 from copy import deepcopy
 import collections
 import logging
-
+import os
 class Transport(object):
 
     def __init__(self, species=None,reactions=None,system=None,pb_bound=None,nx=100):
@@ -121,6 +121,7 @@ class Transport(object):
             if any(['rates' in self.reactions[reaction] for reaction in self.reactions]):
                 self.use_reactions=True
                 self.logger.info('Found reactions.')
+        self.use_reactions=False
         #DIFFUSION CONSTANTS
         self.D=[]
         for sp in self.species:
@@ -132,7 +133,9 @@ class Transport(object):
 
         if all([a in self.system for a in ['water viscosity','electrolyte viscosity']]):
             #rescale diffusion coefficients according to ionic strength (Stokes-Einstein):
-            self.D=[d*self.system['water viscosity']/self.system['electrolyte viscosity'] for d in self.D]
+            print 'Rescaling', self.system['water viscosity'], self.system['electrolyte viscosity']
+            self.D=np.array([d*float(self.system['water viscosity'])/float(self.system['electrolyte viscosity']) for d in self.D])
+            
 
         self.mu = self.D * self.charges *self.beta  #ion mobilities according to Einstein relation
 
@@ -224,6 +227,8 @@ class Transport(object):
         self.potential=np.zeros([self.nx])
         self.total_charge=np.zeros([self.nx])
 
+        self.write_comsol_parameter_file()
+        sys.exit()
 
     def symbol_reader(self,species):
     #determine charges and create arrays of charges and D's
@@ -496,6 +501,57 @@ class Transport(object):
             else:
                 self.efield_bound+=[e*1e10]
         self.efield_bound=np.array(self.efield_bound)
+
+
+    def write_comsol_parameter_file(self):
+        variable_names=[['D'+str(i+1) for i in range(len(self.D))],\
+                        ['Z'+str(i+1) for i in range(len(self.D))],\
+                        ['k'+str(i+1) for i in range(len(self.D))],\
+                        ['ci'+str(i+1) for i in range(len(self.D))]]
+        units=[[str(d)+'[m^2/s]' for d in self.D],\
+                [str(int(c/unit_F)) for c in self.charges],\
+                [str(-self.flux_bound[isp][0])+'[m/s]' for isp in range(self.nspecies)],\
+                [str(self.species[sp]['bulk concentration'])+'[mol/m^3]' for sp in self.species]]
+        labels=[[n+' Diffusion coefficient' for n in self.species],\
+                [n+' charge' for n in self.species],\
+                [n+' flux' for n in self.species],\
+                [n+' bulk concentrations' for n in self.species]]
+        comsol_name='comsol_parameters.txt'
+
+        lines=[
+            'L_cell '+str(max(self.xmesh))+' Cell length',
+#            lambdaD/epsilon Cell length',
+            'epsilon lambdaD/L_cell Dimensionless Debye length scale',
+            'T '+str(self.system['temperature'])+'[K] Temperature',
+            'RT R_const*T Molar gas constant * Temperature',
+            'delta lambdaS/lambdaD Dimensionless Stern layer thickness'
+            'cM 1[mol/m^3] Metal reference concentration',
+            'alphac 0.5 Cathodic charge transfer coefficient',
+            'alphaa 1-alphac Anodic charge transfer coefficient',
+            'V 0.5 Potential',
+            #'jr 0.01 Dimensionless anodic reaction current density',
+            #'kc 0.01 Dimensionless cathodic rate coefficient',
+            #'J 0.9 Dimensionless cell current density',
+            #'Kc kc*4*Dp/L Cathodic rate constant',
+            #'Ka jr*4*Dp*cref/(L*cM) Anodic rate constant',
+            #'id 4*Z*F_const*Dp*cref/L Nernst limiting current density',
+            #'icell J*id Cell current density',
+            'lambdaD '+str(self.debye_length)+'[m] Debye length',
+            'CS 18*1e-6[F/cm^2] Stern layer capacitance',
+            'delta lambdaS/lambdaD Dimensionless Stern layer thickness',
+            'eps_r '+str(self.system['epsilon'])+' relative permittivity',
+            'epsS epsilon0_const*2 Stern layer effective permittivity',
+            'lambdaS epsS/CS Stern layer thickness'
+            'V 0.2[V] Electrode potential']
+
+        if os.path.exists(comsol_name):
+            os.remove(comsol_name)
+        with open(comsol_name,'a') as outfile:
+            for v,u,l in zip(variable_names, units, labels):
+                for i in range(len(v)):
+                    outfile.write('{} {} {}\n'.format(v[i],u[i],l[i]))
+            for line in lines:
+                outfile.write(line+'\n')
 
     def gaussian(self,sigma=0.01,z=1,mu=0.2,cmax=1):
         """define gaussian charge density. c is in molar"""

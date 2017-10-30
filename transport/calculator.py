@@ -17,6 +17,7 @@ from scipy.optimize import minimize
 from scipy.integrate import ode
 from scipy import interpolate
 import os
+import odespy, numpy
 
 class Calculator():
 
@@ -37,14 +38,19 @@ class Calculator():
 
         self.use_lax_friedrich=False
         string=calc.split('--')
+        self.calc_method=None
         if len(string)>1:
             if string[-1]=='LF':
                 self.use_lax_friedrich=True
+            else:
+                self.calc_method=string[-1]
             self.calc=string[0]
         else:
             self.calc=calc
 
-        if self.calc not in ['FTCS','Crank-Nicolson','odeint','vode','lsoda','dopri5','dop853','odeint']:
+        self.calc_list=['FTCS','Crank-Nicolson','odeint','vode','lsoda','dopri5','dop853','odeint','odespy']
+
+        if self.calc not in self.calc_list:
             self.tp.logger.error('No calculator found with this name. Aborting.')
             sys.exit()
         
@@ -812,13 +818,14 @@ class Calculator():
                                     (\
                                     #1st part: [dc/dx(i=1)-dc/dx(i=0)] / dx
                                     #2*(C[k,1]-C[k,0]-self.tp.flux_bound[k,0]*2.*dx)/dx**2\
-                                    (self.tp.D[k]*(C[k,1]-C[k,0])/dx-flux)/dx\
+                                    (self.tp.D[k]*((C[k,2]-C[k,0])/(2.*dx)+self.tp.beta*self.tp.charges[k]*\
+                                    C[k,1]*grad_v[1])-flux)/dx\
                                     #2nd part
                                     #+self.tp.beta*self.tp.charges[k]*dcgradv_dx\
-                                    +self.tp.beta*self.tp.charges[k]*(\
-                                        C[k,0]*lapl_v[0]+flux*grad_v[0])
+            #                        +self.tp.beta*self.tp.charges[k]*(\
+            #                            C[k,0]*lapl_v[0]+flux*grad_v[0])
                                     )#+\
-                    #            rates[k,i]
+                                #rates[k,i]
                         else:
                             if self.use_lax_friedrich:
                                 corr=dc_dx_2*dx**2/dt/2.
@@ -843,16 +850,31 @@ class Calculator():
             def ode_func_inv(t,c,dx,dt):
                 return ode_func(c,t,dx,dt)
 
+            def ode_func_odespy(c,t):
+                print 'going', np.shape(c),np.shape(t)
+                dx=self.tp.dx
+                dt=self.tp.dt
+                return ode_func(c,t,dx,dt)
+
             if self.tp.calc in ['lsoda','odeint']:
                 sol,output = integrate.odeint(ode_func_inv, c0, self.tp.tmesh, args=(dx,dt),full_output=True, ml=self.tp.nspecies, mu=self.tp.nspecies)
                 self.tp.logger.info('Used minimal time = ',min(output['tcur']),' and maximal time = ',max(output['tcur']))
+            elif self.tp.calc == 'odespy':
+                solver = odespy.Vode(ode_func_odespy, rtol=0.0, atol=1e-6,
+                     adams_or_bdf='adams', order=10)
+                solver.set_initial_condition(c0)
+                sol, t = solver.solve(self.tp.tmesh)
             else:
-                r = ode(ode_func).set_integrator(self.tp.calc) #('dopri5') #, method='bdf')
+                if self.calc_method is not None:
+                    r = ode(ode_func).set_integrator(self.tp.calc) #('dopri5') #, method='bdf')
+                else:
+                    r = ode(ode_func).set_integrator(self.tp.calc,method=self.calc_method,nsteps=10000) #('dopri5') #, method='bdf')
                 r.set_initial_value(c0).set_f_params(dx,dt) #c, t, dx, dt
                 sol=[]
                 while r.successful() and r.t < nt*dt:
                     sol.append(r.integrate(r.t+dt))
                 sol=np.array(sol)
+
 
             #return the results
             self.tp.logger_db.debug(np.shape(sol))
@@ -890,7 +912,7 @@ class Calculator():
                     #get the flux
                     flux=self.tp.flux_bound[k,0] #this is dc/dx at i=0
                     #Robin BC for concentrations on left side (wall)
-                    divisor=(2*self.tp.D[k]-self.tp.mu[k]*(v[1]-self.tp.system['vzeta']))
+                    divisor=2*self.tp.D[k]-self.tp.mu[k]*(v[1]-self.tp.system['vzeta'])
                     C[k,0] =(\
                         (2*self.tp.D[k]+self.tp.mu[k]*(v[1]-self.tp.system['vzeta']))*C[k,1]+\
                         flux*2.*dx)/divisor
@@ -1005,7 +1027,7 @@ class Calculator():
                     #so we need to write out a copy of c, not c itself.tp
             return cout,s
 
-        if method in ['vode','lsoda','dopri5','dop853','odeint']:
+        if method not in ['FTCS','Crank-Nicolson']: #in ['vode','lsoda','dopri5','dop853','odeint']:
             cout=integrate_odeint(dx,nx,dt,nt,self.tp.c0,ntout)
             dataplot=cout
         elif method=='FTCS':

@@ -47,7 +47,7 @@ system=\
     #according to Einstein-Stokes relation: D_in_electrolyte = D_in_water * mu0/mu
     'epsilon': 78.36,
     'exclude species': ['H+'], #exclude this species from PNP equations
-    'migration': False
+    'migration': True
     }
 ###########################################################################
 
@@ -169,10 +169,11 @@ if total_flux<1.0:
 else:
     species['unknown']['flux']=0.0
 
-#system['electrolyte viscosity']=viscosity(species['HCO3-']['bulk concentration']), #Pa*s at 25C of KHCO3 solution
+print species['HCO3-']['bulk concentration']
+visc=viscosity(species['HCO3-']['bulk concentration']/10**3), #Pa*s at 25C of KHCO3 solution
 system['boundary thickness']=boundary_thickness
 system['current density']=data_fluxes['current_density']['-0.95526']
-
+system['electrolyte viscosity']=visc[0]
 ###########################################################################
 #BOUNDARY CONDITIONS FOR PBE
 ###########################################################################
@@ -191,16 +192,16 @@ tp=Transport(
     reactions=reactions,
     system=system,
     pb_bound=pb_bound,
-    nx=300)
+    nx=500)
 
 
-tp.set_calculator('odeint')
+tp.set_calculator('odespy') #--bdf')
 #tp.set_calculator('Crank-Nicolson--LF')
 #tp.set_initial_concentrations('Gouy-Chapman')
 
 c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1)
 #scale_pb_grid
-cout=c.run(dt=1e-5,tmax=20.0) #1.0)
+cout=c.run(dt=1e-3,tmax=20.0) #1.0)
 
 p=Plot(transport=tp)
 p.plot(cout)
