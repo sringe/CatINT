@@ -18,6 +18,7 @@ from scipy.integrate import ode
 from scipy import interpolate
 import os
 import odespy, numpy
+from comsol import Comsol
 
 class Calculator():
 
@@ -48,7 +49,7 @@ class Calculator():
         else:
             self.calc=calc
 
-        self.calc_list=['FTCS','Crank-Nicolson','odeint','vode','lsoda','dopri5','dop853','odeint','odespy']
+        self.calc_list=['FTCS','Crank-Nicolson','odeint','vode','lsoda','dopri5','dop853','odeint','odespy','comsol']
 
         if self.calc not in self.calc_list:
             self.tp.logger.error('No calculator found with this name. Aborting.')
@@ -70,6 +71,11 @@ class Calculator():
         self.oldtime=np.inf
         self.tp.ntout=ntout
         self.initialize='bla'
+        if self.calc == 'comsol':
+            com=Comsol(transport=self.tp)
+            com.write_parameter_file()
+            com.write_input()
+        sys.exit()
         return
 
     def get_rates(self,C):

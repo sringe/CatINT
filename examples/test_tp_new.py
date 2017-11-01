@@ -178,6 +178,7 @@ system['electrolyte viscosity']=visc[0]
 #BOUNDARY CONDITIONS FOR PBE
 ###########################################################################
 
+#'potential','gradient','robin'
 pb_bound={
 #        'potential': {'wall':'zeta'},
 #        'gradient': {'bulk':0.0}}
@@ -195,7 +196,7 @@ tp=Transport(
     nx=500)
 
 
-tp.set_calculator('odespy') #--bdf')
+tp.set_calculator('comsol') #odespy') #--bdf')
 #tp.set_calculator('Crank-Nicolson--LF')
 #tp.set_initial_concentrations('Gouy-Chapman')
 
