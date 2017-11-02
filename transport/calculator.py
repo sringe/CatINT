@@ -73,8 +73,7 @@ class Calculator():
         self.initialize='bla'
         if self.calc == 'comsol':
             com=Comsol(transport=self.tp)
-            com.write_parameter_file()
-            com.write_input()
+            com.run()
         sys.exit()
         return
 

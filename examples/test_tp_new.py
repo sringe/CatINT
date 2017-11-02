@@ -193,7 +193,7 @@ tp=Transport(
     reactions=reactions,
     system=system,
     pb_bound=pb_bound,
-    nx=500)
+    nx=40)
 
 
 tp.set_calculator('comsol') #odespy') #--bdf')

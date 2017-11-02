@@ -2,18 +2,30 @@
 from units import *
 import numpy as np
 import os
+from subprocess import call
 
 class Comsol():
     """This class does all operations need to write input files for comsol and read output"""
-    def __init__(self,path='.',transport=None,method=[\
-            ['static'],['time-dependent','parametric','epsilon']]):
+    def __init__(self,path=os.getcwd(),transport=None,exe_path='/Applications/COMSOL53/Multiphysics_copy1/bin/comsol'):
         if transport is None:
             self.tp.logger.error('No transport object provided for calculator. Stopping here.')
             sys.exit()
         else:
             self.tp=transport #transport object
         self.tp.path=path
-        self.method=method #static or time-dependent
+        self.exe=exe_path
+
+    def run(self,
+            studies=None):
+        if studies is None:
+            studies={}
+            studies['static']={'parametric':{'epsilon':[0.01,0.1]}}
+        self.studies=studies
+#        self.write_parameter_file()
+        self.write_input()
+        call(self.exe+" compile "+'/'.join([os.getcwd(),self.inp_file_name]),shell=True)
+        call(self.exe+" batch -inputfile "+'/'.join([os.getcwd(),'.'.join(self.inp_file_name.split('.')[:-1])+".class"]),shell=True)
+        #~/software/transport/examples/diffuse_double_layer_with_charge_transfer_nonstatic_2.java
 
     def write_parameter_file(self,file_name='comsol_parameters.txt'):
         variable_names=[['D'+str(i+1) for i in range(len(self.tp.D))],\
@@ -28,7 +40,6 @@ class Comsol():
                 [n+' charge' for n in self.tp.species],\
                 [n+' flux' for n in self.tp.species],\
                 [n+' bulk concentrations' for n in self.tp.species]]
-
         lines=[
             'L_cell '+str(max(self.tp.xmesh))+' Cell length',
 #            lambdaD/epsilon Cell length',
@@ -64,17 +75,22 @@ class Comsol():
             for line in lines:
                 outfile.write(line+'\n')
 
-    def write_input(self,file_name='model.java',model_name='transport',model_comments=''):
+    def write_input(self,file_name='pnp_transport.java',model_name='transport',model_comments=''):
+        self.inp_file_name=file_name
         with open(file_name,'w') as inp:
+
+            inp.write('import com.comsol.model.*;\n')
+            inp.write('import com.comsol.model.util.*;\n')
+
             inp.write('/*\n')
             inp.write(' *Transport Model as created by Transport Framework\n')
             inp.write(' */\n')
-            inp.write('public class transport_model {\n')
-            inp.write('  public static Model run()\n')
+            inp.write('public class '+str('.'.join(file_name.split('.')[:-1]))+' {\n')
+            inp.write('  public static Model run() {\n')
             inp.write('    Model model = ModelUtil.create("Model");\n')
             inp.write('    model.modelPath("'+self.tp.path+'");\n')
             inp.write('    model.label("'+model_name+'");\n')
-            inp.write('    model.comments("'+model_comments+'")\n')
+            inp.write('    model.comments("'+model_comments+'");\n')
 
             #PARAMETER
             #diffusion coefficients
@@ -94,9 +110,9 @@ class Comsol():
                 inp.write('    model.param().set("ci{}", "{}[mol/m^3]", "{} bulk concentrations");\n'.format(\
                         i+1, self.tp.species[sp]['bulk concentration'],self.tp.species[sp]['name']))
             #some system parameters
-            inp.write('    model.param().set("L_cell", "{}", "Cell length")\n'.format(self.tp.xmax))
+            inp.write('    model.param().set("L_cell", "{}", "Cell length");\n'.format(self.tp.xmax))
             inp.write('    model.param().set("epsilon", "lambdaD/L_cell", "Dimensionless Debye length scale");\n')
-            inp.write('    model.param().set("T", "''[K]", "Temperature");\n'.format(self.tp.system['temperature']))
+            inp.write('    model.param().set("T", "{}[K]", "Temperature");\n'.format(self.tp.system['temperature']))
             inp.write('    model.param().set("RT", "R_const*T", "Molar gas constant * Temperature");\n')
             inp.write('    model.param().set("delta", "lambdaS/lambdaD", "Dimensionless Stern layer thicknesscM 1[mol/m^3] Metal reference concentration");\n')
             inp.write('    model.param().set("alphac", "0.5", "Cathodic charge transfer coefficient");\n')
@@ -131,8 +147,11 @@ class Comsol():
                     inp.write('    model.param().set("{}", "{} [{}]", "rate constant: {}");\n'.format(\
                             'k'+str(i)+'r',self.tp.reactions[reaction]['rates'][1],unit_r,products+' -> '+educts))
             inp.write('    model.param().set("flux_factor", "1", "factor scaling the flux");\n')
-            inp.write('    model.param().set("grid_factor", "'+str(self.tp.xmax/self.tp.debye_length)+'", "minimal number of x mesh points (boundary and domain)");\n')
+            inp.write('    model.param().set("grid_factor", "'+str(self.tp.nx-1)+'", "minimal number of x mesh points (boundary and domain)");\n')
 
+            inp.write('/*\n')
+            inp.write(' *MODEL DEFINITION\n')
+            inp.write(' */\n')
             #COMPONENTS: CREATE THE MODEL
             inp.write('    model.component().create("comp1", true);\n')
             inp.write('    model.component("comp1").geom().create("geom1", 1);\n')
@@ -145,6 +164,9 @@ class Comsol():
             inp.write('    model.component("comp1").geom("geom1").feature("i1").set("p2", "L_cell");\n')
             inp.write('    model.component("comp1").geom("geom1").run();\n')
 
+            inp.write('/*\n')
+            inp.write(' *VARIABLES\n')
+            inp.write(' */\n')
             #VARIABLES
             inp.write('    model.component("comp1").variable().create("var1");\n')
             
@@ -165,6 +187,9 @@ class Comsol():
             inp.write('    model.component("comp1").variable("var3").selection().geom("geom1", 0);\n')
             inp.write('    model.component("comp1").variable("var3").selection().set(new int[]{2});\n')
 
+            inp.write('/*\n')
+            inp.write(' *INTEGRATION\n')
+            inp.write(' */\n')
             #INTEGRATION
             inp.write('    model.component("comp1").cpl().create("intop1", "Integration");\n')
             inp.write('    model.component("comp1").cpl().create("intop2", "Integration");\n')
@@ -172,6 +197,9 @@ class Comsol():
             inp.write('    model.component("comp1").cpl("intop1").selection().set(new int[]{2});\n')
             inp.write('    model.component("comp1").cpl("intop2").selection().set(new int[]{1});\n')
 
+            inp.write('/*\n')
+            inp.write(' *ELECTROSTATICS\n')
+            inp.write(' */\n')
             #ELECTROSTATICS
             inp.write('    model.component("comp1").physics().create("es", "Electrostatics", "geom1");\n')
             inp.write('    model.component("comp1").physics("es").field("electricpotential").field("phi");\n')
@@ -183,7 +211,8 @@ class Comsol():
             inp.write('    model.component("comp1").physics("es").feature("pot2").selection().set(new int[]{1});\n')
             inp.write('    model.component("comp1").physics("es").create("df1", "DisplacementField", 0);\n')
             inp.write('    model.component("comp1").physics("es").feature("df1").selection().set(new int[]{1});\n')
-            inp.write('    model.component("comp1").physics("es").create("fp1", "FloatingPotential", 0);\n')
+            #floating requires one of: AC/DC Module, MEMS Module, Plasma Module, Acoustics Module, Structural Mechanics Module, Semiconductor Module
+#            inp.write('    model.component("comp1").physics("es").create("fp1", "FloatingPotential", 0);\n')
             inp.write('    model.component("comp1").physics().create("tds", "DilutedSpecies", "geom1");\n')
 
             inp.write('    model.component("comp1").physics("tds").field("concentration").field("cp1");\n')
@@ -235,6 +264,9 @@ class Comsol():
             inp.write('    model.component("comp1").physics("tds").prop("TransportMechanism").set("Migration", true);\n')
 
             #add diffusion coefficients to diffusion model
+            inp.write('/*\n')
+            inp.write(' *-> ADD diffusion coefficients\n')
+            inp.write(' */\n')
             charge_str=""
             for i in range(len(self.tp.species)):
                 charge_str+="{\"Z"+str(i+1)+"\"}"
@@ -245,14 +277,20 @@ class Comsol():
             for i in range(len(self.tp.species)):
                 inp.write('    model.component("comp1").physics("tds").feature("cdm1").set("D_cp'+str(i+1)+'", new String[][]{{"D'+str(i+1)+'"}, {"0"}, {"0"}, {"0"}, {"D'+str(i+1)+'"}, {"0"}, {"0"}, {"0"}, {"D'+str(i+1)+'"}});\n')
 
+            inp.write('/*\n')
+            inp.write(' *-> ADD initial concentrations\n')
+            inp.write(' */\n')
             #add initial concentrations to diffusion model
             ci_str=""
             for i in range(len(self.tp.species)):
-                ci_str+="\"ci"+str(i+1)+"\""
+                ci_str+="{\"ci"+str(i+1)+"\"}"
                 if i != len(self.tp.species)-1:
                     ci_str+=", "
-            inp.write('    model.component("comp1").physics("tds").field("init1").set("initc", new String{}[]{'+ci_str+'});\n')
+            inp.write('    model.component("comp1").physics("tds").feature("init1").set("initc", new String[][]{'+ci_str+'});\n')
 
+            inp.write('/*\n')
+            inp.write(' *-> ADD BOUNDARIES\n')
+            inp.write(' */\n')
             #boundaries
             b_str=""
             for i in range(len(self.tp.species)):
@@ -261,6 +299,9 @@ class Comsol():
                     b_str+=", "
             inp.write('    model.component("comp1").physics("tds").feature("fl1").set("species", new int[][]{'+b_str+'});\n')
 
+            inp.write('/*\n')
+            inp.write(' *-> ADD FLUXES\n')
+            inp.write(' */\n')
             #fluxes
             f_str=""
             for i in range(len(self.tp.species)):
@@ -334,6 +375,9 @@ class Comsol():
                         rates_new.append([i,rate])
                 return rates_new
 
+            inp.write('/*\n')
+            inp.write(' *REACTIONS\n')
+            inp.write(' */\n')
             #reactions
             rate_str=get_rates()
             for index,rate in rate_str:
@@ -343,6 +387,9 @@ class Comsol():
             inp.write('    model.component("comp1").physics("ge").active(false);\n')
             inp.write('    model.component("comp1").physics("ge").feature("ge1").set("name", "icell");\n')
 
+            inp.write('/*\n')
+            inp.write(' *GLOBAL EQUATIONS\n')
+            inp.write(' */\n')
             #global equations
             inp.write('    model.component("comp1").physics("ge").feature("ge1").set("equation", "intop1(iloc)-icell");\n')
             inp.write('    model.component("comp1").physics("ge").feature("ge1").set("description", "Cell Voltage");\n')
@@ -364,6 +411,10 @@ class Comsol():
             inp.write('    model.component("comp1").mesh("mesh1").feature("edg1").feature("size2").set("hminactive", false);\n')
             inp.write('    model.component("comp1").mesh("mesh1").run();\n')
 
+            inp.write('/*\n')
+            inp.write(' *PROBES\n')
+            inp.write(' */\n')
+
             #probes
             inp.write('    model.component("comp1").probe("pdom1").set("bndsnap1", true);\n')
             inp.write('    model.component("comp1").probe("pdom1").feature("ppb1").active(false);\n')
@@ -383,50 +434,88 @@ class Comsol():
 
             inp.write('    model.component("comp1").physics("es").feature("ccn1").set("epsilonr_mat", "userdef");\n')
 
-            #studies
-            if 'static' in sum(self.method,[]):
-                i=self.method.index('static')+1
-                inp.write('    model.study().create("std'+str(i)+'");\n')
-                inp.write('    model.study("std'+str(i)+'").create("stat", "Stationary");\n')
-            if 'time-dependent' in sum(self.method,[]):
-                i=self.method.index('time-dependent')+1
-                inp.write('    model.study().create("std'+str(i)+'");\n')
-                inp.write('    model.study("std'+str(i)+'").create("param", "Parametric");\n')
-                inp.write('    model.study("std'+str(i)+'").create("time", "Transient");\n')
+            inp.write('/*\n')
+            inp.write(' *STUDIES\n')
+            inp.write(' */\n')
 
             #solutions
-            i=0
             j=0
-            for i in range(len(self.method)):
-                method=self.method[i][0]
-                i+=1
-                if method=='static':
+            ip=0
+            for i,study in enumerate(self.studies):
+                for method in self.studies[study]:
                     j+=1
-                    inp.write('    model.sol().create("sol'+str(i)+'");\n')
-                    inp.write('    model.sol("sol'+str(j)+'").study("std'+str(i)+'");\n')
-                    inp.write('    model.sol("sol'+str(j)+'").attach("std'+str(i)+'");\n')
-                    inp.write('    model.sol("sol'+str(j)+'").create("st'+str(i)+'", "StudyStep");\n')
-                    inp.write('    model.sol("sol'+str(j)+'").create("v'+str(i)+'", "Variables");\n')
-                    inp.write('    model.sol("sol'+str(j)+'").create("s'+str(i)+'", "Stationary");\n')
-                    inp.write('    model.sol("sol'+str(j)+'").feature("s'+str(i)+'").create("fc1", "FullyCoupled");\n')
-                    inp.write('    model.sol("sol'+str(j)+'").feature("s'+str(i)+'").create("d1", "Direct");\n')
-                    inp.write('    model.sol("sol'+str(j)+'").feature("s'+str(i)+'").feature().remove("fcDef");\n')
-                elif method=='time-dependent':
-                    inp.write('    model.sol().create("sol'+str(i)+'");\n')
-                    inp.write('    model.sol("sol'+str(i)+'").study("std2");\n')
-                    inp.write('    model.sol("sol'+str(i)+'").attach("std2");\n')
-                    inp.write('    model.sol("sol'+str(i)+'").create("st1", "StudyStep");\n')
-                    inp.write('    model.sol("sol'+str(i)+'").create("v1", "Variables");\n')
-                    inp.write('    model.sol("sol'+str(i)+'").create("t1", "Time");\n')
-                    inp.write('    model.sol("sol'+str(i)+'").feature("t1").create("fc1", "FullyCoupled");\n')
-                    inp.write('    model.sol("sol'+str(i)+'").feature("t1").create("d1", "Direct");\n')
-                    inp.write('    model.sol("sol'+str(i)+'").feature("t1").feature().remove("fcDef");\n')
-                    #inp.write('    model.sol().create("sol5");\n')
-                    #inp.write('    model.sol("sol5").study("std2");\n')
-                    #inp.write('    model.sol("sol5").label("Parametric Solutions 3");\n')
+                    stype=[key for key in self.studies[study][method]][0]
+                    if study=='stationary':
+                        inp.write('    model.study().create("std'+str(i)+'");\n')
+                        inp.write('    model.study("std'+str(i)+'").create("stat", "Stationary");\n')
+                    else:
+                        inp.write('    model.study().create("std'+str(i)+'");\n')
+                        inp.write('    model.study("std'+str(i)+'").create("time", "Transient");\n')
+                        inp.write('    model.study("std'+str(i)+'").create("param", "Parametric");\n')
+                    #create a new solver
+                    if stype!='parametric':
+                        inp.write('    model.sol().create("sol'+str(j)+'");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").study("std'+str(i)+'");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").attach("std'+str(i)+'");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").create("st1", "StudyStep");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").create("v1", "Variables");\n')
+                        if study=='stationary':
+                            inp.write('    model.sol("sol'+str(j)+'").create("s1", "Stationary");\n')
+                        elif study=='time-dependent':
+                            inp.write('    model.sol("sol'+str(i)+'").create("t1", "Time");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("s1").create("fc1", "FullyCoupled");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("s1").create("d1", "Direct");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("s1").feature().remove("fcDef");\n')
+                    else:
+                        ip+=1
+                        inp.write('    model.sol().create("sol'+str(j)+'");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").study("std'+str(i)+'");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").label("Parametric Solutions 3");\n')
+                        inp.write('    model.batch().create("p'+str(ip)+'", "Parametric");\n')
+                        inp.write('    model.batch("p'+str(ip)+'").create("so1", "Solutionseq");\n')
+                        inp.write('    model.batch("p'+str(ip)+'").study("std'+str(i)+'");\n')
+                        inp.write('    model.study("std'+str(i)+'").feature("param").set("pname", new String[]{"'+stype+'"});)\n')
+                        inp.write('    model.study("std'+str(i)+'").feature("param").set("plistarr", new String[]{"'+sum(map(str,self.studies[study][method][stype])+' ')+'"});\n')
+                        inp.write('    model.study("std'+str(i)+'").feature("param").set("punit", new String[]{""});\n')
+                    if study=='time-dependent':
+                        inp.write('    model.study("std'+str(i)+'").feature("time").set("tlist", "range('+str(min(self.tmesh))+','+str(self.tmax)+','+str(self.nt)+')");\n')
 
-                    #inp.write('    model.batch().create("p1", "Parametric");\n')
-                    #inp.write('    model.batch("p1").create("so1", "Solutionseq");\n')
-                    #inp.write('    model.batch("p1").study("std2");\n')
+            #now set numeric parameters and run!
+            j=0
+            ip=0
+            for i,study in enumerate(self.studies):
+                for method in self.studies[study]:
+                    j+=1
+                    if study=='stationary':
+                        inp.write('    model.sol("sol'+str(j)+'").attach("std'+str(i)+'");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("s1").feature("fc1").set("initstep", 0.01);\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("s1").feature("fc1").set("minstep", 1.0E-6);\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("s1").feature("fc1").set("maxiter", 50);\n')
+                        inp.write('    model.sol("sol'+str(j)+'").runAll();\n')
+                    elif study=='time-dependent':
+                        inp.write('    model.sol("sol'+str(j)+'").attach("std'+str(i)+'");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("v1").set("clist", new String[]{"'+str(min(self.tmesh))+','+str(self.tmax)+','+str(self.nt)+'"});\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("t1").set("tlist", "'+str(min(self.tmesh))+','+str(self.tmax)+','+str(self.nt)+'");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("t1").set("maxorder", 2);\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("t1").feature("fc1").set("maxiter", 8);\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("t1").feature("fc1").set("damp", 0.9);\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("t1").feature("fc1").set("jtech", "once");\n')
+                        inp.write('    moidel.sol("sol'+str(j)+'").runAll();\n')
+
+            inp.write('    return model;\n')
+            inp.write('  }\n')
+            inp.write('\n')
+
+            inp.write('  public static Model run2(Model model) {\n')
+            inp.write('  return model;\n')
+            inp.write('  }\n')
+
+            inp.write('\n')
+            inp.write('  public static void main(String[] args) {\n')
+            inp.write('    Model model = run();\n')
+            inp.write('    run2(model);\n')
+            inp.write('  }\n')
+            inp.write('\n')
+            inp.write('}\n')
 
             
