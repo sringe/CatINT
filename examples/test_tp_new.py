@@ -1,6 +1,6 @@
-from transport.transport import Transport
-from transport.calculator import Calculator 
-from transport.plot import Plot
+from catint.transport import Transport
+from catint.calculator import Calculator 
+from catint.plot import Plot
 from read_data import read_data
 import numpy as np
 import sys
