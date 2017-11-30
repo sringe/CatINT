@@ -121,7 +121,7 @@ species=\
     'C2':               {   'symbol':               'C_2H_5OH',
                             'name':                 'C2-ethanol',
                             'diffusion':            0.84e-009,
-                            'zeff':                 '12.0',
+                            'zeff':                 12.0,
                             'req':                  [2]}
     }
 ###########################################################################
@@ -131,12 +131,17 @@ species=\
 ###########################################################################
 
 comsol_params={}
-comsol_params['A']=[1.e13,'Exponential prefactor']
+comsol_params['A1']=['1.e13[1/s]','Exponential prefactor']
+comsol_params['A2']=['1.e13[m^3/s/mol]','Exponential prefactor']
 comsol_params['Ga_CHO']=['1.11746219[eV]','CHO Activation Energy']
 comsol_params['Ga_CHOH']=['2.37467774[eV]','CHOH Activation Energy']
 comsol_params['Ga_OCCO']=['0.578959276[eV]','OCCO Activation Energy']
 comsol_params['Ga_OCCOH']=['1.10495851[eV]','OCCOH Activation Energy']
-eVToJmol=eVTokcal*calToJ*1000
+comsol_params['eVToJmol']=[str(eVTokcal*1000*calToJ)+'[J/eV/mol]','eV to J/mol Conversion factor']
+comsol_params['alpha1']=['0.5','Butler-Volmer Parameter']
+comsol_params['alpha2']=['2.0','Butler-Volmer Parameter']
+comsol_params['e0']=['1[C]','electronic charge']
+
 
 ###########################################################################
 #RATE EQUATIONS/FLUXES
@@ -145,12 +150,12 @@ eVToJmol=eVTokcal*calToJ*1000
 #give rates as COMSOL strings
 CO_rate=''
 OHm_rate=''
-C1_rate='[[CO]]*A*exp(-max([Ga_CHO+0.5*V, Ga_CHOH+2*V])/RT)'
-C2_rate='[[CO]]**2*A*exp(-max([Ga_OCCOH+0.5*V, Ga_OCCO])/RT)'
+C1_rate='[[CO]]*A1*exp(-max(Ga_CHO+alpha1*V*e0, Ga_CHOH+alpha2*V*e0)*eVToJmol/RT)'#/F_const/'+str(species['C1']['zeff'])
+C2_rate='[[CO]]^2*A2*exp(-max(Ga_OCCOH+alpha1*V*e0, Ga_OCCO)*eVToJmol/RT)' #/F_const/'+str(species['C2']['zeff'])
 formulas=[C1_rate,C2_rate]
 for product,formula in zip(system['products'][0],formulas):
-    CO_rate+='-'+str(species[product]['req'][0])+'/'+str(species[product]['zeff'])+'*'+formula
-    OHm_rate+=formula
+    CO_rate+='-'+str(species[product]['req'][0])+'*'+formula #+'/'+str(unit_F*species[product]['zeff'])+'*'+formula
+    OHm_rate+='+'+formula
 
 #OHm_rate+='-'+
 

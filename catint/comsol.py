@@ -19,6 +19,8 @@ class Comsol():
 
     def run(self,
             studies=None):
+        studies={}
+#        studies['static']={'None':{'None':None}}
         if studies is None:
             studies={}
             studies['time-dependent']={'None':{'None':None}}
@@ -80,7 +82,7 @@ class Comsol():
             for line in lines:
                 outfile.write(line+'\n')
 
-    def write_input(self,file_name='pnp_transport.java',model_name='pnp_transport',model_comments=''):
+    def write_input(self,file_name='pnp_transport.java',model_name='pnp_transport.mph',model_comments=''):
         self.inp_file_name=file_name
         with open(file_name,'w') as inp:
 
@@ -98,6 +100,13 @@ class Comsol():
             inp.write('    model.comments("'+model_comments+'");\n')
 
             #PARAMETER
+
+            #additional parameters from input
+            for pa in self.tp.comsol_params:
+                pa_val=self.tp.comsol_params[pa][0]
+                pa_des=self.tp.comsol_params[pa][1]
+                inp.write('    model.param().set("'+pa+'", "'+str(pa_val)+'",   "'+pa_des+'");\n')
+
             #diffusion coefficients
             for i,sp in enumerate(self.tp.species):
                 inp.write('    model.param().set("D{}", "{}[m^2/s]", "{} Diffusion coefficient");\n'.format(\
@@ -106,24 +115,11 @@ class Comsol():
             for i,sp in enumerate(self.tp.species):
                 inp.write('    model.param().set("Z{}", "{}", "{} ionic charge");\n'.format(\
                         i+1, self.tp.species[sp]['charge'],self.tp.species[sp]['name']))
-            #rates
-            for i,sp in enumerate(self.tp.species):
-                if type(self.tp.species[sp]['flux'])==str:
-                    mod_str=''
-                    #flux is given as equation, have to replace concentrations with correct number here
-                    string=self.tp.species[sp]['flux']
-                    iss=0
-                    for s1 in string.split('[['):
-                        iss+=1
-                        if len(s1)==0 or iss==1:
-                            continue
-                        sp_str=s1.split(']]')
-                        conc=self.tp.species[sp_str[0]]['bulk concentration']
-                        sp_str[0]=str(conc)
-                        mod_str+=''.join(sp_str)
-                    self.tp.species[sp]['flux']=mod_str
 
-                inp.write('    model.param().set("k{}", "{}[mol/m^2/s]", "{} flux");\n'.format(\
+            for i,sp in enumerate(self.tp.species):
+                if type(self.tp.species[sp]['flux'])!=str:
+                    #define fluxes here as parameters
+                    inp.write('    model.param().set("k{}", "{}[mol/m^2/s]", "{} flux");\n'.format(\
                         i+1, self.tp.species[sp]['flux'],self.tp.species[sp]['name']))
 
 
@@ -148,11 +144,6 @@ class Comsol():
             inp.write('    model.param().set("lambdaS", "epsS/CS", "Stern layer thickness");\n')
 #            inp.write('    model.param().set("V", "0.2[V]", "Electrode potential");\n')
 
-            #additional parameters from input
-            for pa in self.tp.comsol_params:
-                pa_val=self.tp.comsol_params[pa][0]
-                pa_des=self.tp.comsol_params[pa][1]
-                inp.write('    model.param().set("'+pa+'", "'+str(pa_val)+'",   "'+pa_des+'");\n')
 
             #reaction rates
             i=0
@@ -203,20 +194,40 @@ class Comsol():
             
             inp.write('    model.component("comp1").variable("var1").set("deltaphi", "phiM-phi", "Metal - reaction plane potential difference");\n')
             inp.write('    model.component("comp1").variable("var1").set("rho_s", "epsS*deltaphi/lambdaS", "Surface charge density");\n')
-            inp.write('    model.component("comp1").variable("var1").selection().geom("geom1", 0);\n')
-            inp.write('    model.component("comp1").variable("var1").selection().set(new int[]{1});\n')
-            inp.write('    model.component("comp1").variable().create("var2");\n')
-            inp.write('    model.component("comp1").variable("var2").set("phiM", "V", "Metal phase potential (ground)");\n')
-            inp.write('    model.component("comp1").variable("var2").selection().geom("geom1", 0);\n')
-            inp.write('    model.component("comp1").variable("var2").selection().set(new int[]{1});\n')
-            inp.write('    model.component("comp1").variable().create("var3");\n')
             if self.tp.pb_bound['potential']['bulk'] is not None:
                 potential_r=self.tp.pb_bound['potential']['bulk']
             else:
                 potential_r=0.0
-            inp.write('    model.component("comp1").variable("var3").set("phiM", "'+str(potential_r)+' [V]", "Metal phase potential (cell voltage)");\n')
-            inp.write('    model.component("comp1").variable("var3").selection().geom("geom1", 0);\n')
-            inp.write('    model.component("comp1").variable("var3").selection().set(new int[]{2});\n')
+            inp.write('    model.component("comp1").variable("var1").set("phiM", "'+str(potential_r)+' [V]", "Metal phase potential (cell voltage)");\n')
+            inp.write('    model.component("comp1").variable("var1").selection().geom("geom1", 0);\n')
+            inp.write('    model.component("comp1").variable("var1").selection().set(new int[]{1});\n')
+            inp.write('    model.component("comp1").variable().create("var2");\n')
+#            inp.write('    model.component("comp1").variable("var2").set("phiM", "V", "Metal phase potential (ground)");\n')
+            inp.write('    model.component("comp1").variable("var2").selection().geom("geom1", 0);\n')
+#            inp.write('    model.component("comp1").variable("var2").selection().set(new int[]{1});\n')
+#            inp.write('    model.component("comp1").variable().create("var3");\n')
+            #inp.write('    model.component("comp1").variable("var3").selection().geom("geom1", 0);\n')
+            #inp.write('    model.component("comp1").variable("var3").selection().set(new int[]{2});\n')
+
+
+            #rates
+            for i,sp in enumerate(self.tp.species):
+                if type(self.tp.species[sp]['flux'])==str:
+                    mod_str=''
+                    #flux is given as equation, have to replace concentrations with correct number here
+                    string=self.tp.species[sp]['flux']
+                    iss=0
+                    for s1 in string.split('[['):
+                        iss+=1
+                        if len(s1)==0 or iss==1:
+                            continue
+                        sp_str=s1.split(']]')
+#                        conc=self.tp.species[sp_str[0]]['bulk concentration']
+                        sp_str[0]='cp'+str(i+1)
+                        mod_str+=''.join(sp_str)
+                    self.tp.species[sp]['flux']=mod_str
+                    inp.write('    model.component("comp1").variable("var2").set("k{}", "{}", "{} flux");\n'.format(\
+                            i+1, self.tp.species[sp]['flux'],self.tp.species[sp]['name']))
 
             inp.write('/*\n')
             inp.write(' *INTEGRATION\n')
@@ -483,7 +494,6 @@ class Comsol():
                     else:
                         inp.write('    model.study().create("std'+str(i)+'");\n')
                         inp.write('    model.study("std'+str(i)+'").create("time", "Transient");\n')
-                        inp.write('    model.study("std'+str(i)+'").create("param", "Parametric");\n')
                     #create a new solver
                     if stype!='parametric':
                         inp.write('    model.sol().create("sol'+str(j)+'");\n')
@@ -500,6 +510,7 @@ class Comsol():
                         inp.write('    model.sol("sol'+str(j)+'").feature("s1").feature().remove("fcDef");\n')
                     else:
                         ip+=1
+                        inp.write('    model.study("std'+str(i)+'").create("param", "Parametric");\n')
                         inp.write('    model.sol().create("sol'+str(j)+'");\n')
                         inp.write('    model.sol("sol'+str(j)+'").study("std'+str(i)+'");\n')
                         inp.write('    model.sol("sol'+str(j)+'").label("Parametric Solutions 3");\n')
@@ -514,9 +525,11 @@ class Comsol():
 
             #now set numeric parameters and run!
             j=0
+            i=0
             ip=0
             print '>>> ', self.tp.nt
             for i,study in enumerate(self.studies):
+                i+=1
                 for method in self.studies[study]:
                     j+=1
                     if study=='stationary':
