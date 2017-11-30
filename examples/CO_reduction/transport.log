@@ -1,0 +1,8 @@
+11-29 18:21 root         INFO     Starting Transport Calculation.
+11-29 18:21 root         INFO     Found reaction equivalents, trying to use these for flux initialization.
+11-29 18:21 transport.debug DEBUG    DB: FLUXES
+11-29 18:21 transport.debug DEBUG    OH- [[CO]]*A*exp(-max([Ga_CHO+0.5*V, Ga_CHOH+2*V])/RT)[[CO]]**2*A*exp(-max([Ga_OCCOH+0.5*V, Ga_OCCO])/RT)
+11-29 18:21 transport.debug DEBUG    K 0.0
+11-29 18:21 transport.debug DEBUG    CO -1/8.0*[[CO]]*A*exp(-max([Ga_CHO+0.5*V, Ga_CHOH+2*V])/RT)-2/12.0*[[CO]]**2*A*exp(-max([Ga_OCCOH+0.5*V, Ga_OCCO])/RT)
+11-29 18:21 transport.debug DEBUG    C1 [[CO]]*A*exp(-max([Ga_CHO+0.5*V, Ga_CHOH+2*V])/RT)
+11-29 18:21 transport.debug DEBUG    C2 [[CO]]**2*A*exp(-max([Ga_OCCOH+0.5*V, Ga_OCCO])/RT)

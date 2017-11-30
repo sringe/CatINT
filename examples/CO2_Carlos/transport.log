@@ -1,0 +1,21 @@
+11-29 22:02 root         INFO     Starting Transport Calculation.
+11-29 22:02 root         INFO     Not found reaction equivalents, trying to use number of C-atoms for flux initialization (only works for CO2(CO)R!!!).
+11-29 22:02 transport.info INFO     Found reactions.
+11-29 22:02 transport.debug DEBUG    DB: FLUXES
+11-29 22:02 transport.debug DEBUG    propol 0.230622
+11-29 22:02 transport.debug DEBUG    OH- 0.0
+11-29 22:02 transport.debug DEBUG    metol 0.019581195
+11-29 22:02 transport.debug DEBUG    CO2 0.0
+11-29 22:02 transport.debug DEBUG    CO 0.50286
+11-29 22:02 transport.debug DEBUG    etgly 0.0230859558
+11-29 22:02 transport.debug DEBUG    allyl 0.0
+11-29 22:02 transport.debug DEBUG    H2 89.585376
+11-29 22:02 transport.debug DEBUG    unknown 0.0
+11-29 22:02 transport.debug DEBUG    K 0.0
+11-29 22:02 transport.debug DEBUG    etol 2.902716
+11-29 22:02 transport.debug DEBUG    HCO3- 0.0
+11-29 22:02 transport.debug DEBUG    CH4 71.109606
+11-29 22:02 transport.debug DEBUG    C2H4 16.119264
+11-29 22:02 transport.debug DEBUG    HCOO- 0.802842
+11-29 22:02 transport.debug DEBUG    CO32- 0.0
+11-29 22:02 transport.debug DEBUG    acet 0.0607057794
