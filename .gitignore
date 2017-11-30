@@ -2,3 +2,9 @@
 *.gz
 *.aux
 *.swp
+*.status
+*.log
+*.java
+*.mph
+*.class
+*.sorted
