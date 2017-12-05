@@ -119,12 +119,14 @@ class Transport(object):
         self.beta = 1./(self.system['temperature'] * unit_R)
 
         #GET CHARGES AND NCATOMS FROM CHEMICAL SYMBOLS
-        self.charges,self.reqs=self.symbol_reader(self.species)
+        self.charges=self.symbol_reader(self.species)
 
         self.use_migration=True
         if 'migration' in self.system:
             if not self.system['migration']:
                 self.use_migration=False
+
+        self.use_convection=False
 
         self.use_reactions=False
         if self.reactions is not None:
@@ -143,7 +145,7 @@ class Transport(object):
 
         if all([a in self.system for a in ['water viscosity','electrolyte viscosity']]):
             #rescale diffusion coefficients according to ionic strength (Stokes-Einstein):
-            print 'Rescaling', self.system['water viscosity'], self.system['electrolyte viscosity']
+            self.logger.info('Rescaling water viscosities to electrolyte concentration {} {}'.format(self.system['water viscosity'], self.system['electrolyte viscosity']))
             self.D=np.array([d*float(self.system['water viscosity'])/float(self.system['electrolyte viscosity']) for d in self.D])
             
 
@@ -231,26 +233,45 @@ class Transport(object):
         self.comsol_params=comsol_params
 
     def evaluate_fluxes(self):
-        tmp_educts=[0.0]*len(self.system['educts'])
-        tmp_OHm=[0.0]*len(self.system['educts'])
+        for sp in self.species:
+            print 'fluxes before', sp, self.species[sp]['flux']
+#        tmp_educts=[0.0]*len(self.system['educts'])
+#        tmp_OHm=0.0#*len(self.system['educts'])
         #go over all products:
+        tmp_rates=np.zeros([self.nspecies])
         for isp,sp in enumerate(self.species):
-            if self.species[sp] not in sum(self.system['products'],[]):
-                continue
             if 'zeff' in self.species[sp]:
-                crate=self.species[sp]['flux']/(unit_F*self.species[sp]['zeff'])
-                self.species[sp]['flux']=crate
-                for ieduct,educt in enumerate(self.system['educts']):
-                    if self.species[sp] in self.system['products'][ieduct]:
-                        tmp_educts[ieduct]+=crate*self.reqs[isp]
-                tmp_OHm+=crate*self.species[sp]['zeff']
+                if type(self.species[sp]['flux'])!=dict:
+                    crate=self.species[sp]['flux']/(unit_F*self.species[sp]['zeff'])
+                    self.species[sp]['flux']=crate
+#                if sp not in sum([self.system['sum rates'][sp]['values'] for sp in self.system['sum rates']],[]):
+#                    continue
+                for isp2,sp2 in enumerate(self.species):
+                    if type(self.species[sp2]['flux'])==dict:
+                        if sp in self.species[sp2]['flux']['values']:
+                            if self.species[sp2]['flux']['reqs']=='number_of_catoms':
+                                req=self.number_of_catoms[isp]
+                            elif self.species[sp2]['flux']['reqs']=='zeff':
+                                req=self.species[sp]['zeff']
+                            else:
+                                req=self.species[sp2]['flux']['reqs'][isp]
+                            if self.species[sp2]['flux']['kind']=='educt':
+                                tmp_rates[isp2]-=crate*req
+                            else:
+                                tmp_rates[isp2]+=crate*req
 #            elif sp=='HCO3-':
 #                self.species[sp]['flux']=-self.species['H2']['flux']/(unit_F*self.species['H2']['zeff'])*2.
-        for ieduct,educt in enumerate(self.system['educts']):
-            self.species[educt]['flux']=-tmp_educts[ieduct]
+        for isp,sp in enumerate(self.species):
+            if type(self.species[sp]['flux'])==dict:
+                self.species[sp]['flux']=tmp_rates[isp]
+#        for ieduct,educt in enumerate(self.system['educts']):
+#            self.species[educt]['flux']=-tmp_educts[ieduct]
         if 'unknown' in self.species:
             #we needed this flux only to calculate the co2 and oh- fluxes
             self.species['unknown']['flux']=0.0
+        for sp in self.species:
+            print 'fluxes after', sp, self.species[sp]['flux']
+        exit()
 
     def symbol_reader(self,species):
     #determine charges and create arrays of charges and D's
@@ -310,22 +331,10 @@ class Transport(object):
                     number=''
         charges=np.array(charges)
         number_of_catoms=np.array(number_of_catoms)
+        self.number_of_catoms=number_of_catoms
         #the automatic reader of the number of catoms is maybe not what we want
         #for the reaction equivalents:
-        reqs_given=False
-        reqs=[0]*len(self.species)
-        for isp,sp in enumerate(self.species):
-            if 'req' in self.species[sp]:
-                reqs[isp]=self.species[sp]['req']
-                reqs_given=True
-
-        if reqs_given:
-            logging.info('Found reaction equivalents, trying to use these for flux initialization.')
-            reqs_output=reqs
-        else:
-            logging.info('Not found reaction equivalents, trying to use number of C-atoms for flux initialization (only works for CO2(CO)R!!!).')
-            reqs_output=number_of_catoms
-        return charges, reqs_output
+        return charges
 
     def set_boundary_and_initial_conditions(self,pb_bound,flux_bound):
 
@@ -343,8 +352,6 @@ class Transport(object):
                                 'bulk':     None},
                 'gradient':     {'wall':    None,
                                 'bulk':     0.0},
-                'robin':        {'wall':    None,
-                                'bulk':     None}
                 }
         else:
             self.pb_bound={} 
@@ -363,7 +370,6 @@ class Transport(object):
                 else:
                     self.pb_bound[key1]['wall']=None
                     self.pb_bound[key1]['bulk']=None
-                    self.pb_bound[key1]['robin']=None
 
         #if 'vzeta' in self.system:
         #    self.vzeta_init=self.system['vzeta']

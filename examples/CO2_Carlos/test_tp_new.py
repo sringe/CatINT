@@ -75,6 +75,10 @@ pH_i = 14+np.log10(OHm_i/1000.0) #initial pH (in log. arg must be conc in M)
 #diffusion          [m/s]       (infinite dilution in water at 25C)
 #bulk concentrations [mol/m^3]
 #zeff number of electrons need to derive product from CO2
+#if the fluxes of other reactants should be summed up to get the flux of another reactant
+#put a dictionary as shown below. values are the reactants which contribute to the flux,
+#reqs are the reaction equivalents
+#flux can be equation as string or dictionary (see above) or the value as float
 #Henry              [atm/M] (from http://butane.chem.uiuc.edu/pshapley/GenChem1/L23/web-L23.pdf)
 species=\
     {
@@ -85,7 +89,9 @@ species=\
     'CO2':              {   'symbol':               'CO_2',
                             'name':                 'carbon dioxide',
                             'diffusion':            1.91e-009,
-                            'bulk concentration':   CO2_i},
+                            'bulk concentration':   CO2_i,
+                            'flux':                 {'kind':'educt','values':['C2H4','CH4','CO','HCOO-','etol','propol','allyl','metol','acet','etgly','unknown'],\
+                                                    'reqs':'number_of_catoms'}},
     'CO32-':            {   'symbol':               'CO_3^{2-}',
                             'name':                 'carboxylate',
                             'diffusion':            9.23e-010,
@@ -97,7 +103,9 @@ species=\
     'OH-':              {   'symbol':               'OH^-',
                             'name':                 'hydroxyl',
                             'diffusion':            5.273e-009,
-                            'bulk concentration':   OHm_i},
+                            'bulk concentration':   OHm_i,
+                            'flux':                 {'kind':'product','values':['C2H4','CH4','CO','HCOO-','etol','propol','allyl','metol','acet','etgly','unknown','H2'],\
+                                                    'reqs':'zeff'}},
     'H+':               {   'symbol':               'H^+',
                             'name':                 'hydronium',
                             'bulk concentration':   10**(-pH_i)},
@@ -169,7 +177,6 @@ if total_flux<1.0:
 else:
     species['unknown']['flux']=0.0
 
-print species['HCO3-']['bulk concentration']
 visc=viscosity(species['HCO3-']['bulk concentration']/10**3), #Pa*s at 25C of KHCO3 solution
 system['boundary thickness']=boundary_thickness
 #system['current density']=data_fluxes['current_density']['-0.95526']
@@ -182,8 +189,8 @@ system['electrolyte viscosity']=visc[0]
 pb_bound={
 #        'potential': {'wall':'zeta'},
 #        'gradient': {'bulk':0.0}}
-    'potential':{'bulk':0.0},
-    'gradient': {'wall':0.0}} 
+         'potential':{'bulk':0.0,'wall':-0.2}}
+#    'potential': {'wall':-0.2}} 
 
 ###########################################################################
 #SETUP AND RUN
