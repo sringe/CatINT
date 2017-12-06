@@ -27,11 +27,13 @@ class Comsol():
         self.studies=studies
 #        self.write_parameter_file()
         self.write_input()
+        self.tp.logger.info('Compiling Comsol.')
         call(self.exe+" compile "+'/'.join([os.getcwd(),self.inp_file_name]),shell=True)
+        self.tp.logger.info('Starting Comsol.')
         call(self.exe+" batch -inputfile "+'/'.join([os.getcwd(),'.'.join(self.inp_file_name.split('.')[:-1])+".class"]),shell=True)
         #~/software/transport/examples/diffuse_double_layer_with_charge_transfer_nonstatic_2.java
-        cout=self.read_output()
-        return cout
+        self.tp.logger.info('Reading Comsol output.')
+        self.read_output()
 
     def write_parameter_file(self,file_name='comsol_parameters.txt'):
         variable_names=[['D'+str(i+1) for i in range(len(self.tp.D))],\
@@ -531,6 +533,23 @@ class Comsol():
                             inp.write('    model.sol("sol'+str(j)+'").feature("t1").create("fc1", "FullyCoupled");\n')
                             inp.write('    model.sol("sol'+str(j)+'").feature("t1").create("d1", "Direct");\n')
                             inp.write('    model.sol("sol'+str(j)+'").feature("t1").feature().remove("fcDef");\n')
+                        ##not sure why there are these lines, just pasting them from the comsol java file:
+                        #inp.write('    model.result().dataset().create("dset2", "Solution");\n')
+                        #inp.write('    model.result().dataset().create("cpt1", "CutPoint1D");\n')
+                        #inp.write('    model.result().dataset("dset2").set("probetag", "pdom1");\n')
+                        #inp.write('    model.result().dataset("cpt1").set("probetag", "pdom1");\n')
+                        #inp.write('    model.result().dataset("cpt1").set("data", "dset2");\n')
+                        #inp.write('    model.result().numerical().create("pev1", "EvalPoint")\n');
+                        #inp.write('    model.result().numerical().create("pev2", "EvalPoint");\n')
+                        #inp.write('    model.result().numerical().create("pev3", "EvalPoint");\n')
+                        #inp.write('    model.result().numerical("pev1").set("probetag", "pdom1/ppb1");\n')
+                        #inp.write('    model.result().numerical("pev2").set("probetag", "pdom1/ppb2");\n')
+                        #inp.write('    model.result().numerical("pev3").set("probetag", "pdom1/ppb3");\n')
+                        #inp.write('    model.component("comp1").probe("pdom1").genResult(null);\n')
+                        #inp.write('    model.result().dataset("dset2").label("Probe Solution 2");\n')
+                        #inp.write('    model.result().numerical("pev3").set("unit", new String[]{""});\n')
+                        #inp.write('    model.result().remove("pg1");\n')
+                        ##end unknown lines
                     else:
                         ip+=1
                         inp.write('    model.study("std'+str(i+1)+'").create("param", "Parametric");\n')
@@ -544,7 +563,7 @@ class Comsol():
                         inp.write('    model.study("std'+str(i+1)+'").feature("param").set("plistarr", new String[]{"'+sum(map(str,self.studies[study][method][stype])+' ')+'"});\n')
                         inp.write('    model.study("std'+str(i+1)+'").feature("param").set("punit", new String[]{""});\n')
                     if study=='time-dependent':
-                        inp.write('    model.study("std'+str(i+1)+'").feature("time").set("tlist", "range('+str(min(self.tp.tmesh))+','+str(self.tp.tmax)+','+str(self.tp.nt)+')");\n')
+                        inp.write('    model.study("std'+str(i+1)+'").feature("time").set("tlist", "range('+str(min(self.tp.tmesh))+','+str(self.tp.dt)+','+str(self.tp.tmax)+')");\n')
 
             #now set numeric parameters and run!
             j=0
@@ -560,8 +579,8 @@ class Comsol():
                         inp.write('    model.sol("sol'+str(j)+'").runAll();\n')
                     elif study=='time-dependent':
                         inp.write('    model.sol("sol'+str(j)+'").attach("std'+str(i+1)+'");\n')
-                        inp.write('    model.sol("sol'+str(j)+'").feature("v1").set("clist", new String[]{"'+str(min(self.tp.tmesh))+','+str(self.tp.tmax)+','+str(self.tp.nt)+'"});\n')
-                        inp.write('    model.sol("sol'+str(j)+'").feature("t1").set("tlist", "range('+str(min(self.tp.tmesh))+','+str(self.tp.tmax)+','+str(self.tp.nt)+')");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("v1").set("clist", new String[]{"'+str(min(self.tp.tmesh))+','+str(self.tp.dt)+', '+str(self.tp.tmax)+'"});\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("t1").set("tlist", "range('+str(min(self.tp.tmesh))+','+str(self.tp.dt)+','+str(self.tp.tmax)+')");\n')
                         inp.write('    model.sol("sol'+str(j)+'").feature("t1").set("maxorder", 2);\n')
                         inp.write('    model.sol("sol'+str(j)+'").feature("t1").feature("fc1").set("maxiter", 8);\n')
                         inp.write('    model.sol("sol'+str(j)+'").feature("t1").feature("fc1").set("damp", 0.9);\n')
@@ -592,7 +611,7 @@ class Comsol():
                     for sp,i in zip(self.tp.species,range(len(self.tp.species))):
                         c_str+="\""+var_name+str(i+1)+"\""
                         unit_str+="\""+unit_name+"\""
-                        name_str+=""+self.tp.species[sp]['name']+""
+                        name_str+="\""+label+" "+self.tp.species[sp]['name']+"\""
                         if i != len(self.tp.species)-1:
                             c_str+=", "
                             unit_str+=", "
@@ -603,14 +622,14 @@ class Comsol():
                         i+=1
                         c_str+="\""+v+"\""
                         unit_str+="\""+u+"\""
-                        name_str+=""+v+""
+                        name_str+="\""+v+"\""
                         if i != len(var_name)-1:
                             c_str+=", "
                             unit_str+=", "
                             name_str+=", "
                 inp.write('    model.result().export("data'+str(export_count)+'").set("expr", new String[]{'+c_str+'});\n')
                 inp.write('    model.result().export("data'+str(export_count)+'").set("unit", new String[]{'+unit_str+'});\n')
-                inp.write('    model.result().export("data'+str(export_count)+'").set("descr", new String[]{"'+label+': '+name_str+'"});\n')
+                inp.write('    model.result().export("data'+str(export_count)+'").set("descr", new String[]{'+name_str+'});\n')
                 inp.write('    model.result().export("data'+str(export_count)+'").set("filename", "'+root+'/'+file_name+'");\n')
                 inp.write('    model.result().export("data'+str(export_count)+'").run();\n')
 
@@ -639,13 +658,29 @@ class Comsol():
 
     def read_output(self):
         """reads the output files of COMSOL written to the results folder"""
-        cout=np.zeros([self.tp.ntout,self.tp.nspecies*self.tp.nx])
-        for output in self.outputs:
+        self.tp.potential=[]
+        self.tp.efield=[]
+        for ioutput,output in enumerate(self.outputs):
+            if ioutput==0:
+                #first get the new xmesh:
+                self.tp.xmesh=[]
+                i=0
+                for line in open(self.results_folder+'/'+output+'.txt','r'):
+                    i+=1
+                    if i>8:
+                        ls=line.split()
+                        for j,lss in enumerate(ls):
+                            if j==0:
+                                self.tp.xmesh.append(float(lss))
+                self.tp.xmax=max(self.tp.xmesh)
+                self.tp.nx=len(self.tp.xmesh)
+                self.tp.dx=self.tp.xmax/self.tp.nx
+                cout=np.zeros([self.tp.ntout,self.tp.nspecies*self.tp.nx])
+                cout_tmp=np.zeros([self.tp.nt+1,self.tp.nspecies*self.tp.nx])
+            #now read in all results
             i=0
             for line in open(self.results_folder+'/'+output+'.txt','r'):
                 i+=1
-                if i==6:
-                    len_data=int(line.split(':')[-1])
                 if i>8 and [key for key in self.studies][0]=='stationary':
                     if output=='concentrations':
                         ls=line.split()
@@ -662,18 +697,22 @@ class Comsol():
                                 self.tp.efield[i-1]=float(lss)
                 elif i>8 and [key for key in self.studies][0]=='time-dependent':
                     if output=='concentrations':
+                        #read a selection of time steps here
                         ls=line.split()
-                        i_t=np.zeros([self.tp.nt],dtype=int)-1
+                        i_t=np.zeros([self.tp.nspecies],dtype=int)-1
                         for j,lss in enumerate(ls):
                             if j>0:
                                 i_sp=(j-1)%self.tp.nspecies #index of species
                                 i_t[i_sp]+=1 #index of current time step of species
                                 n=i_t[i_sp]
-                                if n % int(self.tp.nt/float(self.tp.ntout)) == 0 or n==self.tp.nt-1:
-                                    cout[n,i_sp*self.tp.nx+i-1]=float(lss)
+#                                if n % int(self.tp.nt/float(self.tp.ntout)) == 0: # or n==self.tp.nt-1:
+                                if n in self.tp.itout:
+                                    cout_tmp[n,i_sp*self.tp.nx+i-9]=float(lss)
+
                     elif output=='electrostatics':
+                        #read only the last time step here
                         ls=line.split()
-                        i_t=np.zeros([self.tp.nt],dtype=int)-1
+                        i_t=np.zeros([2],dtype=int)-1
                         for j,lss in enumerate(ls):
                             if j>0:
                                 i_sp=(j-1)%2
@@ -681,11 +720,26 @@ class Comsol():
                                 n=i_t[i_sp]
                                 if n==self.tp.nt-1: #n % int(self.tp.nt/float(self.tp.ntout)) == 0 or n==self.tp.nt-1:
                                     if i_sp==0:
-                                        self.tp.potential[i-1]=float(lss)
+                                        self.tp.potential.append(float(lss))
                                     elif i_sp==1:
-                                        self.tp.efield[i-1]=float(lss)
+                                        self.tp.efield.append(float(lss))
+        #compress cout_tmp to cout (save only relevant time steps)
+        nn=-1
+        for n,cc in enumerate(cout_tmp):
+#            if n % int(self.tp.nt/float(self.tp.ntout))==0:
+            if n in self.tp.itout:
+                nn+=1
+                cout[nn,:]=cc
+        self.tp.logger.info('Wrote out concentrations at '+str(nn+1)+' steps.')
+        self.tp.potential=np.array(self.tp.potential)
+        self.tp.efield=np.array(self.tp.efield)
         cout=np.array(cout)
-        return cout
+        for i_sp,sp in enumerate(self.tp.species):
+            self.tp.species[sp]['concentration']=cout[-1,i_sp*self.tp.nx:(i_sp+1)*self.tp.nx]
+        self.tp.cout=cout
 
-
-
+        #update total charge density
+        self.tp.total_charge=np.zeros([self.tp.nx])
+        for i_sp,sp in enumerate(self.tp.species):
+            for ix,xx in enumerate(self.tp.xmesh):
+                self.tp.total_charge[ix]+=self.tp.charges[i_sp]*self.tp.species[sp]['concentration'][ix]

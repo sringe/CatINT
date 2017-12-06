@@ -19,14 +19,8 @@ class Plot():
 
     def plot(self,cout=None):
 
-        if cout is None:
-            cout=[]
-            for t in range(1):
-                cout.append([0.0]*self.tp.nspecies*self.tp.nx)
-            cout=np.array(cout)
+        cout=self.tp.cout
 
-
-#        colorlist=cycle(['b','k','])
         colors=dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
         colorlist=cycle([colors[key] for key in colors])
 
@@ -101,10 +95,10 @@ class Plot():
         ax4.set_xlabel('x (m)')
         ax4.legend()
 #        ax4.plot(self.tp.xmesh[:-1],self.tp.external_charge[:-1]/10**3/unit_F, '-',label='n_ext')
-        ax5.plot(self.tp.xmesh[:-1],self.tp.total_charge[:-1]/10**3/unit_F,'-',label='n_tot')
-        ax6.set_ylabel('n_ion (e*mol/L)')
-        ax6.legend()
-        ax6.set_title('Charge Density')
+        ax5.plot(self.tp.xmesh,self.tp.total_charge/10**3/unit_F,'-',label='n_tot')
+        ax5.set_ylabel('n_ion (e*mol/L)')
+        ax5.legend()
+        ax5.set_title('Charge Density')
 
         for ax in [ax1,ax2,ax3,ax4,ax5,ax6]:
             ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2e'))

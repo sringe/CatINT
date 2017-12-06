@@ -189,7 +189,7 @@ system['electrolyte viscosity']=visc[0]
 pb_bound={
 #        'potential': {'wall':'zeta'},
 #        'gradient': {'bulk':0.0}}
-         'potential':{'bulk':0.0,'wall':-0.2}}
+         'potential':{'bulk':0.0,'wall':potential}}
 #    'potential': {'wall':-0.2}} 
 
 ###########################################################################
@@ -207,9 +207,9 @@ tp.set_calculator('comsol') #odespy') #--bdf')
 #tp.set_calculator('Crank-Nicolson--LF')
 #tp.set_initial_concentrations('Gouy-Chapman')
 
-c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1)
+c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10.0)
 #scale_pb_grid
-cout=c.run(dt=1e-3,tmax=20.0) #1.0)
+cout=c.run()
 
 p=Plot(transport=tp)
 p.plot(cout)

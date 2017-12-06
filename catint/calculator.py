@@ -23,7 +23,7 @@ from comsol import Comsol
 
 class Calculator():
 
-    def __init__(self,transport=None,dt=None,tmax=None,ntout=5,calc=None,
+    def __init__(self,transport=None,dt=None,tmax=None,ntout=1,calc=None,
             scale_pb_grid=None,tau_jacobi=1e-7,tau_scf=1e-5):
 
         self.tau_scf=tau_scf
@@ -37,6 +37,7 @@ class Calculator():
         if calc is None:
             calc=self.tp.calc
         
+        self.tp.ntout=ntout
 #        if os.path.exists('results.txt'):
 #            os.remove('results.txt')
 
@@ -72,8 +73,26 @@ class Calculator():
         if tmax is not None or dt is not None:
             self.tp.tmesh=np.arange(0,self.tp.tmax+self.tp.dt,self.tp.dt)
             self.tp.nt=len(self.tp.tmesh)
+        else:
+            self.tp.logger.warning('No time mesh given, defaulting to range(0,1,0.1)')
+            self.tp.tmesh=np.arange(0,1,0.1)
+            self.tp.nt=len(self.tp.tmesh)
         self.oldtime=np.inf
-        self.tp.ntout=ntout
+        
+        #go over the times and decide which ones to output
+        self.tp.itout=[]
+        cc=0
+        for it,t in enumerate(self.tp.tmesh):
+            if it==self.tp.nt-1:
+                cc+=1
+                self.tp.itout.append(it)
+            elif it>1 and it%int(self.tp.nt/float(self.tp.ntout)) == 0:
+                cc+=1
+                self.tp.itout.append(it)
+        #set the output number correctly
+        ntout=cc
+        self.tp.ntout=ntout #
+
         self.initialize='bla'
         if self.calc == 'comsol':
             self.comsol=Comsol(transport=self.tp)
@@ -372,7 +391,8 @@ class Calculator():
             #return the results
             cout = []
             for n in range(0,nt):
-                if n % int(nt/float(ntout)) == 0 or n==nt-1:
+#                if n % int(nt/float(ntout)) == 0 or n==nt-1:
+                if n in self.tp.itout:
                     cout.append(sol[n,:].copy()) # numpy arrays are mutable, 
             return cout
 
@@ -479,7 +499,8 @@ class Calculator():
                     C[k,1:-1] = CTMP
                     COLD[k,:]=C[k,:]
 
-                if n % int(nt/float(ntout)) == 0 or n==nt-1: # or True:
+#                if n % int(nt/float(ntout)) == 0 or n==nt-1: # or True:
+                if n in self.tp.itout:
                     COUT.append(np.ndarray.flatten(C)) # numpy arrays are mutable, 
                     #so we need to write out a copy of c, not c itself.tp
             return COUT,s
@@ -591,7 +612,8 @@ class Calculator():
                 #                print i,j,A[i,j]
                 ctmp = np.linalg.solve(A,B) #this gives vector without initial and final elements
                 c = unpack(ctmp,c0,c1,nx) #add left and right boundary values back
-                if n % int(nt/float(ntout)) == 0 or n==nt-1: # or True:
+#                if n % int(nt/float(ntout)) == 0 or n==nt-1: # or True:
+                if n in self.tp.itout:
                     cout.append(c.copy()) # numpy arrays are mutable, 
                     #so we need to write out a copy of c, not c itself.tp
             return cout,s
@@ -887,7 +909,8 @@ class Calculator():
             self.tp.logger_db.debug(np.shape(sol))
             cout = []
             for n in range(0,nt):
-                if n % int(nt/float(ntout)) == 0 or n==nt-1:
+#                if n % int(nt/float(ntout)) == 0 or n==nt-1:
+                if n in self.tp.itout:
                     cout.append(sol[n,:].copy()) # numpy arrays are mutable, 
             return cout
 
@@ -940,7 +963,8 @@ class Calculator():
                             M+=1
                         temp[i] = E * C[k,i-1] + M * C[k,i] + W * C[k,i+1] + rates[k,i]*dt
                     C[k,:]=temp
-                if n % int(nt/float(ntout)) == 0 or n==nt-1:
+#                if n % int(nt/float(ntout)) == 0 or n==nt-1:
+                if n in self.tp.itout:
                     COUT.append(np.ndarray.flatten(C))
                 #if n==100:
                 #    return cout
@@ -1007,7 +1031,8 @@ class Calculator():
                                 2*V[n,j] + V[n,j+1]) + ee[k]*\
                                 (self.tp.efield[i]*(V[n,j+1]-V[n,j-1])/(2.*dx)+\
                                 self.tp.defield_dx[i]*V[n,j])
-                if n % int(nt/float(ntout)) == 0 or n==nt-1:
+#                if n % int(nt/float(ntout)) == 0 or n==nt-1:
+                if n in self.tp.itout:
                     cout.append(V[n,:].copy())
                 #if n==100:
                 #    return cout
@@ -1029,7 +1054,8 @@ class Calculator():
                 B[0] = B[0]+0.5*s*(c0+c0)
                 B[-1] = B[-1]+0.5*s*(c1+c1)
                 c[1:-1] = np.linalg.solve(A,B)
-                if n % int(nt/float(ntout)) == 0 or n==nt-1:
+#                if n % int(nt/float(ntout)) == 0 or n==nt-1:
+                if n in self.tp.itout:
                     cout.append(c.copy()) # numpy arrays are mutable, 
                     #so we need to write out a copy of c, not c itself.tp
             return cout,s
@@ -1055,15 +1081,9 @@ class Calculator():
             dataplot=cout[-1]
         return cout
 
-    def run(self,dt=None,tmax=None):
-        if dt!=None:
-            self.tp.dt=dt
-        if tmax!=None:
-            self.tp.tmax=tmax
-        self.tp.tmesh=np.arange(0,self.tp.tmax+self.tp.dt,self.tp.dt)
-        self.tp.nt=len(self.tp.tmesh)
+    def run(self):
         if not self.tp.scf_bound:
-            cout=self.run_single_step()
+            self.run_single_step()
         #elif self.scf_bound:
         #    #electrode boundary is defined by catmap calculation
         #    catmap=Catmap()
@@ -1079,7 +1099,6 @@ class Calculator():
         #        catmap.run()
         #        #update concentrations
         #        cout_old=cout[-1]
-        return cout
 
     def converged(self,old,new):
         cmrsd=0.0
@@ -1091,12 +1110,17 @@ class Calculator():
             return False
 
     def run_single_step(self):
+#        print 'ntout=',self.tp.ntout
+#        for n in range(len(self.tp.tmesh)):
+#            print 'checking',n, self.tp.nt/float(self.tp.ntout)
+#            if n%int(self.tp.nt/float(self.tp.ntout))==0: # or n==self.tp.nt-1:
+#                print 'this will be outputted',n
+#        exit()
         if self.calc != 'comsol':
             cout=self.integrate_pnp(self.tp.dx,self.tp.nx,self.tp.dt,\
                 len(self.tp.tmesh),self.tp.ntout,method=self.calc)
+            for i_sp,sp in enumerate(self.tp.species):
+                self.tp.species[sp]['concentration']=cout[-1,i_sp*self.tp.nx:(i_sp+1)*self.tp.nx]
+            self.tp.cout=cout
         else:
-            cout=self.comsol.run()
-        for isp,sp in enumerate(self.tp.species):
-            self.tp.species[sp]['updated concentration']=cout[-1][isp*self.tp.nx]
-        sys.exit()
-        return cout
+            self.comsol.run()

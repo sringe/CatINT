@@ -145,7 +145,7 @@ class Transport(object):
 
         if all([a in self.system for a in ['water viscosity','electrolyte viscosity']]):
             #rescale diffusion coefficients according to ionic strength (Stokes-Einstein):
-            self.logger.info('Rescaling water viscosities to electrolyte concentration {} {}'.format(self.system['water viscosity'], self.system['electrolyte viscosity']))
+            self.logger.info('Rescaling diffusion coefficients from water viscosity {} to electrolyte viscosity {}'.format(self.system['water viscosity'], self.system['electrolyte viscosity']))
             self.D=np.array([d*float(self.system['water viscosity'])/float(self.system['electrolyte viscosity']) for d in self.D])
             
 
@@ -233,11 +233,7 @@ class Transport(object):
         self.comsol_params=comsol_params
 
     def evaluate_fluxes(self):
-        for sp in self.species:
-            print 'fluxes before', sp, self.species[sp]['flux']
-#        tmp_educts=[0.0]*len(self.system['educts'])
-#        tmp_OHm=0.0#*len(self.system['educts'])
-        #go over all products:
+        self.logger.info('Evaluating fluxes of {} as sum of products/educts'.format([sp for sp in self.species if type(self.species[sp]['flux'])==dict]))
         tmp_rates=np.zeros([self.nspecies])
         for isp,sp in enumerate(self.species):
             if 'zeff' in self.species[sp]:
@@ -269,9 +265,6 @@ class Transport(object):
         if 'unknown' in self.species:
             #we needed this flux only to calculate the co2 and oh- fluxes
             self.species['unknown']['flux']=0.0
-        for sp in self.species:
-            print 'fluxes after', sp, self.species[sp]['flux']
-        exit()
 
     def symbol_reader(self,species):
     #determine charges and create arrays of charges and D's
