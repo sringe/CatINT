@@ -3,6 +3,7 @@ from units import *
 import numpy as np
 import os
 from subprocess import call
+import re 
 
 class Comsol():
     """This class does all operations need to write input files for comsol and read output"""
@@ -212,6 +213,7 @@ class Comsol():
             inp.write('    model.component("comp1").variable().create("var2");\n')
 #            inp.write('    model.component("comp1").variable("var2").set("phiM", "V", "Metal phase potential (ground)");\n')
             inp.write('    model.component("comp1").variable("var2").selection().geom("geom1", 0);\n')
+            inp.write('    model.component("comp1").variable("var2").selection().set(new int[]{1});\n')
 #            inp.write('    model.component("comp1").variable("var2").selection().set(new int[]{1});\n')
 #            inp.write('    model.component("comp1").variable().create("var3");\n')
             #inp.write('    model.component("comp1").variable("var3").selection().geom("geom1", 0);\n')
@@ -225,15 +227,10 @@ class Comsol():
                     #flux is given as equation, have to replace concentrations with correct number here
                     string=self.tp.species[sp]['flux']
                     iss=0
-                    for s1 in string.split('[['):
-                        iss+=1
-                        if len(s1)==0 or iss==1:
-                            continue
-                        sp_str=s1.split(']]')
-#                        conc=self.tp.species[sp_str[0]]['bulk concentration']
-                        sp_str[0]='cp'+str(i+1)
-                        mod_str+=''.join(sp_str)
-                    self.tp.species[sp]['flux']=mod_str
+                    matches=re.findall('\[\[(.*?)\]\]',string,re.DOTALL)
+                    for match in matches:
+                        string=string.replace('[['+match+']]','cp'+str([ii+1 for ii,spp in enumerate(self.tp.species) if spp==match][0]))
+                    self.tp.species[sp]['flux']=string
                     inp.write('    model.component("comp1").variable("var2").set("k{}", "{}", "{} flux");\n'.format(\
                         i+1, self.tp.species[sp]['flux'],self.tp.species[sp]['name']))
                 

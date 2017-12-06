@@ -192,7 +192,11 @@ class Transport(object):
         for sp in self.species:
             if 'flux' not in self.species[sp]:
                 self.species[sp]['flux']=0.0
-
+            else:
+                if type(self.species[sp]['flux'])==str:
+                    self.logger.info('Flux of species '+sp+' is assumed to be an equation.')
+                elif type(self.species[sp]['flux'])==dict:
+                    self.logger.info('Flux of species '+sp+' will be evaluated from the fluxes of '+str(self.species[sp]['flux']['values']))
         #we need to calculate the flux of the educt as the sum of all the product rates
         #only do this, if the rate is not given as function
         if not any([type(self.species[sp]['flux'])==str for sp in self.species]):

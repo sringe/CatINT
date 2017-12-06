@@ -204,9 +204,9 @@ tp.set_calculator('comsol') #odespy') #--bdf')
 #tp.set_calculator('Crank-Nicolson--LF')
 #tp.set_initial_concentrations('Gouy-Chapman')
 
-c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1)
+c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10)
 #scale_pb_grid
-cout=c.run(dt=1e-3,tmax=20.0) #1.0)
+cout=c.run() #1.0)
 
 p=Plot(transport=tp)
 p.plot(cout)
