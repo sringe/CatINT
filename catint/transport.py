@@ -275,6 +275,24 @@ class Transport(object):
         k=-1
         charges=[]
         number_of_catoms=[]
+        noc_requested=False
+        products=[]
+        educts=[]
+        catom_requested_values=[]
+        #first find species which is educt:
+        for sp in self.species:
+            if 'flux' in self.species[sp]:
+                if type(self.species[sp]['flux'])==dict:
+                    if self.species[sp]['flux']['kind']=='educt' and self.species[sp]['flux']['reqs']=='number_of_catoms':
+                        educts.append(sp)
+                        catom_requested_values+=self.species[sp]['flux']['values']
+                    elif self.species[sp]['flux']['kind']=='product' and self.species[sp]['flux']['reqs']=='number_of_catoms':
+                        products.append(sp)
+                        catom_requested_values+=self.species[sp]['flux']['values']
+                    if self.species[sp]['flux']['reqs']=='number_of_catoms':
+                        noc_requested=True
+
+
         for sp in species:
             k+=1
             number_of_catoms.append(0.0)
@@ -304,6 +322,10 @@ class Transport(object):
             #create a few shorter arrays
             charges.append(no*unit_F)
 
+            if sp in educts and len(educts)!=0:
+                continue
+            if sp not in catom_requested_values:
+                continue
             #secondly extract number of c atoms
             check_number=False
             number=''
@@ -329,6 +351,11 @@ class Transport(object):
         charges=np.array(charges)
         number_of_catoms=np.array(number_of_catoms)
         self.number_of_catoms=number_of_catoms
+        if noc_requested:
+            self.logger.info('Number of C-Atoms for Evaluation of '+str(educts)+str(products)+' fluxes:')
+            for isp,sp in enumerate(self.species):
+                if sp not in educts and sp in catom_requested_values:
+                    self.logger.info('  {}: {}'.format(sp,self.number_of_catoms[isp]))
         #the automatic reader of the number of catoms is maybe not what we want
         #for the reaction equivalents:
         return charges

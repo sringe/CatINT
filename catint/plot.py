@@ -100,6 +100,11 @@ class Plot():
         ax5.legend()
         ax5.set_title('Charge Density')
 
+        ax6.plot(self.tp.xmesh,self.tp.current_density/100**3,'-',label='J')
+        ax6.set_ylabel('J (A/cm^2)')
+        ax6.legend()
+        ax6.set_title('Current Density')
+
         for ax in [ax1,ax2,ax3,ax4,ax5,ax6]:
             ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2e'))
 

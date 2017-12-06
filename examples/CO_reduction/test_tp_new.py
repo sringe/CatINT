@@ -181,35 +181,44 @@ system['boundary thickness']=boundary_thickness
 #BOUNDARY CONDITIONS FOR PBE
 ###########################################################################
 
-#'potential','gradient','robin'
-pb_bound={
-#        'potential': {'wall':'zeta'},
-#        'gradient': {'bulk':0.0}}
-    'potential':{'bulk':0.0},
-    'gradient': {'wall':0.0}} 
+potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
+results=[]
+for potential in potentials:
 
-###########################################################################
-#SETUP AND RUN
-###########################################################################
-tp=Transport(
-    species=species,
-#    reactions=reactions,
-    system=system,
-    pb_bound=pb_bound,
-    comsol_params=comsol_params,
-    nx=40)
-
-
-tp.set_calculator('comsol') #odespy') #--bdf')
-#tp.set_calculator('Crank-Nicolson--LF')
-#tp.set_initial_concentrations('Gouy-Chapman')
-
-c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10)
-#scale_pb_grid
-cout=c.run() #1.0)
-
-p=Plot(transport=tp)
-p.plot(cout)
-
-###########################################################################
+    #'potential','gradient','robin'
+    pb_bound={
+    #        'potential': {'wall':'zeta'},
+    #        'gradient': {'bulk':0.0}}
+        'potential':{'bulk':potential},
+        'gradient': {'wall':0.0}} 
+    
+    ###########################################################################
+    #SETUP AND RUN
+    ###########################################################################
+    tp=Transport(
+        species=species,
+    #    reactions=reactions,
+        system=system,
+        pb_bound=pb_bound,
+        comsol_params=comsol_params,
+        nx=40)
+    
+    
+    tp.set_calculator('comsol') #odespy') #--bdf')
+    #tp.set_calculator('Crank-Nicolson--LF')
+    #tp.set_initial_concentrations('Gouy-Chapman')
+    
+    c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10)
+    #scale_pb_grid
+    cout=c.run() #1.0)
+    
+    p=Plot(transport=tp)
+    p.plot(cout)
+    #results.append(potential,tp.species['CO2']['flux'])
+#plt.plot(results,'-o')
+#plt.show()
+    #p.add_plot('polarization')
+#    p.plot(cout)
+ #   p.plot_polarization()
+    ###########################################################################
 

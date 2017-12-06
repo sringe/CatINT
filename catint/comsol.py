@@ -16,7 +16,7 @@ class Comsol():
         self.tp.path=path
         self.exe=exe_path
         self.results_folder='results'
-        self.outputs=['concentrations','electrostatics']
+        self.outputs=['concentrations','electrostatics','current_density']
 
     def run(self,
             studies=None):
@@ -636,6 +636,8 @@ class Comsol():
             if 'electrostatics' in self.outputs:
                 #electrostatics
                 export_data(['phi','es.Ex'],['V','V/m'],'Potential, Field', self.results_folder+'/electrostatics.txt',2)
+            if 'current_density' in self.outputs:
+                export_data(['es.Jx'],['A/m^2'],'Current density', self.results_folder+'/current_density.txt',3)
 
             inp.write('    return model;\n')
             inp.write('  }\n')
@@ -657,6 +659,7 @@ class Comsol():
         """reads the output files of COMSOL written to the results folder"""
         self.tp.potential=[]
         self.tp.efield=[]
+        self.tp.current_density=[]
         for ioutput,output in enumerate(self.outputs):
             if ioutput==0:
                 #first get the new xmesh:
@@ -689,9 +692,13 @@ class Comsol():
                         ls=line.split()
                         for j,lss in enumerate(ls):
                             if j==1:
-                                self.tp.potential[i-1]=float(lss)
+                                self.tp.potential.append(float(lss))
                             elif j==2:
-                                self.tp.efield[i-1]=float(lss)
+                                self.tp.efield.append(float(lss))
+                    elif output=='current_density':
+                        ls=line.split()
+                        for j,lss in enumerate(ls):
+                            self.tp.current_density.append(float(lss))
                 elif i>8 and [key for key in self.studies][0]=='time-dependent':
                     if output=='concentrations':
                         #read a selection of time steps here
@@ -706,20 +713,27 @@ class Comsol():
                                 if n in self.tp.itout:
                                     cout_tmp[n,i_sp*self.tp.nx+i-9]=float(lss)
 
-                    elif output=='electrostatics':
+                    elif output in ['electrostatics','current_density']:
                         #read only the last time step here
                         ls=line.split()
                         i_t=np.zeros([2],dtype=int)-1
                         for j,lss in enumerate(ls):
                             if j>0:
-                                i_sp=(j-1)%2
+                                if output=='electrostatics':
+                                    i_sp=(j-1)%2
+                                else:
+                                    i_sp=(j-1)%1
                                 i_t[i_sp]+=1
                                 n=i_t[i_sp]
                                 if n==self.tp.nt-1: #n % int(self.tp.nt/float(self.tp.ntout)) == 0 or n==self.tp.nt-1:
-                                    if i_sp==0:
-                                        self.tp.potential.append(float(lss))
-                                    elif i_sp==1:
-                                        self.tp.efield.append(float(lss))
+                                    if output=='electrostatics':
+                                        if i_sp==0:
+                                            self.tp.potential.append(float(lss))
+                                        elif i_sp==1:
+                                            self.tp.efield.append(float(lss))
+                                    elif output=='current_density': 
+                                        if i_sp==0:
+                                            self.tp.current_density.append(float(lss))
         #compress cout_tmp to cout (save only relevant time steps)
         nn=-1
         for n,cc in enumerate(cout_tmp):
@@ -730,6 +744,8 @@ class Comsol():
         self.tp.logger.info('Wrote out concentrations at '+str(nn+1)+' steps.')
         self.tp.potential=np.array(self.tp.potential)
         self.tp.efield=np.array(self.tp.efield)
+        self.tp.current_density=np.array(self.tp.current_density)
+        print 'shape',np.shape(self.tp.current_density)
         cout=np.array(cout)
         for i_sp,sp in enumerate(self.tp.species):
             self.tp.species[sp]['concentration']=cout[-1,i_sp*self.tp.nx:(i_sp+1)*self.tp.nx]
