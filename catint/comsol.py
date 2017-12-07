@@ -124,7 +124,7 @@ class Comsol():
             for i,sp in enumerate(self.tp.species):
                 if type(self.tp.species[sp]['flux'])!=str:
                     #define fluxes here as parameters
-                    inp.write('    model.param().set("k{}", "{}[mol/m^2/s]", "{} flux");\n'.format(\
+                    inp.write('    model.param().set("j{}", "{}[mol/m^2/s]", "{} flux");\n'.format(\
                         i+1, self.tp.species[sp]['flux'],self.tp.species[sp]['name']))
 
 
@@ -231,7 +231,7 @@ class Comsol():
                     for match in matches:
                         string=string.replace('[['+match+']]','cp'+str([ii+1 for ii,spp in enumerate(self.tp.species) if spp==match][0]))
                     self.tp.species[sp]['flux']=string
-                    inp.write('    model.component("comp1").variable("var2").set("k{}", "{}", "{} flux");\n'.format(\
+                    inp.write('    model.component("comp1").variable("var2").set("j{}", "{}", "{} flux");\n'.format(\
                         i+1, self.tp.species[sp]['flux'],self.tp.species[sp]['name']))
                 
 
@@ -363,7 +363,7 @@ class Comsol():
             #fluxes
             f_str=""
             for i in range(len(self.tp.species)):
-                f_str+="{\"k"+str(i+1)+"*flux_factor\"}"
+                f_str+="{\"j"+str(i+1)+"*flux_factor\"}"
                 if i != len(self.tp.species)-1:
                     f_str+=", "
 

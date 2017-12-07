@@ -44,7 +44,7 @@ class Transport(object):
         self.logger = logging.getLogger('transport.info')
         
         #all the possible keys:
-        species_keys=['bulk concentration', 'diffusion', 'name', 'symbol', 'zeff','flux','req']
+        species_keys=['bulk concentration', 'diffusion', 'name', 'symbol', 'zeff','flux','req','kind']
         system_keys=['vzeta','temperature','pressure','water viscosity','electrolyte viscosity',\
                 'epsilon','exclude species','migration','boundary thickness','educts',\
                 'products']
@@ -54,10 +54,12 @@ class Transport(object):
             self.species={'species1':       {'symbol':r'K^+',
                                             'name':'potassium',
                                             'diffusion':1.96e-9,
+                                            'kind':'electrolyte',
                                             'bulk concentration':0.001*1000.},
                           'species2':       {'symbol':r'HCO_3^-',
                                             'name':'bicarbonate',
                                             'diffusion':1.2e-9,
+                                            'kind':'electrolyte',
                                             'bulk concentration':0.001*1000.}}
         else:
             for sp in species:
@@ -92,6 +94,21 @@ class Transport(object):
                     self.logger.error('No such key "'+key+'" in system list. Quitting here.')
                     sys.exit()
             self.system=system
+
+        #sort different species into lists:
+        self.product_list=[]
+        self.educt_list=[]
+        self.electrolyte_list=[]
+        for sp in self.species:
+            if 'kind' in self.species[sp]:
+                if self.species[sp]['kind']=='product':
+                    self.product_list.append(sp)
+                elif self.species[sp]['kind']=='educt':
+                    self.educt_list.append(sp)
+                elif self.species[sp]['kind']=='electrolyte':
+                    self.electrolyte_list.append(sp)
+            else:
+                self.logger.warning('No kind given for species {}. Assign \'electrolyte\' to this type.'.format(sp))
 
         for key in system_defaults:
            # ['epsilon','temperature','pressure','vzeta']:
@@ -291,7 +308,6 @@ class Transport(object):
                         catom_requested_values+=self.species[sp]['flux']['values']
                     if self.species[sp]['flux']['reqs']=='number_of_catoms':
                         noc_requested=True
-
 
         for sp in species:
             k+=1

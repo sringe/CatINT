@@ -82,6 +82,7 @@ species=\
     'K':                {   'symbol':               'K^+',
                             'name':                 'potassium',
                             'diffusion':            1.957e-009,
+                            'kind':                 'electrolyte',
                             'bulk concentration':   K_i},
 #    'CO2':              {   'symbol':               'CO_2',
 #                            'name':                 'carbon dioxide',
@@ -98,6 +99,7 @@ species=\
     'OH-':              {   'symbol':               'OH^-',
                             'name':                 'hydroxyl',
                             'diffusion':            5.273e-009,
+                            'kind':                 'electrolyte',
                             'bulk concentration':   OHm_i},
 #    'H+':               {   'symbol':               'H^+',
 #                            'name':                 'hydronium',
@@ -111,16 +113,19 @@ species=\
                             'name':                 'carbon monoxide',
                             'diffusion':            2.03e-009,
                             'zeff':                 2.0,
+                            'kind':                 'educt',
                             'bulk concentration':   CO_i,
                             'req':                  [1]},
     'C1':               {   'symbol':               'CH4',
                             'name':                 'C1-methane',
                             'diffusion':            1.49e-009,
+                            'kind':                 'product',
                             'zeff':                 8.0,
                             'req':                  [1]},
     'C2':               {   'symbol':               'C_2H_5OH',
                             'name':                 'C2-ethanol',
                             'diffusion':            0.84e-009,
+                            'kind':                 'product',
                             'zeff':                 12.0,
                             'req':                  [2]}
     }
@@ -131,8 +136,8 @@ species=\
 ###########################################################################
 
 comsol_params={}
-comsol_params['A1']=['1.e13[1/s]','Exponential prefactor']
-comsol_params['A2']=['1.e13[m^3/s/mol]','Exponential prefactor']
+comsol_params['A']=['1.e13[1/s]','Exponential prefactor']
+#comsol_params['A2']=['1.e13[1/s]','Exponential prefactor']
 comsol_params['Ga_CHO']=['1.11746219[eV]','CHO Activation Energy']
 comsol_params['Ga_CHOH']=['2.37467774[eV]','CHOH Activation Energy']
 comsol_params['Ga_OCCO']=['0.578959276[eV]','OCCO Activation Energy']
@@ -141,18 +146,25 @@ comsol_params['eVToJmol']=[str(eVTokcal*1000*calToJ)+'[J/eV/mol]','eV to J/mol C
 comsol_params['alpha1']=['0.5','Butler-Volmer Parameter']
 comsol_params['alpha2']=['2.0','Butler-Volmer Parameter']
 comsol_params['e0']=['1[C]','electronic charge']
-
+comsol_params['erho']=['80.3e-6[C/cm^2]','surface density of active sites x elementary charge']
+comsol_params['Lmol']=['1[l/mol]','conversion factor']
+comsol_params['rho_act']=['7.04e-6[mol/m^2]','Density of Active Sites, assuming an active site to occupy 1/3 of the total surface'] #from Singh paper
+comsol_params['Ga_CO_ads']=['0.8[eV]','Adsorption barrier for CO on Cu211']
+comsol_params['Kads']=['exp(-Ga_CO_ads*eVToJmol/RT)','Equilibrium constant for CO adsorption']
 
 ###########################################################################
 #RATE EQUATIONS/FLUXES
 ###########################################################################
 
+#using langmuir isotherm to convert concentrations to coverages:
+coverage='Kads*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads)'
+
 #give rates as COMSOL strings
+C1_rate='(-1)*rho_act*'+coverage+'*A*exp(-max(Ga_CHO+alpha1*V*e0, Ga_CHOH+alpha2*V*e0)*eVToJmol/RT)'#/F_const/'+str(species['C1']['zeff'])
+C2_rate='(-1)*rho_act*'+coverage+'^2*A*exp(-max(Ga_OCCOH+alpha1*V*e0, Ga_OCCO)*eVToJmol/RT)' #/F_const/'+str(species['C2']['zeff'])
+formulas=[C1_rate,C2_rate]
 CO_rate=''
 OHm_rate=''
-C1_rate='[[CO]]*A1*exp(-max(Ga_CHO+alpha1*V*e0, Ga_CHOH+alpha2*V*e0)*eVToJmol/RT)'#/F_const/'+str(species['C1']['zeff'])
-C2_rate='[[CO]]^2*A2*exp(-max(Ga_OCCOH+alpha1*V*e0, Ga_OCCO)*eVToJmol/RT)' #/F_const/'+str(species['C2']['zeff'])
-formulas=[C1_rate,C2_rate]
 for product,formula in zip(system['products'][0],formulas):
     CO_rate+='-'+str(species[product]['req'][0])+'*'+formula #+'/'+str(unit_F*species[product]['zeff'])+'*'+formula
     OHm_rate+='+'+formula
@@ -189,8 +201,8 @@ for potential in potentials:
     pb_bound={
     #        'potential': {'wall':'zeta'},
     #        'gradient': {'bulk':0.0}}
-        'potential':{'bulk':potential},
-        'gradient': {'wall':0.0}} 
+        'potential':{'bulk':0.0},
+        'gradient': {'wall':potential}} 
     
     ###########################################################################
     #SETUP AND RUN

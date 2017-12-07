@@ -32,7 +32,7 @@ class Plot():
         ax1 = fig.add_subplot(gs1[0:2,0:2])
         ax2 = fig.add_subplot(gs1[0:2,2:4])
 
-        product_list=['HCOO-','CO','H2','etol','propol','metol','C2H4','CH4','allyl']
+        product_list=self.tp.educt_list+self.tp.product_list #['HCOO-','CO','H2','etol','propol','metol','C2H4','CH4','allyl']
 
         color_offset=0.3
         for k,sp in enumerate(self.tp.species):
@@ -64,7 +64,7 @@ class Plot():
             ax.legend(ncol=2)
             ax.set_xlabel('x (m)')
             ax.set_ylabel('c (mol/L)')
-        ax1.set_title('Product Concentrations')
+        ax1.set_title('Educt/Product Concentrations')
         ax2.set_title('Electrolyte Concentrations')
 
         ax3 = fig.add_subplot(gs1[8])
@@ -100,8 +100,8 @@ class Plot():
         ax5.legend()
         ax5.set_title('Charge Density')
 
-        ax6.plot(self.tp.xmesh,self.tp.current_density/100**3,'-',label='J')
-        ax6.set_ylabel('J (A/cm^2)')
+        ax6.plot(self.tp.xmesh,self.tp.current_density/10,'-',label='J')
+        ax6.set_ylabel('J (mA/cm^2)')
         ax6.legend()
         ax6.set_title('Current Density')
 
