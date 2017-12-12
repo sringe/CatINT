@@ -45,7 +45,7 @@ class Transport(object):
         
         #all the possible keys:
         species_keys=['bulk concentration', 'diffusion', 'name', 'symbol', 'zeff','flux','req','kind']
-        system_keys=['vzeta','temperature','pressure','water viscosity','electrolyte viscosity',\
+        system_keys=['phiM','phiPZC','temperature','pressure','water viscosity','electrolyte viscosity',\
                 'epsilon','exclude species','migration','boundary thickness','educts',\
                 'products']
 
@@ -71,7 +71,7 @@ class Transport(object):
 
         if pb_bound is None:
             pb_bound={
-            'potential': {'wall':'zeta'},
+            'potential': {'wall':'phiM'},
             'gradient': {'bulk':0.0}}
 
         #self-consistent boundary condition
@@ -82,7 +82,8 @@ class Transport(object):
                 'Stern epsilon': 2.0, #dielectric permittivity in Stenr layer (for Robin BCs)
                 'Stern capacitance':18e-2, #Stern layer capacitance for Robin BCs
                 'temperature':298.14,
-                'vzeta':0.0, #-0.0125,
+                'phiM':0.0, #-0.0125, #potential vs SHE
+                'phiPZC':0.0,       #PZC potential
                 'pressure':1,
                 'educts':[], #'CO2',\
                 'products':[]}
@@ -111,7 +112,7 @@ class Transport(object):
                 self.logger.warning('No kind given for species {}. Assign \'electrolyte\' to this type.'.format(sp))
 
         for key in system_defaults:
-           # ['epsilon','temperature','pressure','vzeta']:
+           # ['epsilon','temperature','pressure','phiM']:
             if key not in self.system:
                 self.system[key]=system_defaults[key]
 
@@ -388,7 +389,7 @@ class Transport(object):
 
         if pb_bound is None:
             self.pb_bound={
-                'potential':    {'wall':    self.tp.system['vzeta'],
+                'potential':    {'wall':    self.tp.system['phiM'],
                                 'bulk':     None},
                 'gradient':     {'wall':    None,
                                 'bulk':     0.0},
@@ -400,8 +401,8 @@ class Transport(object):
                 if key1 in pb_bound:
                     for key2 in ['wall','bulk']:
                         if key2 in pb_bound[key1]:
-                            if pb_bound[key1][key2]=='zeta':
-                                value=self.system['vzeta']
+                            if pb_bound[key1][key2]=='phiM':
+                                value=self.system['phiM']
                             else:
                                 value=pb_bound[key1][key2]
                             self.pb_bound[key1][key2]=value
@@ -411,10 +412,10 @@ class Transport(object):
                     self.pb_bound[key1]['wall']=None
                     self.pb_bound[key1]['bulk']=None
 
-        #if 'vzeta' in self.system:
-        #    self.vzeta_init=self.system['vzeta']
+        #if 'phiM' in self.system:
+        #    self.phiM_init=self.system['phiM']
         #else:
-        self.vzeta_init=None
+        self.phiM_init=None
 
         self.set_boundary_conditions(\
                 flux_boundary=flux_bound,         #in mol/s/cm^2
@@ -423,13 +424,13 @@ class Transport(object):
                 efield_boundary={'l':0.0})    #in V/Ang
 
 
-    def set_initial_concentrations(self,func,vzeta=None):
+    def set_initial_concentrations(self,func,phiM=None):
         """we can set the initial concentrations to a particular function"""
         if func=='Gouy-Chapman':
-            if vzeta is None:
-                vzeta=self.system['vzeta']
+            if phiM is None:
+                phiM=self.system['phiM']
             else:
-                self.vzeta_init=vzeta
+                self.phiM_init=phiM
             if self.nspecies!=2:
                 self.logger.error('Gouy-Chapman limit only implemented for two species, cationic'+\
                         'and anionic. Not applying initialization.')
@@ -442,7 +443,7 @@ class Transport(object):
             for i in range(self.nx):
                 c_initial_specific[str(k)][str(i)]=\
                     self.species[sp]['bulk concentration']*\
-                    np.exp(-self.beta*self.charges[k]*function(self.xmesh[i],vzeta=vzeta)[0])
+                    np.exp(-self.beta*self.charges[k]*function(self.xmesh[i],phiM=phiM)[0])
         self.set_initial_conditions(c_initial_specific=c_initial_specific)
         return
 
@@ -471,13 +472,13 @@ class Transport(object):
         return sol
 
        
-    def gouy_chapman(self,x,vzeta=None):
-        if vzeta is None:
-            vzeta=self.system['vzeta']
+    def gouy_chapman(self,x,phiM=None):
+        if phiM is None:
+            phiM=self.system['phiM']
         def func(x):
-            term1 = 1.+np.tanh(vzeta*self.beta*unit_F/4.)*\
+            term1 = 1.+np.tanh(phiM*self.beta*unit_F/4.)*\
                 np.exp(-1./self.debye_length*x)
-            term2 = 1.-np.tanh(vzeta*self.beta*unit_F/4.)*\
+            term2 = 1.-np.tanh(phiM*self.beta*unit_F/4.)*\
                 np.exp(-1./self.debye_length*x)
             return 2./(self.beta*abs(self.charges[0]))*np.log(term1/term2)
         grad=(func(x+1e-10)-func(x-1e-10))/(2*1e-10)

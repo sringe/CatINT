@@ -1,0 +1,16 @@
+surface_name	site_name	species_name	formation_energy	bulk_structure	frequencies	other_parameters	reference
+None	gas	ele	0.0	None	[]	[]	gas phase calcs
+None	gas	H	0.0	None	[]	[]	gas phase calcs
+None	gas	H2O	0.0	None	[225.5, 470.9, 1634.8, 3754.4, 3850.7]	[]	gas phase calcs
+None	gas	H2	0.0	None	[4449.6]	[]	gas phase calcs
+None	gas	OH	0.825	None	[]	[]	gas phase calcs
+Pt	111	H	-0.203765762	fcc	[459.5, 563.0, 995.3]	[]	This work
+Pt	hl	H	0.0	fcc	[0.1]	[]	This work
+Pt	111	H-H	0.412887498044	fcc	[129.1, 218.3, 426.7, 4083.2]	[]	This work
+Pt	111	H-ele	0.267380622677	fcc	[902.6, 1205.4, 1784.9]	[]	This work
+Pt	111	H2-ele	0.366175584928	fcc	[420.6, 445.7, 799.4, 1078.9, 1145.2, 1915.9]	[]	This work
+Pt	111	OH	0.778726201	fcc	[35.4, 126.8, 307.9, 511.8, 534.0, 3660.9]	[]	This work
+Pt	111	H2O-ele	1.160	fcc	[0.1]	[]	Volmer-Basic
+Pt	111	H2O-H-ele	1.750	fcc	[0.1]	[]	Heyrovsky-Basic
+
+

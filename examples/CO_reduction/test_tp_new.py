@@ -46,7 +46,8 @@ system=\
     #according to Einstein-Stokes relation: D_in_electrolyte = D_in_water * mu0/mu
     'epsilon': 78.36,
    # 'exclude species': ['H+'], #exclude this species from PNP equations
-    'migration': True
+    'migration': True,
+    'phiPZC': 0.0
     }
 ###########################################################################
 
@@ -116,7 +117,7 @@ species=\
                             'kind':                 'educt',
                             'bulk concentration':   CO_i,
                             'req':                  [1]},
-    'C1':               {   'symbol':               'CH4',
+    'C1':               {   'symbol':               'CH_4',
                             'name':                 'C1-methane',
                             'diffusion':            1.49e-009,
                             'kind':                 'product',
@@ -148,20 +149,23 @@ comsol_params['alpha2']=['2.0','Butler-Volmer Parameter']
 comsol_params['e0']=['1[C]','electronic charge']
 comsol_params['erho']=['80.3e-6[C/cm^2]','surface density of active sites x elementary charge']
 comsol_params['Lmol']=['1[l/mol]','conversion factor']
-comsol_params['rho_act']=['7.04e-6[mol/m^2]','Density of Active Sites, assuming an active site to occupy 1/3 of the total surface'] #from Singh paper
-comsol_params['Ga_CO_ads']=['0.8[eV]','Adsorption barrier for CO on Cu211']
+comsol_params['rho_act']=['7.04e-6[mol/m^2]','Density of Active Sites'] #from Singh paper
+comsol_params['Ga_CO_ads']=['0.73[eV]','Adsorption barrier for CO on Cu211']
 comsol_params['Kads']=['exp(-Ga_CO_ads*eVToJmol/RT)','Equilibrium constant for CO adsorption']
+comsol_params['max_coverage']=['0.44','Maximal coverage with which the Langmuir isotherm will be scaled']
+#comsol_params['Eeq_C1']=['0.11','Equilibrium Potential of CO reduction to C1']
+#comsol_params['Eeq_C2']=['0.11','Equilibrium Potential of CO reduction to C2']
 
 ###########################################################################
 #RATE EQUATIONS/FLUXES
 ###########################################################################
 
 #using langmuir isotherm to convert concentrations to coverages:
-coverage='Kads*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads)'
+coverage='Kads*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads)*max_coverage'
 
 #give rates as COMSOL strings
-C1_rate='(-1)*rho_act*'+coverage+'*A*exp(-max(Ga_CHO+alpha1*V*e0, Ga_CHOH+alpha2*V*e0)*eVToJmol/RT)'#/F_const/'+str(species['C1']['zeff'])
-C2_rate='(-1)*rho_act*'+coverage+'^2*A*exp(-max(Ga_OCCOH+alpha1*V*e0, Ga_OCCO)*eVToJmol/RT)' #/F_const/'+str(species['C2']['zeff'])
+C1_rate='(-1)*rho_act*'+coverage+'*A*exp(-max(Ga_CHO+alpha1*(phiM-phi)*e0, Ga_CHOH+alpha2*(phiM-phi)*e0)*eVToJmol/RT)'#/F_const/'+str(species['C1']['zeff'])
+C2_rate='(-1)*rho_act*'+coverage+'^2*A*exp(-max(Ga_OCCOH+alpha1*(phiM-phi)*e0, Ga_OCCO)*eVToJmol/RT)' #/F_const/'+str(species['C2']['zeff'])
 formulas=[C1_rate,C2_rate]
 CO_rate=''
 OHm_rate=''
@@ -197,13 +201,16 @@ potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 for potential in potentials:
 
+    system['phiM']=potential
+
     #'potential','gradient','robin'
     pb_bound={
     #        'potential': {'wall':'zeta'},
     #        'gradient': {'bulk':0.0}}
         'potential':{'bulk':0.0},
-        'gradient': {'wall':potential}} 
-    
+        'wall':system['phiM']}
+
+
     ###########################################################################
     #SETUP AND RUN
     ###########################################################################

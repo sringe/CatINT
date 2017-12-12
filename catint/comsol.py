@@ -75,7 +75,7 @@ class Comsol():
             'CS 18*1e-6[F/cm^2] Stern layer capacitance',
             'delta lambdaS/lambdaD Dimensionless Stern layer thickness',
             'eps_r '+str(self.tp.system['epsilon'])+' relative permittivity',
-            'epsS epsilon0_const*2 Stern layer effective permittivity',
+            'epsS epsilon0_const*eps_r Stern layer effective permittivity',
             'lambdaS epsS/CS Stern layer thickness'
             'V '+str(potential_r)+'[V] Electrode potential']
         if os.path.exists(file_name):
@@ -145,7 +145,8 @@ class Comsol():
                 potential_r=self.tp.pb_bound['potential']['wall']
             else:
                 potential_r=0.0
-            inp.write('    model.param().set("V", "'+str(potential_r)+' [V]", "Potential");\n')
+            inp.write('    model.param().set("phiM", "'+str(self.tp.system['phiM'])+' [V]", "Metal Potential");\n')
+            inp.write('    model.param().set("phiPZC", "'+str(self.tp.system['phiPZC'])+' [V]", "Metal PZC Potential");\n')
             inp.write('    model.param().set("lambdaD", "'+str(self.tp.debye_length)+'[m]", "Debye length");\n')
             inp.write('    model.param().set("CS", "'+str(self.tp.system['Stern capacitance']/100**2)+'[F/cm^2]", "Stern layer capacitance");\n')
             inp.write('    model.param().set("eps_r", "'+str(self.tp.system['epsilon'])+'", "relative permittivity");\n')
@@ -202,12 +203,13 @@ class Comsol():
             inp.write('    model.component("comp1").variable().create("var1");\n')
             
             inp.write('    model.component("comp1").variable("var1").set("deltaphi", "phiM-phi", "Metal - reaction plane potential difference");\n')
-            inp.write('    model.component("comp1").variable("var1").set("rho_s", "epsS*deltaphi/lambdaS", "Surface charge density");\n')
+            #inp.write('    model.component("comp1").variable("var1").set("rho_s", "epsS*deltaphi/lambdaS", "Surface charge density");\n')
+            inp.write('    model.component("comp1").variable("var1").set("rho_s", "((phiM-phiPZC)-phi)*CS", "Surface charge density");\n')
             if self.tp.pb_bound['potential']['bulk'] is not None:
                 potential_r=self.tp.pb_bound['potential']['bulk']
             else:
                 potential_r=0.0
-            inp.write('    model.component("comp1").variable("var1").set("phiM", "V", "Metal phase potential (cell voltage)");\n')
+#            inp.write('    model.component("comp1").variable("var1").set("phiM", "'+self.tp.system['phiM']+'[V]", "Metal phase potential (cell voltage)");\n')
             inp.write('    model.component("comp1").variable("var1").selection().geom("geom1", 0);\n')
             inp.write('    model.component("comp1").variable("var1").selection().set(new int[]{1});\n')
             inp.write('    model.component("comp1").variable().create("var2");\n')
