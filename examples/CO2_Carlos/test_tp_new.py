@@ -184,7 +184,12 @@ species=\
 #MODIFY DATA FROM FILES
 ###########################################################################
 
+#set up descriptors:
+#this works but it does not adapt the fluxes! there is currently no 
+#descriptor based data input implemented!
+descriptors={'phiM':[key for key in data_fluxes['CO']]}
 
+#set potential to the value you want
 potential=str(-1.16953) #-0.95526)
 total_flux=0.0
 for key in species:
@@ -192,6 +197,7 @@ for key in species:
         species[key]['flux']=data_fluxes[key][potential]
         total_flux+=data_fluxes[key][potential]
 
+#unknown species only if flux of others is smaller than 1
 if total_flux<1.0:
     species['unknown']['flux']=1.-total_flux
 else:
@@ -201,6 +207,7 @@ visc=viscosity(species['HCO3-']['bulk concentration']/10**3), #Pa*s at 25C of KH
 system['boundary thickness']=boundary_thickness
 #system['current density']=data_fluxes['current_density']['-0.95526']
 system['electrolyte viscosity']=visc[0]
+
 ###########################################################################
 #BOUNDARY CONDITIONS FOR PBE
 ###########################################################################
@@ -211,15 +218,20 @@ pb_bound={
 #        'gradient': {'bulk':0.0}}
          'potential':{'bulk':0.0,'wall':potential}}
 #    'potential': {'wall':-0.2}} 
+#set corresponding system variable
+system['phiM']=potential
 
 ###########################################################################
 #SETUP AND RUN
 ###########################################################################
+
+
 tp=Transport(
     species=species,
     reactions=reactions,
     system=system,
     pb_bound=pb_bound,
+    descriptors=descriptors,
     nx=40)
 
 
@@ -229,10 +241,10 @@ tp.set_calculator('comsol') #odespy') #--bdf')
 
 c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10.0)
 #scale_pb_grid
-cout=c.run()
+c.run()
 
 p=Plot(transport=tp)
-p.plot(cout)
+p.plot()
 
 ###########################################################################
 

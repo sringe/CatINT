@@ -1082,8 +1082,29 @@ class Calculator():
         return cout
 
     def run(self):
-        if not self.tp.scf_bound:
-            self.run_single_step()
+        if self.tp.descriptors is not None:
+            desc_keys=[key for key in self.tp.descriptors]
+            i1=0
+            i2=0
+            for value1 in self.tp.descriptors[desc_keys[0]]:
+                i1+=1
+                for value2 in self.tp.descriptors[desc_keys[1]]:
+                    i2+=1
+                    self.tp.logger.info('Starting calculation for '+desc_keys[0]+'='+str(value1)+' and '+desc_keys[1]+'='+str(value2))
+                    label=str(i1)+str(i2)
+                    #=desc_keys[0]+'='+str(value1)+'_'+desc_keys[1]+'='+str(value2)
+                    #update the iterating descriptor based property in system properties
+                    self.tp.system[desc_keys[0]]=value1
+                    self.tp.system[desc_keys[1]]=value2
+                    #update descriptor based data collection
+                    self.tp.all_data[str(value1)][str(value2)]['system']=self.tp.system
+                    
+                    if not self.tp.scf_bound:
+                        self.run_single_step(label=label,desc_values=[value1,value2])
+        else:
+            if not self.tp.scf_bound:
+                self.run_single_step()
+#                elif se
         #elif self.scf_bound:
         #    #electrode boundary is defined by catmap calculation
         #    catmap=Catmap()
@@ -1109,7 +1130,7 @@ class Calculator():
         else:
             return False
 
-    def run_single_step(self):
+    def run_single_step(self,label='',desc_values=[]):
 #        print 'ntout=',self.tp.ntout
 #        for n in range(len(self.tp.tmesh)):
 #            print 'checking',n, self.tp.nt/float(self.tp.ntout)
@@ -1123,4 +1144,4 @@ class Calculator():
                 self.tp.species[sp]['concentration']=cout[-1,i_sp*self.tp.nx:(i_sp+1)*self.tp.nx]
             self.tp.cout=cout
         else:
-            self.comsol.run()
+            self.comsol.run(label=label,desc_val=desc_values)

@@ -6,7 +6,7 @@ import sys
 from matplotlib import colors as mcolors
 import matplotlib.gridspec as gridspec
 import matplotlib.ticker as mtick
-
+import os
 
 class Plot():
 
@@ -17,7 +17,37 @@ class Plot():
         else:
             self.tp=transport #transport object
 
-    def plot(self,cout=None):
+    def plot(self):
+
+        outdir='catint_plots'
+
+        if not os.path.exists(outdir):
+            os.makedirs(outdir)
+
+        if self.tp.descriptors is not None:
+            #copy descriptor based data to single arrays for plotting
+            desc_keys=[key for key in self.tp.descriptors]
+            i1=0
+            i2=0
+            for value1 in self.tp.descriptors[desc_keys[0]]:
+                i1+=1
+                for value2 in self.tp.descriptors[desc_keys[1]]:
+                    i2+=1
+                    self.tp.potential=self.tp.all_data[str(value1)][str(value2)]['system']['potential']
+                    self.tp.efield=self.tp.all_data[str(value1)][str(value2)]['system']['efield']
+                    self.tp.current_density=self.tp.all_data[str(value1)][str(value2)]['system']['current_density']
+                    self.tp.species=self.tp.all_data[str(value1)][str(value2)]['species']
+                    self.tp.cout=self.tp.all_data[str(value1)][str(value2)]['system']['cout']
+                    self.plot_single()
+                    plt.savefig(outdir+'/results_'+str(i1)+str(i2)+'.pdf')
+                    plt.savefig(outdir+'/results_'+str(i1)+str(i2)+'.png')
+        else:
+            self.plot_single()
+            plt.savefig(outdir+'/results.pdf')
+            plt.savefig(outdir+'/results.png')
+        plt.show()
+
+    def plot_single(self):
 
         cout=self.tp.cout
 
@@ -110,4 +140,3 @@ class Plot():
 
         gs1.tight_layout(fig, rect=[0.0, 0, 1, 1], h_pad=1.0)
 
-        plt.show()

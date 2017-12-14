@@ -2,14 +2,16 @@ scaler = 'ThermodynamicScaler'
 rxn_expressions = [
     'H_hl + ele_g + *_s -> H-ele*_s + *_hl -> H*_s + *_hl; beta=0.4', # VA
     'H_hl + ele_g + H*_s -> H2-ele*_s + *_hl -> H2_g + *_s + *_hl; beta=0.6', # HA
+    'H_g + ele_g + *_s -> H-ele*_s + *_hl -> H*_s + *_hl; beta=0.4', # VA
+    'H_g + ele_g + H*_s -> H2-ele*_s + *_hl -> H2_g + *_s + *_hl; beta=0.6', # HA
     'H*_s + H*_s -> H-H*_s + *_s <-> H2_g + 2*_s',     # T
     'H2O_g + ele_g + *_s  <-> H2O-ele*_s  <-> H*_s + OH_g; beta=0.8', # VB
     'H2O_g + ele_g + H*_s  <-> H2O-H-ele*_s  <-> H2_g + OH_g + *_s; beta=0.8', # HB
     'OH_g + *_s <-> OH*_s + ele_g',     #OH_ads
-    'H_g  + *_hl -> H_hl',  #delete this also
+    'H_g  + *_hl -> H_hl',  #diffusion. H atom from gas phase reacts with diffusion site close to surface
 ]
 
-prefactor_list = [1e13]*(len(rxn_expressions)-1)+[4*10**2] #Heine: prefactor for CO is 1e8, delete last factor
+prefactor_list = [1e13]*(len(rxn_expressions)-1)+[4*10**2] #Heine: prefactor for CO is 1e8, last factor is for diffusion
 surface_names = ['Pt']
 descriptor_names= ['voltage','temperature'] #descriptor names
 descriptor_ranges = [[-1.5, 0.5],[300, 300]]

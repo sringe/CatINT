@@ -16,7 +16,7 @@ import logging
 import os
 class Transport(object):
 
-    def __init__(self, species=None,reactions=None,system=None,pb_bound=None,nx=100,scf_bound=False,comsol_params={}):
+    def __init__(self, species=None,reactions=None,system=None,pb_bound=None,nx=100,scf_bound=False,comsol_params={},descriptors=None):
 
         # set up logging to file - see previous section for more details
         logging.basicConfig(level=logging.DEBUG,
@@ -206,7 +206,8 @@ class Transport(object):
         #self.external_charge=self.gaussian(sigma=5e-6,z=1.0,mu=4.e-5,cmax=5e-5)+self.gaussian(sigma=5e-6,z=-1.0,mu=5.e-5,cmax=5e-5)
         self.count=1
 
-        #STEADY-STATE REACTION RATES/FLUXES
+        #STATIONARY-STATE REACTION RATES/FLUXES
+
         for sp in self.species:
             if 'flux' not in self.species[sp]:
                 self.species[sp]['flux']=0.0
@@ -253,6 +254,44 @@ class Transport(object):
 
         #define additional parameters which should be used inside comsol
         self.comsol_params=comsol_params
+        self.initialize_descriptors(descriptors)
+
+    def initialize_descriptors(self,descriptors):
+
+
+        #list of descriptors over which to iterate
+        if descriptors is not None:
+            self.descriptors=descriptors
+        else:
+            return
+#            self.descriptors
+            #no descriptors specified. put one here just that the following routine work fine
+#            self.descriptors={'voltage':[self.system['phiM']],'temperature':[self.system['temperature']]}
+
+        desc_keys=[key for key in self.descriptors]
+        if len(desc_keys)==1:
+            self.logger.debug('Adding a dummy descriptor for convenience in the code')
+            if 'temperature' not in desc_keys:
+                self.descriptors['temperature']=[self.system['temperature']]
+            else:
+                self.descriptors['phiM']=[self.system['phiM']]
+
+        desc_keys=[key for key in self.descriptors]
+        if len(desc_keys)!=2:
+            self.logger.error('Cannot use other than 2 descriptors')
+            sys.exit()
+
+        for desc in desc_keys:
+            if desc not in self.system:
+                self.logger.error(desc+' not found in system list, cannot evaluate other than system descriptors, yet')
+                self.logger.error('Here is the current system list:\n{}'.format(self.system))
+
+        #initialize an dictionary which will contain all descriptor organized results:
+        self.all_data={}
+        for value1 in self.descriptors[desc_keys[0]]:
+            for value2 in self.descriptors[desc_keys[1]]:
+                self.all_data[str(value1)]={str(value2):{'species':self.species}}
+                self.all_data[str(value1)][str(value2)]['system']=self.system
 
     def evaluate_fluxes(self):
         self.logger.info('Evaluating fluxes of {} as sum of products/educts'.format([sp for sp in self.species if type(self.species[sp]['flux'])==dict]))

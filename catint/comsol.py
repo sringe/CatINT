@@ -4,6 +4,7 @@ import numpy as np
 import os
 from subprocess import call
 import re 
+from shutil import copyfile as copy
 
 class Comsol():
     """This class does all operations need to write input files for comsol and read output"""
@@ -15,11 +16,13 @@ class Comsol():
             self.tp=transport #transport object
         self.tp.path=path
         self.exe=exe_path
-        self.results_folder='results'
+        self.results_folder_base='comsol_results'
+        self.results_folder=self.results_folder_base
         self.outputs=['concentrations','electrostatics','current_density']
 
-    def run(self,
+    def run(self,label='',desc_val=[],
             studies=None):
+        self.results_folder=self.results_folder_base+'_'+label
         if studies is None:
             studies={}
             studies['time-dependent']={'None':{'None':None}}
@@ -27,14 +30,14 @@ class Comsol():
 #            studies['static']={'parametric':{'epsilon':[0.01,0.1]}}
         self.studies=studies
 #        self.write_parameter_file()
-        self.write_input()
+        self.write_input(desc_val=desc_val)
         self.tp.logger.info('Compiling Comsol.')
         call(self.exe+" compile "+'/'.join([os.getcwd(),self.inp_file_name]),shell=True)
         self.tp.logger.info('Starting Comsol.')
         call(self.exe+" batch -inputfile "+'/'.join([os.getcwd(),'.'.join(self.inp_file_name.split('.')[:-1])+".class"]),shell=True)
         #~/software/transport/examples/diffuse_double_layer_with_charge_transfer_nonstatic_2.java
         self.tp.logger.info('Reading Comsol output.')
-        self.read_output()
+        self.read_output(desc_val)
 
     def write_parameter_file(self,file_name='comsol_parameters.txt'):
         variable_names=[['D'+str(i+1) for i in range(len(self.tp.D))],\
@@ -87,7 +90,7 @@ class Comsol():
             for line in lines:
                 outfile.write(line+'\n')
 
-    def write_input(self,file_name='pnp_transport.java',model_name='pnp_transport.mph',model_comments=''):
+    def write_input(self,file_name='pnp_transport.java',model_name='pnp_transport.mph',model_comments='',desc_val=[]):
         self.inp_file_name=file_name
         with open(file_name,'w') as inp:
 
@@ -202,7 +205,7 @@ class Comsol():
             #VARIABLES
             inp.write('    model.component("comp1").variable().create("var1");\n')
             
-            inp.write('    model.component("comp1").variable("var1").set("deltaphi", "phiM-phi", "Metal - reaction plane potential difference");\n')
+#            inp.write('    model.component("comp1").variable("var1").set("deltaphi", "phiM-phi", "Metal - reaction plane potential difference");\n')
             #inp.write('    model.component("comp1").variable("var1").set("rho_s", "epsS*deltaphi/lambdaS", "Surface charge density");\n')
             inp.write('    model.component("comp1").variable("var1").set("rho_s", "((phiM-phiPZC)-phi)*CS", "Surface charge density");\n')
             if self.tp.pb_bound['potential']['bulk'] is not None:
@@ -593,6 +596,7 @@ class Comsol():
             if not os.path.isdir(self.results_folder):
                 os.makedirs(self.results_folder)
 
+
             root=os.getcwd()
 
 
@@ -632,14 +636,23 @@ class Comsol():
                 inp.write('    model.result().export("data'+str(export_count)+'").set("filename", "'+root+'/'+file_name+'");\n')
                 inp.write('    model.result().export("data'+str(export_count)+'").run();\n')
 
+#            if self.tp.descriptors is not None:
+#                label_append=' ,'
+#                keys=[key for key in self.tp.descriptors]
+#                label_append+=keys[0]+'='+str(desc_val[0])+', '
+#                label_append+=keys[1]+'='+str(desc_val[1])
+#            else:
+#                label_append=''
+            label_append=''
+
             if 'concentrations' in self.outputs:
                 #concentrations
-                export_data('cp','mol/m^3', 'Concentrations', self.results_folder+'/concentrations.txt',1)
+                export_data('cp','mol/m^3', 'Concentrations'+label_append, self.results_folder+'/concentrations.txt',1)
             if 'electrostatics' in self.outputs:
                 #electrostatics
-                export_data(['phi','es.Ex'],['V','V/m'],'Potential, Field', self.results_folder+'/electrostatics.txt',2)
+                export_data(['phi','es.Ex'],['V','V/m'],'Potential, Field'+label_append, self.results_folder+'/electrostatics.txt',2)
             if 'current_density' in self.outputs:
-                export_data(['es.Jx'],['A/m^2'],'Current density', self.results_folder+'/current_density.txt',3)
+                export_data(['es.Jx'],['A/m^2'],'Current density'+label_append, self.results_folder+'/current_density.txt',3)
 
             inp.write('    return model;\n')
             inp.write('  }\n')
@@ -657,7 +670,10 @@ class Comsol():
             inp.write('\n')
             inp.write('}\n')
 
-    def read_output(self):
+        #make a copy of the input file into the results folder
+        copy(root+'/'+file_name,self.results_folder+'/'+file_name)
+
+    def read_output(self,desc_val):
         """reads the output files of COMSOL written to the results folder"""
         self.tp.potential=[]
         self.tp.efield=[]
@@ -747,11 +763,23 @@ class Comsol():
         self.tp.potential=np.array(self.tp.potential)
         self.tp.efield=np.array(self.tp.efield)
         self.tp.current_density=np.array(self.tp.current_density)
-        print 'shape',np.shape(self.tp.current_density)
+        if self.tp.descriptors is not None:
+            #save all of them in descriptor based dictionary:
+            self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['potential']=self.tp.potential
+            self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['efield']=self.tp.efield
+            self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['current_density']=self.tp.current_density
         cout=np.array(cout)
+        self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['cout']=cout
+        for key in self.tp.all_data:
+            for key2 in self.tp.all_data[key]:
+                for key3 in self.tp.all_data[key][key2]:
+                    print 'all keys', key,key2,key3
         for i_sp,sp in enumerate(self.tp.species):
             self.tp.species[sp]['concentration']=cout[-1,i_sp*self.tp.nx:(i_sp+1)*self.tp.nx]
+            if self.tp.descriptors is not None:
+                self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['species'][sp]['concentration']=self.tp.species[sp]['concentration']
         self.tp.cout=cout
+        self.tp.all_data
 
         #update total charge density
         self.tp.total_charge=np.zeros([self.tp.nx])
