@@ -31,12 +31,12 @@ class Comsol():
         self.studies=studies
 #        self.write_parameter_file()
         self.write_input(desc_val=desc_val)
-        self.tp.logger.info('Compiling Comsol.')
+        self.tp.logger.info('Compiling COMSOL.')
         call(self.exe+" compile "+'/'.join([os.getcwd(),self.inp_file_name]),shell=True)
-        self.tp.logger.info('Starting Comsol.')
+        self.tp.logger.info('Starting COMSOL.')
         call(self.exe+" batch -inputfile "+'/'.join([os.getcwd(),'.'.join(self.inp_file_name.split('.')[:-1])+".class"]),shell=True)
         #~/software/transport/examples/diffuse_double_layer_with_charge_transfer_nonstatic_2.java
-        self.tp.logger.info('Reading Comsol output.')
+        self.tp.logger.info('Reading COMSOL output.')
         self.read_output(desc_val)
 
     def write_parameter_file(self,file_name='comsol_parameters.txt'):
@@ -75,7 +75,7 @@ class Comsol():
             #'id 4*Z*F_const*Dp*cref/L Nernst limiting current density',
             #'icell J*id Cell current density',
             'lambdaD '+str(self.tp.debye_length)+'[m] Debye length',
-            'CS 18*1e-6[F/cm^2] Stern layer capacitance',
+            'CS '+str(self.tp.system['Stern capacitance'])+'*1e-6[F/cm^2] Stern layer capacitance',
             'delta lambdaS/lambdaD Dimensionless Stern layer thickness',
             'eps_r '+str(self.tp.system['epsilon'])+' relative permittivity',
             'epsS epsilon0_const*eps_r Stern layer effective permittivity',
@@ -182,7 +182,7 @@ class Comsol():
                         inp.write('    model.param().set("{}", "{} [{}]", "rate constant: {}");\n'.format(\
                                 'k'+str(i)+'r',self.tp.reactions[reaction]['rates'][1],unit_r,products+' -> '+educts))
             inp.write('    model.param().set("flux_factor", "1", "factor scaling the flux");\n')
-            inp.write('    model.param().set("grid_factor", "'+str(self.tp.nx-1)+'", "minimal number of x mesh points (boundary and domain)");\n')
+            inp.write('    model.param().set("grid_factor", "'+str(self.tp.nx_init-1)+'", "minimal number of x mesh points (boundary and domain)");\n')
 
             inp.write('/*\n')
             inp.write(' *MODEL DEFINITION\n')
@@ -565,7 +565,7 @@ class Comsol():
                         inp.write('    model.study("std'+str(i+1)+'").feature("param").set("plistarr", new String[]{"'+sum(map(str,self.studies[study][method][stype])+' ')+'"});\n')
                         inp.write('    model.study("std'+str(i+1)+'").feature("param").set("punit", new String[]{""});\n')
                     if study=='time-dependent':
-                        inp.write('    model.study("std'+str(i+1)+'").feature("time").set("tlist", "range('+str(min(self.tp.tmesh))+','+str(self.tp.dt)+','+str(self.tp.tmax)+')");\n')
+                        inp.write('    model.study("std'+str(i+1)+'").feature("time").set("tlist", "range('+str(min(self.tp.tmesh_init))+','+str(self.tp.dt_init)+','+str(self.tp.tmax_init)+')");\n')
 
             #now set numeric parameters and run!
             j=0
@@ -581,8 +581,8 @@ class Comsol():
                         inp.write('    model.sol("sol'+str(j)+'").runAll();\n')
                     elif study=='time-dependent':
                         inp.write('    model.sol("sol'+str(j)+'").attach("std'+str(i+1)+'");\n')
-                        inp.write('    model.sol("sol'+str(j)+'").feature("v1").set("clist", new String[]{"'+str(min(self.tp.tmesh))+','+str(self.tp.dt)+', '+str(self.tp.tmax)+'"});\n')
-                        inp.write('    model.sol("sol'+str(j)+'").feature("t1").set("tlist", "range('+str(min(self.tp.tmesh))+','+str(self.tp.dt)+','+str(self.tp.tmax)+')");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("v1").set("clist", new String[]{"'+str(min(self.tp.tmesh_init))+','+str(self.tp.dt_init)+', '+str(self.tp.tmax_init)+'"});\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("t1").set("tlist", "range('+str(min(self.tp.tmesh_init))+','+str(self.tp.dt_init)+','+str(self.tp.tmax_init)+')");\n')
                         inp.write('    model.sol("sol'+str(j)+'").feature("t1").set("maxorder", 2);\n')
                         inp.write('    model.sol("sol'+str(j)+'").feature("t1").feature("fc1").set("maxiter", 8);\n')
                         inp.write('    model.sol("sol'+str(j)+'").feature("t1").feature("fc1").set("damp", 0.9);\n')
@@ -636,15 +636,7 @@ class Comsol():
                 inp.write('    model.result().export("data'+str(export_count)+'").set("filename", "'+root+'/'+file_name+'");\n')
                 inp.write('    model.result().export("data'+str(export_count)+'").run();\n')
 
-#            if self.tp.descriptors is not None:
-#                label_append=' ,'
-#                keys=[key for key in self.tp.descriptors]
-#                label_append+=keys[0]+'='+str(desc_val[0])+', '
-#                label_append+=keys[1]+'='+str(desc_val[1])
-#            else:
-#                label_append=''
             label_append=''
-
             if 'concentrations' in self.outputs:
                 #concentrations
                 export_data('cp','mol/m^3', 'Concentrations'+label_append, self.results_folder+'/concentrations.txt',1)
@@ -673,16 +665,37 @@ class Comsol():
         #make a copy of the input file into the results folder
         copy(root+'/'+file_name,self.results_folder+'/'+file_name)
 
-    def read_output(self,desc_val):
+    def read_output(self,desc_val=[]):
         """reads the output files of COMSOL written to the results folder"""
+        #modify the Description line of the output with proper concentrations:
+        if self.tp.descriptors is not None:
+            label_append=' || '
+            keys=[key for key in self.tp.descriptors]
+            label_append+=keys[0]+'='+str(desc_val[0])+', '
+            label_append+=keys[1]+'='+str(desc_val[1])
+        else:
+            label_append=''
+#            label_append=''
         self.tp.potential=[]
         self.tp.efield=[]
         self.tp.current_density=[]
         for ioutput,output in enumerate(self.outputs):
+            #add some more info to the description line
+            file_lines=''
+            with open(self.results_folder+'/'+output+'.txt', 'r') as f:
+                for x in f.readlines():
+                    if 'Description' in x:
+                        file_lines+=''.join([x.strip(), label_append, '\n'])
+                    else:
+                        file_lines+=x
+            with open(self.results_folder+'/'+output+'.txt', 'w') as f:
+                f.writelines(file_lines)
+            # end add info
             if ioutput==0:
                 #first get the new xmesh:
                 self.tp.xmesh=[]
                 i=0
+
                 for line in open(self.results_folder+'/'+output+'.txt','r'):
                     i+=1
                     if i>8:
@@ -697,6 +710,7 @@ class Comsol():
                 cout_tmp=np.zeros([self.tp.nt+1,self.tp.nspecies*self.tp.nx])
             #now read in all results
             i=0
+            self.tp.logger.info('Reading COMSOL output from'+self.results_folder+'/'+output+'.txt')
             for line in open(self.results_folder+'/'+output+'.txt','r'):
                 i+=1
                 if i>8 and [key for key in self.studies][0]=='stationary':
@@ -770,19 +784,16 @@ class Comsol():
             self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['current_density']=self.tp.current_density
         cout=np.array(cout)
         self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['cout']=cout
-        for key in self.tp.all_data:
-            for key2 in self.tp.all_data[key]:
-                for key3 in self.tp.all_data[key][key2]:
-                    print 'all keys', key,key2,key3
         for i_sp,sp in enumerate(self.tp.species):
             self.tp.species[sp]['concentration']=cout[-1,i_sp*self.tp.nx:(i_sp+1)*self.tp.nx]
             if self.tp.descriptors is not None:
                 self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['species'][sp]['concentration']=self.tp.species[sp]['concentration']
         self.tp.cout=cout
-        self.tp.all_data
+
 
         #update total charge density
         self.tp.total_charge=np.zeros([self.tp.nx])
         for i_sp,sp in enumerate(self.tp.species):
             for ix,xx in enumerate(self.tp.xmesh):
                 self.tp.total_charge[ix]+=self.tp.charges[i_sp]*self.tp.species[sp]['concentration'][ix]
+

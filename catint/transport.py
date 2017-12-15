@@ -45,7 +45,7 @@ class Transport(object):
         
         #all the possible keys:
         species_keys=['bulk concentration', 'diffusion', 'name', 'symbol', 'zeff','flux','req','kind']
-        system_keys=['phiM','phiPZC','temperature','pressure','water viscosity','electrolyte viscosity',\
+        system_keys=['phiM','Stern capacitance','phiPZC','temperature','pressure','water viscosity','electrolyte viscosity',\
                 'epsilon','exclude species','migration','boundary thickness','educts',\
                 'products']
 
@@ -193,6 +193,10 @@ class Transport(object):
         self.xmesh=np.arange(0,self.xmax+self.dx,self.dx)
         self.nx=len(self.xmesh)
 
+        self.xmesh_init=self.xmesh
+        self.nx_init=self.nx
+        self.xmax_init=self.xmax
+
 #        if min(self.xmesh)<=0:
 #            min_x=1e-15
 #        else:
@@ -272,9 +276,9 @@ class Transport(object):
         if len(desc_keys)==1:
             self.logger.debug('Adding a dummy descriptor for convenience in the code')
             if 'temperature' not in desc_keys:
-                self.descriptors['temperature']=[self.system['temperature']]
+                self.descriptors['temperature']=[str(self.system['temperature'])]
             else:
-                self.descriptors['phiM']=[self.system['phiM']]
+                self.descriptors['phiM']=[str(self.system['phiM'])]
 
         desc_keys=[key for key in self.descriptors]
         if len(desc_keys)!=2:
@@ -290,8 +294,8 @@ class Transport(object):
         self.all_data={}
         for value1 in self.descriptors[desc_keys[0]]:
             for value2 in self.descriptors[desc_keys[1]]:
-                self.all_data[str(value1)]={str(value2):{'species':self.species}}
-                self.all_data[str(value1)][str(value2)]['system']=self.system
+                self.all_data[str(value1)]={str(value2):{'species':self.species.copy()}}
+                self.all_data[str(value1)][str(value2)]['system']=self.system.copy()
 
     def evaluate_fluxes(self):
         self.logger.info('Evaluating fluxes of {} as sum of products/educts'.format([sp for sp in self.species if type(self.species[sp]['flux'])==dict]))

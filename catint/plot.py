@@ -10,12 +10,13 @@ import os
 
 class Plot():
 
-    def __init__(self,transport=None):
+    def __init__(self,transport=None,logscale=False):
         if transport==None:
             print('No transport object provided for calculator. Stopping here.')
             sys.exit()
         else:
             self.tp=transport #transport object
+        self.logscale=logscale
 
     def plot(self):
 
@@ -31,6 +32,7 @@ class Plot():
             i2=0
             for value1 in self.tp.descriptors[desc_keys[0]]:
                 i1+=1
+                i2=0
                 for value2 in self.tp.descriptors[desc_keys[1]]:
                     i2+=1
                     self.tp.potential=self.tp.all_data[str(value1)][str(value2)]['system']['potential']
@@ -85,11 +87,15 @@ class Plot():
                     color=str(brightness)
                 elif k==1:
                     color=(brightness,1.,1.)
+                if self.logscale:
+                    func=ax.semilogy
+                else:
+                    func=ax.plot
                 if i==len(cout)-1:
-                    ax.plot(self.tp.xmesh,c[k*self.tp.nx:(k+1)*self.tp.nx] /10**3,'-',color=color,linewidth=lw,zorder=zorder,label=r'$'+self.tp.species[sp]['symbol']+'$')
+                    func(self.tp.xmesh,c[k*self.tp.nx:(k+1)*self.tp.nx] /10**3,'-',color=color,linewidth=lw,zorder=zorder,label=r'$'+self.tp.species[sp]['symbol']+'$')
                             #'z='+str(int(self.tp.charges[k]/unit_F)))
                 else:
-                    ax.plot(self.tp.xmesh,c[k*self.tp.nx:(k+1)*self.tp.nx] /10**3,'-',color=color,linewidth=lw,zorder=zorder)
+                    func(self.tp.xmesh,c[k*self.tp.nx:(k+1)*self.tp.nx] /10**3,'-',color=color,linewidth=lw,zorder=zorder)
         for ax in [ax1,ax2]:
             ax.legend(ncol=2)
             ax.set_xlabel('x (m)')

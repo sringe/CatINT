@@ -77,6 +77,13 @@ class Calculator():
             self.tp.logger.warning('No time mesh given, defaulting to range(0,1,0.1)')
             self.tp.tmesh=np.arange(0,1,0.1)
             self.tp.nt=len(self.tp.tmesh)
+
+        #save this initial mesh
+        self.tp.tmesh_init=self.tp.tmesh
+        self.tp.nt_init=self.tp.nt
+        self.tp.dt_init=self.tp.dt
+        self.tp.tmax_init=self.tp.tmax
+
         self.oldtime=np.inf
         
         #go over the times and decide which ones to output
@@ -1088,6 +1095,7 @@ class Calculator():
             i2=0
             for value1 in self.tp.descriptors[desc_keys[0]]:
                 i1+=1
+                i2=0
                 for value2 in self.tp.descriptors[desc_keys[1]]:
                     i2+=1
                     self.tp.logger.info('Starting calculation for '+desc_keys[0]+'='+str(value1)+' and '+desc_keys[1]+'='+str(value2))
@@ -1097,10 +1105,11 @@ class Calculator():
                     self.tp.system[desc_keys[0]]=value1
                     self.tp.system[desc_keys[1]]=value2
                     #update descriptor based data collection
-                    self.tp.all_data[str(value1)][str(value2)]['system']=self.tp.system
+                    self.tp.all_data[str(value1)][str(value2)]['system'][desc_keys[0]]=self.tp.system[desc_keys[0]]
+                    self.tp.all_data[str(value1)][str(value2)]['system'][desc_keys[1]]=self.tp.system[desc_keys[1]]
                     
                     if not self.tp.scf_bound:
-                        self.run_single_step(label=label,desc_values=[value1,value2])
+                        self.run_single_step(label=label,desc_val=[str(value1),str(value2)])
         else:
             if not self.tp.scf_bound:
                 self.run_single_step()
@@ -1130,13 +1139,17 @@ class Calculator():
         else:
             return False
 
-    def run_single_step(self,label='',desc_values=[]):
+    def run_single_step(self,label='',desc_val=[]):
 #        print 'ntout=',self.tp.ntout
 #        for n in range(len(self.tp.tmesh)):
 #            print 'checking',n, self.tp.nt/float(self.tp.ntout)
 #            if n%int(self.tp.nt/float(self.tp.ntout))==0: # or n==self.tp.nt-1:
 #                print 'this will be outputted',n
 #        exit()
+
+        keys=[key for key in self.tp.descriptors]
+        values1=str(self.tp.descriptors[keys[0]][0])
+        values2=str(self.tp.descriptors[keys[0]][1])
         if self.calc != 'comsol':
             cout=self.integrate_pnp(self.tp.dx,self.tp.nx,self.tp.dt,\
                 len(self.tp.tmesh),self.tp.ntout,method=self.calc)
@@ -1144,4 +1157,4 @@ class Calculator():
                 self.tp.species[sp]['concentration']=cout[-1,i_sp*self.tp.nx:(i_sp+1)*self.tp.nx]
             self.tp.cout=cout
         else:
-            self.comsol.run(label=label,desc_val=desc_values)
+            self.comsol.run(label=label,desc_val=desc_val)

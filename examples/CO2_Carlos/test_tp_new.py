@@ -38,7 +38,7 @@ reactions=\
 data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
 
 ###########################################################################
-#THERMODYNAMIC VARIABLES
+#SYSTEM VARIABLES
 ###########################################################################
 system=\
     {
@@ -49,7 +49,8 @@ system=\
     #according to Einstein-Stokes relation: D_in_electrolyte = D_in_water * mu0/mu
     'epsilon': 78.36,
     'exclude species': ['H+'], #exclude this species from PNP equations
-    'migration': True
+    'migration': True,
+    'Stern capacitance': 200. #in muF/cm^2
     }
 ###########################################################################
 
@@ -243,7 +244,10 @@ c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10.0)
 #scale_pb_grid
 c.run()
 
-p=Plot(transport=tp)
+#plots:
+#plots: 'concentrations','potential','efield','current_density' (are plotted in a separate figure for all descriptors)
+#descriptor_plots: same as above (the results requested will be plotted into a single figure for all descriptors)
+p=Plot(transport=tp,logscale=True) #transport=tp,plots=['concentrations','potential','efield','current_density'],descriptor_plots=['_potential'])
 p.plot()
 
 ###########################################################################

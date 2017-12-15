@@ -200,7 +200,7 @@ system['boundary thickness']=boundary_thickness
 potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 for potential in potentials:
-    descriptors={'phiM':[-1.0,0.0]}
+    descriptors={'phiM':[-1.0,-0.5]}
     system['phiM']=potential
 
     #'potential','gradient','robin'
