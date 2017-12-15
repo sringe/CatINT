@@ -204,6 +204,11 @@ class Comsol():
             inp.write(' */\n')
             #VARIABLES
             inp.write('    model.component("comp1").variable().create("var1");\n')
+            #additional parameters from input
+            for pa in self.tp.comsol_variables:
+                pa_val=self.tp.comsol_variables[pa][0]
+                pa_des=self.tp.comsol_variables[pa][1]
+                inp.write('    model.component("comp1").variable("var1").set("'+pa+'", "'+str(pa_val)+'",   "'+pa_des+'");\n')
             
 #            inp.write('    model.component("comp1").variable("var1").set("deltaphi", "phiM-phi", "Metal - reaction plane potential difference");\n')
             #inp.write('    model.component("comp1").variable("var1").set("rho_s", "epsS*deltaphi/lambdaS", "Surface charge density");\n')

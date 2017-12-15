@@ -8,25 +8,45 @@ import sys
 ###########################################################################
 #REACTIONS
 ###########################################################################
-#reactants:             (first line are the educts, second the products)
+#important: the species used here must be also listed in the species dictionary later
+#reaction:              define chemical reaction as string
 #constant:              (dimensionless (mol/m^3))
 #rates:                 (forward and backward rates)
 
-reactions=\
+electrolyte_reactions=\
     {
-    'buffe':           {   'reactants':            [['CO2','H2O'],['H2CO3']],
+    'buffe':            {   'reaction':             'CO2 + H2O <-> H2CO3', 
                             'constant':             2.63e-3},                               #KH
-    'buffer-acid':      {   'reactants':            [['CO2','H2O'],['HCO3-','H+']],
+    'buffer-acid':      {   'reaction':            'CO2 + H2O <-> HCO3- + H+', 
                             'constant':             (4.44e-7)*1000.0},                      #K1a (=Kc=K0)
-    'buffer-base':      {   'reactants':            [['CO2','OH-'],['HCO3-']],
+    'buffer-base':      {   'reaction':            'CO2 + OH- <-> HCO3-', 
                             'constant':             (4.44e7)/1000.0,                        #K1b (=Kc!=K0, since unit conversion factor is missing)
                             'rates':                [(5.93e3)/1000.0,(5.93e3)/(4.44e7)]},   #"k1f, k1r"
-    'buffer-base2':     {   'reactants':            [['HCO3-','OH-'],['CO32-','H2O']],
+    'buffer-base2':     {   'reaction':            'HCO3- + OH- <-> CO32- + H2O', 
                             'constant':             (4.66e3)/1000.0,
                             'rates':                [(1.0e8)/1000.0,(1.0e8)/(4.66e3)]},     #"k2f,k2r"
-    'buffer2':          {   'reactants':            [['CO2','CO32-','H2O'],['HCO3-','HCO3-']],
+    'buffer2':          {   'reaction':            'CO2 + CO32- + H2O <->  2 HCO3-', 
                             'constant':             9.52e3}                                 #K3
     }
+#reactions=electrolyte_reactions
+#rates can be given as reaction rate or current densities
+#if the rates are now given here, they are calculated from the species fluxes 
+electrode_reactions=\
+    {
+    'H2':           {   'reaction':            '2 H2O + 2 e- -> H2 + 2 OH-'},
+    'CO':           {   'reaction':            'CO2 + H2O + 2 e- ->  CO + 2 OH-'},
+    'CH4':          {   'reaction':            'CO2 + 6 H2O + 8 e- -> CH4 + 8 OH-'},
+    'C2H4':         {   'reaction':            '2 CO2 + 8 H2O + 12 e- -> C2H4 + 12 OH-'},
+    'metol':        {   'reaction':            'CO2 + 5 H2O + 6 e- ->  metol + 6 OH-'},
+    'acet':         {   'reaction':            '2 CO2 + 6 H2O + 8 e- -> acet + 8 OH-'}, #!!! actually we use Hacet here
+    'etol':         {   'reaction':            '2 CO2 + 9 H2O + 12 e- -> etol + 12 OH-'},
+    'etgly':        {   'reaction':            '2 CO2 + 8 H2O + 10 e- -> etgly + 10 OH-'},
+    'allyl':        {   'reaction':            '3 CO2 + 11 H2O + 16 e- -> allyl + 16 OH-'},
+    'propol':       {   'reaction':            '3 CO2 + 13 H2O + 18 e- -> propol + 18 OH-'},
+    'HCOO-':        {   'reaction':            'CO2 + 2 H2O + 2 e- -> HCOO- + 2 OH-'},  #consider HCOOH here
+    'unknown':      {   'reaction':            '2 CO2 + 4 H2O + 6 e- -> unknown + 6 OH-'} 
+    }
+
 #K = a(CO32-)*a(H2O)/(a(HCO3-)*a(OH-)) = c(CO32-)[mol/l]/c(HCO3-)[mol/l]/c(OH-)[mol/l]*unit_conversion = Kc*unit_conversion
 
 ###########################################################################
@@ -60,13 +80,13 @@ system=\
 #set up the initial concentrationss from this constants:
 CO2_i = 0.03419*system['pressure']*1000. #initial CO2(aq) bulk concentrations at t=0 and Pressure P in [mol/m3] units
                         #from Henry constant (29.41 atm/M
-CO32m_i = ((2*bic_i+reactions['buffer2']['constant']*CO2_i)-\
-            (np.sqrt((2*bic_i+reactions['buffer2']['constant']*CO2_i)**2\
+CO32m_i = ((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)-\
+            (np.sqrt((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)**2\
             -4.0*(bic_i)**2)))/2  #initial (CO3)2- bulk concentrations at t=0 [mol/m3]
 # Initial composition of the bulk electrolyte at t=0
 HCO3m_i = bic_i-CO32m_i #initial HCO3- bulk concentrations at t=0 [mol/m3]
 K_i = bic_i #initial K+ bulk concentrations at t=0 [mol/m3]
-OHm_i = HCO3m_i/reactions['buffer-base']['constant']/CO2_i #initial OH- bulk concentrations at t=0 [mol/m3]
+OHm_i = HCO3m_i/electrolyte_reactions['buffer-base']['constant']/CO2_i #initial OH- bulk concentrations at t=0 [mol/m3]
 pH_i = 14+np.log10(OHm_i/1000.0) #initial pH (in log. arg must be conc in M)
 ###########################################################################
 
@@ -78,7 +98,7 @@ pH_i = 14+np.log10(OHm_i/1000.0) #initial pH (in log. arg must be conc in M)
 #diffusion          [m/s]       (infinite dilution in water at 25C)
 #bulk concentrations [mol/m^3]
 #zeff number of electrons need to derive product from CO2
-#if the fluxes of other reactants should be summed up to get the flux of another reactant
+#if the fluxes of other reactant should be summed up to get the flux of another reactant
 #put a dictionary as shown below. values are the reactants which contribute to the flux,
 #reqs are the reaction equivalents
 #flux can be equation as string or dictionary (see above) or the value as float
@@ -88,95 +108,65 @@ species=\
     'K':                {   'symbol':               'K^+',
                             'name':                 'potassium',
                             'diffusion':            1.957e-009,
-                            'kind':                 'electrolyte',
                             'bulk concentration':   K_i},
     'CO2':              {   'symbol':               'CO_2',
                             'name':                 'carbon dioxide',
                             'diffusion':            1.91e-009,
-                            'bulk concentration':   CO2_i,
-                            'kind':                 'educt',
-                            'flux':                 {'kind':'educt','values':['C2H4','CH4','CO','HCOO-','etol','propol','allyl','metol','acet','etgly','unknown'],\
-                                                    'reqs':'number_of_catoms'}},
+                            'bulk concentration':   CO2_i},
+#                            'flux':                 {'kind':'educt','values':['C2H4','CH4','CO','HCOO-','etol','propol','allyl','metol','acet','etgly','unknown'],\
+#                                                    'reqs':'number_of_catoms'}},
     'CO32-':            {   'symbol':               'CO_3^{2-}',
                             'name':                 'carboxylate',
                             'diffusion':            9.23e-010,
-                            'kind':                 'electrolyte',
                             'bulk concentration':   CO32m_i},
     'HCO3-':            {   'symbol':               'HCO_3^-',
                             'name':                 'bicarbonate',
                             'diffusion':            1.185e-009,
-                            'kind':                 'electrolyte',
                             'bulk concentration':   HCO3m_i},
     'OH-':              {   'symbol':               'OH^-',
                             'name':                 'hydroxyl',
                             'diffusion':            5.273e-009,
-                            'kind':                 'electrolyte',
-                            'bulk concentration':   OHm_i,
-                            'flux':                 {'kind':'product','values':['C2H4','CH4','CO','HCOO-','etol','propol','allyl','metol','acet','etgly','unknown','H2'],\
-                                                    'reqs':'zeff'}},
+                            'bulk concentration':   OHm_i},
+#                            'flux':                 {'kind':'product','values':['C2H4','CH4','CO','HCOO-','etol','propol','allyl','metol','acet','etgly','unknown','H2'],\
+#                                                    'reqs':'zeff'}},
     'H+':               {   'symbol':               'H^+',
                             'name':                 'hydronium',
-                            'kind':                 'None',
                             'bulk concentration':   10**(-pH_i)},
     'H2':               {   'symbol':               'H_2',
                             'name':                 'hydrogen',
-                            'kind':                 'product',
-                            'diffusion':            4.50e-009,
-                            'zeff':                 2.0},
+                            'diffusion':            4.50e-009},
     'CO':               {   'symbol':               'CO',
                             'name':                 'carbon monoxide',
-                            'kind':                 'product',
-                            'diffusion':            2.03e-009,
-                            'zeff':                 2.0},
+                            'diffusion':            2.03e-009},
     'CH4':              {   'symbol':               'CH_4',
                             'name':                 'methane',
-                            'kind':                 'product',
-                            'zeff':                 8.0,
                             'diffusion':            1.49e-009},
     'C2H4':             {   'symbol':               'C_2H_4',
                             'name':                 'ethylene',
-                            'kind':                 'product',
-                            'zeff':                 12.0,
                             'diffusion':            1.87e-009},
     'HCOO-':            {   'symbol':               'HCOO^-',
                             'name':                 'formate',
-                            'kind':                 'product',
-                            'zeff':                 2.0,
                             'diffusion':            1.454e-009},
     'etol':             {   'name':                 'ethanol',
                             'symbol':               'C_2H_5OH',
-                            'kind':                 'product',
-                            'zeff':                 12.0,
                             'diffusion':            0.84e-009},
     'propol':           {   'name':                 'n-propanol',
                             'symbol':               'C_3H_7OH',
-                            'kind':                 'product',
-                            'zeff':                 18.0,
                             'diffusion':            1.3e-009},
     'allyl':            {   'name':                 'allylalcohol',
                             'symbol':               'C_3H_5OH',
-                            'kind':                 'product',
-                            'zeff':                 16.0,
                             'diffusion':            1.1e-009},
     'metol':            {   'name':                 'Methanol',
                             'symbol':               'CH_3OH',
-                            'kind':                 'product',
-                            'zeff':                 6.0,
                             'diffusion':            0.84e-009},
     'acet':             {   'name':                 'acetate',
                             'symbol':               'CH_3COO^-',
-                            'kind':                 'product',
-                            'zeff':                 8.0,
                             'diffusion':            1.089e-009},
     'etgly':            {   'name':                 'ethyleneglycol',
                             'symbol':               'C_2H_4OHOH',
-                            'kind':                 'product',
-                            'zeff':                 10.0,
                             'diffusion':            1.102e-009},      #at 0.02 fraction of dlycol
-    'unknown':          {   'name':                 'unknown',
+    'unknown':          {   'name':                 'unknown', #glyoxal
                             'symbol':               'C_2H_2O_2',
-                            'kind':                 'product',
-                            'zeff':                 6.0, #assumed: glyoxal
                             'diffusion':            0.0}
     }
 ###########################################################################
@@ -195,14 +185,16 @@ potential=str(-1.16953) #-0.95526)
 total_flux=0.0
 for key in species:
     if key!='unknown' and key in data_fluxes: #'flux' in species[key]:
-        species[key]['flux']=data_fluxes[key][potential]
+        electrode_reactions[key]['rates']=data_fluxes[key][potential]
         total_flux+=data_fluxes[key][potential]
 
 #unknown species only if flux of others is smaller than 1
 if total_flux<1.0:
-    species['unknown']['flux']=1.-total_flux
+    electrode_reactions['unknown']['rates']=1.-total_flux
 else:
-    species['unknown']['flux']=0.0
+    electrode_reactions['unknown']['rates']=0.0
+
+
 
 visc=viscosity(species['HCO3-']['bulk concentration']/10**3), #Pa*s at 25C of KHCO3 solution
 system['boundary thickness']=boundary_thickness
@@ -229,7 +221,8 @@ system['phiM']=potential
 
 tp=Transport(
     species=species,
-    reactions=reactions,
+    electrolyte_reactions=electrolyte_reactions,
+    electrode_reactions=electrode_reactions,
     system=system,
     pb_bound=pb_bound,
     descriptors=descriptors,

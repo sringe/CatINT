@@ -47,7 +47,8 @@ system=\
     'epsilon': 78.36,
    # 'exclude species': ['H+'], #exclude this species from PNP equations
     'migration': True,
-    'phiPZC': 0.0
+    'phiPZC': 0.0,
+    'Stern capacitance': 200
     }
 ###########################################################################
 
@@ -155,7 +156,7 @@ comsol_params['Kads']=['exp(-Ga_CO_ads*eVToJmol/RT)','Equilibrium constant for C
 comsol_params['max_coverage']=['0.44','Maximal coverage with which the Langmuir isotherm will be scaled']
 #comsol_params['Eeq_C1']=['0.11','Equilibrium Potential of CO reduction to C1']
 #comsol_params['Eeq_C2']=['0.11','Equilibrium Potential of CO reduction to C2']
-
+comsol_params['eta']=['-0.5','Overpotential']
 ###########################################################################
 #RATE EQUATIONS/FLUXES
 ###########################################################################
@@ -164,8 +165,10 @@ comsol_params['max_coverage']=['0.44','Maximal coverage with which the Langmuir 
 coverage='Kads*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads)*max_coverage'
 
 #give rates as COMSOL strings
-C1_rate='(-1)*rho_act*'+coverage+'*A*exp(-max(Ga_CHO+alpha1*(phiM-phi)*e0, Ga_CHOH+alpha2*(phiM-phi)*e0)*eVToJmol/RT)'#/F_const/'+str(species['C1']['zeff'])
-C2_rate='(-1)*rho_act*'+coverage+'^2*A*exp(-max(Ga_OCCOH+alpha1*(phiM-phi)*e0, Ga_OCCO)*eVToJmol/RT)' #/F_const/'+str(species['C2']['zeff'])
+C1_rate='rho_act*'+coverage+'*A*exp(-max(Ga_CHO+alpha1*(phiM-phi)*e0, Ga_CHOH+alpha2*(phiM-phi)*e0)*eVToJmol/RT)'#/F_const/'+str(species['C1']['zeff'])
+C2_rate='rho_act*'+coverage+'^2*A*exp(-max(Ga_OCCOH+alpha1*(phiM-phi)*e0, Ga_OCCO)*eVToJmol/RT)' #/F_const/'+str(species['C2']['zeff'])
+#C1_rate='rho_act*'+coverage+'*A*exp(-max(Ga_CHO+alpha1*(eta)*e0, Ga_CHOH+alpha2*(eta)*e0)*eVToJmol/RT)'#/F_const/'+str(species['C1']['zeff'])
+#C2_rate='rho_act*'+coverage+'^2*A*exp(-max(Ga_OCCOH+alpha1*(eta)*e0, Ga_OCCO)*eVToJmol/RT)' #/F_const/'+str(species['C2']['zeff'])
 formulas=[C1_rate,C2_rate]
 CO_rate=''
 OHm_rate=''

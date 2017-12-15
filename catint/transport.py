@@ -14,9 +14,13 @@ from copy import deepcopy
 import collections
 import logging
 import os
+import re
+
 class Transport(object):
 
-    def __init__(self, species=None,reactions=None,system=None,pb_bound=None,nx=100,scf_bound=False,comsol_params={},descriptors=None):
+    def __init__(self, species=None,electrode_reactions=None,electrolyte_reactions=None,\
+            system=None,pb_bound=None,nx=100,scf_bound=False,\
+            comsol_params={},comsol_variables={},descriptors=None):
 
         # set up logging to file - see previous section for more details
         logging.basicConfig(level=logging.DEBUG,
@@ -44,10 +48,9 @@ class Transport(object):
         self.logger = logging.getLogger('transport.info')
         
         #all the possible keys:
-        species_keys=['bulk concentration', 'diffusion', 'name', 'symbol', 'zeff','flux','req','kind']
+        species_keys=['bulk concentration', 'diffusion', 'name', 'symbol', 'flux']
         system_keys=['phiM','Stern capacitance','phiPZC','temperature','pressure','water viscosity','electrolyte viscosity',\
-                'epsilon','exclude species','migration','boundary thickness','educts',\
-                'products']
+                'epsilon','exclude species','migration','electrode reactions','electrolyte reactions','boundary thickness']
 
         #go over input data and put in some defaults if none
         if species is None:
@@ -96,20 +99,6 @@ class Transport(object):
                     sys.exit()
             self.system=system
 
-        #sort different species into lists:
-        self.product_list=[]
-        self.educt_list=[]
-        self.electrolyte_list=[]
-        for sp in self.species:
-            if 'kind' in self.species[sp]:
-                if self.species[sp]['kind']=='product':
-                    self.product_list.append(sp)
-                elif self.species[sp]['kind']=='educt':
-                    self.educt_list.append(sp)
-                elif self.species[sp]['kind']=='electrolyte':
-                    self.electrolyte_list.append(sp)
-            else:
-                self.logger.warning('No kind given for species {}. Assign \'electrolyte\' to this type.'.format(sp))
 
         for key in system_defaults:
            # ['epsilon','temperature','pressure','phiM']:
@@ -123,8 +112,6 @@ class Transport(object):
 
         self.nspecies=len(self.species)
 
-        #defaults for system settings:
-        self.reactions=reactions
 
         #add concentration = 0 for all species with no separately defined values
         for sp in self.species:
@@ -146,12 +133,61 @@ class Transport(object):
 
         self.use_convection=False
 
-        self.use_reactions=False
-        if self.reactions is not None:
-            if any(['rates' in self.reactions[reaction] for reaction in self.reactions]):
-                self.use_reactions=True
-                self.logger.info('Found reactions.')
-#        self.use_reactions=False
+        ######################
+        #REACTIONS
+        ######################
+
+        #Working on electrolyte reactions if requested
+        self.electrolyte_reactions=electrolyte_reactions
+        self.use_electrolyte_reactions=False
+        dontuse=False
+        if 'electrolyte reactions' in self.system:
+            if not self.system['electrolyte reactions']:
+                self.use_electrolyte_reactions=False
+                dontuse=True
+        if self.electrolyte_reactions is not None and not dontuse:
+            if any(['rates' in self.electrolyte_reactions[reaction] for reaction in self.electrolyte_reactions]):
+                self.use_electrolyte_reactions=True
+                self.logger.info('Found electrolyte reactions. Preparing...')
+                self.electrolyte_reactions=self.initialize_reactions(self.electrolyte_reactions)
+        #Working on electrode reactions if requested
+        self.electrode_reactions=electrode_reactions
+        self.use_electrode_reactions=False
+        dontuse=False
+        if 'electrode reactions' in self.system:
+            if not self.system['electrode reactions']:
+                self.use_electrode_reactions=False
+                dontuse=True
+        if self.electrode_reactions is not None and not dontuse:
+            self.use_electrode_reactions=True
+            self.logger.info('Found electrode reactions. Preparing...')
+            self.electrode_reactions=self.initialize_reactions(self.electrode_reactions)
+
+        #sort different species into lists:
+        self.product_list=[]
+        self.educt_list=[]
+        self.electrolyte_list=[]
+
+        for sp in self.electrode_reactions:
+            self.product_list.append(sp)
+            for rr in self.electrode_reactions[sp]['reaction'][0]:
+                if rr != sp and rr not in ['H2O','e-'] and rr not in self.educt_list:
+                    self.educt_list.append(rr)
+            for rr in self.electrode_reactions[sp]['reaction'][1]:
+                if rr != sp and rr not in ['H2O','e-'] and rr not in self.product_list:
+                    self.product_list.append(rr)
+
+
+        for sp in self.species:
+            if sp not in self.product_list and sp not in self.educt_list:
+                self.electrolyte_list.append(sp)
+
+        if self.use_electrode_reactions:
+            self.logger.info('Educts: {}'.format(self.educt_list))
+            self.logger.info('Products: {}'.format(self.product_list))
+        if self.use_electrolyte_reactions:
+            self.logger.info('Electrolyte Components: {}'.format(self.electrolyte_list))
+
         #DIFFUSION CONSTANTS
         self.D=[]
         for sp in self.species:
@@ -211,20 +247,7 @@ class Transport(object):
         self.count=1
 
         #STATIONARY-STATE REACTION RATES/FLUXES
-
-        for sp in self.species:
-            if 'flux' not in self.species[sp]:
-                self.species[sp]['flux']=0.0
-            else:
-                if type(self.species[sp]['flux'])==str:
-                    self.logger.info('Flux of species '+sp+' is assumed to be an equation.')
-                elif type(self.species[sp]['flux'])==dict:
-                    self.logger.info('Flux of species '+sp+' will be evaluated from the fluxes of '+str(self.species[sp]['flux']['values']))
-        #we need to calculate the flux of the educt as the sum of all the product rates
-        #only do this, if the rate is not given as function
-        if not any([type(self.species[sp]['flux'])==str for sp in self.species]):
-            #functions work only for comsol and are implemented in comsol calculator
-            self.evaluate_fluxes()
+        self.initialize_fluxes()
 
 
         #FLUX AND FARADAIC YIELD
@@ -258,7 +281,82 @@ class Transport(object):
 
         #define additional parameters which should be used inside comsol
         self.comsol_params=comsol_params
+        #comsol variables depending on variables updated during the calculation
+        self.comsol_variables=comsol_variables
         self.initialize_descriptors(descriptors)
+
+    def initialize_fluxes(self):
+
+        fluxes_type=None
+        #first check if rates or current densities have been specified in the electrode reaction section (priority):
+        if any(sum([['rates' in self.electrode_reactions[reaction]] for reaction in self.electrode_reactions],[])):
+            self.logger.info('Found rates specified for electrode reactions. Taking these as species fluxes.')
+            #first set the fluxes of all products
+            ers=self.electrode_reactions
+            missing_species=[]
+            for er in ers:
+                self.species[er]['flux']=ers[er]['rates'][0]
+                for reac in sum(ers[er]['reaction'],[]):
+                    if reac not in ers and reac not in ['e-','H2O']:
+                        missing_species+=[reac]
+            print missing_species
+            sys.exit()
+            #calculate fluxes of remaining species by summations
+            
+        elif any(sum([['current density' in self.electrode_reactions[reaction]] for reaction in self.electrode_reactions],[])):
+            self.logger.info('Found current densities specified for electrode reactions. Taking these to calculate fluxes.')
+            ers=self.electrode_reactions
+
+        else:
+            self.logger.info('No rates or current densities specified in electrode reactions dict. Taking fluxes from species dict')
+            for sp in self.species:
+                if 'flux' not in self.species[sp]:
+                    self.species[sp]['flux']=0.0
+                else:
+                    if type(self.species[sp]['flux'])==str:
+                        self.logger.info('Flux of species '+sp+' is assumed to be an equation.')
+            #we need to calculate the flux of the educt as the sum of all the product rates
+            #only do this, if the rate is not given as function
+            if not any([type(self.species[sp]['flux'])==str for sp in self.species]):
+                #functions work only for comsol and are implemented in comsol calculator
+                self.evaluate_fluxes()
+
+    def initialize_reactions(self,reactions):
+        """ replace the reaction string by a list"""
+        for reaction in reactions:
+            string=reactions[reaction]['reaction']
+            if '<->' in string:
+                si=sum([ab.split('->') for ab in string.split('<->')],[])
+            else:
+                si=string.split('->')
+            new_si=[]
+            for sii in si:
+                new_si.append(sii.strip())
+            si=new_si
+            final_reactants=[]
+            for isii,sii in enumerate(si):
+                reactants=sii.split(' + ') #list of all reactants of current equation side
+                reactants_out=[]
+                for ir,reactant in enumerate(reactants):
+                    nel=re.findall('([0-9]+)[ ]+e-',reactant)
+                    if len(nel)>0:
+                        #this is e-, have to count this
+                        reactions[reaction]['nel']=int(nel[0])
+                    N=re.findall('([0-9]+)[ ]+[A-Za-z]+',reactant)
+                    if len(N)<1:
+                        reactants_out.append(reactant.strip())
+#                        reactants_out.append([r.strip() for r in reactants if len(r)>0])
+                        continue
+                    else:
+                        N=int(N[0])
+#                        del reactants_out[ir]
+                        for n in range(N):
+                            reactants_out.append(reactant[len(str(N))+1:].strip())
+#                        reactants_out=[r.strip() for r in reactants_out if len(r)>0]
+                final_reactants.append(reactants_out)
+            reactions[reaction]['reaction']=final_reactants
+        return reactions
+
 
     def initialize_descriptors(self,descriptors):
 
