@@ -160,27 +160,27 @@ class Comsol():
 
             #reaction rates
             i=0
-            if self.tp.use_reactions: 
-                for reaction in self.tp.reactions:
-                    if 'rates' in self.tp.reactions[reaction]:
+            if self.tp.use_electrolyte_reactions: 
+                for reaction in self.tp.electrolyte_reactions:
+                    if 'rates' in self.tp.electrolyte_reactions[reaction]:
                         i+=1
                         educts=''
                         products=''
                         unit='1/s'
-                        unit_f=unit+'*m^3/mol'*(len(self.tp.reactions[reaction]['reactants'][0])-1)
-                        unit_r=unit+'*m^3/mol'*(len(self.tp.reactions[reaction]['reactants'][1])-1)
-                        for reactant in self.tp.reactions[reaction]['reactants'][0]:
+                        unit_f=unit+'*m^3/mol'*(len(self.tp.electrolyte_reactions[reaction]['reaction'][0])-1)
+                        unit_r=unit+'*m^3/mol'*(len(self.tp.electrolyte_reactions[reaction]['reaction'][1])-1)
+                        for reactant in self.tp.electrolyte_reactions[reaction]['reaction'][0]:
                             educts+=reactant
-                            if reactant!=self.tp.reactions[reaction]['reactants'][0][-1]:
+                            if reactant!=self.tp.electrolyte_reactions[reaction]['reaction'][0][-1]:
                                 educts+=' + '
-                        for reactant in self.tp.reactions[reaction]['reactants'][1]:
+                        for reactant in self.tp.electrolyte_reactions[reaction]['reaction'][1]:
                             products+=reactant
-                            if reactant!=self.tp.reactions[reaction]['reactants'][1][-1]:
+                            if reactant!=self.tp.electrolyte_reactions[reaction]['reaction'][1][-1]:
                                 products+=' + '
                         inp.write('    model.param().set("{}", "{} [{}]", "rate constant: {}");\n'.format(\
-                                'k'+str(i)+'f',self.tp.reactions[reaction]['rates'][0],unit_f,educts+' -> '+products))
+                                'k'+str(i)+'f',self.tp.electrolyte_reactions[reaction]['rates'][0],unit_f,educts+' -> '+products))
                         inp.write('    model.param().set("{}", "{} [{}]", "rate constant: {}");\n'.format(\
-                                'k'+str(i)+'r',self.tp.reactions[reaction]['rates'][1],unit_r,products+' -> '+educts))
+                                'k'+str(i)+'r',self.tp.electrolyte_reactions[reaction]['rates'][1],unit_r,products+' -> '+educts))
             inp.write('    model.param().set("flux_factor", "1", "factor scaling the flux");\n')
             inp.write('    model.param().set("grid_factor", "'+str(self.tp.nx_init-1)+'", "minimal number of x mesh points (boundary and domain)");\n')
 
@@ -388,47 +388,47 @@ class Comsol():
                 species_names=[sp for sp in self.tp.species]
                 rates=[""]*self.tp.nspecies
                 jj=0
-                for r in self.tp.reactions:
-                    reaction=self.tp.reactions[r]
+                for r in self.tp.electrolyte_reactions:
+                    reaction=self.tp.electrolyte_reactions[r]
                     if 'rates' not in reaction:
                         continue
                     else:
                         jj+=1
                     #rates of educts:
-                    for reactant in reaction['reactants'][0]:
+                    for reactant in reaction['reaction'][0]:
                         if reactant not in self.tp.species:
                             continue
                         k=species_names.index(reactant)
                     #    rates[k]=""
                         prod=""
-                        for reactant2 in reaction['reactants'][0]:
+                        for reactant2 in reaction['reaction'][0]:
                             if reactant2 not in self.tp.species:
                                 continue
                             k2=species_names.index(reactant2)
                             prod+="cp"+str(k2+1)+"*"
                         rates[k]+="-"+prod+"k"+str(jj)+"f"
                         prod=""
-                        for reactant2 in reaction['reactants'][1]:
+                        for reactant2 in reaction['reaction'][1]:
                             if reactant2 not in self.tp.species:
                                 continue
                             k2=species_names.index(reactant2)
                             prod+="cp"+str(k2+1)+"*"
                         rates[k]+="+"+prod+"k"+str(jj)+"r"
                     #rates of products
-                    for reactant in reaction['reactants'][1]:
+                    for reactant in reaction['reaction'][1]:
                         if reactant not in self.tp.species:
                             continue
                         k=species_names.index(reactant)
                      #   rates[k]=""
                         prod=""
-                        for reactant2 in reaction['reactants'][0]:
+                        for reactant2 in reaction['reaction'][0]:
                             if reactant2 not in self.tp.species:
                                 continue
                             k2=species_names.index(reactant2)
                             prod+="cp"+str(k2+1)+"*"
                         rates[k]+="+"+prod+"k"+str(jj)+"f"
                         prod=""
-                        for reactant2 in reaction['reactants'][1]:
+                        for reactant2 in reaction['reaction'][1]:
                             if reactant2 not in self.tp.species:
                                 continue
                             k2=species_names.index(reactant2)
@@ -447,7 +447,7 @@ class Comsol():
             inp.write(' *REACTIONS\n')
             inp.write(' */\n')
             #reactions
-            if self.tp.use_reactions:
+            if self.tp.use_electrolyte_reactions:
                 rate_str=get_rates()
                 for index,rate in rate_str:
                     inp.write('    model.component("comp1").physics("tds").feature("reac1").set("R_cp'+str(index)+'", "'+rate+'");\n')

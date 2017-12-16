@@ -178,21 +178,21 @@ species=\
 #set up descriptors:
 #this works but it does not adapt the fluxes! there is currently no 
 #descriptor based data input implemented!
-descriptors={'phiM':[key for key in data_fluxes['CO']]}
+descriptors={'phiM':[key for key in data_fluxes['CO']][:2]}
 
 #set potential to the value you want
 potential=str(-1.16953) #-0.95526)
 total_flux=0.0
 for key in species:
     if key!='unknown' and key in data_fluxes: #'flux' in species[key]:
-        electrode_reactions[key]['rates']=data_fluxes[key][potential]
+        electrode_reactions[key]['current density']=[data_fluxes[key][potential],0.0]
         total_flux+=data_fluxes[key][potential]
 
 #unknown species only if flux of others is smaller than 1
 if total_flux<1.0:
-    electrode_reactions['unknown']['rates']=1.-total_flux
+    electrode_reactions['unknown']['current density']=[1.-total_flux,0.0]
 else:
-    electrode_reactions['unknown']['rates']=0.0
+    electrode_reactions['unknown']['current density']=[0.0,0.0]
 
 
 
@@ -240,7 +240,7 @@ c.run()
 #plots:
 #plots: 'concentrations','potential','efield','current_density' (are plotted in a separate figure for all descriptors)
 #descriptor_plots: same as above (the results requested will be plotted into a single figure for all descriptors)
-p=Plot(transport=tp,logscale=True) #transport=tp,plots=['concentrations','potential','efield','current_density'],descriptor_plots=['_potential'])
+p=Plot(transport=tp,logscale=False) #transport=tp,plots=['concentrations','potential','efield','current_density'],descriptor_plots=['_potential'])
 p.plot()
 
 ###########################################################################

@@ -290,25 +290,49 @@ class Transport(object):
         fluxes_type=None
         #first check if rates or current densities have been specified in the electrode reaction section (priority):
         if any(sum([['rates' in self.electrode_reactions[reaction]] for reaction in self.electrode_reactions],[])):
-            self.logger.info('Found rates specified for electrode reactions. Taking these as species fluxes.')
+            self.logger.info('Found rates specified for electrode reactions. Taking these to calculate fluxes.')
+            method='rates'
+        elif any(sum([['current density' in self.electrode_reactions[reaction]] for reaction in self.electrode_reactions],[])):
+            self.logger.info('Found current densities specified for electrode reactions. Taking these to calculate fluxes.')
+            method='current density'
+        else:
+            self.logger.info('Found no electrode reaction rates, taking fluxes specified in the species section (or no flux otherwise).')
+            method='species flux'
+        if method in ['rates','current density']:
+            for sp in self.species:
+                self.species[sp]['flux']=0.0
+            self.logger.info('Found rates specified for electrode reactions. Taking these as species flux boundary conditions.')
             #first set the fluxes of all products
             ers=self.electrode_reactions
             missing_species=[]
             for er in ers:
-                self.species[er]['flux']=ers[er]['rates'][0]
+                if method=='rates':
+                    self.species[er]['flux']=ers[er]['rates'][0]
+                elif method=='current density':
+                    self.species[er]['flux']=ers[er]['current density'][0]
+                    self.species[er]['flux']*=1./self.electrode_reactions[er]['nel']/unit_F
                 for reac in sum(ers[er]['reaction'],[]):
-                    if reac not in ers and reac not in ['e-','H2O']:
+                    if reac not in ers and reac not in ['e-','H2O'] and reac not in missing_species:
                         missing_species+=[reac]
-            print missing_species
-            sys.exit()
-            #calculate fluxes of remaining species by summations
-            
-        elif any(sum([['current density' in self.electrode_reactions[reaction]] for reaction in self.electrode_reactions],[])):
-            self.logger.info('Found current densities specified for electrode reactions. Taking these to calculate fluxes.')
-            ers=self.electrode_reactions
 
-        else:
-            self.logger.info('No rates or current densities specified in electrode reactions dict. Taking fluxes from species dict')
+            if len(missing_species)>0:
+                self.logger.info('Calculating fluxes of {} as sum of other fluxes'.format(missing_species))
+            #calculate fluxes of remaining species by using the fluxes of products evaluated before
+            for er in ers:
+                educts=ers[er]['reaction'][0]
+                products=ers[er]['reaction'][1]
+                for missing in missing_species:
+                    if True: #missing in educts:
+                        for sp in products:
+                            if sp not in missing_species and sp not in ['H2O','OH-','H+','e-']:
+                                #get number of missing molecules:
+                                if missing in educts:
+                                    factor=(-1)
+                                else:
+                                    factor=1
+                                self.species[missing]['flux']+=factor*self.species[sp]['flux']*max(educts.count(missing),products.count(missing)) #/self.electrode_reactions[sp]['nel']
+
+        elif method=='species flux':
             for sp in self.species:
                 if 'flux' not in self.species[sp]:
                     self.species[sp]['flux']=0.0
@@ -317,9 +341,9 @@ class Transport(object):
                         self.logger.info('Flux of species '+sp+' is assumed to be an equation.')
             #we need to calculate the flux of the educt as the sum of all the product rates
             #only do this, if the rate is not given as function
-            if not any([type(self.species[sp]['flux'])==str for sp in self.species]):
+#            if not any([type(self.species[sp]['flux'])==str for sp in self.species]):
                 #functions work only for comsol and are implemented in comsol calculator
-                self.evaluate_fluxes()
+#                self.evaluate_fluxes()
 
     def initialize_reactions(self,reactions):
         """ replace the reaction string by a list"""
@@ -395,39 +419,39 @@ class Transport(object):
                 self.all_data[str(value1)]={str(value2):{'species':self.species.copy()}}
                 self.all_data[str(value1)][str(value2)]['system']=self.system.copy()
 
-    def evaluate_fluxes(self):
-        self.logger.info('Evaluating fluxes of {} as sum of products/educts'.format([sp for sp in self.species if type(self.species[sp]['flux'])==dict]))
-        tmp_rates=np.zeros([self.nspecies])
-        for isp,sp in enumerate(self.species):
-            if 'zeff' in self.species[sp]:
-                if type(self.species[sp]['flux'])!=dict:
-                    crate=self.species[sp]['flux']/(unit_F*self.species[sp]['zeff'])
-                    self.species[sp]['flux']=crate
-#                if sp not in sum([self.system['sum rates'][sp]['values'] for sp in self.system['sum rates']],[]):
-#                    continue
-                for isp2,sp2 in enumerate(self.species):
-                    if type(self.species[sp2]['flux'])==dict:
-                        if sp in self.species[sp2]['flux']['values']:
-                            if self.species[sp2]['flux']['reqs']=='number_of_catoms':
-                                req=self.number_of_catoms[isp]
-                            elif self.species[sp2]['flux']['reqs']=='zeff':
-                                req=self.species[sp]['zeff']
-                            else:
-                                req=self.species[sp2]['flux']['reqs'][isp]
-                            if self.species[sp2]['flux']['kind']=='educt':
-                                tmp_rates[isp2]-=crate*req
-                            else:
-                                tmp_rates[isp2]+=crate*req
-#            elif sp=='HCO3-':
-#                self.species[sp]['flux']=-self.species['H2']['flux']/(unit_F*self.species['H2']['zeff'])*2.
-        for isp,sp in enumerate(self.species):
-            if type(self.species[sp]['flux'])==dict:
-                self.species[sp]['flux']=tmp_rates[isp]
-#        for ieduct,educt in enumerate(self.system['educts']):
-#            self.species[educt]['flux']=-tmp_educts[ieduct]
-        if 'unknown' in self.species:
-            #we needed this flux only to calculate the co2 and oh- fluxes
-            self.species['unknown']['flux']=0.0
+#    def evaluate_fluxes(self):
+#        self.logger.info('Evaluating fluxes of {} as sum of products/educts'.format([sp for sp in self.species if type(self.species[sp]['flux'])==dict]))
+#        tmp_rates=np.zeros([self.nspecies])
+#        for isp,sp in enumerate(self.species):
+#            if 'zeff' in self.species[sp]:
+#                if type(self.species[sp]['flux'])!=dict:
+#                    crate=self.species[sp]['flux']/(unit_F*self.species[sp]['zeff'])
+#                    self.species[sp]['flux']=crate
+##                if sp not in sum([self.system['sum rates'][sp]['values'] for sp in self.system['sum rates']],[]):
+##                    continue
+#                for isp2,sp2 in enumerate(self.species):
+#                    if type(self.species[sp2]['flux'])==dict:
+#                        if sp in self.species[sp2]['flux']['values']:
+#                            if self.species[sp2]['flux']['reqs']=='number_of_catoms':
+#                                req=self.number_of_catoms[isp]
+#                            elif self.species[sp2]['flux']['reqs']=='zeff':
+#                                req=self.species[sp]['zeff']
+#                            else:
+#                                req=self.species[sp2]['flux']['reqs'][isp]
+#                            if self.species[sp2]['flux']['kind']=='educt':
+#                                tmp_rates[isp2]-=crate*req
+#                            else:
+#                                tmp_rates[isp2]+=crate*req
+##            elif sp=='HCO3-':
+##                self.species[sp]['flux']=-self.species['H2']['flux']/(unit_F*self.species['H2']['zeff'])*2.
+#        for isp,sp in enumerate(self.species):
+#            if type(self.species[sp]['flux'])==dict:
+#                self.species[sp]['flux']=tmp_rates[isp]
+##        for ieduct,educt in enumerate(self.system['educts']):
+##            self.species[educt]['flux']=-tmp_educts[ieduct]
+#        if 'unknown' in self.species:
+#            #we needed this flux only to calculate the co2 and oh- fluxes
+#            self.species['unknown']['flux']=0.0
 
     def symbol_reader(self,species):
     #determine charges and create arrays of charges and D's
