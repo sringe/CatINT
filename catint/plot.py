@@ -35,11 +35,11 @@ class Plot():
                 i2=0
                 for value2 in self.tp.descriptors[desc_keys[1]]:
                     i2+=1
-                    self.tp.potential=self.tp.all_data[str(value1)][str(value2)]['system']['potential']
-                    self.tp.efield=self.tp.all_data[str(value1)][str(value2)]['system']['efield']
-                    self.tp.current_density=self.tp.all_data[str(value1)][str(value2)]['system']['current_density']
-                    self.tp.species=self.tp.all_data[str(value1)][str(value2)]['species']
-                    self.tp.cout=self.tp.all_data[str(value1)][str(value2)]['system']['cout']
+                    self.tp.potential=self.tp.all_data[str(value1)][str(value2)]['system']['potential'].copy()
+                    self.tp.efield=self.tp.all_data[str(value1)][str(value2)]['system']['efield'].copy()
+                    self.tp.current_density=self.tp.all_data[str(value1)][str(value2)]['system']['current_density'].copy()
+                    self.tp.species=self.tp.all_data[str(value1)][str(value2)]['species'].copy()
+                    self.tp.cout=self.tp.all_data[str(value1)][str(value2)]['system']['cout'].copy()
                     self.plot_single()
                     plt.savefig(outdir+'/results_'+str(i1)+str(i2)+'.pdf')
                     plt.savefig(outdir+'/results_'+str(i1)+str(i2)+'.png')
@@ -67,6 +67,9 @@ class Plot():
         product_list=self.tp.educt_list+self.tp.product_list #['HCOO-','CO','H2','etol','propol','metol','C2H4','CH4','allyl']
 
         color_offset=0.3
+        for sp in self.tp.species:
+            print 'sp', sp
+#        print 'cout in plot', self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['cout'][0,9*self.tp.nx:10*self.tp.nx-1]
         for k,sp in enumerate(self.tp.species):
             color=next(colorlist)
             if sp in product_list:

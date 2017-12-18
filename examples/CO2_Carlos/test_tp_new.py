@@ -15,10 +15,10 @@ import sys
 
 electrolyte_reactions=\
     {
-    'buffe':            {   'reaction':             'CO2 + H2O <-> H2CO3', 
-                            'constant':             2.63e-3},                               #KH
-    'buffer-acid':      {   'reaction':            'CO2 + H2O <-> HCO3- + H+', 
-                            'constant':             (4.44e-7)*1000.0},                      #K1a (=Kc=K0)
+#    'buffe':            {   'reaction':             'CO2 + H2O <-> H2CO3', 
+#                            'constant':             2.63e-3},                               #KH
+#    'buffer-acid':      {   'reaction':            'CO2 + H2O <-> HCO3- + H+', 
+#                            'constant':             (4.44e-7)*1000.0},                      #K1a (=Kc=K0)
     'buffer-base':      {   'reaction':            'CO2 + OH- <-> HCO3-', 
                             'constant':             (4.44e7)/1000.0,                        #K1b (=Kc!=K0, since unit conversion factor is missing)
                             'rates':                [(5.93e3)/1000.0,(5.93e3)/(4.44e7)]},   #"k1f, k1r"
@@ -67,10 +67,14 @@ system=\
     'water viscosity':  8.90e-004, #Pa*s at 25C
     #calculate the electrolyte viscosity. This will be used to rescale the diffusion coefficients
     #according to Einstein-Stokes relation: D_in_electrolyte = D_in_water * mu0/mu
+    'exclude species':['H+','H2O'], #here all the species from the reactions defined above which should be not 
+    #considered for the transport or rate calculations (activity of 1 e.g. for water), should be listed here
+    #for equation definitions
     'epsilon': 78.36,
-    'exclude species': ['H+'], #exclude this species from PNP equations
+    'Stern capacitance': 18., #in muF/cm^2
     'migration': True,
-    'Stern capacitance': 200. #in muF/cm^2
+    'electrode reactions': True,
+    'electrolyte reactions': True
     }
 ###########################################################################
 
@@ -129,9 +133,9 @@ species=\
                             'bulk concentration':   OHm_i},
 #                            'flux':                 {'kind':'product','values':['C2H4','CH4','CO','HCOO-','etol','propol','allyl','metol','acet','etgly','unknown','H2'],\
 #                                                    'reqs':'zeff'}},
-    'H+':               {   'symbol':               'H^+',
-                            'name':                 'hydronium',
-                            'bulk concentration':   10**(-pH_i)},
+   # 'H+':               {   'symbol':               'H^+',
+   #                         'name':                 'hydronium',
+   #                         'bulk concentration':   10**(-pH_i)},
     'H2':               {   'symbol':               'H_2',
                             'name':                 'hydrogen',
                             'diffusion':            4.50e-009},
@@ -178,8 +182,9 @@ species=\
 #set up descriptors:
 #this works but it does not adapt the fluxes! there is currently no 
 #descriptor based data input implemented!
-descriptors={'phiM':[key for key in data_fluxes['CO']][:2]}
-
+#descriptors={'phiM':[[key for key in data_fluxes['CO']][0]]}
+descriptors={'phiM':[-1.16953]} #[[key for key in data_fluxes['CO']][0]]}
+print 'descriptors',descriptors
 #set potential to the value you want
 potential=str(-1.16953) #-0.95526)
 total_flux=0.0
@@ -205,14 +210,8 @@ system['electrolyte viscosity']=visc[0]
 #BOUNDARY CONDITIONS FOR PBE
 ###########################################################################
 
-#'potential','gradient','robin'
-pb_bound={
-#        'potential': {'wall':'zeta'},
-#        'gradient': {'bulk':0.0}}
-         'potential':{'bulk':0.0,'wall':potential}}
-#    'potential': {'wall':-0.2}} 
-#set corresponding system variable
 system['phiM']=potential
+#by default Robin BCs will be taken at the electrode and Dirichlet in the bulk
 
 ###########################################################################
 #SETUP AND RUN
@@ -224,7 +223,6 @@ tp=Transport(
     electrolyte_reactions=electrolyte_reactions,
     electrode_reactions=electrode_reactions,
     system=system,
-    pb_bound=pb_bound,
     descriptors=descriptors,
     nx=40)
 

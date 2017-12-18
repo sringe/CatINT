@@ -50,7 +50,7 @@ class Transport(object):
         #all the possible keys:
         species_keys=['bulk concentration', 'diffusion', 'name', 'symbol', 'flux']
         system_keys=['phiM','Stern capacitance','phiPZC','temperature','pressure','water viscosity','electrolyte viscosity',\
-                'epsilon','exclude species','migration','electrode reactions','electrolyte reactions','boundary thickness']
+                'epsilon','migration','electrode reactions','electrolyte reactions','boundary thickness','exclude species']
 
         #go over input data and put in some defaults if none
         if species is None:
@@ -72,6 +72,12 @@ class Transport(object):
                         sys.exit()
             self.species=species
 
+        #convert to ordered dictionary to have consistent indices of species
+        self.species=collections.OrderedDict(self.species)
+    
+        for sp in self.species:
+            print 'sp before', sp
+
         if pb_bound is None:
             pb_bound={
             'potential': {'wall':'phiM'},
@@ -87,9 +93,7 @@ class Transport(object):
                 'temperature':298.14,
                 'phiM':0.0, #-0.0125, #potential vs SHE
                 'phiPZC':0.0,       #PZC potential
-                'pressure':1,
-                'educts':[], #'CO2',\
-                'products':[]}
+                'pressure':1}
         if system is None:
             self.system=system_defaults
         else:
@@ -106,9 +110,16 @@ class Transport(object):
                 self.system[key]=system_defaults[key]
 
         #delete species that should not be considered here
-        if 'exclude species' in self.system:
-            for es in self.system['exclude species']:
+        #default exclude species: H2O, e-
+        if 'H2O' not in self.system['exclude species']:
+            self.system['exclude species']+=['H2O']
+        if 'e-' not in self.system['exclude species']:
+            self.system['exclude species']+=['e-']
+
+        for es in self.system['exclude species']:
+            if es in self.species:
                 del self.species[es]
+        self.logger.info('Excluding {} from PNP transport. They will also not participate in reactions (activity = 1)'.format(self.system['exclude species']))
 
         self.nspecies=len(self.species)
 
@@ -150,6 +161,9 @@ class Transport(object):
                 self.use_electrolyte_reactions=True
                 self.logger.info('Found electrolyte reactions. Preparing...')
                 self.electrolyte_reactions=self.initialize_reactions(self.electrolyte_reactions)
+        for el in self.electrolyte_reactions:
+            if not 'rates' in self.electrolyte_reactions[el]:
+                self.logger.info('Reaction {} has no rates given. It will not be considered for PNP dynamics!'.format(el))
         #Working on electrode reactions if requested
         self.electrode_reactions=electrode_reactions
         self.use_electrode_reactions=False
@@ -171,10 +185,10 @@ class Transport(object):
         for sp in self.electrode_reactions:
             self.product_list.append(sp)
             for rr in self.electrode_reactions[sp]['reaction'][0]:
-                if rr != sp and rr not in ['H2O','e-'] and rr not in self.educt_list:
+                if rr != sp and rr not in ['e-'] and rr not in self.system['exclude species'] and rr not in self.educt_list:
                     self.educt_list.append(rr)
             for rr in self.electrode_reactions[sp]['reaction'][1]:
-                if rr != sp and rr not in ['H2O','e-'] and rr not in self.product_list:
+                if rr != sp and rr not in ['e-'] and rr not in self.system['exclude species'] and rr not in self.product_list:
                     self.product_list.append(rr)
 
 
@@ -187,6 +201,8 @@ class Transport(object):
             self.logger.info('Products: {}'.format(self.product_list))
         if self.use_electrolyte_reactions:
             self.logger.info('Electrolyte Components: {}'.format(self.electrolyte_list))
+
+        print 'phiM', self.system['phiM']
 
         #DIFFUSION CONSTANTS
         self.D=[]
@@ -287,6 +303,10 @@ class Transport(object):
 
     def initialize_fluxes(self):
 
+        if not self.use_electrode_reactions:
+            for sp in self.species:
+                self.species[sp]['flux']=0.0
+
         fluxes_type=None
         #first check if rates or current densities have been specified in the electrode reaction section (priority):
         if any(sum([['rates' in self.electrode_reactions[reaction]] for reaction in self.electrode_reactions],[])):
@@ -312,7 +332,7 @@ class Transport(object):
                     self.species[er]['flux']=ers[er]['current density'][0]
                     self.species[er]['flux']*=1./self.electrode_reactions[er]['nel']/unit_F
                 for reac in sum(ers[er]['reaction'],[]):
-                    if reac not in ers and reac not in ['e-','H2O'] and reac not in missing_species:
+                    if reac not in ers and reac not in ['e-'] and reac not in self.system['exclude species'] and reac not in missing_species:
                         missing_species+=[reac]
 
             if len(missing_species)>0:
@@ -324,7 +344,7 @@ class Transport(object):
                 for missing in missing_species:
                     if True: #missing in educts:
                         for sp in products:
-                            if sp not in missing_species and sp not in ['H2O','OH-','H+','e-']:
+                            if sp not in missing_species and sp not in self.system['exclude species'] and sp not in ['H2O','OH-','H+','e-']:
                                 #get number of missing molecules:
                                 if missing in educts:
                                     factor=(-1)
@@ -384,9 +404,11 @@ class Transport(object):
 
     def initialize_descriptors(self,descriptors):
 
-
         #list of descriptors over which to iterate
         if descriptors is not None:
+            if any([type(descriptors[desc]) not in [list,np.array] for desc in descriptors]):
+                self.logger.error('Descriptors must be given as list. Stopping here for safety')
+                sys.exit()
             self.descriptors=descriptors
         else:
             return
@@ -457,27 +479,9 @@ class Transport(object):
     #determine charges and create arrays of charges and D's
         k=-1
         charges=[]
-        number_of_catoms=[]
-        noc_requested=False
-        products=[]
-        educts=[]
-        catom_requested_values=[]
-        #first find species which is educt:
-        for sp in self.species:
-            if 'flux' in self.species[sp]:
-                if type(self.species[sp]['flux'])==dict:
-                    if self.species[sp]['flux']['kind']=='educt' and self.species[sp]['flux']['reqs']=='number_of_catoms':
-                        educts.append(sp)
-                        catom_requested_values+=self.species[sp]['flux']['values']
-                    elif self.species[sp]['flux']['kind']=='product' and self.species[sp]['flux']['reqs']=='number_of_catoms':
-                        products.append(sp)
-                        catom_requested_values+=self.species[sp]['flux']['values']
-                    if self.species[sp]['flux']['reqs']=='number_of_catoms':
-                        noc_requested=True
 
         for sp in species:
             k+=1
-            number_of_catoms.append(0.0)
             fstring=species[sp]['symbol']
 
             #first extract charges from array
@@ -504,40 +508,7 @@ class Transport(object):
             #create a few shorter arrays
             charges.append(no*unit_F)
 
-            if sp in educts and len(educts)!=0:
-                continue
-            if sp not in catom_requested_values:
-                continue
-            #secondly extract number of c atoms
-            check_number=False
-            number=''
-            for s in fstring:
-                if check_number:
-                    if s=='_':
-                        continue
-                    elif s.isdigit():
-                        number+=s
-                        continue
-                    elif number!='':
-                        number_of_catoms[k]-=1
-                        number_of_catoms[k]+=int(number)
-                        check_number=False
-                    else:
-                        check_number=False
-                if s=='C':
-                    number_of_catoms[k]+=1
-                    check_number=True
-                else:
-                    check_number=False
-                    number=''
         charges=np.array(charges)
-        number_of_catoms=np.array(number_of_catoms)
-        self.number_of_catoms=number_of_catoms
-        if noc_requested:
-            self.logger.info('Number of C-Atoms for Evaluation of '+str(educts)+str(products)+' fluxes:')
-            for isp,sp in enumerate(self.species):
-                if sp not in educts and sp in catom_requested_values:
-                    self.logger.info('  {}: {}'.format(sp,self.number_of_catoms[isp]))
         #the automatic reader of the number of catoms is maybe not what we want
         #for the reaction equivalents:
         return charges

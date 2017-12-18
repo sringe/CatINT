@@ -155,6 +155,7 @@ class Comsol():
             inp.write('    model.param().set("eps_r", "'+str(self.tp.system['epsilon'])+'", "relative permittivity");\n')
             inp.write('    model.param().set("epsS", "epsilon0_const*'+str(self.tp.system['Stern epsilon'])+'", "Stern layer effective permittivity");\n')
             inp.write('    model.param().set("lambdaS", "epsS/CS", "Stern layer thickness");\n')
+            inp.write('    model.param().set("conc_std", "1 [mol/m^3]", "Standard concentration (1mol/l)");\n')
 #            inp.write('    model.param().set("V", "0.2[V]", "Electrode potential");\n')
 
 
@@ -397,42 +398,57 @@ class Comsol():
                     #rates of educts:
                     for reactant in reaction['reaction'][0]:
                         if reactant not in self.tp.species:
-                            continue
-                        k=species_names.index(reactant)
+                            #prod+="conc_std"
+                            pass
+                           # continue
+                        else:
+                            k=species_names.index(reactant)
                     #    rates[k]=""
                         prod=""
                         for reactant2 in reaction['reaction'][0]:
                             if reactant2 not in self.tp.species:
-                                continue
-                            k2=species_names.index(reactant2)
-                            prod+="cp"+str(k2+1)+"*"
+                                prod+="conc_std*"
+                                #continue
+                            else:
+                                k2=species_names.index(reactant2)
+                                prod+="cp"+str(k2+1)+"*"
                         rates[k]+="-"+prod+"k"+str(jj)+"f"
                         prod=""
                         for reactant2 in reaction['reaction'][1]:
                             if reactant2 not in self.tp.species:
-                                continue
-                            k2=species_names.index(reactant2)
-                            prod+="cp"+str(k2+1)+"*"
+                                prod+="conc_std*"
+                                #pass
+                                #continue
+                            else:
+                                k2=species_names.index(reactant2)
+                                prod+="cp"+str(k2+1)+"*"
                         rates[k]+="+"+prod+"k"+str(jj)+"r"
                     #rates of products
                     for reactant in reaction['reaction'][1]:
                         if reactant not in self.tp.species:
-                            continue
-                        k=species_names.index(reactant)
+                            #prod+="conc_std"
+                            pass
+                            #continue
+                        else:
+                            k=species_names.index(reactant)
                      #   rates[k]=""
                         prod=""
                         for reactant2 in reaction['reaction'][0]:
                             if reactant2 not in self.tp.species:
-                                continue
-                            k2=species_names.index(reactant2)
-                            prod+="cp"+str(k2+1)+"*"
+                                prod+="conc_std*"
+                                #continue
+                            else:
+                                k2=species_names.index(reactant2)
+                                prod+="cp"+str(k2+1)+"*"
                         rates[k]+="+"+prod+"k"+str(jj)+"f"
                         prod=""
                         for reactant2 in reaction['reaction'][1]:
                             if reactant2 not in self.tp.species:
-                                continue
-                            k2=species_names.index(reactant2)
-                            prod+="cp"+str(k2+1)+"*"
+                                prod+="conc_std*"
+                                #continue
+                            else:
+                                k2=species_names.index(reactant2)
+                                prod+="cp"+str(k2+1)+"*"
                         rates[k]+="-"+prod+"k"+str(jj)+"r"
 
                 rates_new=[]
@@ -789,16 +805,20 @@ class Comsol():
             self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['current_density']=self.tp.current_density
         cout=np.array(cout)
         self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['cout']=cout
+        print 'couttest',cout[9*self.tp.nx:10*self.tp.nx-1]
+        print 'shape',np.shape(cout),self.tp.nx
+        print 'cout', self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['cout'][0,9*self.tp.nx:10*self.tp.nx-1]
         for i_sp,sp in enumerate(self.tp.species):
             self.tp.species[sp]['concentration']=cout[-1,i_sp*self.tp.nx:(i_sp+1)*self.tp.nx]
             if self.tp.descriptors is not None:
                 self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['species'][sp]['concentration']=self.tp.species[sp]['concentration']
         self.tp.cout=cout
-
-
+        
         #update total charge density
         self.tp.total_charge=np.zeros([self.tp.nx])
         for i_sp,sp in enumerate(self.tp.species):
             for ix,xx in enumerate(self.tp.xmesh):
                 self.tp.total_charge[ix]+=self.tp.charges[i_sp]*self.tp.species[sp]['concentration'][ix]
+        for sp in self.tp.species:
+            print 'sp after comsol', sp
 

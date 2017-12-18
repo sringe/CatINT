@@ -1146,10 +1146,12 @@ class Calculator():
 #            if n%int(self.tp.nt/float(self.tp.ntout))==0: # or n==self.tp.nt-1:
 #                print 'this will be outputted',n
 #        exit()
+        for sp in self.tp.species:
+            print 'sp before run', sp
 
-        keys=[key for key in self.tp.descriptors]
-        values1=str(self.tp.descriptors[keys[0]][0])
-        values2=str(self.tp.descriptors[keys[0]][1])
+        #keys=[key for key in self.tp.descriptors]
+        #values1=str(self.tp.descriptors[keys[0]][0])
+        #values2=str(self.tp.descriptors[keys[0]][1])
         if self.calc != 'comsol':
             cout=self.integrate_pnp(self.tp.dx,self.tp.nx,self.tp.dt,\
                 len(self.tp.tmesh),self.tp.ntout,method=self.calc)
