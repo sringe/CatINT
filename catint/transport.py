@@ -75,9 +75,6 @@ class Transport(object):
         #convert to ordered dictionary to have consistent indices of species
         self.species=collections.OrderedDict(self.species)
     
-        for sp in self.species:
-            print 'sp before', sp
-
         if pb_bound is None:
             pb_bound={
             'potential': {'wall':'phiM'},
@@ -88,11 +85,14 @@ class Transport(object):
 
         system_defaults={
                 'epsilon':78.36,
-                'Stern epsilon': 2.0, #dielectric permittivity in Stenr layer (for Robin BCs)
+                'Stern epsilon':2.0, #only important for mesh definition (no actual parameter in model)
                 'Stern capacitance':18e-2, #Stern layer capacitance for Robin BCs
                 'temperature':298.14,
                 'phiM':0.0, #-0.0125, #potential vs SHE
                 'phiPZC':0.0,       #PZC potential
+                'electrode reactions': False,
+                'electrolyte reactions': False,
+                'exclude species': ['H2O','e-'],
                 'pressure':1}
         if system is None:
             self.system=system_defaults
@@ -109,13 +109,7 @@ class Transport(object):
             if key not in self.system:
                 self.system[key]=system_defaults[key]
 
-        #delete species that should not be considered here
-        #default exclude species: H2O, e-
-        if 'H2O' not in self.system['exclude species']:
-            self.system['exclude species']+=['H2O']
-        if 'e-' not in self.system['exclude species']:
-            self.system['exclude species']+=['e-']
-
+        #delete species which should not be considered for PNP dynamics
         for es in self.system['exclude species']:
             if es in self.species:
                 del self.species[es]
@@ -147,49 +141,73 @@ class Transport(object):
         ######################
         #REACTIONS
         ######################
+        #if reactions are given as input, they will always be used!
+        #use_electrolyte/electrode_reactions is not really needed 
 
         #Working on electrolyte reactions if requested
         self.electrolyte_reactions=electrolyte_reactions
         self.use_electrolyte_reactions=False
-        dontuse=False
         if 'electrolyte reactions' in self.system:
             if not self.system['electrolyte reactions']:
                 self.use_electrolyte_reactions=False
-                dontuse=True
-        if self.electrolyte_reactions is not None and not dontuse:
+            elif self.system['electrolyte reactions']:
+                self.use_electrolyte_reactions=True
+        if self.electrolyte_reactions is not None:
             if any(['rates' in self.electrolyte_reactions[reaction] for reaction in self.electrolyte_reactions]):
                 self.use_electrolyte_reactions=True
-                self.logger.info('Found electrolyte reactions. Preparing...')
+                self.logger.info('Found electrolyte reactions with specified rates. Switching electrolyte reactions on. Preparing...')
                 self.electrolyte_reactions=self.initialize_reactions(self.electrolyte_reactions)
-        for el in self.electrolyte_reactions:
-            if not 'rates' in self.electrolyte_reactions[el]:
-                self.logger.info('Reaction {} has no rates given. It will not be considered for PNP dynamics!'.format(el))
+        if self.electrolyte_reactions is None and self.use_electrolyte_reactions:
+            self.logger.error('Electrolyte reactions were requested by input, but no electrolyte reaction was defined. Define electrolyte reaction first.')
+            sys.exit()
+
+        if self.use_electrolyte_reactions:
+            for el in self.electrolyte_reactions:
+                if not 'rates' in self.electrolyte_reactions[el]:
+                    self.logger.info('Reaction {} has no rates given. It will not be considered for PNP dynamics!'.format(el))
+                for sp in sum(self.electrolyte_reactions[el]['reaction'],[]):
+                    if sp not in self.species and sp not in self.system['exclude species']:
+                        self.logger.error('Species {} has not been defined, but is used in the electrolyte reactions, define it first!'.format(sp))
+                        sys.exit()
+
         #Working on electrode reactions if requested
         self.electrode_reactions=electrode_reactions
         self.use_electrode_reactions=False
-        dontuse=False
         if 'electrode reactions' in self.system:
             if not self.system['electrode reactions']:
                 self.use_electrode_reactions=False
-                dontuse=True
-        if self.electrode_reactions is not None and not dontuse:
+            elif self.system['electrode reactions']:
+                self.use_electrode_reactions=True
+
+        if self.electrode_reactions is not None:
             self.use_electrode_reactions=True
-            self.logger.info('Found electrode reactions. Preparing...')
+            self.logger.info('Found electrode reactions. Switching electrode reactions on. Preparing...')
             self.electrode_reactions=self.initialize_reactions(self.electrode_reactions)
+        elif self.electrode_reactions is None and self.use_electrode_reactions:
+            self.logger.error('Electrode reactions were requested by input, but no electrode reaction was defined. Define electrode reaction first.')
+            sys.exit()
+
+        if self.use_electrode_reactions:
+            for el in self.electrode_reactions:
+                for sp in sum(self.electrode_reactions[el]['reaction'],[]):
+                    if sp not in self.species and sp not in self.system['exclude species']:
+                        self.logger.error('Species {} has not been defined, but is used in the electrode reactions, define it first!'.format(el))
+                        sys.exit()
 
         #sort different species into lists:
         self.product_list=[]
         self.educt_list=[]
         self.electrolyte_list=[]
 
-        for sp in self.electrode_reactions:
-            self.product_list.append(sp)
-            for rr in self.electrode_reactions[sp]['reaction'][0]:
-                if rr != sp and rr not in ['e-'] and rr not in self.system['exclude species'] and rr not in self.educt_list:
-                    self.educt_list.append(rr)
-            for rr in self.electrode_reactions[sp]['reaction'][1]:
-                if rr != sp and rr not in ['e-'] and rr not in self.system['exclude species'] and rr not in self.product_list:
-                    self.product_list.append(rr)
+        if self.use_electrode_reactions:
+            for sp in self.electrode_reactions:
+                self.product_list.append(sp)
+                for rr in self.electrode_reactions[sp]['reaction'][0]:
+                    if rr != sp and rr not in ['e-'] and rr not in self.system['exclude species'] and rr not in self.educt_list:
+                        self.educt_list.append(rr)
+                for rr in self.electrode_reactions[sp]['reaction'][1]:
+                    if rr != sp and rr not in ['e-'] and rr not in self.system['exclude species'] and rr not in self.product_list:
+                        self.product_list.append(rr)
 
 
         for sp in self.species:
@@ -201,8 +219,6 @@ class Transport(object):
             self.logger.info('Products: {}'.format(self.product_list))
         if self.use_electrolyte_reactions:
             self.logger.info('Electrolyte Components: {}'.format(self.electrolyte_list))
-
-        print 'phiM', self.system['phiM']
 
         #DIFFUSION CONSTANTS
         self.D=[]
@@ -248,6 +264,10 @@ class Transport(object):
         self.xmesh_init=self.xmesh
         self.nx_init=self.nx
         self.xmax_init=self.xmax
+
+        if self.debye_length>self.xmax/2.:
+            self.logger.warning('Debye length is larger than 1/4th of the xmesh. Take care that the x discretization is not too coarse!.')
+            self.logger.warning('Current xmesh: xmax={}, dx={} at debye_length={}'.format(self.xmax,self.dx,self.debye_length))
 
 #        if min(self.xmesh)<=0:
 #            min_x=1e-15
@@ -306,6 +326,7 @@ class Transport(object):
         if not self.use_electrode_reactions:
             for sp in self.species:
                 self.species[sp]['flux']=0.0
+            return
 
         fluxes_type=None
         #first check if rates or current densities have been specified in the electrode reaction section (priority):
@@ -318,10 +339,25 @@ class Transport(object):
         else:
             self.logger.info('Found no electrode reaction rates, taking fluxes specified in the species section (or no flux otherwise).')
             method='species flux'
+        isstring=False
         if method in ['rates','current density']:
+            if method=='rates':
+                if any(sum([[rate for rate in self.electrode_reactions[reaction]['rates']] for reaction in self.electrode_reactions],[])):
+                    self.logger.info('Rates are given as string. Assuming an equation (works only with COMSOL)')
+                    isstring=True
+                    if not all(sum([[rate for rate in self.electrode_reactions[reaction]['rates']] for reaction in self.electrode_reactions],[])):
+                        self.logger.error('For equations, all rates must be given as strings, so far.')
+                        sys.exit()
+            elif method=='current density':
+                if any([type(self.electrode_reactions[reaction]['current density'])==str for reaction in self.electrode_reactions]):
+                    self.logger.info('Current densities are given as string. Assuming an equation (works only with COMSOL)')
+                    isstring=True
             for sp in self.species:
-                self.species[sp]['flux']=0.0
-            self.logger.info('Found rates specified for electrode reactions. Taking these as species flux boundary conditions.')
+                if isstring:
+                    self.species[sp]['flux']='0.0'
+                else:
+                    self.species[sp]['flux']=0.0
+
             #first set the fluxes of all products
             ers=self.electrode_reactions
             missing_species=[]
@@ -330,7 +366,10 @@ class Transport(object):
                     self.species[er]['flux']=ers[er]['rates'][0]
                 elif method=='current density':
                     self.species[er]['flux']=ers[er]['current density'][0]
-                    self.species[er]['flux']*=1./self.electrode_reactions[er]['nel']/unit_F
+                    if isstring:
+                        self.species[er]['flux']+='/'+self.electrode_reactions[er]['nel']+'/F_const' #unit_F
+                    else:
+                        self.species[er]['flux']*=1./self.electrode_reactions[er]['nel']/unit_F
                 for reac in sum(ers[er]['reaction'],[]):
                     if reac not in ers and reac not in ['e-'] and reac not in self.system['exclude species'] and reac not in missing_species:
                         missing_species+=[reac]
@@ -347,10 +386,19 @@ class Transport(object):
                             if sp not in missing_species and sp not in self.system['exclude species'] and sp not in ['H2O','OH-','H+','e-']:
                                 #get number of missing molecules:
                                 if missing in educts:
-                                    factor=(-1)
+                                    if isstring:
+                                        factor='(-1)'
+                                    else:
+                                        factor=(-1)
                                 else:
-                                    factor=1
-                                self.species[missing]['flux']+=factor*self.species[sp]['flux']*max(educts.count(missing),products.count(missing)) #/self.electrode_reactions[sp]['nel']
+                                    if isstring:
+                                        factor='1'
+                                    else:
+                                        factor=1
+                                if isstring:
+                                    self.species[missing]['flux']+='+'+str(factor)+'*'+self.species[sp]['flux']+'*'+str(max(educts.count(missing),products.count(missing))) #/self.electrode_reactions[sp]['nel']
+                                else:
+                                    self.species[missing]['flux']+=factor*self.species[sp]['flux']*max(educts.count(missing),products.count(missing)) #/self.electrode_reactions[sp]['nel']
 
         elif method=='species flux':
             for sp in self.species:
@@ -358,7 +406,8 @@ class Transport(object):
                     self.species[sp]['flux']=0.0
                 else:
                     if type(self.species[sp]['flux'])==str:
-                        self.logger.info('Flux of species '+sp+' is assumed to be an equation.')
+                        self.logger.info('Flux of species '+sp+' cannot be equation. Please specify rate in electrode reactions.') #is assumed to be an equation.')
+                        sys.exit()
             #we need to calculate the flux of the educt as the sum of all the product rates
             #only do this, if the rate is not given as function
 #            if not any([type(self.species[sp]['flux'])==str for sp in self.species]):

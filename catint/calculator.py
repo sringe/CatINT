@@ -1146,8 +1146,6 @@ class Calculator():
 #            if n%int(self.tp.nt/float(self.tp.ntout))==0: # or n==self.tp.nt-1:
 #                print 'this will be outputted',n
 #        exit()
-        for sp in self.tp.species:
-            print 'sp before run', sp
 
         #keys=[key for key in self.tp.descriptors]
         #values1=str(self.tp.descriptors[keys[0]][0])

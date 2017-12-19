@@ -1,3 +1,4 @@
+
 from catint.transport import Transport
 from catint.calculator import Calculator 
 from catint.plot import Plot
@@ -6,12 +7,6 @@ import sys
 from units import *
 from read_data import read_data
 
-###########################################################################
-#REACTIONS
-###########################################################################
-#reactants:             (first line are the educts, second the products)
-#constant:              (dimensionless (mol/m^3))
-#rates:                 (forward and backward rates)
 
 electrolyte_reactions=\
     {
@@ -28,29 +23,6 @@ electrolyte_reactions=\
     'buffer2':          {   'reaction':            'CO2 + CO32- + H2O <->  2 HCO3-', 
                             'constant':             9.52e3}                                 #K3
     }
-
-electrode_reactions={
-    'C1':   {'reaction': 'CO + 5 H2O + 6 e- -> C1 + 6 OH-'}, #methane
-    'C2':   {'reaction': '2 CO + 7 H2O + 8 e- -> C2 + 8 OH-'}} #ethanol
-
-#reactions=\
-#    {
-#    'buffe':           {   'reactants':            [['CO2','H2O'],['H2CO3']],
-#                            'constant':             2.63e-3},                               #KH
-#    'buffer-acid':      {   'reactants':            [['CO2','H2O'],['HCO3-','H+']],
-#                            'constant':             (4.44e-7)*1000.0},                      #K1a
-#    'buffer-base':      {   'reactants':            [['CO2','OH-'],['HCO3-']],
-#                            'constant':             (4.44e7)/1000.0,                        #K1b
-#                            'rates':                [(5.93e3)/1000.0,(5.93e3)/(4.44e7)]},   #"k1f, k1r"
-#    'buffer-base2':     {   'reactants':            [['HCO3-','OH-'],['CO32-','H2O']],
-#                            'constant':             (4.66e3)/1000.0,
-#                            'rates':                [(1.0e8)/1000.0,(1.0e8)/(4.66e3)]},     #"k2f,k2r"
-#    'buffer2':          {   'reactants':            [['CO2','CO32-','H2O'],['HCO3-','HCO3-']],
-#                            'constant':             9.52e3}                                 #K3
-#    }
-###########################################################################
-
-
 ###########################################################################
 #THERMODYNAMIC VARIABLES
 ###########################################################################
@@ -64,12 +36,13 @@ system=\
     'epsilon': 78.36,
    # 'exclude species': ['H+'], #exclude this species from PNP equations
     'migration': True,
-    'electrode reactions': True,
+    'electrode reactions': False,
     'electrolyte reactions': True, #False,
     'phiPZC': 0.0,
     'Stern capacitance': 200
     }
 ###########################################################################
+
 
 ###########################################################################
 #READ DATA FILE
@@ -125,65 +98,8 @@ species=\
                             'name':                 'hydroxyl',
                             'diffusion':            5.273e-009,
                             'bulk concentration':   OHm_i},
-#    'H+':               {   'symbol':               'H^+',
-#                            'name':                 'hydronium',
-#                            'bulk concentration':   10**(-pH_i)},
-#    'H2':               {   'symbol':               'H_2',
-#                            'name':                 'hydrogen',
-#                            'diffusion':            4.50e-009,
-#                            'zeff':                 2.0,
-#                            'req':                  [1]},
-    'CO':               {   'symbol':               'CO',
-                            'name':                 'carbon monoxide',
-                            'diffusion':            2.03e-009,
-                            'bulk concentration':   CO_i},
-    'C1':               {   'symbol':               'CH_4',
-                            'name':                 'C1-methane',
-                            'diffusion':            1.49e-009},
-    'C2':               {   'symbol':               'C_2H_5OH',
-                            'name':                 'C2-ethanol',
-                            'diffusion':            0.84e-009},
     }
 ###########################################################################
-
-###########################################################################
-#Additional COMSOL variable definitions
-###########################################################################
-
-comsol_params={}
-comsol_params['A']=['1.e13[1/s]','Exponential prefactor']
-#comsol_params['A2']=['1.e13[1/s]','Exponential prefactor']
-comsol_params['Ga_CHO']=['1.11746219[eV]','CHO Activation Energy']
-comsol_params['Ga_CHOH']=['2.37467774[eV]','CHOH Activation Energy']
-comsol_params['Ga_OCCO']=['0.578959276[eV]','OCCO Activation Energy']
-comsol_params['Ga_OCCOH']=['1.10495851[eV]','OCCOH Activation Energy']
-comsol_params['eVToJmol']=[str(eVTokcal*1000*calToJ)+'[J/eV/mol]','eV to J/mol Conversion factor']
-comsol_params['alpha1']=['0.5','Butler-Volmer Parameter']
-comsol_params['alpha2']=['2.0','Butler-Volmer Parameter']
-comsol_params['e0']=['1[C]','electronic charge']
-comsol_params['erho']=['80.3e-6[C/cm^2]','surface density of active sites x elementary charge']
-comsol_params['Lmol']=['1[l/mol]','conversion factor']
-comsol_params['rho_act']=['7.04e-6[mol/m^2]','Density of Active Sites'] #from Singh paper
-comsol_params['Ga_CO_ads']=['0.73[eV]','Adsorption barrier for CO on Cu211']
-comsol_params['Kads']=['exp(-Ga_CO_ads*eVToJmol/RT)','Equilibrium constant for CO adsorption']
-comsol_params['max_coverage']=['0.44','Maximal coverage with which the Langmuir isotherm will be scaled']
-#comsol_params['Eeq_C1']=['0.11','Equilibrium Potential of CO reduction to C1']
-#comsol_params['Eeq_C2']=['0.11','Equilibrium Potential of CO reduction to C2']
-comsol_params['eta']=['-0.5','Overpotential']
-###########################################################################
-#RATE EQUATIONS/FLUXES
-###########################################################################
-
-#using langmuir isotherm to convert concentrations to coverages:
-coverage='Kads*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads)*max_coverage'
-
-#give rates as COMSOL equations
-#all variables used here have to be defined as COMSOL params as seen before
-C1_rate='rho_act*'+coverage+'*A*exp(-max(Ga_CHO+alpha1*(phiM-phi)*e0, Ga_CHOH+alpha2*(phiM-phi)*e0)*eVToJmol/RT)'#/F_const/'+str(species['C1']['zeff'])
-C2_rate='rho_act*'+coverage+'^2*A*exp(-max(Ga_OCCOH+alpha1*(phiM-phi)*e0, Ga_OCCO)*eVToJmol/RT)' #/F_const/'+str(species['C2']['zeff'])
-
-electrode_reactions['C1']['rates']=[C1_rate,'0.0']
-electrode_reactions['C2']['rates']=[C2_rate,'0.0']
 
 boundary_thickness=7.93E-05 #in m
 
@@ -198,7 +114,7 @@ system['electrolyte viscosity']=visc[0]
 potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 for potential in potentials:
-    descriptors={'phiM':[-1.0,-0.5]}
+    descriptors={'phiM':[-1.0]}
     system['phiM']=potential
 
     #'potential','gradient','robin'
@@ -214,11 +130,9 @@ for potential in potentials:
     ###########################################################################
     tp=Transport(
         species=species,
-        electrode_reactions=electrode_reactions,
         electrolyte_reactions=electrolyte_reactions,
         system=system,
         pb_bound=pb_bound,
-        comsol_params=comsol_params,
         descriptors=descriptors,
         nx=40)
     

@@ -151,7 +151,7 @@ class Comsol():
             inp.write('    model.param().set("phiM", "'+str(self.tp.system['phiM'])+' [V]", "Metal Potential");\n')
             inp.write('    model.param().set("phiPZC", "'+str(self.tp.system['phiPZC'])+' [V]", "Metal PZC Potential");\n')
             inp.write('    model.param().set("lambdaD", "'+str(self.tp.debye_length)+'[m]", "Debye length");\n')
-            inp.write('    model.param().set("CS", "'+str(self.tp.system['Stern capacitance']/100**2)+'[F/cm^2]", "Stern layer capacitance");\n')
+            inp.write('    model.param().set("CS", "'+str(self.tp.system['Stern capacitance']/1e6)+'[F/cm^2]", "Stern layer capacitance");\n')
             inp.write('    model.param().set("eps_r", "'+str(self.tp.system['epsilon'])+'", "relative permittivity");\n')
             inp.write('    model.param().set("epsS", "epsilon0_const*'+str(self.tp.system['Stern epsilon'])+'", "Stern layer effective permittivity");\n')
             inp.write('    model.param().set("lambdaS", "epsS/CS", "Stern layer thickness");\n')
@@ -267,8 +267,9 @@ class Comsol():
                 inp.write('    model.component("comp1").physics("es").feature("sfcd1").selection().set(new int[]{1});\n')
                 inp.write('    model.component("comp1").physics("es").create("pot1", "ElectricPotential", 0);\n')
                 inp.write('    model.component("comp1").physics("es").feature("pot1").selection().set(new int[]{2});\n')
-                inp.write('    model.component("comp1").physics("es").create("pot2", "ElectricPotential", 0);\n')
-                inp.write('    model.component("comp1").physics("es").feature("pot2").selection().set(new int[]{1});\n')
+                #only for dirichlet:
+                #inp.write('    model.component("comp1").physics("es").create("pot2", "ElectricPotential", 0);\n')
+                #inp.write('    model.component("comp1").physics("es").feature("pot2").selection().set(new int[]{1});\n')
                 inp.write('    model.component("comp1").physics("es").create("df1", "DisplacementField", 0);\n')
                 inp.write('    model.component("comp1").physics("es").feature("df1").selection().set(new int[]{1});\n')
             #floating requires one of: AC/DC Module, MEMS Module, Plasma Module, Acoustics Module, Structural Mechanics Module, Semiconductor Module
@@ -287,8 +288,10 @@ class Comsol():
             inp.write('    model.component("comp1").physics("tds").create("gconstr1", "GlobalConstraint", -1);\n')
             inp.write('    model.component("comp1").physics("tds").create("conc1", "Concentration", 0);\n')
             inp.write('    model.component("comp1").physics("tds").feature("conc1").selection().set(new int[]{2});\n')
-            inp.write('    model.component("comp1").physics("tds").create("reac1", "Reactions", 1);\n')
-            inp.write('    model.component("comp1").physics("tds").feature("reac1").selection().all();\n')
+
+            if self.tp.use_electrolyte_reactions:
+                inp.write('    model.component("comp1").physics("tds").create("reac1", "Reactions", 1);\n')
+                inp.write('    model.component("comp1").physics("tds").feature("reac1").selection().all();\n')
             inp.write('    model.component("comp1").physics().create("ge", "GlobalEquations", "geom1");\n')
 
             if self.tp.use_migration:
@@ -316,8 +319,10 @@ class Comsol():
             if self.tp.use_migration:
                 inp.write('    model.component("comp1").physics("es").feature("ccn1").set("epsilonr", new String[][]{{"eps_r"}, {"0"}, {"0"}, {"0"}, {"eps_r"}, {"0"}, {"0"}, {"0"}, {"eps_r"}});\n')
                 inp.write('    model.component("comp1").physics("es").feature("sfcd1").set("rhoqs", "rho_s");\n')
-                inp.write('    model.component("comp1").physics("es").feature("pot2").set("V0", "V");\n')
-                inp.write('    model.component("comp1").physics("es").feature("pot2").active(false);\n')
+                #for dirichlet BC's
+                #inp.write('    model.component("comp1").physics("es").feature("pot2").set("V0", "phiM");\n')
+                #inp.write('    model.component("comp1").physics("es").feature("pot2").active(false);\n')
+                #end dirichlet
                 inp.write('    model.component("comp1").physics("es").feature("df1").active(false);\n')
 #                inp.write('    model.component("comp1").physics("es").feature("fp1").active(false);\n')
             inp.write('    model.component("comp1").physics("tds").prop("ShapeProperty").set("order_concentration", 2);\n')
@@ -399,7 +404,7 @@ class Comsol():
                     for reactant in reaction['reaction'][0]:
                         if reactant not in self.tp.species:
                             #prod+="conc_std"
-                            pass
+                            continue
                            # continue
                         else:
                             k=species_names.index(reactant)
@@ -427,7 +432,7 @@ class Comsol():
                     for reactant in reaction['reaction'][1]:
                         if reactant not in self.tp.species:
                             #prod+="conc_std"
-                            pass
+                            continue
                             #continue
                         else:
                             k=species_names.index(reactant)
