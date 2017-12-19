@@ -150,26 +150,27 @@ species=\
 #Additional COMSOL variable definitions
 ###########################################################################
 
+
 comsol_params={}
 comsol_params['A']=['1.e13[1/s]','Exponential prefactor']
 #comsol_params['A2']=['1.e13[1/s]','Exponential prefactor']
-comsol_params['Ga_CHO']=['1.11746219[eV]','CHO Activation Energy']
-comsol_params['Ga_CHOH']=['2.37467774[eV]','CHOH Activation Energy']
-comsol_params['Ga_OCCO']=['0.578959276[eV]','OCCO Activation Energy']
-comsol_params['Ga_OCCOH']=['1.10495851[eV]','OCCOH Activation Energy']
-comsol_params['eVToJmol']=[str(eVTokcal*1000*calToJ)+'[J/eV/mol]','eV to J/mol Conversion factor']
+comsol_params['Ga_CHO']=[str(1.11746219*unit_F)+'[J/mol]','CHO Activation Energy']
+comsol_params['Ga_CHOH']=[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Energy']
+comsol_params['Ga_OCCO']=[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy']
+comsol_params['Ga_OCCOH']=[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy']
+#comsol_params['eVToJmol']=[str(eVTokcal*1000*calToJ)+'[J/eV/mol]','eV to J/mol Conversion factor']
 comsol_params['alpha1']=['0.5','Butler-Volmer Parameter']
 comsol_params['alpha2']=['2.0','Butler-Volmer Parameter']
 comsol_params['e0']=['1[C]','electronic charge']
 comsol_params['erho']=['80.3e-6[C/cm^2]','surface density of active sites x elementary charge']
 comsol_params['Lmol']=['1[l/mol]','conversion factor']
-comsol_params['rho_act']=['7.04e-6[mol/m^2]','Density of Active Sites'] #from Singh paper
-comsol_params['Ga_CO_ads']=['0.73[eV]','Adsorption barrier for CO on Cu211']
-comsol_params['Kads']=['exp(-Ga_CO_ads*eVToJmol/RT)','Equilibrium constant for CO adsorption']
+#active site density. singh paper: 7.04e-6[mol/m^2]
+#here: 3x3 Cu211 cell as example. area=6.363x7.794*1e-20, active sites=3 (step top sites, 1.004495558139274e-05), 9 (all top sites, 3.013486674417822e-05)
+comsol_params['rho_act']=['1.004495558139274e-05[mol/m^2]','Density of Active Sites'] #from Singh paper: 7.04e-6
+comsol_params['Ga_CO_ads']=[str(0.73*unit_F)+'[J/mol]','Adsorption barrier for CO on Cu211']
+comsol_params['Kads']=['exp(-Ga_CO_ads/RT)','Equilibrium constant for CO adsorption']
 comsol_params['max_coverage']=['0.44','Maximal coverage with which the Langmuir isotherm will be scaled']
-#comsol_params['Eeq_C1']=['0.11','Equilibrium Potential of CO reduction to C1']
-#comsol_params['Eeq_C2']=['0.11','Equilibrium Potential of CO reduction to C2']
-comsol_params['eta']=['-0.5','Overpotential']
+
 ###########################################################################
 #RATE EQUATIONS/FLUXES
 ###########################################################################
@@ -179,8 +180,8 @@ coverage='Kads*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads)*max_coverage'
 
 #give rates as COMSOL equations
 #all variables used here have to be defined as COMSOL params as seen before
-C1_rate='rho_act*'+coverage+'*A*exp(-max(Ga_CHO+alpha1*(phiM-phi)*e0, Ga_CHOH+alpha2*(phiM-phi)*e0)*eVToJmol/RT)'#/F_const/'+str(species['C1']['zeff'])
-C2_rate='rho_act*'+coverage+'^2*A*exp(-max(Ga_OCCOH+alpha1*(phiM-phi)*e0, Ga_OCCO)*eVToJmol/RT)' #/F_const/'+str(species['C2']['zeff'])
+C1_rate='rho_act*'+coverage+'*A*exp(-max(Ga_CHO+alpha1*(phiM-phi)*F_const, Ga_CHOH+alpha2*(phiM-phi)*F_const)/RT)'#/F_const/'+str(species['C1']['zeff'])
+C2_rate='rho_act*'+coverage+'^2*A*exp(-max(Ga_OCCOH+alpha1*(phiM-phi)*F_const, Ga_OCCO)/RT)' #/F_const/'+str(species['C2']['zeff'])
 
 electrode_reactions['C1']['rates']=[C1_rate,'0.0']
 electrode_reactions['C2']['rates']=[C2_rate,'0.0']
@@ -198,7 +199,7 @@ system['electrolyte viscosity']=visc[0]
 potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 for potential in potentials:
-    descriptors={'phiM':[-1.0,-0.5]}
+    descriptors={'phiM':[-1.0]}
     system['phiM']=potential
 
     #'potential','gradient','robin'
