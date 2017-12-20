@@ -18,7 +18,7 @@ class Comsol():
         self.exe=exe_path
         self.results_folder_base='comsol_results'
         self.results_folder=self.results_folder_base
-        self.outputs=['concentrations','electrostatics','current_density']
+        self.outputs=['concentrations','electrostatics','current_density','electrode_flux']
 
     def run(self,label='',desc_val=[],
             studies=None):
@@ -67,13 +67,13 @@ class Comsol():
             'alphac 0.5 Cathodic charge transfer coefficient',
             'alphaa 1-alphac Anodic charge transfer coefficient',
             'V 0.5 Potential',
-            #'jr 0.01 Dimensionless anodic reaction current density',
+            #'jr 0.01 Dimensionless anodic reaction current_density',
             #'kc 0.01 Dimensionless cathodic rate coefficient',
-            #'J 0.9 Dimensionless cell current density',
+            #'J 0.9 Dimensionless cell current_density',
             #'Kc kc*4*Dp/L Cathodic rate constant',
             #'Ka jr*4*Dp*cref/(L*cM) Anodic rate constant',
-            #'id 4*Z*F_const*Dp*cref/L Nernst limiting current density',
-            #'icell J*id Cell current density',
+            #'id 4*Z*F_const*Dp*cref/L Nernst limiting current_density',
+            #'icell J*id Cell current_density',
             'lambdaD '+str(self.tp.debye_length)+'[m] Debye length',
             'CS '+str(self.tp.system['Stern capacitance'])+'*1e-6[F/cm^2] Stern layer capacitance',
             'delta lambdaS/lambdaD Dimensionless Stern layer thickness',
@@ -223,8 +223,6 @@ class Comsol():
             inp.write('    model.component("comp1").variable("var1").selection().set(new int[]{1});\n')
             inp.write('    model.component("comp1").variable().create("var2");\n')
 #            inp.write('    model.component("comp1").variable("var2").set("phiM", "V", "Metal phase potential (ground)");\n')
-            inp.write('    model.component("comp1").variable("var2").selection().geom("geom1", 0);\n')
-            inp.write('    model.component("comp1").variable("var2").selection().set(new int[]{1});\n')
 #            inp.write('    model.component("comp1").variable("var2").selection().set(new int[]{1});\n')
 #            inp.write('    model.component("comp1").variable().create("var3");\n')
             #inp.write('    model.component("comp1").variable("var3").selection().geom("geom1", 0);\n')
@@ -244,6 +242,9 @@ class Comsol():
                     self.tp.species[sp]['flux']=string
                     inp.write('    model.component("comp1").variable("var2").set("j{}", "{}", "{} flux");\n'.format(\
                         i+1, self.tp.species[sp]['flux'],self.tp.species[sp]['name']))
+                elif i==0:
+                    inp.write('    model.component("comp1").variable("var2").selection().geom("geom1", 0);\n')
+                    inp.write('    model.component("comp1").variable("var2").selection().set(new int[]{1});\n')
                 
 
             inp.write('/*\n')
@@ -489,7 +490,7 @@ class Comsol():
             inp.write('    model.component("comp1").physics("ge").feature("ge1").set("DependentVariableQuantity", "electricpotential");\n')
             inp.write('    model.component("comp1").physics("ge").feature("ge1").set("SourceTermQuantity", "currentdensity");\n')
             inp.write('    model.component("comp1").physics("ge").feature("ge1")\n')
-            inp.write('         .label("Solve for potential that results in given current density icell");\n')
+            inp.write('         .label("Solve for potential that results in given current_density icell");\n')
 
             inp.write('    model.component("comp1").mesh("mesh1").feature("edg1").feature("size1").set("hauto", 1);\n')
             inp.write('    model.component("comp1").mesh("mesh1").feature("edg1").feature("size1").set("custom", "on");\n')
@@ -515,7 +516,7 @@ class Comsol():
             inp.write('    model.component("comp1").probe("pdom1").feature("ppb1").set("window", "window1");\n')
             inp.write('    model.component("comp1").probe("pdom1").feature("ppb2").set("expr", "es.Jdx");\n')
             inp.write('    model.component("comp1").probe("pdom1").feature("ppb2").set("unit", "A/m^2");\n')
-            inp.write('    model.component("comp1").probe("pdom1").feature("ppb2").set("descr", "Displacement current density, x component");\n')
+            inp.write('    model.component("comp1").probe("pdom1").feature("ppb2").set("descr", "Displacement current_density, x component");\n')
             inp.write('    model.component("comp1").probe("pdom1").feature("ppb2").set("table", "tbl1");\n')
             inp.write('    model.component("comp1").probe("pdom1").feature("ppb2").set("window", "window1");\n')
             inp.write('    model.component("comp1").probe("pdom1").feature("ppb3").active(false);\n')
@@ -671,6 +672,8 @@ class Comsol():
                 export_data(['phi','es.Ex'],['V','V/m'],'Potential, Field'+label_append, self.results_folder+'/electrostatics.txt',2)
             if 'current_density' in self.outputs:
                 export_data(['es.Jx'],['A/m^2'],'Current density'+label_append, self.results_folder+'/current_density.txt',3)
+            if 'electrode_flux' in self.outputs:
+                export_data('j','mol/m^2/s','Electrode flux'+label_append, self.results_folder+'/electrode_flux.txt',4)
 
             inp.write('    return model;\n')
             inp.write('  }\n')
@@ -734,6 +737,8 @@ class Comsol():
                 self.tp.dx=self.tp.xmax/self.tp.nx
                 cout=np.zeros([self.tp.ntout,self.tp.nspecies*self.tp.nx])
                 cout_tmp=np.zeros([self.tp.nt+1,self.tp.nspecies*self.tp.nx])
+                electrode_flux=np.zeros_like(cout)
+                electrode_flux_tmp=np.zeros_like(cout_tmp)
             #now read in all results
             i=0
             self.tp.logger.info('Reading COMSOL output from'+self.results_folder+'/'+output+'.txt')
@@ -757,8 +762,14 @@ class Comsol():
                         ls=line.split()
                         for j,lss in enumerate(ls):
                             self.tp.current_density.append(float(lss))
+                    elif output=='electrode_flux':
+                        ls=line.split()
+                        for j,lss in enumerate(ls):
+                            if j>0:
+                                i_sp=j-1
+                                electrode_flux[0,i_sp*self.tp.nx+i]=float(lss)
                 elif i>8 and [key for key in self.studies][0]=='time-dependent':
-                    if output=='concentrations':
+                    if output in ['concentrations','electrode_flux']:
                         #read a selection of time steps here
                         ls=line.split()
                         i_t=np.zeros([self.tp.nspecies],dtype=int)-1
@@ -769,7 +780,10 @@ class Comsol():
                                 n=i_t[i_sp]
 #                                if n % int(self.tp.nt/float(self.tp.ntout)) == 0: # or n==self.tp.nt-1:
                                 if n in self.tp.itout:
-                                    cout_tmp[n,i_sp*self.tp.nx+i-9]=float(lss)
+                                    if output=='concentrations':
+                                        cout_tmp[n,i_sp*self.tp.nx+i-9]=float(lss)
+                                    elif output=='electrode_flux':
+                                        electrode_flux_tmp[n,i_sp*self.tp.nx+i-9]=float(lss)
 
                     elif output in ['electrostatics','current_density']:
                         #read only the last time step here
@@ -799,6 +813,14 @@ class Comsol():
             if n in self.tp.itout:
                 nn+=1
                 cout[nn,:]=cc
+        nn=-1
+        for n,cc in enumerate(electrode_flux_tmp):
+            if n in self.tp.itout:
+                nn+=1
+                electrode_flux[nn,:]=cc
+
+        self.tp.electrode_flux=electrode_flux
+
         self.tp.logger.info('Wrote out concentrations at '+str(nn+1)+' steps.')
         self.tp.potential=np.array(self.tp.potential)
         self.tp.efield=np.array(self.tp.efield)
@@ -810,9 +832,7 @@ class Comsol():
             self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['current_density']=self.tp.current_density
         cout=np.array(cout)
         self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['cout']=cout
-        print 'couttest',cout[9*self.tp.nx:10*self.tp.nx-1]
-        print 'shape',np.shape(cout),self.tp.nx
-        print 'cout', self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['cout'][0,9*self.tp.nx:10*self.tp.nx-1]
+        self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['electrode_flux']=electrode_flux
         for i_sp,sp in enumerate(self.tp.species):
             self.tp.species[sp]['concentration']=cout[-1,i_sp*self.tp.nx:(i_sp+1)*self.tp.nx]
             if self.tp.descriptors is not None:
@@ -824,6 +844,4 @@ class Comsol():
         for i_sp,sp in enumerate(self.tp.species):
             for ix,xx in enumerate(self.tp.xmesh):
                 self.tp.total_charge[ix]+=self.tp.charges[i_sp]*self.tp.species[sp]['concentration'][ix]
-        for sp in self.tp.species:
-            print 'sp after comsol', sp
 

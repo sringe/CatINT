@@ -15,6 +15,7 @@ import collections
 import logging
 import os
 import re
+from io import save_all
 
 class Transport(object):
 
@@ -46,6 +47,10 @@ class Transport(object):
         
         self.logger_db = logging.getLogger('transport.debug')
         self.logger = logging.getLogger('transport.info')
+
+        #pickle outputs of dictionaries:
+        if not os.path.exists('obj'):
+            os.makedirs('obj')
         
         #all the possible keys:
         species_keys=['bulk concentration', 'diffusion', 'name', 'symbol', 'flux']
@@ -802,3 +807,5 @@ class Transport(object):
         """Attach calculator object."""
         self.calc=calc
 
+    def save(self):
+        save_all(self)

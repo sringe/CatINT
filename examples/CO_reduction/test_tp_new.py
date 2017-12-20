@@ -167,7 +167,7 @@ comsol_params['Lmol']=['1[l/mol]','conversion factor']
 #active site density. singh paper: 7.04e-6[mol/m^2]
 #here: 3x3 Cu211 cell as example. area=6.363x7.794*1e-20, active sites=3 (step top sites, 1.004495558139274e-05), 9 (all top sites, 3.013486674417822e-05)
 comsol_params['rho_act']=['1.004495558139274e-05[mol/m^2]','Density of Active Sites'] #from Singh paper: 7.04e-6
-comsol_params['Ga_CO_ads']=[str(0.73*unit_F)+'[J/mol]','Adsorption barrier for CO on Cu211']
+comsol_params['Ga_CO_ads']=[str(-0.3*unit_F)+'[J/mol]','Adsorption barrier for CO on Cu211']
 comsol_params['Kads']=['exp(-Ga_CO_ads/RT)','Equilibrium constant for CO adsorption']
 comsol_params['max_coverage']=['0.44','Maximal coverage with which the Langmuir isotherm will be scaled']
 
@@ -199,7 +199,7 @@ system['electrolyte viscosity']=visc[0]
 potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 for potential in potentials:
-    descriptors={'phiM':[-1.0]}
+    descriptors={'phiM':list(np.linspace(-1.0,0.0,2))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
@@ -231,9 +231,12 @@ for potential in potentials:
     c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10)
     #scale_pb_grid
     c.run() #1.0)
+    tp.save() #saves all data to pickle files to enable restart or plotting later
     
     p=Plot(transport=tp)
-    p.plot()
+    p.plot(large_plots=['concentrations_reaction','desc_current_density'],\
+            small_plots=['potential','concentrations_electrolyte','current_density','pH'])
+    #p.plot(large_plots=['electrode flux'])
     #results.append(potential,tp.species['CO2']['flux'])
 #plt.plot(results,'-o')
 #plt.show()
