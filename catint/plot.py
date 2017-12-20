@@ -11,15 +11,15 @@ from io import read_all
 
 class Plot():
 
-    def __init__(self,transport=None,logscale=False,init_from_file=False):
+    def __init__(self,transport=None,logscale=False,init_from_file=None):
         if transport==None:
             print('No transport object provided for calculator. Stopping here.')
             sys.exit()
         else:
             self.tp=transport #transport object
-        if init_from_file:
+        if init_from_file is not None:
             #load data from pickle
-            read_all(self.tp)
+            read_all(self.tp,init_from_file)
         self.logscale=logscale
 
     def plot(self,large_plots=[],small_plots=[]):
@@ -57,6 +57,7 @@ class Plot():
                         self.plot_single()
                         plt.savefig(outdir+'/results_'+str(i1)+str(i2)+'.pdf')
                         plt.savefig(outdir+'/results_'+str(i1)+str(i2)+'.png')
+                        plt.close()
                     if any([a.startswith('desc_') for a in sum([self.large_plots,self.small_plots],[])]):
                         for p in plot_names:
                             if p=='current_density':
@@ -87,7 +88,7 @@ class Plot():
             self.plot_single()
             plt.savefig(outdir+'/results.pdf')
             plt.savefig(outdir+'/results.png')
-        plt.show()
+#        plt.show()
 
     def plot_single(self):
 

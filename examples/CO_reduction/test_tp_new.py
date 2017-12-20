@@ -199,7 +199,7 @@ system['electrolyte viscosity']=visc[0]
 potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-1.0,0.0,2))}
+    descriptors={'phiM':list(np.linspace(-1.4,0.0,30))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
