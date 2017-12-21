@@ -25,30 +25,71 @@ def insert_line(file_name,line_num,text):
     f.write(contents)
     f.close() 
 
-def save_all(tp):
+def save_all(tp,only=None):
     """saves all dictionaries and arrays into pickle files in the obj folder"""
-    save_obj(tp.all_data,'all_data')
-    save_obj(tp.species,'species')
-    save_obj(tp.system,'system')
-    save_obj(tp.descriptors,'descriptors')
-    save_obj(tp.xmesh,'xmesh')
-    save_obj(tp.tmesh,'tmesh')
-    save_obj(tp.electrode_reactions,'electrode_reactions')
-    save_obj(tp.electrolyte_reactions,'electrolyte_reactions')
+    if only is None:
+        save_obj(tp.all_data,'all_data')
+        save_obj(tp.species,'species')
+        save_obj(tp.system,'system')
+        save_obj(tp.descriptors,'descriptors')
+        save_obj(tp.xmesh,'xmesh')
+        save_obj(tp.tmesh,'tmesh')
+        save_obj(tp.electrode_reactions,'electrode_reactions')
+        save_obj(tp.electrolyte_reactions,'electrolyte_reactions')
+    else:
+        save_obj(tp.all_data,only)
 
-def read_all(tp,fname):
-    tp.all_data=load_obj('all_data',fname)
-    tp.species=load_obj('species',fname)
-    tp.system=load_obj('system',fname)
-    tp.descriptors=load_obj('descriptors',fname)
-    tp.xmesh=load_obj('xmesh',fname)
-    tp.tmesh=load_obj('tmesh',fname)
-    tp.electrode_reactions=load_obj('electrode_reactions',fname)
-    tp.electrolyte_reactions=load_obj('electrolyte_reactions',fname)
-    tp.xmax=max(tp.xmesh)
-    tp.nx=len(tp.xmesh)
-    tp.dx=tp.xmesh[1]-tp.xmesh[0]
-    tp.tmax=max(tp.tmesh)
-    tp.nt=len(tp.tmesh)
-    tp.dt=tp.tmesh[1]-tp.tmesh[0]
+def add_to_dict(self,append,*expr):
+    (filename,line_number,function_name,text)=traceback.extract_stack()[-2]
+    begin=text.find('add_to_dict(')+len('add_to_dict(')
+    end=text.find(')',begin)
+    text=[name.strip()+append for name in text[begin:end].split(',')]
+    text=text[1:]
+    data_dict=dict(zip(text,expr))
+    if not hasattr(self,'data_dict'):
+        self.data_dict={}
+    self.data_dict.update(data_dict)
+    for key in self.data_dict:
+        if not hasattr(self,key):
+            setattr(self,key,self.data_dict[key])
+    return self.data_dict
 
+def read_all(tp,fname,only=None):
+    if only is None:
+        tp.all_data=load_obj('all_data',fname)
+        tp.species=load_obj('species',fname)
+        tp.system=load_obj('system',fname)
+        tp.descriptors=load_obj('descriptors',fname)
+        tp.xmesh=load_obj('xmesh',fname)
+        tp.tmesh=load_obj('tmesh',fname)
+        tp.electrode_reactions=load_obj('electrode_reactions',fname)
+        tp.electrolyte_reactions=load_obj('electrolyte_reactions',fname)
+        tp.xmax=max(tp.xmesh)
+        tp.nx=len(tp.xmesh)
+        tp.dx=tp.xmesh[1]-tp.xmesh[0]
+        tp.tmax=max(tp.tmesh)
+        tp.nt=len(tp.tmesh)
+        tp.dt=tp.tmesh[1]-tp.tmesh[0]
+    else:
+        if type(only)==list:
+            for o in only:
+                value=load_obj(o,fname)
+                setattr(tp,o,value)
+        elif type(only)==str:
+            value=load_obj(only,fname)
+            setattr(tp,only,value)
+
+def print_diff(dictname,varname,missing):
+    print('  DIFF -- {} key of {} is missing in model {}'.format(varname,dictname,missing))
+
+#def diff(tp1,tp2):
+#    """shows difference between two transport models"""
+#    print 'Evaluating differences between transport models.'
+#    for a in tp1.all_data:
+#        if a not in tp2.all_data:
+#            print_diff('all_data',a,'tp2')
+#        else:
+#            for b in tp1.all_data[a]:
+#                
+#        for b in tp2.all_data[a]:
+#

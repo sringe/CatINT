@@ -24,7 +24,10 @@ from comsol import Comsol
 class Calculator():
 
     def __init__(self,transport=None,dt=None,tmax=None,ntout=1,calc=None,
-            scale_pb_grid=None,tau_jacobi=1e-7,tau_scf=1e-5):
+            scale_pb_grid=None,tau_jacobi=1e-7,tau_scf=1e-5,mode='time-dependent'):
+
+        self.mode=mode #calculation mode for comsol: time-dependent or stationary. the local
+        #solvers here are all time-dependent
 
         self.tau_scf=tau_scf
 
@@ -102,7 +105,7 @@ class Calculator():
 
         self.initialize='bla'
         if self.calc == 'comsol':
-            self.comsol=Comsol(transport=self.tp)
+            self.comsol=Comsol(transport=self.tp,mode=self.mode)
         return
 
     def get_rates(self,C):

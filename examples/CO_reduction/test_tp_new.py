@@ -67,7 +67,7 @@ system=\
     'electrode reactions': True,
     'electrolyte reactions': True, #False,
     'phiPZC': 0.0,
-    'Stern capacitance': 200
+    'Stern capacitance': 20 #std: 20
     }
 ###########################################################################
 
@@ -92,6 +92,11 @@ HCO3m_i = bic_i-CO32m_i #initial HCO3- bulk concentrations at t=0 [mol/m3]
 K_i = bic_i #initial K+ bulk concentrations at t=0 [mol/m3]
 OHm_i = HCO3m_i/electrolyte_reactions['buffer-base']['constant']/CO2_i #initial OH- bulk concentrations at t=0 [mol/m3]
 pH_i = 14+np.log10(OHm_i/1000.0) #initial pH (in log. arg must be conc in M)
+
+#pH_i=7.
+#OHm_i=10**(pH_i-14.)*1000.0
+#HCO3m_i=OHm_i*electrolyte_reactions['buffer-base']['constant']*CO2_i
+#CO32m_i=
 ###########################################################################
 
 ###########################################################################
@@ -169,7 +174,7 @@ comsol_params['Lmol']=['1[l/mol]','conversion factor']
 comsol_params['rho_act']=['1.004495558139274e-05[mol/m^2]','Density of Active Sites'] #from Singh paper: 7.04e-6
 comsol_params['Ga_CO_ads']=[str(-0.3*unit_F)+'[J/mol]','Adsorption barrier for CO on Cu211']
 comsol_params['Kads']=['exp(-Ga_CO_ads/RT)','Equilibrium constant for CO adsorption']
-comsol_params['max_coverage']=['0.44','Maximal coverage with which the Langmuir isotherm will be scaled']
+comsol_params['max_coverage']=['0.44','Maximal coverage with which the Langmuir isotherm will be scaled'] #0.44
 
 ###########################################################################
 #RATE EQUATIONS/FLUXES
@@ -178,10 +183,13 @@ comsol_params['max_coverage']=['0.44','Maximal coverage with which the Langmuir 
 #using langmuir isotherm to convert concentrations to coverages:
 coverage='Kads*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads)*max_coverage'
 
+n1=0
+n2=2
+
 #give rates as COMSOL equations
 #all variables used here have to be defined as COMSOL params as seen before
-C1_rate='rho_act*'+coverage+'*A*exp(-max(Ga_CHO+alpha1*(phiM-phi)*F_const, Ga_CHOH+alpha2*(phiM-phi)*F_const)/RT)'#/F_const/'+str(species['C1']['zeff'])
-C2_rate='rho_act*'+coverage+'^2*A*exp(-max(Ga_OCCOH+alpha1*(phiM-phi)*F_const, Ga_OCCO)/RT)' #/F_const/'+str(species['C2']['zeff'])
+C1_rate='rho_act*'+coverage+'*A*exp(-max(Ga_CHO+(alpha1+'+str(n1)+')*(phiM-phi)*F_const, Ga_CHOH+alpha2*(phiM-phi)*F_const)/RT+'+str(np.log(10.))+'*0.059*(14+log10(abs([[OH-]])*Lmol)))'#/F_const/'+str(species['C1']['zeff'])
+C2_rate='rho_act*'+coverage+'^2*A*exp(-max(Ga_OCCOH+(alpha1+'+str(n2)+')*(phiM-phi)*F_const, Ga_OCCO)/RT+'+str(np.log(10.))+'*0.059*(14+log10(abs([[OH-]])*Lmol)))' #/F_const/'+str(species['C2']['zeff'])
 
 electrode_reactions['C1']['rates']=[C1_rate,'0.0']
 electrode_reactions['C2']['rates']=[C2_rate,'0.0']
@@ -199,7 +207,7 @@ system['electrolyte viscosity']=visc[0]
 potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-1.4,0.0,30))}
+    descriptors={'phiM':list(np.linspace(-1.3,0.0,30))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
@@ -228,7 +236,7 @@ for potential in potentials:
     #tp.set_calculator('Crank-Nicolson--LF')
     #tp.set_initial_concentrations('Gouy-Chapman')
     
-    c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10)
+    c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='time-dependent')
     #scale_pb_grid
     c.run() #1.0)
     tp.save() #saves all data to pickle files to enable restart or plotting later

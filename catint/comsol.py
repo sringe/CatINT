@@ -8,7 +8,7 @@ from shutil import copyfile as copy
 
 class Comsol():
     """This class does all operations need to write input files for comsol and read output"""
-    def __init__(self,path=os.getcwd(),transport=None,exe_path='/Applications/COMSOL53/Multiphysics/bin/comsol'):
+    def __init__(self,path=os.getcwd(),transport=None,exe_path='/Applications/COMSOL53/Multiphysics/bin/comsol',mode='time-dependent'):
         if transport is None:
             self.tp.logger.error('No transport object provided for calculator. Stopping here.')
             sys.exit()
@@ -19,13 +19,16 @@ class Comsol():
         self.results_folder_base='comsol_results'
         self.results_folder=self.results_folder_base
         self.outputs=['concentrations','electrostatics','current_density','electrode_flux']
+        self.mode=mode
 
     def run(self,label='',desc_val=[],
             studies=None):
         self.results_folder=self.results_folder_base+'_'+label
         if studies is None:
             studies={}
-            studies['time-dependent']={'None':{'None':None}}
+#            studies['time-dependent']={'None':{'None':None}}
+            studies[self.mode]={'None':{'None':None}}
+#            studies['stationary']={'None':{'None':None}}
 #            studies['time-dependent']['None']=None
 #            studies['static']={'parametric':{'epsilon':[0.01,0.1]}}
         self.studies=studies
@@ -844,4 +847,22 @@ class Comsol():
         for i_sp,sp in enumerate(self.tp.species):
             for ix,xx in enumerate(self.tp.xmesh):
                 self.tp.total_charge[ix]+=self.tp.charges[i_sp]*self.tp.species[sp]['concentration'][ix]
+
+        #evaluate and save the electrode current density:
+        data=[]
+        i1=0
+        i2=0
+        for reac in self.tp.electrode_reactions:
+            if 'electrode_current_density' not in self.tp.electrode_reactions[reac]:
+                self.tp.electrode_reactions[reac]['electrode_current_density']={}
+        i2+=1
+        current_density=0
+        all_currents=[]
+        for sp in self.tp.electrode_reactions:
+            nprod=len([a for a in self.tp.electrode_reactions[sp]['reaction'][1] if a==sp])
+            isp=[i for i,sp2 in enumerate(self.tp.species) if sp2==sp][0]
+            c_current_density=self.tp.electrode_flux[-1][isp*self.tp.nx]*self.tp.electrode_reactions[sp]['nel']*unit_F/nprod/10.
+            current_density+=c_current_density
+            all_currents.append(c_current_density)
+            self.tp.electrode_reactions[sp]['electrode_current_density'][(str(desc_val[0]),str(desc_val[1]))]=c_current_density
 
