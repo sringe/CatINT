@@ -71,9 +71,9 @@ class Plot():
                                     all_currents.append(c_current_density)
                                 data_desc[p].append(sum([[value1,value2,current_density],all_currents],[]))
             #convert to np.arrays
-            for p in plot_names:
-                data_desc[p]=np.array(data_desc[p])
             if any([a.startswith('desc_') for a in sum([self.large_plots,self.small_plots],[])]):
+                for p in plot_names:
+                    data_desc[p]=np.array(data_desc[p])
                 for p in plot_names:
                     plt.figure()
                     plt.ylabel('i (mV/cm^2)')

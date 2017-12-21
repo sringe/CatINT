@@ -82,20 +82,28 @@ data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
 ###########################################################################
 #set up the initial concentrationss from this constants:
 CO2_i = 0.03419*system['pressure']*1000. #initial CO2(aq) bulk concentrations at t=0 and Pressure P in [mol/m3] units
-                        #from Henry constant (29.41 atm/M
+#                        #from Henry constant (29.41 atm/M
 CO_i = 9.5e-4*system['pressure']*1000.
-CO32m_i = ((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)-\
-            (np.sqrt((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)**2\
-            -4.0*(bic_i)**2)))/2  #initial (CO3)2- bulk concentrations at t=0 [mol/m3]
-# Initial composition of the bulk electrolyte at t=0
-HCO3m_i = bic_i-CO32m_i #initial HCO3- bulk concentrations at t=0 [mol/m3]
-K_i = bic_i #initial K+ bulk concentrations at t=0 [mol/m3]
-OHm_i = HCO3m_i/electrolyte_reactions['buffer-base']['constant']/CO2_i #initial OH- bulk concentrations at t=0 [mol/m3]
-pH_i = 14+np.log10(OHm_i/1000.0) #initial pH (in log. arg must be conc in M)
+#CO32m_i = ((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)-\
+#            (np.sqrt((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)**2\
+#            -4.0*(bic_i)**2)))/2  #initial (CO3)2- bulk concentrations at t=0 [mol/m3]
+## Initial composition of the bulk electrolyte at t=0
+#HCO3m_i = bic_i-CO32m_i #initial HCO3- bulk concentrations at t=0 [mol/m3]
+#K_i = bic_i #initial K+ bulk concentrations at t=0 [mol/m3]
+#OHm_i = HCO3m_i/electrolyte_reactions['buffer-base']['constant']/CO2_i #initial OH- bulk concentrations at t=0 [mol/m3]
+#pH_i = 14+np.log10(OHm_i/1000.0) #initial pH (in log. arg must be conc in M)
 
-#pH_i=7.
-#OHm_i=10**(pH_i-14.)*1000.0
-#HCO3m_i=OHm_i*electrolyte_reactions['buffer-base']['constant']*CO2_i
+
+pH_i=7.0
+OHm_i=10**(pH_i-14.)*1000.0
+HCO3m_i=OHm_i*electrolyte_reactions['buffer-base']['constant']*CO2_i
+CO32m_i = electrolyte_reactions['buffer-base2']['constant']**2*OHm_i**2*electrolyte_reactions['buffer2']['constant']*CO2_i
+bic_i = np.sqrt(electrolyte_reactions['buffer2']['constant']*CO2_i*CO32m_i)
+K_i = bic_i
+
+#print 'new bic_i=',bic_i
+#sys.exit()
+
 #CO32m_i=
 ###########################################################################
 
@@ -164,8 +172,9 @@ comsol_params['Ga_CHOH']=[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Ener
 comsol_params['Ga_OCCO']=[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy']
 comsol_params['Ga_OCCOH']=[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy']
 #comsol_params['eVToJmol']=[str(eVTokcal*1000*calToJ)+'[J/eV/mol]','eV to J/mol Conversion factor']
-comsol_params['alpha1']=['0.5','Butler-Volmer Parameter']
-comsol_params['alpha2']=['2.0','Butler-Volmer Parameter']
+comsol_params['alpha_CHO']=['0.5','Butler-Volmer Parameter']
+comsol_params['alpha_CHOH']=['2.0','Butler-Volmer Parameter']
+comsol_params['alpha_OCCOH']=['0.5','Butler-Volmer Parameter']
 comsol_params['e0']=['1[C]','electronic charge']
 comsol_params['erho']=['80.3e-6[C/cm^2]','surface density of active sites x elementary charge']
 comsol_params['Lmol']=['1[l/mol]','conversion factor']
@@ -183,13 +192,70 @@ comsol_params['max_coverage']=['0.44','Maximal coverage with which the Langmuir 
 #using langmuir isotherm to convert concentrations to coverages:
 coverage='Kads*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads)*max_coverage'
 
-n1=0
-n2=2
+nCHO=0
+nCHOH=0
+nOCCOH=0
+nOCCO=0
 
 #give rates as COMSOL equations
 #all variables used here have to be defined as COMSOL params as seen before
-C1_rate='rho_act*'+coverage+'*A*exp(-max(Ga_CHO+(alpha1+'+str(n1)+')*(phiM-phi)*F_const, Ga_CHOH+alpha2*(phiM-phi)*F_const)/RT+'+str(np.log(10.))+'*0.059*(14+log10(abs([[OH-]])*Lmol)))'#/F_const/'+str(species['C1']['zeff'])
-C2_rate='rho_act*'+coverage+'^2*A*exp(-max(Ga_OCCOH+(alpha1+'+str(n2)+')*(phiM-phi)*F_const, Ga_OCCO)/RT+'+str(np.log(10.))+'*0.059*(14+log10(abs([[OH-]])*Lmol)))' #/F_const/'+str(species['C2']['zeff'])
+#C1_rate='rho_act*'+coverage+'*A*\
+#        exp(-\
+#            max(\
+#                (Ga_CHO+(alpha1+'+str(nCHO)+')*(phiM-phi)*F_const)/RT+alpha1*(7+log10(max([[OH-]],0.0)*Lmol))*'+str(np.log(10.))+', \
+#                (Ga_CHOH+(alpha2+'+str(nCHOH)+')*(phiM-phi)*F_const)/RT+alpha2*(7+log10(max([[OH-]],0.0)*Lmol))*'+str(np.log(10.))+\
+#            ')\
+#        )'#/F_const/'+str(species['C1']['zeff'])
+#C2_rate='rho_act*'+coverage+'^2*A*\
+#        exp(-\
+#            max(\
+#                (Ga_OCCOH+(alpha1+'+str(nOCCOH)+')*(phiM-phi)*F_const)/RT+alpha1*(7+log10(max([[OH-]],0.0)*Lmol))*'+str(np.log(10.))+', \
+#                (Ga_OCCO+'+str(nOCCO)+'*(phiM-phi)*F_const)/RT'\
+#            ')\
+#        )'rho_max=5.0 #smoothness factor for maximum, the larger it is the smoother the function is approximated
+rho_max=5.0 #smoothness factor for maximum, the larger it is the smoother the function is approximated
+
+avoid_div_zero=0.0 #add to OH- concentration to avoid division by zero
+
+C1_rate='rho_act*'+coverage+'*A*'\
+        '('\
+            '(1.+'+str(avoid_div_zero)+')/'\
+            '('\
+                '((1+'+str(avoid_div_zero)+')/(abs([[OH-]])*Lmol+'+str(avoid_div_zero)+'))^('+str(rho_max)+'*alpha_CHO)*'\
+                    'exp(-'\
+                        +str(rho_max)+'*('\
+                            '(Ga_CHO+(alpha_CHO+'+str(nCHO)+')*(phiM-phi)*F_const)/RT+alpha_CHO*7*'+str(np.log(10.))+\
+                        ')'\
+                    ')+'+\
+                '((1+'+str(avoid_div_zero)+')/(abs([[OH-]])*Lmol+'+str(avoid_div_zero)+'))^('+str(rho_max)+'*alpha_CHOH)*'\
+                    'exp(-'\
+                        +str(rho_max)+'*('\
+                            '(Ga_CHOH+(alpha_CHOH+'+str(nCHOH)+')*(phiM-phi)*F_const)/RT+alpha_CHOH*7*'+str(np.log(10.))+\
+                        ')'\
+                    ')+'+\
+                str(avoid_div_zero)+\
+            ')'\
+        ')^(1./'+str(rho_max)+')'
+
+C2_rate='rho_act*'+coverage+'^2*A*'\
+        '('\
+            '(1.+'+str(avoid_div_zero)+')/'\
+            '('\
+                '((1+'+str(avoid_div_zero)+')/(abs([[OH-]])*Lmol+'+str(avoid_div_zero)+'))^('+str(rho_max)+'*alpha_OCCOH)*'\
+                    'exp(-'\
+                        +str(rho_max)+'*('\
+                            '(Ga_OCCOH+(alpha_OCCOH+'+str(nOCCOH)+')*(phiM-phi)*F_const)/RT+alpha_OCCOH*7*'+str(np.log(10.))+\
+                        ')'\
+                    ')+'+\
+                ''\
+                    'exp(-'\
+                        +str(rho_max)+'*('\
+                            '(Ga_OCCO+'+str(nOCCO)+'*(phiM-phi)*F_const)/RT'\
+                        ')'\
+                    ')+'+\
+                str(avoid_div_zero)+\
+            ')'\
+        ')^(1./'+str(rho_max)+')'
 
 electrode_reactions['C1']['rates']=[C1_rate,'0.0']
 electrode_reactions['C2']['rates']=[C2_rate,'0.0']
@@ -207,7 +273,7 @@ system['electrolyte viscosity']=visc[0]
 potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-1.3,0.0,30))}
+    descriptors={'phiM':list(np.linspace(-0.3,-0.3,1))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
