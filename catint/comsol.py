@@ -37,6 +37,8 @@ class Comsol():
         self.tp.logger.info('Compiling COMSOL.')
         call(self.exe+" compile "+'/'.join([os.getcwd(),self.inp_file_name]),shell=True)
         self.tp.logger.info('Starting COMSOL.')
+        #copy input file to output folder obj
+        copy('/'.join([os.getcwd(),self.inp_file_name]),'/'.join([os.getcwd(),self.tp.outputfoldername,self.inp_file_name]))
         call(self.exe+" batch -inputfile "+'/'.join([os.getcwd(),'.'.join(self.inp_file_name.split('.')[:-1])+".class"]),shell=True)
         #~/software/transport/examples/diffuse_double_layer_with_charge_transfer_nonstatic_2.java
         self.tp.logger.info('Reading COMSOL output.')
@@ -856,11 +858,6 @@ class Comsol():
                 self.tp.electrode_reactions[reac]['electrode_current_density']={}
         i2+=1
         current_density=0
-        print 'checking'
-        for n in range(len(self.tp.electrode_flux)):
-            print '-'*10
-            print 'n=', n
-            print self.tp.electrode_flux[n]
         all_currents=[]
         for sp in self.tp.electrode_reactions:
             nprod=len([a for a in self.tp.electrode_reactions[sp]['reaction'][1] if a==sp])

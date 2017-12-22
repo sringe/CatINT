@@ -172,9 +172,9 @@ comsol_params['Ga_CHOH']=[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Ener
 comsol_params['Ga_OCCO']=[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy']
 comsol_params['Ga_OCCOH']=[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy']
 #comsol_params['eVToJmol']=[str(eVTokcal*1000*calToJ)+'[J/eV/mol]','eV to J/mol Conversion factor']
-comsol_params['alpha_CHO']=['0.5','Butler-Volmer Parameter']
-comsol_params['alpha_CHOH']=['2.0','Butler-Volmer Parameter']
-comsol_params['alpha_OCCOH']=['0.5','Butler-Volmer Parameter']
+comsol_params['alpha_CHO']=['2.0','Butler-Volmer Parameter'] #std 0.5
+comsol_params['alpha_CHOH']=['2.0','Butler-Volmer Parameter'] #std 2.0
+comsol_params['alpha_OCCOH']=['0.5','Butler-Volmer Parameter'] #std 0.5
 comsol_params['e0']=['1[C]','electronic charge']
 comsol_params['erho']=['80.3e-6[C/cm^2]','surface density of active sites x elementary charge']
 comsol_params['Lmol']=['1[l/mol]','conversion factor']
@@ -281,9 +281,9 @@ electrode_reactions['C2']['rates']=[C2_rate,'0.0']
 
 boundary_thickness=7.93E-05 #in m
 
-visc=viscosity(species['HCO3-']['bulk concentration']/10**3), #Pa*s at 25C of KHCO3 solution
+#visc=viscosity(species['HCO3-']['bulk concentration']/10**3), #Pa*s at 25C of KHCO3 solution
 system['boundary thickness']=boundary_thickness
-system['electrolyte viscosity']=visc[0]
+#system['electrolyte viscosity']=visc[0]
 
 ###########################################################################
 #BOUNDARY CONDITIONS FOR PBE
@@ -292,7 +292,7 @@ system['electrolyte viscosity']=visc[0]
 potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-1.0,-0.3,5))}
+    descriptors={'phiM':list(np.linspace(-0.7,-0.7,1))}
     system['phiM']=potential
 
     #'potential','gradient','robin'

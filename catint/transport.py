@@ -16,6 +16,7 @@ import logging
 import os
 import re
 from io import save_all
+import subprocess
 
 class Transport(object):
 
@@ -40,13 +41,16 @@ class Transport(object):
         logging.getLogger('').addHandler(console)
         
         # Now, we can log to the root logger, or any other logger. First the root...
-        logging.info('Starting Transport Calculation.')
+        logging.info('Starting Transport Calculation. Current commit = {}'.format(subprocess.check_output(["git", "describe","--always"]).strip()))
         
         # Now, define a couple of other loggers which might represent areas in your
         # application:
         
         self.logger_db = logging.getLogger('transport.debug')
         self.logger = logging.getLogger('transport.info')
+
+        self.inputfilename=sys.argv[0]
+        self.outputfoldername='obj' #folder where all results will be saved with the self.save function
 
         #pickle outputs of dictionaries:
         if not os.path.exists('obj'):

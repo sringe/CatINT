@@ -1,7 +1,8 @@
 import pickle
+from shutil import copyfile as copy
 
-def save_obj(obj, name ):
-    with open('obj/'+ name + '.pkl', 'wb') as f:
+def save_obj(folder,obj, name ):
+    with open(folder+'/'+ name + '.pkl', 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
 def load_obj(name,fname):
@@ -28,16 +29,17 @@ def insert_line(file_name,line_num,text):
 def save_all(tp,only=None):
     """saves all dictionaries and arrays into pickle files in the obj folder"""
     if only is None:
-        save_obj(tp.all_data,'all_data')
-        save_obj(tp.species,'species')
-        save_obj(tp.system,'system')
-        save_obj(tp.descriptors,'descriptors')
-        save_obj(tp.xmesh,'xmesh')
-        save_obj(tp.tmesh,'tmesh')
-        save_obj(tp.electrode_reactions,'electrode_reactions')
-        save_obj(tp.electrolyte_reactions,'electrolyte_reactions')
+        save_obj(tp.outputfoldername,tp.all_data,'all_data')
+        save_obj(tp.outputfoldername,tp.species,'species')
+        save_obj(tp.outputfoldername,tp.system,'system')
+        save_obj(tp.outputfoldername,tp.descriptors,'descriptors')
+        save_obj(tp.outputfoldername,tp.xmesh,'xmesh')
+        save_obj(tp.outputfoldername,tp.tmesh,'tmesh')
+        save_obj(tp.outputfoldername,tp.electrode_reactions,'electrode_reactions')
+        save_obj(tp.outputfoldername,tp.electrolyte_reactions,'electrolyte_reactions')
     else:
-        save_obj(tp.all_data,only)
+        save_obj(tp.outputfoldername,tp.all_data,only)
+    copy(tp.inputfilename,tp.outputfoldername+'/'+tp.inputfilename)
 
 def add_to_dict(self,append,*expr):
     (filename,line_number,function_name,text)=traceback.extract_stack()[-2]
