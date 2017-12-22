@@ -72,7 +72,7 @@ system=\
     #for equation definitions
     'epsilon': 78.36,
     'Stern capacitance': 18., #in muF/cm^2
-    'migration': True,
+    'migration': False,
     'electrode reactions': True,
     'electrolyte reactions': True
     }
@@ -231,7 +231,7 @@ tp.set_calculator('comsol') #odespy') #--bdf')
 #tp.set_calculator('Crank-Nicolson--LF')
 #tp.set_initial_concentrations('Gouy-Chapman')
 
-c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10.0)
+c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10.0,mode='stationary')
 #scale_pb_grid
 c.run()
 
@@ -241,5 +241,6 @@ c.run()
 p=Plot(transport=tp,logscale=False) #transport=tp,plots=['concentrations','potential','efield','current_density'],descriptor_plots=['_potential'])
 p.plot()
 
+tp.save() #save all results for later use
 ###########################################################################
 

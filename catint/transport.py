@@ -114,6 +114,10 @@ class Transport(object):
             if key not in self.system:
                 self.system[key]=system_defaults[key]
 
+        if 'exclude species' not in self.system:
+            self.system['exclude species']=['e-']
+        else:
+            self.system['exclude species']+=['e-']
         #delete species which should not be considered for PNP dynamics
         for es in self.system['exclude species']:
             if es in self.species:
@@ -173,6 +177,9 @@ class Transport(object):
                 for sp in sum(self.electrolyte_reactions[el]['reaction'],[]):
                     if sp not in self.species and sp not in self.system['exclude species']:
                         self.logger.error('Species {} has not been defined, but is used in the electrolyte reactions, define it first!'.format(sp))
+                        self.logger.error('  This is the current species list:')
+                        for sp in self.species:
+                            self.logger.error('  {}'.format(sp))
                         sys.exit()
 
         #Working on electrode reactions if requested
@@ -196,7 +203,10 @@ class Transport(object):
             for el in self.electrode_reactions:
                 for sp in sum(self.electrode_reactions[el]['reaction'],[]):
                     if sp not in self.species and sp not in self.system['exclude species']:
-                        self.logger.error('Species {} has not been defined, but is used in the electrode reactions, define it first!'.format(el))
+                        self.logger.error('Species {} has not been defined, but is used in the electrode reactions, define it first!'.format(sp))
+                        self.logger.error('  This is the current species list:')
+                        for sp in self.species:
+                            self.logger.error('  {}'.format(sp))
                         sys.exit()
 
         #sort different species into lists:

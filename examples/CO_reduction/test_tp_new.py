@@ -212,50 +212,69 @@ nOCCO=0
 #                (Ga_OCCOH+(alpha1+'+str(nOCCOH)+')*(phiM-phi)*F_const)/RT+alpha1*(7+log10(max([[OH-]],0.0)*Lmol))*'+str(np.log(10.))+', \
 #                (Ga_OCCO+'+str(nOCCO)+'*(phiM-phi)*F_const)/RT'\
 #            ')\
-#        )'rho_max=5.0 #smoothness factor for maximum, the larger it is the smoother the function is approximated
-rho_max=5.0 #smoothness factor for maximum, the larger it is the smoother the function is approximated
+#        )'sigma_max=5.0 #smoothness factor for maximum, the larger it is the smoother the function is approximated
 
-avoid_div_zero=0.0 #add to OH- concentration to avoid division by zero
+comsol_params['OH_min']=['1e-20 [mol/m^3]','Minimal OH- concentration allowed in the evaluation of the rate coverage with which the Langmuir isotherm will be scaled'] #0.44
 
-C1_rate='rho_act*'+coverage+'*A*'\
-        '('\
-            '(1.+'+str(avoid_div_zero)+')/'\
-            '('\
-                '((1+'+str(avoid_div_zero)+')/(abs([[OH-]])*Lmol+'+str(avoid_div_zero)+'))^('+str(rho_max)+'*alpha_CHO)*'\
-                    'exp(-'\
-                        +str(rho_max)+'*('\
-                            '(Ga_CHO+(alpha_CHO+'+str(nCHO)+')*(phiM-phi)*F_const)/RT+alpha_CHO*7*'+str(np.log(10.))+\
-                        ')'\
-                    ')+'+\
-                '((1+'+str(avoid_div_zero)+')/(abs([[OH-]])*Lmol+'+str(avoid_div_zero)+'))^('+str(rho_max)+'*alpha_CHOH)*'\
-                    'exp(-'\
-                        +str(rho_max)+'*('\
-                            '(Ga_CHOH+(alpha_CHOH+'+str(nCHOH)+')*(phiM-phi)*F_const)/RT+alpha_CHOH*7*'+str(np.log(10.))+\
-                        ')'\
-                    ')+'+\
-                str(avoid_div_zero)+\
-            ')'\
-        ')^(1./'+str(rho_max)+')'
+smooth_maximum=False
 
-C2_rate='rho_act*'+coverage+'^2*A*'\
-        '('\
-            '(1.+'+str(avoid_div_zero)+')/'\
-            '('\
-                '((1+'+str(avoid_div_zero)+')/(abs([[OH-]])*Lmol+'+str(avoid_div_zero)+'))^('+str(rho_max)+'*alpha_OCCOH)*'\
-                    'exp(-'\
-                        +str(rho_max)+'*('\
-                            '(Ga_OCCOH+(alpha_OCCOH+'+str(nOCCOH)+')*(phiM-phi)*F_const)/RT+alpha_OCCOH*7*'+str(np.log(10.))+\
-                        ')'\
-                    ')+'+\
-                ''\
-                    'exp(-'\
-                        +str(rho_max)+'*('\
-                            '(Ga_OCCO+'+str(nOCCO)+'*(phiM-phi)*F_const)/RT'\
-                        ')'\
-                    ')+'+\
-                str(avoid_div_zero)+\
-            ')'\
-        ')^(1./'+str(rho_max)+')'
+if not smooth_maximum:
+    C1_rate='rho_act*'+coverage+'*A*'+\
+            'exp(-'+\
+                'max('+\
+                    '(Ga_CHO+(alpha_CHO+'+str(nCHO)+')*(phiM-phi)*F_const)/RT+alpha_CHO*(7+log10(max([[OH-]],OH_min)*Lmol))*'+str(np.log(10.))+', '+\
+                    '(Ga_CHOH+(alpha_CHOH+'+str(nCHOH)+')*(phiM-phi)*F_const)/RT+alpha_CHOH*(7+log10(max([[OH-]],OH_min)*Lmol))*'+str(np.log(10.))+\
+                ')'+\
+            ')'#/F_const/'+str(species['C1']['zeff'])
+    C2_rate='rho_act*'+coverage+'^2*A*'+\
+            'exp(-'+\
+                'max('+\
+                    '(Ga_OCCOH+(alpha_OCCOH+'+str(nOCCOH)+')*(phiM-phi)*F_const)/RT+alpha_OCCOH*(7+log10(max([[OH-]],OH_min)*Lmol))*'+str(np.log(10.))+', '+\
+                    '(Ga_OCCO+'+str(nOCCO)+'*(phiM-phi)*F_const)/RT'+\
+                ')'+\
+            ')'
+else:
+    comsol_params['avoid_div_zero']=['0.0','Avoid division by zero by adding small value on top of numerator and denominator']
+    comsol_params['sigma_max']=['5.0','Smooth the calculation of the maximum by exponential summation. The larger this is, the smoother the maximum function is around the maximum']
+    C1_rate='rho_act*'+coverage+'*A*'+\
+            '('+\
+                '(1.+avoid_div_zero)/'+\
+                '('+\
+                    '((1+avoid_div_zero)/(max([[OH-]],OH_min)*Lmol+avoid_div_zero))^(sigma_max*alpha_CHO)*'+\
+                        'exp(-'+\
+                            'sigma_max*('+\
+                                '(Ga_CHO+(alpha_CHO+'+str(nCHO)+')*(phiM-phi)*F_const)/RT+alpha_CHO*7*'+str(np.log(10.))+\
+                            ')'+\
+                        ')+'+\
+                    '((1+avoid_div_zero)/(max([[OH-]],OH_min)*Lmol+avoid_div_zero))^(sigma_max*alpha_CHOH)*'+\
+                        'exp(-'+\
+                            'sigma_max*('+\
+                                '(Ga_CHOH+(alpha_CHOH+'+str(nCHOH)+')*(phiM-phi)*F_const)/RT+alpha_CHOH*7*'+str(np.log(10.))+\
+                            ')'+\
+                        ')+'+\
+                    'avoid_div_zero'+\
+                ')'+\
+            ')^(1./sigma_max)'
+    
+    C2_rate='rho_act*'+coverage+'^2*A*'+\
+            '('+\
+                '(1.+avoid_div_zero)/'+\
+                '('+\
+                    '((1+avoid_div_zero)/(max([[OH-]],OH_min)*Lmol+avoid_div_zero))^(sigma_max*alpha_OCCOH)*'+\
+                        'exp(-'+\
+                            'sigma_max*('+\
+                                '(Ga_OCCOH+(alpha_OCCOH+'+str(nOCCOH)+')*(phiM-phi)*F_const)/RT+alpha_OCCOH*7*'+str(np.log(10.))+\
+                            ')'+\
+                        ')+'+\
+                    ''+\
+                        'exp(-'+\
+                            'sigma_max*('+\
+                                '(Ga_OCCO+'+str(nOCCO)+'*(phiM-phi)*F_const)/RT'+\
+                            ')'+\
+                        ')+'+\
+                    'avoid_div_zero'+\
+                ')'+\
+            ')^(1./sigma_max)'
 
 electrode_reactions['C1']['rates']=[C1_rate,'0.0']
 electrode_reactions['C2']['rates']=[C2_rate,'0.0']
@@ -273,7 +292,7 @@ system['electrolyte viscosity']=visc[0]
 potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-0.3,-0.3,1))}
+    descriptors={'phiM':list(np.linspace(-1.0,-0.3,5))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
@@ -302,7 +321,7 @@ for potential in potentials:
     #tp.set_calculator('Crank-Nicolson--LF')
     #tp.set_initial_concentrations('Gouy-Chapman')
     
-    c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='time-dependent')
+    c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary') #time-dependent')
     #scale_pb_grid
     c.run() #1.0)
     tp.save() #saves all data to pickle files to enable restart or plotting later

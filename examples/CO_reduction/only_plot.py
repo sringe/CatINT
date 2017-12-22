@@ -53,6 +53,9 @@ for f in folders:
     style=next(styles)
 #    p=Plot(transport=tp,init_from_file='calc_std_settings')
     read_all(tp,f,only=['electrode_reactions','species']) #system')
+    print 'out'
+    print tp.electrode_reactions
+    sys.exit
     for sp in tp.electrode_reactions:
         color=next(colors)
         jout=tp.electrode_reactions[sp]['electrode_current_density']

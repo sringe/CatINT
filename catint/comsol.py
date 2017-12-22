@@ -238,6 +238,9 @@ class Comsol():
                     mod_str=''
                     #flux is given as equation, have to replace concentrations with correct number here
                     string=self.tp.species[sp]['flux']
+                    string.strip() #remove white spaces
+                    string.replace('\n','')
+                    string.replace('\t','')
                     iss=0
                     matches=re.findall('\[\[(.*?)\]\]',string,re.DOTALL)
                     for match in matches:
@@ -248,7 +251,6 @@ class Comsol():
                 elif i==0:
                     inp.write('    model.component("comp1").variable("var2").selection().geom("geom1", 0);\n')
                     inp.write('    model.component("comp1").variable("var2").selection().set(new int[]{1});\n')
-                
 
             inp.write('/*\n')
             inp.write(' *INTEGRATION\n')
@@ -261,21 +263,20 @@ class Comsol():
             inp.write('    model.component("comp1").cpl("intop2").selection().set(new int[]{1});\n')
 
             #ELECTROSTATICS
-            if self.tp.use_migration:
-                inp.write('/*\n')
-                inp.write(' *ELECTROSTATICS\n')
-                inp.write(' */\n')
-                inp.write('    model.component("comp1").physics().create("es", "Electrostatics", "geom1");\n')
-                inp.write('    model.component("comp1").physics("es").field("electricpotential").field("phi");\n')
-                inp.write('    model.component("comp1").physics("es").create("sfcd1", "SurfaceChargeDensity", 0);\n')
-                inp.write('    model.component("comp1").physics("es").feature("sfcd1").selection().set(new int[]{1});\n')
-                inp.write('    model.component("comp1").physics("es").create("pot1", "ElectricPotential", 0);\n')
-                inp.write('    model.component("comp1").physics("es").feature("pot1").selection().set(new int[]{2});\n')
-                #only for dirichlet:
-                #inp.write('    model.component("comp1").physics("es").create("pot2", "ElectricPotential", 0);\n')
-                #inp.write('    model.component("comp1").physics("es").feature("pot2").selection().set(new int[]{1});\n')
-                inp.write('    model.component("comp1").physics("es").create("df1", "DisplacementField", 0);\n')
-                inp.write('    model.component("comp1").physics("es").feature("df1").selection().set(new int[]{1});\n')
+            inp.write('/*\n')
+            inp.write(' *ELECTROSTATICS\n')
+            inp.write(' */\n')
+            inp.write('    model.component("comp1").physics().create("es", "Electrostatics", "geom1");\n')
+            inp.write('    model.component("comp1").physics("es").field("electricpotential").field("phi");\n')
+            inp.write('    model.component("comp1").physics("es").create("sfcd1", "SurfaceChargeDensity", 0);\n')
+            inp.write('    model.component("comp1").physics("es").feature("sfcd1").selection().set(new int[]{1});\n')
+            inp.write('    model.component("comp1").physics("es").create("pot1", "ElectricPotential", 0);\n')
+            inp.write('    model.component("comp1").physics("es").feature("pot1").selection().set(new int[]{2});\n')
+            #only for dirichlet:
+            #inp.write('    model.component("comp1").physics("es").create("pot2", "ElectricPotential", 0);\n')
+            #inp.write('    model.component("comp1").physics("es").feature("pot2").selection().set(new int[]{1});\n')
+            inp.write('    model.component("comp1").physics("es").create("df1", "DisplacementField", 0);\n')
+            inp.write('    model.component("comp1").physics("es").feature("df1").selection().set(new int[]{1});\n')
             #floating requires one of: AC/DC Module, MEMS Module, Plasma Module, Acoustics Module, Structural Mechanics Module, Semiconductor Module
 #            inp.write('    model.component("comp1").physics("es").create("fp1", "FloatingPotential", 0);\n')
             inp.write('    model.component("comp1").physics().create("tds", "DilutedSpecies", "geom1");\n')
@@ -298,11 +299,10 @@ class Comsol():
                 inp.write('    model.component("comp1").physics("tds").feature("reac1").selection().all();\n')
             inp.write('    model.component("comp1").physics().create("ge", "GlobalEquations", "geom1");\n')
 
-            if self.tp.use_migration:
-                inp.write('    model.component("comp1").multiphysics().create("pc1", "PotentialCoupling", 1);\n')
-                inp.write('    model.component("comp1").multiphysics("pc1").selection().all();\n')
-                inp.write('    model.component("comp1").multiphysics().create("scdc1", "SpaceChargeDensityCoupling", 1);\n')
-                inp.write('    model.component("comp1").multiphysics("scdc1").selection().all();\n')
+            inp.write('    model.component("comp1").multiphysics().create("pc1", "PotentialCoupling", 1);\n')
+            inp.write('    model.component("comp1").multiphysics("pc1").selection().all();\n')
+            inp.write('    model.component("comp1").multiphysics().create("scdc1", "SpaceChargeDensityCoupling", 1);\n')
+            inp.write('    model.component("comp1").multiphysics("scdc1").selection().all();\n')
 
             inp.write('    model.component("comp1").mesh("mesh1").create("edg1", "Edge");\n')
             inp.write('    model.component("comp1").mesh("mesh1").feature("edg1").create("size1", "Size");\n')
@@ -320,14 +320,13 @@ class Comsol():
 
             inp.write('    model.component("comp1").view("view1").axis().set("xmin", 0);\n')
 
-            if self.tp.use_migration:
-                inp.write('    model.component("comp1").physics("es").feature("ccn1").set("epsilonr", new String[][]{{"eps_r"}, {"0"}, {"0"}, {"0"}, {"eps_r"}, {"0"}, {"0"}, {"0"}, {"eps_r"}});\n')
-                inp.write('    model.component("comp1").physics("es").feature("sfcd1").set("rhoqs", "rho_s");\n')
+            inp.write('    model.component("comp1").physics("es").feature("ccn1").set("epsilonr", new String[][]{{"eps_r"}, {"0"}, {"0"}, {"0"}, {"eps_r"}, {"0"}, {"0"}, {"0"}, {"eps_r"}});\n')
+            inp.write('    model.component("comp1").physics("es").feature("sfcd1").set("rhoqs", "rho_s");\n')
                 #for dirichlet BC's
                 #inp.write('    model.component("comp1").physics("es").feature("pot2").set("V0", "phiM");\n')
                 #inp.write('    model.component("comp1").physics("es").feature("pot2").active(false);\n')
                 #end dirichlet
-                inp.write('    model.component("comp1").physics("es").feature("df1").active(false);\n')
+            inp.write('    model.component("comp1").physics("es").feature("df1").active(false);\n')
 #                inp.write('    model.component("comp1").physics("es").feature("fp1").active(false);\n')
             inp.write('    model.component("comp1").physics("tds").prop("ShapeProperty").set("order_concentration", 2);\n')
             if self.tp.use_convection:
@@ -479,16 +478,14 @@ class Comsol():
                         
                 inp.write('    model.component("comp1").physics("tds").feature("reac1").active(true);\n')
 
-            if self.tp.use_migration:
-                inp.write('    model.component("comp1").physics("ge").active(false);\n')
-                inp.write('    model.component("comp1").physics("ge").feature("ge1").set("name", "icell");\n')
+            inp.write('    model.component("comp1").physics("ge").active(false);\n')
+            inp.write('    model.component("comp1").physics("ge").feature("ge1").set("name", "icell");\n')
 
             inp.write('/*\n')
             inp.write(' *GLOBAL EQUATIONS\n')
             inp.write(' */\n')
             #global equations
-            if self.tp.use_migration:
-                inp.write('    model.component("comp1").physics("ge").feature("ge1").set("equation", "intop1(iloc)-icell");\n')
+            inp.write('    model.component("comp1").physics("ge").feature("ge1").set("equation", "intop1(iloc)-icell");\n')
             inp.write('    model.component("comp1").physics("ge").feature("ge1").set("description", "Cell Voltage");\n')
             inp.write('    model.component("comp1").physics("ge").feature("ge1").set("DependentVariableQuantity", "electricpotential");\n')
             inp.write('    model.component("comp1").physics("ge").feature("ge1").set("SourceTermQuantity", "currentdensity");\n')
@@ -739,7 +736,7 @@ class Comsol():
                 self.tp.nx=len(self.tp.xmesh)
                 self.tp.dx=self.tp.xmax/self.tp.nx
                 cout=np.zeros([self.tp.ntout,self.tp.nspecies*self.tp.nx])
-                cout_tmp=np.zeros([self.tp.nt+1,self.tp.nspecies*self.tp.nx])
+                cout_tmp=np.zeros([self.tp.nt+1,self.tp.nspecies*self.tp.nx]) ##check here, why do we put nt+1?? if we put nt, we need to correct the stationary solver below
                 electrode_flux=np.zeros_like(cout)
                 electrode_flux_tmp=np.zeros_like(cout_tmp)
             #now read in all results
@@ -748,29 +745,29 @@ class Comsol():
             for line in open(self.results_folder+'/'+output+'.txt','r'):
                 i+=1
                 if i>8 and [key for key in self.studies][0]=='stationary':
-                    if output=='concentrations':
+                    if output in ['concentrations','electrode_flux']:
                         ls=line.split()
                         for j,lss in enumerate(ls):
                             if j>0:
-                                i_sp=j-1
-                                cout[0,i_sp*self.tp.nx+i]=float(lss)
-                    elif output=='electrostatics':
-                        ls=line.split()
-                        for j,lss in enumerate(ls):
-                            if j==1:
-                                self.tp.potential.append(float(lss))
-                            elif j==2:
-                                self.tp.efield.append(float(lss))
-                    elif output=='current_density':
-                        ls=line.split()
-                        for j,lss in enumerate(ls):
-                            self.tp.current_density.append(float(lss))
-                    elif output=='electrode_flux':
+                                i_sp=(j-1)%self.tp.nspecies
+                                if output=='concentrations':
+                                    cout_tmp[-2,i_sp*self.tp.nx+i-9]=float(lss)
+                                elif output=='electrode_flux':
+                                    electrode_flux_tmp[-2,i_sp*self.tp.nx+i-9]=float(lss)
+                    elif output in ['electrostatics','current_density']:
                         ls=line.split()
                         for j,lss in enumerate(ls):
                             if j>0:
-                                i_sp=j-1
-                                electrode_flux[0,i_sp*self.tp.nx+i]=float(lss)
+                                if output=='electrostatics':
+                                    i_sp=(j-1)%2
+                                    if i_sp==0:
+                                        self.tp.potential.append(float(lss))
+                                    elif i_sp==1:
+                                        self.tp.efield.append(float(lss))
+                                elif output=='current_density':
+                                    i_sp=(j-1)%1
+                                    if i_sp==0:
+                                        self.tp.current_density.append(float(lss))
                 elif i>8 and [key for key in self.studies][0]=='time-dependent':
                     if output in ['concentrations','electrode_flux']:
                         #read a selection of time steps here
@@ -822,7 +819,9 @@ class Comsol():
                 nn+=1
                 electrode_flux[nn,:]=cc
 
+
         self.tp.electrode_flux=electrode_flux
+
 
         self.tp.logger.info('Wrote out concentrations at '+str(nn+1)+' steps.')
         self.tp.potential=np.array(self.tp.potential)
@@ -857,6 +856,11 @@ class Comsol():
                 self.tp.electrode_reactions[reac]['electrode_current_density']={}
         i2+=1
         current_density=0
+        print 'checking'
+        for n in range(len(self.tp.electrode_flux)):
+            print '-'*10
+            print 'n=', n
+            print self.tp.electrode_flux[n]
         all_currents=[]
         for sp in self.tp.electrode_reactions:
             nprod=len([a for a in self.tp.electrode_reactions[sp]['reaction'][1] if a==sp])
