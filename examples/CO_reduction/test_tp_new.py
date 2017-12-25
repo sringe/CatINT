@@ -172,9 +172,14 @@ comsol_params['Ga_CHOH']=[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Ener
 comsol_params['Ga_OCCO']=[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy']
 comsol_params['Ga_OCCOH']=[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy']
 #comsol_params['eVToJmol']=[str(eVTokcal*1000*calToJ)+'[J/eV/mol]','eV to J/mol Conversion factor']
-comsol_params['alpha_CHO']=['2.0','Butler-Volmer Parameter'] #std 0.5
-comsol_params['alpha_CHOH']=['2.0','Butler-Volmer Parameter'] #std 2.0
+comsol_params['alpha_CHO']=['0.5','Butler-Volmer Parameter'] #std 0.5
+comsol_params['alpha_CHOH']=['0.5','Butler-Volmer Parameter'] #std 2.0
 comsol_params['alpha_OCCOH']=['0.5','Butler-Volmer Parameter'] #std 0.5
+comsol_params['alpha_OCCO']=['0.5','Butler-Volmer Parameter'] #std 0.5
+comsol_params['n_CHO']=['2','Butler-Volmer Parameter'] #std 0.5
+comsol_params['n_CHOH']=['2','Butler-Volmer Parameter'] #std 2.0
+comsol_params['n_OCCOH']=['0','Butler-Volmer Parameter'] #std 0.5
+comsol_params['n_OCCO']=['0','Butler-Volmer Parameter'] #std 0.5
 comsol_params['e0']=['1[C]','electronic charge']
 comsol_params['erho']=['80.3e-6[C/cm^2]','surface density of active sites x elementary charge']
 comsol_params['Lmol']=['1[l/mol]','conversion factor']
@@ -189,24 +194,18 @@ comsol_params['max_coverage']=['0.44','Maximal coverage with which the Langmuir 
 #RATE EQUATIONS/FLUXES
 ###########################################################################
 
-#using langmuir isotherm to convert concentrations to coverages:
-coverage='Kads*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads)*max_coverage'
 
-nCHO=0
-nCHOH=0
-nOCCOH=0
-nOCCO=0
 
 #give rates as COMSOL equations
 #all variables used here have to be defined as COMSOL params as seen before
-#C1_rate='rho_act*'+coverage+'*A*\
+#C1_rate='rho_act*coverage*A*\
 #        exp(-\
 #            max(\
 #                (Ga_CHO+(alpha1+'+str(nCHO)+')*(phiM-phi)*F_const)/RT+alpha1*(7+log10(max([[OH-]],0.0)*Lmol))*'+str(np.log(10.))+', \
 #                (Ga_CHOH+(alpha2+'+str(nCHOH)+')*(phiM-phi)*F_const)/RT+alpha2*(7+log10(max([[OH-]],0.0)*Lmol))*'+str(np.log(10.))+\
 #            ')\
 #        )'#/F_const/'+str(species['C1']['zeff'])
-#C2_rate='rho_act*'+coverage+'^2*A*\
+#C2_rate='rho_act*coverage^2*A*\
 #        exp(-\
 #            max(\
 #                (Ga_OCCOH+(alpha1+'+str(nOCCOH)+')*(phiM-phi)*F_const)/RT+alpha1*(7+log10(max([[OH-]],0.0)*Lmol))*'+str(np.log(10.))+', \
@@ -218,58 +217,104 @@ comsol_params['OH_min']=['1e-20 [mol/m^3]','Minimal OH- concentration allowed in
 
 smooth_maximum=False
 
-if not smooth_maximum:
-    C1_rate='rho_act*'+coverage+'*A*'+\
+
+comsol_variables={}
+comsol_variables['coverage']=['Kads*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads)*max_coverage','CO Coverage according to Langmuir isotherm']
+comsol_variables['jCHO']=['rho_act*coverage*A*'+\
+                         'exp(-'+\
+                            '(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phi)*F_const)/RT+alpha_CHO*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+                         ')','rate of CHO']
+comsol_variables['jCHOH']=['rho_act*coverage*A*'+\
+                         'exp(-'+\
+                            '(Ga_CHOH+(alpha_CHOH+n_CHOH)*(phiM-phi)*F_const)/RT+alpha_CHOH*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+                         ')','rate of CHOH']
+comsol_variables['jOCCOH']=['rho_act*coverage^2*A*'+\
+                        'exp(-'+\
+                            '(Ga_OCCOH+(alpha_OCCOH+n_OCCOH)*(phiM-phi)*F_const)/RT+alpha_OCCOH*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+                        ')','rate of OCCOH']
+comsol_variables['jOCCO']=['rho_act*coverage^2*A*'+\
+                        'exp(-'+\
+                            '(Ga_OCCO+n_OCCO)*(phiM-phi)*F_const)/RT'+\
+                        ')','rate of OCCO']
+#additional comsol outputs
+#name, equation, unit
+comsol_outputs=[['jCHO','jCHO','mol/m^2/s'],['jCHOH','jCHOH','mol/m^2/s']] #last one in list is the name of the file, first one is variable name
+
+method=2 #method2 with stationary solver only working one, so far...
+
+if method==0: #not smooth_maximum:
+    C1_rate='min('+\
+                'jCHO, '+\
+                'jCHOH'+\
+            ')'#/F_const/'+str(species['C1']['zeff'])
+    C2_rate='min('+\
+                'jOCCOH, '+\
+                'jOCCO'+\
+            ')'
+elif method==1:
+    comsol_params['sigma_min']=['10.0','Smooth the calculation of the maximum by exponential summation. The larger this is, the smoother the maximum function is around the maximum']
+    C1_rate='-1./sigma_min*'+\
+            'log('+\
+                'exp(sigma_min*jCHO)+'+\
+                'exp(sigma_min*jCHOH)'+\
+            ')'
+    C2_rate='-1./sigma_min*'+\
+            'log('+\
+                'exp(sigma_min*jOCCO)+'+\
+                'exp(sigma_min*jOCCOH)'+\
+            ')'                
+elif method==2:
+    C1_rate='rho_act*coverage*A*'+\
             'exp(-'+\
                 'max('+\
-                    '(Ga_CHO+(alpha_CHO+'+str(nCHO)+')*(phiM-phi)*F_const)/RT+alpha_CHO*(7+log10(max([[OH-]],OH_min)*Lmol))*'+str(np.log(10.))+', '+\
-                    '(Ga_CHOH+(alpha_CHOH+'+str(nCHOH)+')*(phiM-phi)*F_const)/RT+alpha_CHOH*(7+log10(max([[OH-]],OH_min)*Lmol))*'+str(np.log(10.))+\
+                    '(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phi)*F_const)/RT+alpha_CHO*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10), '+\
+                    '(Ga_CHOH+(alpha_CHOH+n_CHOH)*(phiM-phi)*F_const)/RT+alpha_CHOH*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
                 ')'+\
             ')'#/F_const/'+str(species['C1']['zeff'])
-    C2_rate='rho_act*'+coverage+'^2*A*'+\
+    C2_rate='rho_act*coverage^2*A*'+\
             'exp(-'+\
                 'max('+\
-                    '(Ga_OCCOH+(alpha_OCCOH+'+str(nOCCOH)+')*(phiM-phi)*F_const)/RT+alpha_OCCOH*(7+log10(max([[OH-]],OH_min)*Lmol))*'+str(np.log(10.))+', '+\
-                    '(Ga_OCCO+'+str(nOCCO)+'*(phiM-phi)*F_const)/RT'+\
+                    '(Ga_OCCOH+(alpha_OCCOH+n_OCCOH)*(phiM-phi)*F_const)/RT+alpha_OCCOH*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10), '+\
+                    '(Ga_OCCO+(alpha_OCCO+n_OCCO)*(phiM-phi)*F_const)/RT+alpha_OCCO*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
                 ')'+\
             ')'
-else:
+elif method==3:
     comsol_params['avoid_div_zero']=['0.0','Avoid division by zero by adding small value on top of numerator and denominator']
     comsol_params['sigma_max']=['5.0','Smooth the calculation of the maximum by exponential summation. The larger this is, the smoother the maximum function is around the maximum']
-    C1_rate='rho_act*'+coverage+'*A*'+\
+    C1_rate='rho_act*coverage*A*'+\
             '('+\
                 '(1.+avoid_div_zero)/'+\
                 '('+\
                     '((1+avoid_div_zero)/(max([[OH-]],OH_min)*Lmol+avoid_div_zero))^(sigma_max*alpha_CHO)*'+\
                         'exp(-'+\
                             'sigma_max*('+\
-                                '(Ga_CHO+(alpha_CHO+'+str(nCHO)+')*(phiM-phi)*F_const)/RT+alpha_CHO*7*'+str(np.log(10.))+\
+                                '(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phi)*F_const)/RT+alpha_CHO*7*log(10)'+\
                             ')'+\
                         ')+'+\
                     '((1+avoid_div_zero)/(max([[OH-]],OH_min)*Lmol+avoid_div_zero))^(sigma_max*alpha_CHOH)*'+\
                         'exp(-'+\
                             'sigma_max*('+\
-                                '(Ga_CHOH+(alpha_CHOH+'+str(nCHOH)+')*(phiM-phi)*F_const)/RT+alpha_CHOH*7*'+str(np.log(10.))+\
+                                '(Ga_CHOH+(alpha_CHOH+n_CHOH)*(phiM-phi)*F_const)/RT+alpha_CHOH*7*log(10)'+\
                             ')'+\
                         ')+'+\
                     'avoid_div_zero'+\
                 ')'+\
             ')^(1./sigma_max)'
     
-    C2_rate='rho_act*'+coverage+'^2*A*'+\
+    C2_rate='rho_act*coverage^2*A*'+\
             '('+\
                 '(1.+avoid_div_zero)/'+\
                 '('+\
                     '((1+avoid_div_zero)/(max([[OH-]],OH_min)*Lmol+avoid_div_zero))^(sigma_max*alpha_OCCOH)*'+\
                         'exp(-'+\
                             'sigma_max*('+\
-                                '(Ga_OCCOH+(alpha_OCCOH+'+str(nOCCOH)+')*(phiM-phi)*F_const)/RT+alpha_OCCOH*7*'+str(np.log(10.))+\
+                                '(Ga_OCCOH+(alpha_OCCOH+n_OCCOH)*(phiM-phi)*F_const)/RT+alpha_OCCOH*7*log(10)'+\
                             ')'+\
                         ')+'+\
                     ''+\
                         'exp(-'+\
                             'sigma_max*('+\
-                                '(Ga_OCCO+'+str(nOCCO)+'*(phiM-phi)*F_const)/RT'+\
+                                '(Ga_OCCO+n_OCCO)*(phiM-phi)*F_const)/RT'+\
                             ')'+\
                         ')+'+\
                     'avoid_div_zero'+\
@@ -292,7 +337,7 @@ system['boundary thickness']=boundary_thickness
 potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-0.7,-0.7,1))}
+    descriptors={'phiM':list(np.linspace(-1.2,0.0,30))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
@@ -313,6 +358,8 @@ for potential in potentials:
         system=system,
         pb_bound=pb_bound,
         comsol_params=comsol_params,
+        comsol_variables=comsol_variables,
+        comsol_outputs=comsol_outputs,
         descriptors=descriptors,
         nx=40)
     

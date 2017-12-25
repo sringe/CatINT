@@ -17,18 +17,43 @@ import os
 import re
 from io import save_all
 import subprocess
+from glob import glob
+from shutil import copy
 
 class Transport(object):
 
     def __init__(self, species=None,electrode_reactions=None,electrolyte_reactions=None,\
             system=None,pb_bound=None,nx=100,scf_bound=False,\
-            comsol_params={},comsol_variables={},descriptors=None):
+            comsol_params={},comsol_variables={},comsol_outputs={},descriptors=None):
+
+        ##############################################
+        ###########FOLDERS AND FILES##################
+        ##############################################
+
+
+        #folder and file names
+        self.outputfoldername='ci_results' #folder where all results will be saved with the self.save function
+        self.inputfilename=sys.argv[0] #the input file
+        if not os.path.exists(self.outputfoldername):
+            os.makedirs(self.outputfoldername)
+        else:
+#            existing_files=sorted(glob(self.outputfoldername+'_[0-9]+'))
+            existing_files=sorted([f for f in os.listdir('.') if re.search(self.outputfoldername+'_[0-9]+', f)])
+            if len(existing_files)>0: #self.outputfoldername.split('_')[-1].isdigit():
+                number=int(existing_files[-1].split('_')[-1])+1
+            else:
+                number=2
+            self.outputfoldername='_'.join(sum([[self.outputfoldername],[str(number).zfill(4)]],[]))
+            os.makedirs(self.outputfoldername)
+        self.logfilename=self.outputfoldername+'/transport.log' # the log file
+        #copy input file for later reference
+        copy(self.inputfilename,self.outputfoldername+'/'+self.inputfilename)
 
         # set up logging to file - see previous section for more details
         logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                     datefmt='%m-%d %H:%M',
-                    filename='transport.log',
+                    filename=self.logfilename,
                     filemode='w')
         # define a Handler which writes INFO messages or higher to the sys.stderr
         console = logging.StreamHandler()
@@ -41,7 +66,7 @@ class Transport(object):
         logging.getLogger('').addHandler(console)
         
         # Now, we can log to the root logger, or any other logger. First the root...
-        logging.info('Starting Transport Calculation. Current commit = {}'.format(subprocess.check_output(["git", "describe","--always"]).strip()))
+        logging.info('Starting Transport Calculation. Current Version: {}'.format(subprocess.check_output(["git", "describe","--always"]).strip()))
         
         # Now, define a couple of other loggers which might represent areas in your
         # application:
@@ -49,12 +74,9 @@ class Transport(object):
         self.logger_db = logging.getLogger('transport.debug')
         self.logger = logging.getLogger('transport.info')
 
-        self.inputfilename=sys.argv[0]
-        self.outputfoldername='obj' #folder where all results will be saved with the self.save function
-
-        #pickle outputs of dictionaries:
-        if not os.path.exists('obj'):
-            os.makedirs('obj')
+        ##############################################
+        ###########DICTIONARY HANDLING################
+        ##############################################
         
         #all the possible keys:
         species_keys=['bulk concentration', 'diffusion', 'name', 'symbol', 'flux']
@@ -120,7 +142,7 @@ class Transport(object):
 
         if 'exclude species' not in self.system:
             self.system['exclude species']=['e-']
-        else:
+        elif 'e-' not in self.system['exclude species']:
             self.system['exclude species']+=['e-']
         #delete species which should not be considered for PNP dynamics
         for es in self.system['exclude species']:
@@ -338,6 +360,14 @@ class Transport(object):
         self.comsol_params=comsol_params
         #comsol variables depending on variables updated during the calculation
         self.comsol_variables=comsol_variables
+        #additional comsol outputs on top of the standard outputs
+        #these must be tabulated on the xgrid
+        if comsol_outputs is None:
+            self.comsol_outputs=[]
+        else:
+            self.comsol_outputs=comsol_outputs
+
+
         self.initialize_descriptors(descriptors)
 
     def initialize_fluxes(self):

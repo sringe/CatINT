@@ -6,6 +6,7 @@ from glob import glob
 from catint.io import read_all
 from itertools import cycle
 import sys
+from units import *
 
 def plot_leis_data():
     data=np.loadtxt('data/CORR_lei.txt')
@@ -52,10 +53,7 @@ tp=Transport()
 for f in folders:
     style=next(styles)
 #    p=Plot(transport=tp,init_from_file='calc_std_settings')
-    read_all(tp,f,only=['electrode_reactions','species']) #system')
-    print 'out'
-    print tp.electrode_reactions
-    sys.exit
+    read_all(tp,f,only=['electrode_reactions','species','comsol_outputs','comsol_outputs_data']) #system')
     for sp in tp.electrode_reactions:
         color=next(colors)
         jout=tp.electrode_reactions[sp]['electrode_current_density']
@@ -67,6 +65,18 @@ for f in folders:
         data.view(data.dtype.str+','+data.dtype.str).sort(order=['f0'], axis=0)
         plt.semilogy(data[:,0],data[:,1],linestyle=style,color=color,label=f.replace('calc_std_settings','std')+', '+sp)
         #plt.semilogy(data[:,0],data[:,1],'o')
+    symbols=['o','x']
+    for isp,sp in enumerate([o[1] for o in tp.comsol_outputs]):
+        print 'plotting', sp
+        symbol=symbols[isp]
+        jout=tp.comsol_outputs_data[sp]
+        print 'current jout',jout
+        data=[]
+        for v1,v2 in jout:
+            data.append([float(v1),jout[(v1,v2)][0]])
+        data=np.array(data)
+        data.view(data.dtype.str+','+data.dtype.str).sort(order=['f0'], axis=0)
+        plt.semilogy(data[:,0],data[:,1]*6*unit_F/10,symbol,color=color,label=f.replace('calc_std_settings','std')+', '+sp)
 plt.ylim([1e-8,5e2])
 plt.xlim([-1.03,0.0])
 plt.xlabel('Voltage vs RHE (V)')

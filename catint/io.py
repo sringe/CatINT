@@ -37,9 +37,10 @@ def save_all(tp,only=None):
         save_obj(tp.outputfoldername,tp.tmesh,'tmesh')
         save_obj(tp.outputfoldername,tp.electrode_reactions,'electrode_reactions')
         save_obj(tp.outputfoldername,tp.electrolyte_reactions,'electrolyte_reactions')
+        save_obj(tp.outputfoldername,tp.comsol_outputs,'comsol_outputs')
+        save_obj(tp.outputfoldername,tp.comsol_outputs_data,'comsol_outputs_data')
     else:
         save_obj(tp.outputfoldername,tp.all_data,only)
-    copy(tp.inputfilename,tp.outputfoldername+'/'+tp.inputfilename)
 
 def add_to_dict(self,append,*expr):
     (filename,line_number,function_name,text)=traceback.extract_stack()[-2]
