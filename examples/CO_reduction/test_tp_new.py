@@ -176,7 +176,7 @@ comsol_params['alpha_CHO']=['0.5','Butler-Volmer Parameter'] #std 0.5
 comsol_params['alpha_CHOH']=['0.5','Butler-Volmer Parameter'] #std 2.0
 comsol_params['alpha_OCCOH']=['0.5','Butler-Volmer Parameter'] #std 0.5
 comsol_params['alpha_OCCO']=['0.5','Butler-Volmer Parameter'] #std 0.5
-comsol_params['n_CHO']=['2','Butler-Volmer Parameter'] #std 0.5
+comsol_params['n_CHO']=['0','Butler-Volmer Parameter'] #std 0.5
 comsol_params['n_CHOH']=['2','Butler-Volmer Parameter'] #std 2.0
 comsol_params['n_OCCOH']=['0','Butler-Volmer Parameter'] #std 0.5
 comsol_params['n_OCCO']=['0','Butler-Volmer Parameter'] #std 0.5
@@ -213,9 +213,7 @@ comsol_params['max_coverage']=['0.44','Maximal coverage with which the Langmuir 
 #            ')\
 #        )'sigma_max=5.0 #smoothness factor for maximum, the larger it is the smoother the function is approximated
 
-comsol_params['OH_min']=['1e-20 [mol/m^3]','Minimal OH- concentration allowed in the evaluation of the rate coverage with which the Langmuir isotherm will be scaled'] #0.44
-
-smooth_maximum=False
+comsol_params['OH_min']=['1e-20 [mol/m^3]','Minimal OH- concentration allowed in the evaluation of the rates'] #of the rate coverage with which the Langmuir isotherm will be scaled'] #0.44
 
 
 comsol_variables={}
@@ -234,15 +232,19 @@ comsol_variables['jOCCOH']=['rho_act*coverage^2*A*'+\
                         ')','rate of OCCOH']
 comsol_variables['jOCCO']=['rho_act*coverage^2*A*'+\
                         'exp(-'+\
-                            '(Ga_OCCO+n_OCCO)*(phiM-phi)*F_const)/RT'+\
+                            '(Ga_OCCO+(alpha_OCCO+n_OCCO)*(phiM-phi)*F_const)/RT+alpha_OCCO*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
                         ')','rate of OCCO']
 #additional comsol outputs
 #name, equation, unit
-comsol_outputs=[['jCHO','jCHO','mol/m^2/s'],['jCHOH','jCHOH','mol/m^2/s']] #last one in list is the name of the file, first one is variable name
+comsol_outputs=[\
+        ['jCHO','jCHO','mol/m^2/s'],\
+        ['jCHOH','jCHOH','mol/m^2/s'],\
+        ['jOCCOH','jOCCOH','mol/m^2/s'],\
+        ['jOCCO','jOCCO','mol/m^2/s']] #last one in list is the name of the file, first one is variable name
 
-method=2 #method2 with stationary solver only working one, so far...
+method=0 #method2 with stationary solver only working one, so far...
 
-if method==0: #not smooth_maximum:
+if method==0: 
     C1_rate='min('+\
                 'jCHO, '+\
                 'jCHOH'+\
@@ -337,7 +339,7 @@ system['boundary thickness']=boundary_thickness
 potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-1.2,0.0,30))}
+    descriptors={'phiM':list(np.linspace(0.0,-1.3,14))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
@@ -361,14 +363,14 @@ for potential in potentials:
         comsol_variables=comsol_variables,
         comsol_outputs=comsol_outputs,
         descriptors=descriptors,
-        nx=40)
+        nx=200)
     
     
     tp.set_calculator('comsol') #odespy') #--bdf')
     #tp.set_calculator('Crank-Nicolson--LF')
     #tp.set_initial_concentrations('Gouy-Chapman')
     
-    c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary') #time-dependent')
+    c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
     #scale_pb_grid
     c.run() #1.0)
     tp.save() #saves all data to pickle files to enable restart or plotting later

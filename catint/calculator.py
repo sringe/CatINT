@@ -24,10 +24,13 @@ from comsol import Comsol
 class Calculator():
 
     def __init__(self,transport=None,dt=None,tmax=None,ntout=1,calc=None,
-            scale_pb_grid=None,tau_jacobi=1e-7,tau_scf=1e-5,mode='time-dependent'):
+            scale_pb_grid=None,tau_jacobi=1e-7,tau_scf=1e-5,mode='time-dependent',\
+                desc_method='internal-cont'):
 
         self.mode=mode #calculation mode for comsol: time-dependent or stationary. the local
         #solvers here are all time-dependent
+
+
 
         self.tau_scf=tau_scf
 
@@ -39,10 +42,24 @@ class Calculator():
         
         if calc is None:
             calc=self.tp.calc
+
         
         self.tp.ntout=ntout
 #        if os.path.exists('results.txt'):
 #            os.remove('results.txt')
+
+        #method for descriptor:
+        #internal: parameters are updated internally in comsol
+        #  internal-reinit: at each parameter set, the solutions are reinitialized (default)
+        #  internal-cont: the solution of the previous parameter set is used to initialize the next
+        #external: parameters are updated within this comsol.py routine and comsol 
+        #  is recompiled and relaunched for each new parameter set
+
+        self.tp.desc_method=desc_method
+        if calc!='comsol' and desc_method!='external':
+            self.tp.logger.warning('Only comsol solver works with internal solution continuation, switching to external here.')
+            self.tp.desc_method='external'
+
 
         self.use_lax_friedrich=False
         string=calc.split('--')
@@ -1092,7 +1109,7 @@ class Calculator():
         return cout
 
     def run(self):
-        if self.tp.descriptors is not None:
+        if self.tp.descriptors is not None and self.tp.desc_method == 'external':
             desc_keys=[key for key in self.tp.descriptors]
             i1=0
             i2=0
@@ -1102,7 +1119,7 @@ class Calculator():
                 for value2 in self.tp.descriptors[desc_keys[1]]:
                     i2+=1
                     self.tp.logger.info('Starting calculation for '+desc_keys[0]+'='+str(value1)+' and '+desc_keys[1]+'='+str(value2))
-                    label=str(i1)+str(i2)
+                    label=str(i1).zfill(4)+'_'+str(i2).zfill(4)
                     #=desc_keys[0]+'='+str(value1)+'_'+desc_keys[1]+'='+str(value2)
                     #update the iterating descriptor based property in system properties
                     self.tp.system[desc_keys[0]]=value1

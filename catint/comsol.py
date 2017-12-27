@@ -5,10 +5,11 @@ import os
 from subprocess import call
 import re 
 from shutil import copyfile as copy
+from copy import deepcopy
 
 class Comsol():
     """This class does all operations need to write input files for comsol and read output"""
-    def __init__(self,path=os.getcwd(),transport=None,exe_path='/Applications/COMSOL53/Multiphysics/bin/comsol',mode='time-dependent'):
+    def __init__(self,path=os.getcwd(),transport=None,exe_path='/Applications/COMSOL53/Multiphysics/bin/comsol',mode='time-dependent'): 
         if transport is None:
             self.tp.logger.error('No transport object provided for calculator. Stopping here.')
             sys.exit()
@@ -22,18 +23,50 @@ class Comsol():
         for out in self.tp.comsol_outputs:
             self.outputs.append(out)
         self.mode=mode
+        #additionally specified comsol output
+        if not hasattr(self.tp,'comsol_outputs_data'):
+            self.tp.comsol_outputs_data={}
+        
 
     def run(self,label='',desc_val=[],
             studies=None):
         self.results_folder=self.results_folder_base+'_'+label
+        desc_keys=[key for key in self.tp.descriptors]
         if studies is None:
             studies={}
 #            studies['time-dependent']={'None':{'None':None}}
-            studies[self.mode]={'None':{'None':None}}
+            if self.tp.desc_method=='external':
+                studies[self.mode]={'None':{'None':None}}
+            else:
+                #so far we can only have a single descriptor for comsol, choose the first one here:
+                idesc=-1
+                for desc in self.tp.descriptors:
+                    idesc+=1
+                    if len(self.tp.descriptors[desc])>1:
+                        if idesc>0:
+                            self.tp.logger.error('Please chose first descriptor as parametric COMSOL sweep')
+                            sys.exit()
+                        desc_choice=desc
+                        desc_val=self.tp.descriptors[desc_choice]
+                        break
+                studies[self.mode]={'parametric':{desc_choice:desc_val}}
+        for study in studies:
+            if study=='time-dependent' and 'parametric' in studies[study]:
+                self.tp.logger.error('Internal parametric sweep in COMSOL does currently only work with stationary solver')
+                sys.exit()
 #            studies['stationary']={'None':{'None':None}}
 #            studies['time-dependent']['None']=None
 #            studies['static']={'parametric':{'epsilon':[0.01,0.1]}}
         self.studies=studies
+        for study in studies:
+            for method in studies[study]:
+                self.tp.logger.info('Will perform {} calculation with {} setting COMSOL'.format(study,method))
+                for pars in studies[study][method]:
+                    self.tp.logger.info('Parameter set passed to COMSOL is {}'.format(studies[study][method]))
+        if 'cont' in self.tp.desc_method:
+            self.tp.logger.info('Solutions will be updated from calculations with last parameter set')
+        else:
+            self.tp.logger.info('Solutions will be reinitialized for each parameter set')
 #        self.write_parameter_file()
         self.write_input(desc_val=desc_val)
         self.tp.logger.info('Compiling COMSOL.')
@@ -553,51 +586,85 @@ class Comsol():
                         inp.write('    model.study().create("std'+str(i+1)+'");\n')
                         inp.write('    model.study("std'+str(i+1)+'").create("time", "Transient");\n')
                     #create a new solver
-                    if stype!='parametric':
-                        inp.write('    model.sol().create("sol'+str(j)+'");\n')
-                        inp.write('    model.sol("sol'+str(j)+'").study("std'+str(i+1)+'");\n')
-                        inp.write('    model.sol("sol'+str(j)+'").attach("std'+str(i+1)+'");\n')
-                        inp.write('    model.sol("sol'+str(j)+'").create("st1", "StudyStep");\n')
-                        inp.write('    model.sol("sol'+str(j)+'").create("v1", "Variables");\n')
-                        if study=='stationary':
-                            inp.write('    model.sol("sol'+str(j)+'").create("s1", "Stationary");\n')
-                            inp.write('    model.sol("sol'+str(j)+'").feature("s1").create("fc1", "FullyCoupled");\n')
-                            inp.write('    model.sol("sol'+str(j)+'").feature("s1").create("d1", "Direct");\n')
-                            inp.write('    model.sol("sol'+str(j)+'").feature("s1").feature().remove("fcDef");\n')
-                        elif study=='time-dependent':
-                            inp.write('    model.sol("sol'+str(j)+'").create("t1", "Time");\n')
-                            inp.write('    model.sol("sol'+str(j)+'").feature("t1").create("fc1", "FullyCoupled");\n')
-                            inp.write('    model.sol("sol'+str(j)+'").feature("t1").create("d1", "Direct");\n')
-                            inp.write('    model.sol("sol'+str(j)+'").feature("t1").feature().remove("fcDef");\n')
-                        ##not sure why there are these lines, just pasting them from the comsol java file:
-                        #inp.write('    model.result().dataset().create("dset2", "Solution");\n')
-                        #inp.write('    model.result().dataset().create("cpt1", "CutPoint1D");\n')
-                        #inp.write('    model.result().dataset("dset2").set("probetag", "pdom1");\n')
-                        #inp.write('    model.result().dataset("cpt1").set("probetag", "pdom1");\n')
-                        #inp.write('    model.result().dataset("cpt1").set("data", "dset2");\n')
-                        #inp.write('    model.result().numerical().create("pev1", "EvalPoint")\n');
-                        #inp.write('    model.result().numerical().create("pev2", "EvalPoint");\n')
-                        #inp.write('    model.result().numerical().create("pev3", "EvalPoint");\n')
-                        #inp.write('    model.result().numerical("pev1").set("probetag", "pdom1/ppb1");\n')
-                        #inp.write('    model.result().numerical("pev2").set("probetag", "pdom1/ppb2");\n')
-                        #inp.write('    model.result().numerical("pev3").set("probetag", "pdom1/ppb3");\n')
-                        #inp.write('    model.component("comp1").probe("pdom1").genResult(null);\n')
-                        #inp.write('    model.result().dataset("dset2").label("Probe Solution 2");\n')
-                        #inp.write('    model.result().numerical("pev3").set("unit", new String[]{""});\n')
-                        #inp.write('    model.result().remove("pg1");\n')
-                        ##end unknown lines
-                    else:
+                    inp.write('    model.sol().create("sol'+str(j)+'");\n')
+                    inp.write('    model.sol("sol'+str(j)+'").study("std'+str(i+1)+'");\n')
+                    inp.write('    model.sol("sol'+str(j)+'").attach("std'+str(i+1)+'");\n')
+                    inp.write('    model.sol("sol'+str(j)+'").create("st1", "StudyStep");\n')
+                    inp.write('    model.sol("sol'+str(j)+'").create("v1", "Variables");\n')
+                    if study=='stationary':
+                        inp.write('    model.sol("sol'+str(j)+'").create("s1", "Stationary");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("s1").create("fc1", "FullyCoupled");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("s1").create("d1", "Direct");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("s1").feature().remove("fcDef");\n')
+                    elif study=='time-dependent':
+                        inp.write('    model.sol("sol'+str(j)+'").create("t1", "Time");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("t1").create("fc1", "FullyCoupled");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("t1").create("d1", "Direct");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("t1").feature().remove("fcDef");\n')
+                    ##not sure why there are these lines, just pasting them from the comsol java file:
+                    #inp.write('    model.result().dataset().create("dset2", "Solution");\n')
+                    #inp.write('    model.result().dataset().create("cpt1", "CutPoint1D");\n')
+                    #inp.write('    model.result().dataset("dset2").set("probetag", "pdom1");\n')
+                    #inp.write('    model.result().dataset("cpt1").set("probetag", "pdom1");\n')
+                    #inp.write('    model.result().dataset("cpt1").set("data", "dset2");\n')
+                    #inp.write('    model.result().numerical().create("pev1", "EvalPoint")\n');
+                    #inp.write('    model.result().numerical().create("pev2", "EvalPoint");\n')
+                    #inp.write('    model.result().numerical().create("pev3", "EvalPoint");\n')
+                    #inp.write('    model.result().numerical("pev1").set("probetag", "pdom1/ppb1");\n')
+                    #inp.write('    model.result().numerical("pev2").set("probetag", "pdom1/ppb2");\n')
+                    #inp.write('    model.result().numerical("pev3").set("probetag", "pdom1/ppb3");\n')
+                    #inp.write('    model.component("comp1").probe("pdom1").genResult(null);\n')
+                    #inp.write('    model.result().dataset("dset2").label("Probe Solution 2");\n')
+                    #inp.write('    model.result().numerical("pev3").set("unit", new String[]{""});\n')
+                    #inp.write('    model.result().remove("pg1");\n')
+                    ##end unknown lines
+                    if method=='parametric':
                         ip+=1
+
+                        par_name=''
+                        par_unit=''
+                        par_val=''
+#                        for istype,stype in enumerate(self.studies[study][method]):
+                        par_name+='\"'+stype+'\"'
+                        par_unit+='\"\"'
+                        par_val+='\"'
+                        for val in self.studies[study][method][stype]:
+                            par_val+=' '+str(val)+' '
+                        par_val+='\"'
+                        #if istype!=len(self.studies[study][method])-1:
+                        #    par_name+=', '
+                        #    par_val+=', '
+                        #    par_unit+=', '
+
+                        #setup parametric solver
+                        #add parametric solver to study 1
                         inp.write('    model.study("std'+str(i+1)+'").create("param", "Parametric");\n')
-                        inp.write('    model.sol().create("sol'+str(j)+'");\n')
-                        inp.write('    model.sol("sol'+str(j)+'").study("std'+str(i+1)+'");\n')
-                        inp.write('    model.sol("sol'+str(j)+'").label("Parametric Solutions 3");\n')
-                        inp.write('    model.batch().create("p'+str(ip)+'", "Parametric");\n')
-                        inp.write('    model.batch("p'+str(ip)+'").create("so1", "Solutionseq");\n')
-                        inp.write('    model.batch("p'+str(ip)+'").study("std'+str(i+1)+'");\n')
-                        inp.write('    model.study("std'+str(i+1)+'").feature("param").set("pname", new String[]{"'+stype+'"});)\n')
-                        inp.write('    model.study("std'+str(i+1)+'").feature("param").set("plistarr", new String[]{"'+sum(map(str,self.studies[study][method][stype])+' ')+'"});\n')
-                        inp.write('    model.study("std'+str(i+1)+'").feature("param").set("punit", new String[]{""});\n')
+                        inp.write('    model.study("std'+str(i+1)+'").feature("param").set("pname", new String[]{'+par_name+'});\n')
+                        inp.write('    model.study("std'+str(i+1)+'").feature("param").set("plistarr", new String[]{'+par_val+'});\n')
+                        inp.write('    model.study("std'+str(i+1)+'").feature("param").set("punit", new String[]{'+par_unit+'});\n')
+
+                        #variables needed for parametric solver
+                        inp.write('    model.sol("sol'+str(j)+'").feature("v1").set("clistctrl", new String[]{"p1"});\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("v1").set("cname", new String[]{'+par_name+'});\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("v1").set("clist", new String[]{'+par_val+'});\n')
+
+                        #stationary solver config. select the param feature to control the parametric solver and 
+                        #if needed enable solver continuation (usage of old solution)
+                        inp.write('    model.sol("sol'+str(j)+'").feature("s1").create("p1", "Parametric");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("s1").set("probesel", "none");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("s1").feature("p1").set("control", "param");\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("s1").feature("p1").set("pname", new String[]{'+par_name+'});\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("s1").feature("p1").set("plistarr", new String[]{'+par_val+'});\n')
+                        inp.write('    model.sol("sol'+str(j)+'").feature("s1").feature("p1").set("punit", new String[]{'+par_unit+'});\n')
+
+                        if 'internal' in self.tp.desc_method:
+                            if self.tp.desc_method.split('-')[1]=='reinit':
+                                inp.write('    model.sol("sol1").feature("s1").feature("p1").set("pcontinuationmode", "no");\n')
+#                            else:
+#                                inp.write('    model.sol("sol1").feature("s1").feature("p1").set("preusesol", "yes")\n')
+                        else:
+                            inp.write('    model.sol("sol1").feature("s1").feature("p1").set("pcontinuationmode", "no");\n')
+
                     if study=='time-dependent':
                         inp.write('    model.study("std'+str(i+1)+'").feature("time").set("tlist", "range('+str(min(self.tp.tmesh_init))+','+str(self.tp.dt_init)+','+str(self.tp.tmax_init)+')");\n')
 
@@ -717,9 +784,30 @@ class Comsol():
         else:
             label_append=''
 #            label_append=''
+        #if internal descriptor iteration create descriptor value list:
+        if 'internal' in self.tp.desc_method:
+            int_desc_list=[self.studies['stationary']['parametric'][d1] for d1 in self.studies['stationary']['parametric']][0]
+            int_desc=[d1 for d1 in self.studies['stationary']['parametric']][0]
+            #get the first value of the descriptor which is not used as parametric sweep
+            int_desc_non=[self.tp.descriptors[desc][0] for desc in self.tp.descriptors if desc!=int_desc][0]
+        else:
+            int_desc_list=[]
+            int_desc=None
         self.tp.potential=[]
         self.tp.efield=[]
         self.tp.current_density=[]
+        if 'internal' in self.tp.desc_method:
+            for id1,d1 in enumerate(self.tp.all_data):
+                for id2,d2 in enumerate(self.tp.all_data[d1]):
+                    self.tp.all_data[str(d1)][str(d2)]['system']['potential']=[]
+                    self.tp.all_data[str(d1)][str(d2)]['system']['efield']=[]
+                    self.tp.all_data[str(d1)][str(d2)]['system']['current_density']=[]
+                    for iout,cout in enumerate(self.tp.comsol_outputs):
+                        out=cout[1]
+                        if out not in self.tp.comsol_outputs_data:
+                            self.tp.comsol_outputs_data[out]={(str(d1),str(d2)):[]}
+                        else:
+                            self.tp.comsol_outputs_data[out][(str(d1),str(d2))]=[]
         comsol_outputs_data=[]
         for i in range(len(self.tp.comsol_outputs)):
             comsol_outputs_data.append([])
@@ -758,9 +846,14 @@ class Comsol():
                 cout_tmp=np.zeros([self.tp.nt+1,self.tp.nspecies*self.tp.nx]) ##check here, why do we put nt+1?? if we put nt, we need to correct the stationary solver below
                 electrode_flux=np.zeros_like(cout)
                 electrode_flux_tmp=np.zeros_like(cout_tmp)
+                if 'internal' in self.tp.desc_method:
+                    for desc in int_desc_list:
+                        self.tp.all_data[str(desc)][str(int_desc_non)]['system']['cout']=np.zeros([self.tp.nt,self.tp.nspecies*self.tp.nx])
+                        self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux']=np.zeros_like(cout_tmp)
             #now read in all results
             i=0
             self.tp.logger.info('Reading COMSOL output from'+self.results_folder+'/'+toutput+'.txt')
+
             for line in open(self.results_folder+'/'+toutput+'.txt','r'):
                 i+=1
                 if i>8 and [key for key in self.studies][0]=='stationary':
@@ -768,7 +861,13 @@ class Comsol():
                         ls=line.split()
                         for j,lss in enumerate(ls):
                             if j>0:
-                                i_sp=(j-1)%self.tp.nspecies
+                                i_sp=(j-1)%(self.tp.nspecies)
+                                i_de=(j-1-i_sp)/(self.tp.nspecies)
+                                if 'internal' in self.tp.desc_method:
+                                    if output=='concentration':
+                                        self.tp.all_data[str(int_desc_list[i_de])][str(int_desc_non)]['system']['cout'][-2,i_sp*self.tp.nx+i-9]=float(lss)
+                                    elif output=='electrode_flux':
+                                        self.tp.all_data[str(int_desc_list[i_de])][str(int_desc_non)]['system']['electrode_flux'][-2,i_sp*self.tp.nx+i-9]=float(lss)
                                 if output=='concentrations':
                                     cout_tmp[-2,i_sp*self.tp.nx+i-9]=float(lss)
                                 elif output=='electrode_flux':
@@ -779,18 +878,31 @@ class Comsol():
                             if j>0:
                                 if output=='electrostatics':
                                     i_sp=(j-1)%2
+                                    i_de=(j-1-i_sp)/2
+                                    if 'internal' in self.tp.desc_method:
+                                        if i_sp==0:
+                                            self.tp.all_data[str(int_desc_list[i_de])][str(int_desc_non)]['system']['potential'].append(float(lss))
+                                        elif i_sp==1:
+                                            self.tp.all_data[str(int_desc_list[i_de])][str(int_desc_non)]['system']['efield'].append(float(lss))
                                     if i_sp==0:
                                         self.tp.potential.append(float(lss))
                                     elif i_sp==1:
                                         self.tp.efield.append(float(lss))
                                 elif output=='current_density':
                                     i_sp=(j-1)%1
+                                    i_de=(j-1-i_sp)
+                                    if 'internal' in self.tp.desc_method:
+                                        if i_sp==0:
+                                            self.tp.all_data[str(int_desc_list[i_de])][str(int_desc_non)]['system']['current_density'].append(float(lss))
                                     if i_sp==0:
                                         self.tp.current_density.append(float(lss))
                     elif output in self.tp.comsol_outputs:
                         ls=line.split()
                         for j,lss in enumerate(ls):
                             if j>0:
+                                i_de=j-1
+                                if 'internal' in self.tp.desc_method:
+                                    self.tp.comsol_outputs_data[output[1]][(str(int_desc_list[i_de]),str(int_desc_non))].append(float(lss))
                                 comsol_outputs_data[self.tp.comsol_outputs.index(output)].append(float(lss))
                 elif i>8 and [key for key in self.studies][0]=='time-dependent':
                     if output in ['concentrations','electrode_flux']:
@@ -842,6 +954,29 @@ class Comsol():
                                     if i_sp==0:
                                         comsol_outputs_data[self.tp.comsol_outputs.index(output)].append(float(lss))
         #compress cout_tmp to cout (save only relevant time steps)
+        if 'internal' in self.tp.desc_method:
+            for desc in int_desc_list:
+                tmp_ar=deepcopy(self.tp.all_data[str(desc)][str(int_desc_non)]['system']['cout'])
+                self.tp.all_data[str(desc)][str(int_desc_non)]['system']['cout']=np.zeros([self.tp.ntout,self.tp.nspecies*self.tp.nx])
+                nn=-1
+                for n,cc in enumerate(tmp_ar):
+                    if n in self.tp.itout:
+                        nn+=1
+                        self.tp.all_data[str(desc)][str(int_desc_non)]['system']['cout'][nn,:]=cc
+                
+                self.tp.all_data[str(desc)][str(int_desc_non)]['system']['cout']=np.array(self.tp.all_data[str(desc)][str(int_desc_non)]['system']['cout'])
+
+                tmp_ar=deepcopy(self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux'])
+                self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux']=np.zeros([self.tp.ntout,self.tp.nspecies*self.tp.nx])
+                nn=-1
+                for n,cc in enumerate(tmp_ar):
+                    if n in self.tp.itout:
+                        nn+=1
+                        self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux'][nn,:]=cc
+
+                self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux']=np.array(self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux'])
+                
+                
         nn=-1
         for n,cc in enumerate(cout_tmp):
 #            if n % int(self.tp.nt/float(self.tp.ntout))==0:
@@ -857,25 +992,41 @@ class Comsol():
 
         self.tp.electrode_flux=electrode_flux
 
-
         self.tp.logger.info('Wrote out concentrations at '+str(nn+1)+' steps.')
+
+        if 'internal' in self.tp.desc_method:
+            for desc in int_desc_list:
+                for par in ['potential','efield','current_density']:
+                    self.tp.all_data[str(desc)][str(int_desc_non)]['system'][par]=np.array(self.tp.all_data[str(desc)][str(int_desc_non)]['system'][par])
+                for oout in self.tp.comsol_outputs:
+                    out=oout[1]
+                    self.tp.comsol_outputs_data[out][(str(desc),str(int_desc_non))]=np.array(self.tp.comsol_outputs_data[out][(str(desc),str(int_desc_non))])
+
         self.tp.potential=np.array(self.tp.potential)
         self.tp.efield=np.array(self.tp.efield)
         self.tp.current_density=np.array(self.tp.current_density)
         comsol_outputs_data=np.array(comsol_outputs_data)
-        if self.tp.descriptors is not None:
+        if self.tp.descriptors is not None and not 'internal' in self.tp.desc_method:
             #save all of them in descriptor based dictionary:
             self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['potential']=self.tp.potential
             self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['efield']=self.tp.efield
             self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['current_density']=self.tp.current_density
+
         cout=np.array(cout)
-        self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['cout']=cout
-        self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['electrode_flux']=electrode_flux
-        for i_sp,sp in enumerate(self.tp.species):
-            self.tp.species[sp]['concentration']=cout[-1,i_sp*self.tp.nx:(i_sp+1)*self.tp.nx]
-            if self.tp.descriptors is not None:
-                self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['species'][sp]['concentration']=self.tp.species[sp]['concentration']
-        self.tp.cout=cout
+        if not 'internal' in self.tp.desc_method:
+            self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['cout']=cout
+            self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['electrode_flux']=electrode_flux
+            for i_sp,sp in enumerate(self.tp.species):
+                self.tp.species[sp]['concentration']=cout[-1,i_sp*self.tp.nx:(i_sp+1)*self.tp.nx]
+                if self.tp.descriptors is not None:
+                    self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['species'][sp]['concentration']=self.tp.species[sp]['concentration']
+            self.tp.cout=cout
+        else:
+            for desc in int_desc_list:
+                for i_sp,sp in enumerate(self.tp.species):
+                    self.tp.species[sp]['concentration']=self.tp.all_data[str(desc)][str(int_desc_non)]['system']['cout'][-1,i_sp*self.tp.nx:(i_sp+1)*self.tp.nx]
+                    self.tp.all_data[str(desc)][str(int_desc_non)]['species'][sp]['concentration']=self.tp.species[sp]['concentration']
+
         
         #update total charge density
         self.tp.total_charge=np.zeros([self.tp.nx])
@@ -891,23 +1042,27 @@ class Comsol():
         for reac in self.tp.electrode_reactions:
             if 'electrode_current_density' not in self.tp.electrode_reactions[reac]:
                 self.tp.electrode_reactions[reac]['electrode_current_density']={}
-        i2+=1
-        current_density=0
-        all_currents=[]
-        for sp in self.tp.electrode_reactions:
-            nprod=len([a for a in self.tp.electrode_reactions[sp]['reaction'][1] if a==sp])
-            isp=[i for i,sp2 in enumerate(self.tp.species) if sp2==sp][0]
-            c_current_density=self.tp.electrode_flux[-1][isp*self.tp.nx]*self.tp.electrode_reactions[sp]['nel']*unit_F/nprod/10.
-            current_density+=c_current_density
-            all_currents.append(c_current_density)
-            self.tp.electrode_reactions[sp]['electrode_current_density'][(str(desc_val[0]),str(desc_val[1]))]=c_current_density
-        
-        #additionally specified comsol output
-        if not hasattr(self.tp,'comsol_outputs_data'):
-            self.tp.comsol_outputs_data={}
-        for iout,cout in enumerate(self.tp.comsol_outputs):
-            out=cout[1]
-            if out not in self.tp.comsol_outputs_data:
-                self.tp.comsol_outputs_data[out]={(str(desc_val[0]),str(desc_val[1])):comsol_outputs_data[iout]}
-            else:
-                self.tp.comsol_outputs_data[out][(str(desc_val[0]),str(desc_val[1]))]=comsol_outputs_data[iout]
+        if not 'internal' in self.tp.desc_method:
+            i2+=1
+            for sp in self.tp.electrode_reactions:
+                nprod=len([a for a in self.tp.electrode_reactions[sp]['reaction'][1] if a==sp])
+                isp=[i for i,sp2 in enumerate(self.tp.species) if sp2==sp][0] #index in species array
+                
+                c_current_density=self.tp.electrode_flux[-1][isp*self.tp.nx]*self.tp.electrode_reactions[sp]['nel']*unit_F/nprod/10.
+                self.tp.electrode_reactions[sp]['electrode_current_density'][(str(desc_val[0]),str(desc_val[1]))]=c_current_density
+            
+            for iout,oout in enumerate(self.tp.comsol_outputs):
+                out=oout[1]
+                if out not in self.tp.comsol_outputs_data:
+                    self.tp.comsol_outputs_data[out]={(str(desc_val[0]),str(desc_val[1])):comsol_outputs_data[iout]}
+                else:
+                    self.tp.comsol_outputs_data[out][(str(desc_val[0]),str(desc_val[1]))]=comsol_outputs_data[iout]
+        else:
+            i2+=1
+            for desc in int_desc_list:
+                for sp in self.tp.electrode_reactions:
+                    nprod=len([a for a in self.tp.electrode_reactions[sp]['reaction'][1] if a==sp])
+                    isp=[i for i,sp2 in enumerate(self.tp.species) if sp2==sp][0] #index in species array
+                    c_current_density=self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux'][-1][isp*self.tp.nx]*self.tp.electrode_reactions[sp]['nel']*unit_F/nprod/10.
+                    self.tp.electrode_reactions[sp]['electrode_current_density'][(str(desc),str(int_desc_non))]=c_current_density
+

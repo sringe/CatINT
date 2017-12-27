@@ -65,7 +65,7 @@ for f in folders:
         data.view(data.dtype.str+','+data.dtype.str).sort(order=['f0'], axis=0)
         plt.semilogy(data[:,0],data[:,1],linestyle=style,color=color,label=f.replace('calc_std_settings','std')+', '+sp)
         #plt.semilogy(data[:,0],data[:,1],'o')
-    symbols=['o','x']
+    symbols=['o','x','d','D']
     for isp,sp in enumerate([o[1] for o in tp.comsol_outputs]):
         print 'plotting', sp
         symbol=symbols[isp]
@@ -76,11 +76,17 @@ for f in folders:
             data.append([float(v1),jout[(v1,v2)][0]])
         data=np.array(data)
         data.view(data.dtype.str+','+data.dtype.str).sort(order=['f0'], axis=0)
-        plt.semilogy(data[:,0],data[:,1]*6*unit_F/10,symbol,color=color,label=f.replace('calc_std_settings','std')+', '+sp)
+        if sp in ['CHO','HCOH']:
+            nel=6
+            nc=1
+        else:
+            nel=8
+            nc=2
+        plt.semilogy(data[:,0],data[:,1]*nel*unit_F/10,symbol,color=color,label=f.replace('calc_std_settings','std')+', '+sp)
 plt.ylim([1e-8,5e2])
 plt.xlim([-1.03,0.0])
 plt.xlabel('Voltage vs RHE (V)')
-plt.ylabel('j (mV/cm^2')
+plt.ylabel(r'$j$ (mA/cm$^2$)')
 plot_leis_data()
 #plot_xinyans_equation()
 plt.legend()
