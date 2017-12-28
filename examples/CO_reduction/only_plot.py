@@ -9,10 +9,9 @@ import sys
 from units import *
 
 def plot_leis_data():
-    data=np.loadtxt('data/CORR_lei.txt')
+    data=np.loadtxt('data/CO2R_lei.txt')
     species=['CH4','CH2CH2','CH3CHOO-','EtOH','n-PrOH']
     for i in range(5):
-        print data[:,0],data[:,10+i]
         x=data[:,0]
         y=data[:,10+i]
         datap=[]
@@ -24,8 +23,34 @@ def plot_leis_data():
             color='b'
         else:
             color='orange'
-        plt.semilogy(datap[:,0],datap[:,1],'-o',color=color,label=species[i])
+        plt.semilogy(datap[:,0],datap[:,1],'--o',color=color,label=species[i])
+
+def plot_kanans_data():
+    data=np.loadtxt('data/COR.txt')
+    species=['H2','CH4','CH2OO-','CO','MeOH','CH2CH2','EtOH', 'GlyAl','AcAl','Acetate','EtGly','n-PrOH','AllylOH','PrAl','Acetone','OHAc']
+    for i in range(len(species)):
+        x=data[:,0]
+        y=data[:,i+1]
+        datap=[]
+        for xx,yy in zip(x,y):
+            if yy!=0.0:
+                datap.append([xx,-yy])
+        datap=np.array(datap)
+        if species[i] not in ['CH2CH2','CH4','EtOH','n-PrOH','Acetate']:
+            continue
+        if species[i] in ['CH4','MeOH','CH2OO-']:
+            color='b'
+        elif species[i]=='H2':
+            color='k'
+        elif species[i]=='CO':
+            color='y'
+        else:
+            color='orange'
+        plt.semilogy(datap[:,0],datap[:,1],'-o',color=color) #,label=species[i])
+
 rho_act=1.004495558139274e-05
+
+
 
 def C1_rate(voltage, CO_cvg):
     Ga_CHO, Ga_CHOH = 1.11746219, 2.37467774
@@ -44,7 +69,8 @@ def plot_xinyans_equation():
     plt.semilogy(voltage, [C2_rate(v, CO_cvg) for v in voltage], '-', color='orange', label = 'C2_rate')
 
 colors=cycle(['orange','b']) #,'k','r','y'])
-styles=cycle(['-','--','-.',':'])
+#colors=cycle(['orange','b','k','r','y'])
+styles=cycle(['-','--','-.',':','o','d','x'])
 
 #folders=glob('calc_std_settings*') #obj') #calc_std*')
 folders=sys.argv[1:] #glob('test') #calc_std_settings*') #obj') #calc_std*')
@@ -63,14 +89,12 @@ for f in folders:
         data=np.array(data)
 #        data=np.sort(a.view(a.dtype.str+','+a.dtype.str), order=['f1'], axis=0).view(np.float32)
         data.view(data.dtype.str+','+data.dtype.str).sort(order=['f0'], axis=0)
-        plt.semilogy(data[:,0],data[:,1],linestyle=style,color=color,label=f.replace('calc_std_settings','std')+', '+sp)
+        plt.semilogy(data[:,0],data[:,1],style,color=color,label=f.replace('calc_std_settings','std')+', '+sp)
         #plt.semilogy(data[:,0],data[:,1],'o')
     symbols=['o','x','d','D']
     for isp,sp in enumerate([o[1] for o in tp.comsol_outputs]):
-        print 'plotting', sp
         symbol=symbols[isp]
         jout=tp.comsol_outputs_data[sp]
-        print 'current jout',jout
         data=[]
         for v1,v2 in jout:
             data.append([float(v1),jout[(v1,v2)][0]])
@@ -82,18 +106,20 @@ for f in folders:
         else:
             nel=8
             nc=2
-        plt.semilogy(data[:,0],data[:,1]*nel*unit_F/10,symbol,color=color,label=f.replace('calc_std_settings','std')+', '+sp)
+        #plt.semilogy(data[:,0],data[:,1]*nel*unit_F/10,symbol,color=color,label=f.replace('calc_std_settings','std')+', '+sp)
 plt.ylim([1e-8,5e2])
 plt.xlim([-1.03,0.0])
 plt.xlabel('Voltage vs RHE (V)')
 plt.ylabel(r'$j$ (mA/cm$^2$)')
 plot_leis_data()
+plot_kanans_data()
 #plot_xinyans_equation()
 plt.legend()
 plt.show()
-
+plt.close() #empty()
+sys.exit()
 for arg in sys.argv[1:]:
     p=Plot(transport=tp,init_from_file=arg)
-#    read_all(tp,f,only=['electrode_reactions','species']) #system')
-    p.plot(large_plots=['concentrations_electrolyte','concentrations_electrode'])
-    plt.show()
+    read_all(tp,f) #,only=['','species','system','all_data']) #electrode_reactions','species']) #system')
+    p.plot(large_plots=['concentrations_electrolyte','concentrations_electrode'],small_plots=['potential'])
+#    plt.show()

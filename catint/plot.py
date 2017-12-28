@@ -23,6 +23,7 @@ class Plot():
         self.logscale=logscale
 
     def plot(self,large_plots=[],small_plots=[]):
+        self.tp.logger.info('Starting to plot data.')
         self.large_plots=large_plots
         self.small_plots=small_plots
 

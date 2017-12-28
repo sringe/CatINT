@@ -144,6 +144,10 @@ class Transport(object):
             self.system['exclude species']=['e-']
         elif 'e-' not in self.system['exclude species']:
             self.system['exclude species']+=['e-']
+        if 'exclude species' not in self.system:
+            self.system['exclude species']+=['H2O']
+        elif 'H2O' not in self.system['exclude species']:
+            self.system['exclude species']+=['H2O']
         #delete species which should not be considered for PNP dynamics
         for es in self.system['exclude species']:
             if es in self.species:
@@ -852,4 +856,5 @@ class Transport(object):
         self.calc=calc
 
     def save(self):
+        self.logger.info('Saving all data into binary pickle files.')
         save_all(self)

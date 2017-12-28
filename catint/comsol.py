@@ -656,6 +656,7 @@ class Comsol():
                         inp.write('    model.sol("sol'+str(j)+'").feature("s1").feature("p1").set("pname", new String[]{'+par_name+'});\n')
                         inp.write('    model.sol("sol'+str(j)+'").feature("s1").feature("p1").set("plistarr", new String[]{'+par_val+'});\n')
                         inp.write('    model.sol("sol'+str(j)+'").feature("s1").feature("p1").set("punit", new String[]{'+par_unit+'});\n')
+                        inp.write('    model.sol("sol1").feature("s1").feature("p1").set("ponerror", "empty");\n')
 
                         if 'internal' in self.tp.desc_method:
                             if self.tp.desc_method.split('-')[1]=='reinit':
@@ -802,8 +803,8 @@ class Comsol():
                     self.tp.all_data[str(d1)][str(d2)]['system']['potential']=[]
                     self.tp.all_data[str(d1)][str(d2)]['system']['efield']=[]
                     self.tp.all_data[str(d1)][str(d2)]['system']['current_density']=[]
-                    for iout,cout in enumerate(self.tp.comsol_outputs):
-                        out=cout[1]
+                    for iout,oout in enumerate(self.tp.comsol_outputs):
+                        out=oout[1]
                         if out not in self.tp.comsol_outputs_data:
                             self.tp.comsol_outputs_data[out]={(str(d1),str(d2)):[]}
                         else:
@@ -846,10 +847,12 @@ class Comsol():
                 cout_tmp=np.zeros([self.tp.nt+1,self.tp.nspecies*self.tp.nx]) ##check here, why do we put nt+1?? if we put nt, we need to correct the stationary solver below
                 electrode_flux=np.zeros_like(cout)
                 electrode_flux_tmp=np.zeros_like(cout_tmp)
-                if 'internal' in self.tp.desc_method:
-                    for desc in int_desc_list:
-                        self.tp.all_data[str(desc)][str(int_desc_non)]['system']['cout']=np.zeros([self.tp.nt,self.tp.nspecies*self.tp.nx])
-                        self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux']=np.zeros_like(cout_tmp)
+            if 'internal' in self.tp.desc_method and output=='concentrations':
+                for desc in int_desc_list:
+                    self.tp.all_data[str(desc)][str(int_desc_non)]['system']['cout']=np.zeros_like(cout_tmp) #([self.tp.nt,self.tp.nspecies*self.tp.nx])
+            if 'internal' in self.tp.desc_method and output=='electrode_flux':
+                for desc in int_desc_list:
+                    self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux']=np.zeros_like(cout_tmp)
             #now read in all results
             i=0
             self.tp.logger.info('Reading COMSOL output from'+self.results_folder+'/'+toutput+'.txt')
@@ -864,7 +867,7 @@ class Comsol():
                                 i_sp=(j-1)%(self.tp.nspecies)
                                 i_de=(j-1-i_sp)/(self.tp.nspecies)
                                 if 'internal' in self.tp.desc_method:
-                                    if output=='concentration':
+                                    if output=='concentrations':
                                         self.tp.all_data[str(int_desc_list[i_de])][str(int_desc_non)]['system']['cout'][-2,i_sp*self.tp.nx+i-9]=float(lss)
                                     elif output=='electrode_flux':
                                         self.tp.all_data[str(int_desc_list[i_de])][str(int_desc_non)]['system']['electrode_flux'][-2,i_sp*self.tp.nx+i-9]=float(lss)

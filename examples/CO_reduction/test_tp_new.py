@@ -6,6 +6,12 @@ import sys
 from units import *
 from read_data import read_data
 
+pH_i=6.8
+nobuffer=False #True #False #True #False #True #False #True
+
+use_elreac=True
+if nobuffer:
+    use_elreac=False
 ###########################################################################
 #REACTIONS
 ###########################################################################
@@ -17,18 +23,21 @@ electrolyte_reactions=\
     {
 #    'buffe':            {   'reaction':             'CO2 + H2O <-> H2CO3', 
 #                            'constant':             2.63e-3},                               #KH
-#    'buffer-acid':      {   'reaction':            'CO2 + H2O <-> HCO3- + H+', 
-#                            'constant':             (4.44e-7)*1000.0},                      #K1a (=Kc=K0)
+    'buffer-acid':      {   'reaction':            'CO2 + H2O <-> HCO3- + H+', 
+                            'constant':             (4.44e-7)*1000.0,
+                            'rates':                [3.7e-2,3.7e-2/(4.44e-7*1000.0)]},                      #K1a (=Kc=K0)
     'buffer-base':      {   'reaction':            'CO2 + OH- <-> HCO3-', 
                             'constant':             (4.44e7)/1000.0,                        #K1b (=Kc!=K0, since unit conversion factor is missing)
                             'rates':                [(5.93e3)/1000.0,(5.93e3)/(4.44e7)]},   #"k1f, k1r"
     'buffer-base2':     {   'reaction':            'HCO3- + OH- <-> CO32- + H2O', 
                             'constant':             (4.66e3)/1000.0,
                             'rates':                [(1.0e8)/1000.0,(1.0e8)/(4.66e3)]},     #"k2f,k2r"
-    'buffer2':          {   'reaction':            'CO2 + CO32- + H2O <->  2 HCO3-', 
-                            'constant':             9.52e3}                                 #K3
+#    'buffer2':          {   'reaction':            'CO2 + CO32- + H2O <->  2 HCO3-', 
+#                            'constant':             9.52e3}                                 #K3
+    'self-dissociation of water':            {   'reaction':             'H2O <-> OH- + H+',
+                            'constant':             1e-14,
+                            'rates':                [1.3e8*1e-14,1.3e8]} # from https://en.wikipedia.org/wiki/Self-ionization_of_water
     }
-
 electrode_reactions={
     'C1':   {'reaction': 'CO + 5 H2O + 6 e- -> C1 + 6 OH-'}, #methane
     'C2':   {'reaction': '2 CO + 7 H2O + 8 e- -> C2 + 8 OH-'}} #ethanol
@@ -62,10 +71,10 @@ system=\
     #calculate the electrolyte viscosity. This will be used to rescale the diffusion coefficients
     #according to Einstein-Stokes relation: D_in_electrolyte = D_in_water * mu0/mu
     'epsilon': 78.36,
-   # 'exclude species': ['H+'], #exclude this species from PNP equations
+#    'exclude species': ['CO32-','HCO3-'], #exclude this species from PNP equations
     'migration': True,
     'electrode reactions': True,
-    'electrolyte reactions': True, #False,
+    'electrolyte reactions': use_elreac, #False,
     'phiPZC': 0.0,
     'Stern capacitance': 20 #std: 20
     }
@@ -87,19 +96,43 @@ CO_i = 9.5e-4*system['pressure']*1000.
 #CO32m_i = ((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)-\
 #            (np.sqrt((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)**2\
 #            -4.0*(bic_i)**2)))/2  #initial (CO3)2- bulk concentrations at t=0 [mol/m3]
+
+##1) option: initialize with CO2_i and OHm_i
 ## Initial composition of the bulk electrolyte at t=0
 #HCO3m_i = bic_i-CO32m_i #initial HCO3- bulk concentrations at t=0 [mol/m3]
 #K_i = bic_i #initial K+ bulk concentrations at t=0 [mol/m3]
 #OHm_i = HCO3m_i/electrolyte_reactions['buffer-base']['constant']/CO2_i #initial OH- bulk concentrations at t=0 [mol/m3]
 #pH_i = 14+np.log10(OHm_i/1000.0) #initial pH (in log. arg must be conc in M)
 
-
-pH_i=7.0
+##2) option: initialize with HCO3m_i and OHm_i
+print 'CO2 before',CO2_i
 OHm_i=10**(pH_i-14.)*1000.0
-HCO3m_i=OHm_i*electrolyte_reactions['buffer-base']['constant']*CO2_i
-CO32m_i = electrolyte_reactions['buffer-base2']['constant']**2*OHm_i**2*electrolyte_reactions['buffer2']['constant']*CO2_i
-bic_i = np.sqrt(electrolyte_reactions['buffer2']['constant']*CO2_i*CO32m_i)
-K_i = bic_i
+HCO3m_i=0.1*1000.
+CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
+CO2_i=HCO3m_i/OHm_i/electrolyte_reactions['buffer-base']['constant']
+print 'CO2 after',CO2_i
+
+Hm_i=10**(-pH_i)*1000.0
+
+#HCO3m_i=OHm_i*CO2_i*electrolyte_reactions['buffer-base']['constant']
+#CO32m_i = HCO3m_i*OHm_i*electrolyte_reactions['buffer-base2']['constant'] #electrolyte_reactions['buffer-base2']['constant']**2*OHm_i**2*electrolyte_reactions['buffer2']['constant']*CO2_i
+#bic_i = np.sqrt(electrolyte_reactions['buffer2']['constant']*CO2_i*CO32m_i)
+
+#OHm_i=10**(pH_i-14.)*1000.0
+#HCO3m_i=0.1*1000. #set to 0.1M
+#CO2_i=HCO3m_i/OHm_i/electrolyte_reactions['buffer-base']['constant']
+#CO32m_i = electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
+#CO32m_i = electrolyte_reactions['buffer-base2']['constant']**2*OHm_i**2*electrolyte_reactions['buffer2']['constant']*CO2_i
+#bic_i=np.sqrt(electrolyte_reactions['buffer2']['constant']*CO2_i*CO32m_i)
+
+#HCO3m_i=OHm_i*electrolyte_reactions['buffer-base']['constant']*CO2_i
+#CO32m_i = electrolyte_reactions['buffer-base2']['constant']**2*OHm_i**2*electrolyte_reactions['buffer2']['constant']*CO2_i
+#bic_i = np.sqrt(electrolyte_reactions['buffer2']['constant']*CO2_i*CO32m_i)
+
+if nobuffer:
+    K_i = OHm_i
+else:
+    K_i = HCO3m_i+CO32m_i*2+OHm_i-Hm_i
 
 #print 'new bic_i=',bic_i
 #sys.exit()
@@ -120,27 +153,20 @@ species=\
     {
     'K':                {   'symbol':               'K^+',
                             'name':                 'potassium',
-                            'diffusion':            1.957e-009,
+                            'diffusion':            1.957e-9,
                             'bulk concentration':   K_i},
     'CO2':              {   'symbol':               'CO_2',
                             'name':                 'carbon dioxide',
-                            'diffusion':            1.91e-009,
+                            'diffusion':            1.91e-9,
                             'bulk concentration':   CO2_i},
-    'CO32-':            {   'symbol':               'CO_3^{2-}',
-                            'name':                 'carboxylate',
-                            'diffusion':            9.23e-010,
-                            'bulk concentration':   CO32m_i},
-    'HCO3-':            {   'symbol':               'HCO_3^-',
-                            'name':                 'bicarbonate',
-                            'diffusion':            1.185e-009,
-                            'bulk concentration':   HCO3m_i},
     'OH-':              {   'symbol':               'OH^-',
                             'name':                 'hydroxyl',
-                            'diffusion':            5.273e-009,
+                            'diffusion':            5.273e-9,
                             'bulk concentration':   OHm_i},
-#    'H+':               {   'symbol':               'H^+',
-#                            'name':                 'hydronium',
-#                            'bulk concentration':   10**(-pH_i)},
+    'H+':               {   'symbol':               'H^+',
+                            'name':                 'hydronium',
+                            'diffusion':            9.311e-9,   #CRC handbook, IONIC CONDUCTIVITY AND DIFFUSION AT INFINITE DILUTION
+                            'bulk concentration':   Hm_i},
 #    'H2':               {   'symbol':               'H_2',
 #                            'name':                 'hydrogen',
 #                            'diffusion':            4.50e-009,
@@ -148,15 +174,25 @@ species=\
 #                            'req':                  [1]},
     'CO':               {   'symbol':               'CO',
                             'name':                 'carbon monoxide',
-                            'diffusion':            2.03e-009,
+                            'diffusion':            2.03e-9,
                             'bulk concentration':   CO_i},
     'C1':               {   'symbol':               'CH_4',
                             'name':                 'C1-methane',
-                            'diffusion':            1.49e-009},
+                            'diffusion':            1.49e-9},
     'C2':               {   'symbol':               'C_2H_5OH',
                             'name':                 'C2-ethanol',
-                            'diffusion':            0.84e-009},
+                            'diffusion':            0.84e-9},
     }
+
+if not nobuffer:
+    species['CO32-']={   'symbol':               'CO_3^{2-}',
+                            'name':                 'carboxylate',
+                            'diffusion':            9.23e-010,
+                            'bulk concentration':   CO32m_i}
+    species['HCO3-']={   'symbol':               'HCO_3^-',
+                            'name':                 'bicarbonate',
+                            'diffusion':            1.185e-009,
+                            'bulk concentration':   HCO3m_i}
 ###########################################################################
 
 ###########################################################################
@@ -176,8 +212,8 @@ comsol_params['alpha_CHO']=['0.5','Butler-Volmer Parameter'] #std 0.5
 comsol_params['alpha_CHOH']=['0.5','Butler-Volmer Parameter'] #std 2.0
 comsol_params['alpha_OCCOH']=['0.5','Butler-Volmer Parameter'] #std 0.5
 comsol_params['alpha_OCCO']=['0.5','Butler-Volmer Parameter'] #std 0.5
-comsol_params['n_CHO']=['0','Butler-Volmer Parameter'] #std 0.5
-comsol_params['n_CHOH']=['2','Butler-Volmer Parameter'] #std 2.0
+comsol_params['n_CHO']=['1','Butler-Volmer Parameter'] #std 0.5
+comsol_params['n_CHOH']=['1','Butler-Volmer Parameter'] #std 2.0
 comsol_params['n_OCCOH']=['0','Butler-Volmer Parameter'] #std 0.5
 comsol_params['n_OCCO']=['0','Butler-Volmer Parameter'] #std 0.5
 comsol_params['e0']=['1[C]','electronic charge']
@@ -213,26 +249,42 @@ comsol_params['max_coverage']=['0.44','Maximal coverage with which the Langmuir 
 #            ')\
 #        )'sigma_max=5.0 #smoothness factor for maximum, the larger it is the smoother the function is approximated
 
-comsol_params['OH_min']=['1e-20 [mol/m^3]','Minimal OH- concentration allowed in the evaluation of the rates'] #of the rate coverage with which the Langmuir isotherm will be scaled'] #0.44
+comsol_params['OH_min']=['1e-30 [mol/m^3]','Minimal OH- concentration allowed in the evaluation of the rates'] #of the rate coverage with which the Langmuir isotherm will be scaled'] #0.44
 
 
 comsol_variables={}
 comsol_variables['coverage']=['Kads*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads)*max_coverage','CO Coverage according to Langmuir isotherm']
+#comsol_variables['jCHO']=['rho_act*coverage*A*(max([[OH-]],OH_min)*Lmol)^(alpha_CHO)*'+\
+#                         'exp(-'+\
+#                            '(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phi)*F_const)/RT+alpha_CHO*(7)*log(10)'+\
+#                         ')','rate of CHO']
+#comsol_variables['jCHOH']=['rho_act*coverage*A*(max([[OH-]],OH_min)*Lmol)^(alpha_CHO)*'+\
+#                         'exp(-'+\
+#                            '(Ga_CHOH+(alpha_CHOH+n_CHOH)*(phiM-phi)*F_const)/RT+alpha_CHOH*(7)*log(10)'+\
+#                         ')','rate of CHOH']
+#comsol_variables['jOCCOH']=['rho_act*coverage^2*A*(max([[OH-]],OH_min)*Lmol)^(alpha_CHO)*'+\
+#                        'exp(-'+\
+#                            '(Ga_OCCOH+(alpha_OCCOH+n_OCCOH)*(phiM-phi)*F_const)/RT+alpha_OCCOH*(7)*log(10)'+\
+#                        ')','rate of OCCOH']
+#comsol_variables['jOCCO']=['rho_act*coverage^2*A*(max([[OH-]],OH_min)*Lmol)^(alpha_CHO)*'+\
+#                        'exp(-'+\
+#                            '(Ga_OCCO+(alpha_OCCO+n_OCCO)*(phiM-phi)*F_const)/RT+alpha_OCCO*(7)*log(10)'+\
+#                        ')','rate of OCCO']
 comsol_variables['jCHO']=['rho_act*coverage*A*'+\
-                         'exp(-'+\
-                            '(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phi)*F_const)/RT+alpha_CHO*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+                         'exp('+\
+                            '-(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phi)*F_const)/RT+alpha_CHO*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
                          ')','rate of CHO']
 comsol_variables['jCHOH']=['rho_act*coverage*A*'+\
-                         'exp(-'+\
-                            '(Ga_CHOH+(alpha_CHOH+n_CHOH)*(phiM-phi)*F_const)/RT+alpha_CHOH*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+                         'exp('+\
+                            '-(Ga_CHOH+(alpha_CHOH+n_CHOH)*(phiM-phi)*F_const)/RT+alpha_CHOH*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
                          ')','rate of CHOH']
 comsol_variables['jOCCOH']=['rho_act*coverage^2*A*'+\
-                        'exp(-'+\
-                            '(Ga_OCCOH+(alpha_OCCOH+n_OCCOH)*(phiM-phi)*F_const)/RT+alpha_OCCOH*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+                        'exp('+\
+                            '-(Ga_OCCOH+(alpha_OCCOH+n_OCCOH)*(phiM-phi)*F_const)/RT+alpha_OCCOH*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
                         ')','rate of OCCOH']
 comsol_variables['jOCCO']=['rho_act*coverage^2*A*'+\
-                        'exp(-'+\
-                            '(Ga_OCCO+(alpha_OCCO+n_OCCO)*(phiM-phi)*F_const)/RT+alpha_OCCO*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+                        'exp('+\
+                            '-(Ga_OCCO+(alpha_OCCO+n_OCCO)*(phiM-phi)*F_const)/RT+alpha_OCCO*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
                         ')','rate of OCCO']
 #additional comsol outputs
 #name, equation, unit
@@ -328,7 +380,8 @@ electrode_reactions['C2']['rates']=[C2_rate,'0.0']
 
 boundary_thickness=7.93E-05 #in m
 
-#visc=viscosity(species['HCO3-']['bulk concentration']/10**3), #Pa*s at 25C of KHCO3 solution
+if not nobuffer:
+    visc=viscosity(species['HCO3-']['bulk concentration']/10**3), #Pa*s at 25C of KHCO3 solution
 system['boundary thickness']=boundary_thickness
 #system['electrolyte viscosity']=visc[0]
 
@@ -339,7 +392,7 @@ system['boundary thickness']=boundary_thickness
 potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(0.0,-1.3,14))}
+    descriptors={'phiM':list(np.linspace(0.0,-1.2,130))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
@@ -353,17 +406,29 @@ for potential in potentials:
     ###########################################################################
     #SETUP AND RUN
     ###########################################################################
-    tp=Transport(
-        species=species,
-        electrode_reactions=electrode_reactions,
-        electrolyte_reactions=electrolyte_reactions,
-        system=system,
-        pb_bound=pb_bound,
-        comsol_params=comsol_params,
-        comsol_variables=comsol_variables,
-        comsol_outputs=comsol_outputs,
-        descriptors=descriptors,
-        nx=200)
+    if nobuffer:
+        tp=Transport(
+            species=species,
+            electrode_reactions=electrode_reactions,
+            system=system,
+            pb_bound=pb_bound,
+            comsol_params=comsol_params,
+            comsol_variables=comsol_variables,
+            comsol_outputs=comsol_outputs,
+            descriptors=descriptors,
+            nx=200)
+    else:
+        tp=Transport(
+            species=species,
+            electrode_reactions=electrode_reactions,
+            electrolyte_reactions=electrolyte_reactions,
+            system=system,
+            pb_bound=pb_bound,
+            comsol_params=comsol_params,
+            comsol_variables=comsol_variables,
+            comsol_outputs=comsol_outputs,
+            descriptors=descriptors,
+            nx=200)
     
     
     tp.set_calculator('comsol') #odespy') #--bdf')
@@ -375,9 +440,9 @@ for potential in potentials:
     c.run() #1.0)
     tp.save() #saves all data to pickle files to enable restart or plotting later
     
-    p=Plot(transport=tp)
-    p.plot(large_plots=['concentrations_reaction','desc_current_density'],\
-            small_plots=['potential','concentrations_electrolyte','current_density','pH'])
+#    p=Plot(transport=tp)
+#    p.plot(large_plots=['concentrations_reaction','desc_current_density'],\
+#            small_plots=['potential','concentrations_electrolyte','current_density','pH'])
     #p.plot(large_plots=['electrode flux'])
     #results.append(potential,tp.species['CO2']['flux'])
 #plt.plot(results,'-o')
