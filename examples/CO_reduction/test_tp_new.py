@@ -6,8 +6,8 @@ import sys
 from units import *
 from read_data import read_data
 
-pH_i=6.8
-nobuffer=False #True #False #True #False #True #False #True
+pH_i=13.0
+nobuffer=True #False #True #False #True #False #True #False #True #False #True #False #True #False #True #False #True
 
 use_elreac=True
 if nobuffer:
@@ -24,14 +24,23 @@ electrolyte_reactions=\
 #    'buffe':            {   'reaction':             'CO2 + H2O <-> H2CO3', 
 #                            'constant':             2.63e-3},                               #KH
     'buffer-acid':      {   'reaction':            'CO2 + H2O <-> HCO3- + H+', 
-                            'constant':             (4.44e-7)*1000.0,
-                            'rates':                [3.7e-2,3.7e-2/(4.44e-7*1000.0)]},                      #K1a (=Kc=K0)
+#                            'constant':             (4.44e-7)*1000.0,
+    #                        'rates':                [3.7e-2,3.7e-2/(4.44e-7*1000.0)]},                      #K1a (=Kc=K0)
+                            'constant':             0.00138951310, #Schulz2006
+                             'rates':               [3.71e-2,2.67e4/1000.]}, #from Schulz2006
+    'buffer-acid2':     {   'reaction':             'HCO3- <-> CO32- + H+',
+                            'constant':             1.1888e-06, #Schulz2006
+                            'rates':                [59.44,5e10/1000.]}, #from Schulz2006
     'buffer-base':      {   'reaction':            'CO2 + OH- <-> HCO3-', 
-                            'constant':             (4.44e7)/1000.0,                        #K1b (=Kc!=K0, since unit conversion factor is missing)
-                            'rates':                [(5.93e3)/1000.0,(5.93e3)/(4.44e7)]},   #"k1f, k1r"
+#                            'constant':             (4.44e7)/1000.0,                        #K1b (=Kc!=K0, since unit conversion factor is missing)
+#                            'rates':                [(5.93e3)/1000.0,(5.93e3)/(4.44e7)]},   #"k1f, k1r"
+                            'constant':             22966.014418, #Schulz2006
+                            'rates':                [2.23e3/1000.,9.71e-5]}, #Schulz2006
     'buffer-base2':     {   'reaction':            'HCO3- + OH- <-> CO32- + H2O', 
-                            'constant':             (4.66e3)/1000.0,
-                            'rates':                [(1.0e8)/1000.0,(1.0e8)/(4.66e3)]},     #"k2f,k2r"
+#                            'constant':             (4.66e3)/1000.0,
+#                            'rates':                [(1.0e8)/1000.0,(1.0e8)/(4.66e3)]},     #"k2f,k2r"
+                            'constant':             19.60784, #Schulz2006
+                            'rates':                [6e9/1000.,3.06e5]}, #Schulz2006
 #    'buffer2':          {   'reaction':            'CO2 + CO32- + H2O <->  2 HCO3-', 
 #                            'constant':             9.52e3}                                 #K3
     'self-dissociation of water':            {   'reaction':             'H2O <-> OH- + H+',
@@ -72,7 +81,7 @@ system=\
     #according to Einstein-Stokes relation: D_in_electrolyte = D_in_water * mu0/mu
     'epsilon': 78.36,
 #    'exclude species': ['CO32-','HCO3-'], #exclude this species from PNP equations
-    'migration': True,
+    'migration': False, #True,
     'electrode reactions': True,
     'electrolyte reactions': use_elreac, #False,
     'phiPZC': 0.0,
@@ -97,20 +106,24 @@ CO_i = 9.5e-4*system['pressure']*1000.
 #            (np.sqrt((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)**2\
 #            -4.0*(bic_i)**2)))/2  #initial (CO3)2- bulk concentrations at t=0 [mol/m3]
 
-##1) option: initialize with CO2_i and OHm_i
 ## Initial composition of the bulk electrolyte at t=0
 #HCO3m_i = bic_i-CO32m_i #initial HCO3- bulk concentrations at t=0 [mol/m3]
 #K_i = bic_i #initial K+ bulk concentrations at t=0 [mol/m3]
 #OHm_i = HCO3m_i/electrolyte_reactions['buffer-base']['constant']/CO2_i #initial OH- bulk concentrations at t=0 [mol/m3]
 #pH_i = 14+np.log10(OHm_i/1000.0) #initial pH (in log. arg must be conc in M)
 
-##2) option: initialize with HCO3m_i and OHm_i
-print 'CO2 before',CO2_i
+##1) option: initialize with CO2_i and OHm_i
 OHm_i=10**(pH_i-14.)*1000.0
-HCO3m_i=0.1*1000.
+HCO3m_i=electrolyte_reactions['buffer-base']['constant']*CO2_i*OHm_i
 CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
-CO2_i=HCO3m_i/OHm_i/electrolyte_reactions['buffer-base']['constant']
-print 'CO2 after',CO2_i
+print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i
+##2) option: initialize with HCO3m_i and OHm_i
+#print 'CO2 before',CO2_i
+#OHm_i=10**(pH_i-14.)*1000.0
+#HCO3m_i=0.1*1000.
+#CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
+#CO2_i=HCO3m_i/OHm_i/electrolyte_reactions['buffer-base']['constant']
+#print 'CO2 after',CO2_i
 
 Hm_i=10**(-pH_i)*1000.0
 
@@ -208,8 +221,8 @@ comsol_params['Ga_CHOH']=[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Ener
 comsol_params['Ga_OCCO']=[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy']
 comsol_params['Ga_OCCOH']=[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy']
 #comsol_params['eVToJmol']=[str(eVTokcal*1000*calToJ)+'[J/eV/mol]','eV to J/mol Conversion factor']
-comsol_params['alpha_CHO']=['0.5','Butler-Volmer Parameter'] #std 0.5
-comsol_params['alpha_CHOH']=['0.5','Butler-Volmer Parameter'] #std 2.0
+comsol_params['alpha_CHO']=['0.8','Butler-Volmer Parameter'] #std 0.5
+comsol_params['alpha_CHOH']=['0.8','Butler-Volmer Parameter'] #std 2.0
 comsol_params['alpha_OCCOH']=['0.5','Butler-Volmer Parameter'] #std 0.5
 comsol_params['alpha_OCCO']=['0.5','Butler-Volmer Parameter'] #std 0.5
 comsol_params['n_CHO']=['1','Butler-Volmer Parameter'] #std 0.5
