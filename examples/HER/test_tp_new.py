@@ -5,6 +5,12 @@ import numpy as np
 import sys
 from units import *
 
+pH_i=13.0
+nobuffer=True #False #True #False #True #False #True #False #True #False #True #False #True #False #True #False #True #False #True
+
+use_elreac=True
+if nobuffer:
+    use_elreac=False
 ###########################################################################
 #REACTIONS
 ###########################################################################
@@ -12,46 +18,59 @@ from units import *
 #constant:              (dimensionless (mol/m^3))
 #rates:                 (forward and backward rates)
 
-
-
 electrolyte_reactions=\
     {
-    'buffer':           {   'reactants':            [['CO2','H2O'],['H2CO3']],
-                            'constant':             2.63e-3},                               #KH
-    'buffer-acid':      {   'reactants':            [['CO2','H2O'],['HCO3-','H+']],
-                            'constant':             (4.44e-7)*1000.0},                      #K1a
-    'buffer-base':      {   'reactants':            [['CO2','OH-'],['HCO3-']],
-                            'constant':             (4.44e7)/1000.0,                        #K1b
-                            'rates':                [(5.93e3)/1000.0,(5.93e3)/(4.44e7)]},   #"k1f, k1r"
-    'buffer-base2':     {   'reactants':            [['HCO3-','OH-'],['CO32-','H2O']],
-                            'constant':             (4.66e3)/1000.0,
-                            'rates':                [(1.0e8)/1000.0,(1.0e8)/(4.66e3)]},     #"k2f,k2r"
-    'buffer2':          {   'reactants':            [['CO2','CO32-','H2O'],['HCO3-','HCO3-']],
-                            'constant':             9.52e3}                                 #K3
+#    'buffe':            {   'reaction':             'CO2 + H2O <-> H2CO3', 
+#                            'constant':             2.63e-3},                               #KH
+    'buffer-acid':      {   'reaction':            'CO2 + H2O <-> HCO3- + H+', 
+#                            'constant':             (4.44e-7)*1000.0,
+    #                        'rates':                [3.7e-2,3.7e-2/(4.44e-7*1000.0)]},                      #K1a (=Kc=K0)
+                            'constant':             0.00138951310, #Schulz2006
+                             'rates':               [3.71e-2,2.67e4/1000.]}, #from Schulz2006
+    'buffer-acid2':     {   'reaction':             'HCO3- <-> CO32- + H+',
+                            'constant':             1.1888e-06, #Schulz2006
+                            'rates':                [59.44,5e10/1000.]}, #from Schulz2006
+    'buffer-base':      {   'reaction':            'CO2 + OH- <-> HCO3-', 
+#                            'constant':             (4.44e7)/1000.0,                        #K1b (=Kc!=K0, since unit conversion factor is missing)
+#                            'rates':                [(5.93e3)/1000.0,(5.93e3)/(4.44e7)]},   #"k1f, k1r"
+                            'constant':             22966.014418, #Schulz2006
+                            'rates':                [2.23e3/1000.,9.71e-5]}, #Schulz2006
+    'buffer-base2':     {   'reaction':            'HCO3- + OH- <-> CO32- + H2O', 
+#                            'constant':             (4.66e3)/1000.0,
+#                            'rates':                [(1.0e8)/1000.0,(1.0e8)/(4.66e3)]},     #"k2f,k2r"
+                            'constant':             19.60784, #Schulz2006
+                            'rates':                [6e9/1000.,3.06e5]}, #Schulz2006
+#    'buffer2':          {   'reaction':            'CO2 + CO32- + H2O <->  2 HCO3-', 
+#                            'constant':             9.52e3}                                 #K3
+    'self-dissociation of water':            {   'reaction':             'H2O <-> OH- + H+',
+                            'constant':             1e-14,
+                            'rates':                [1.3e8*1e-14,1.3e8]} # from https://en.wikipedia.org/wiki/Self-ionization_of_water
     }
+electrode_reactions={
+    'H2-1':   {'reaction': '2 H2O + 2 e- -> H2 + 2 OH-'},
+    'H2-2':   {'reaction': '2 H+ + 2 e- -> H2'}}
 
-electrode_reactions    
 ###########################################################################
-
 
 ###########################################################################
 #THERMODYNAMIC VARIABLES
 ###########################################################################
 system=\
     {
-    'educts': ['H2'],#,'OH'],  #the educt which is converted to products
-    'products': [['OH-']], #,'C2']],#,['H2']],
     'temperature':  298,     #K
     'pressure':     1.,      #atm
     'water viscosity':  8.90e-004, #Pa*s at 25C
     #calculate the electrolyte viscosity. This will be used to rescale the diffusion coefficients
     #according to Einstein-Stokes relation: D_in_electrolyte = D_in_water * mu0/mu
     'epsilon': 78.36,
-   # 'exclude species': ['H+'], #exclude this species from PNP equations
-    'migration': False,
+#    'exclude species': ['CO32-','HCO3-'], #exclude this species from PNP equations
+    'migration': True,
+    'electrode reactions': True,
+    'electrolyte reactions': use_elreac, #False,
     'phiPZC': 0.0,
-    'Stern capacitance': 200
+    'Stern capacitance': 20 #std: 20
     }
+
 ###########################################################################
 
 ###########################################################################

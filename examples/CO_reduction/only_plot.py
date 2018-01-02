@@ -23,6 +23,8 @@ def plot_leis_data():
             color='b'
         else:
             color='orange'
+        if species[i] not in ['CH4','EtOH']:
+            continue
         plt.semilogy(datap[:,0],datap[:,1],'--o',color=color,label=species[i])
 
 def plot_kanans_data():
@@ -36,7 +38,7 @@ def plot_kanans_data():
             if yy!=0.0:
                 datap.append([xx,-yy])
         datap=np.array(datap)
-        if species[i] not in ['CH2CH2','CH4','EtOH','n-PrOH','Acetate']:
+        if species[i] not in ['CH4','EtOH']: #['CH2CH2','CH4','EtOH','n-PrOH','Acetate']:
             continue
         if species[i] in ['CH4','MeOH','CH2OO-']:
             color='b'
@@ -89,7 +91,7 @@ for f in folders:
         data=np.array(data)
 #        data=np.sort(a.view(a.dtype.str+','+a.dtype.str), order=['f1'], axis=0).view(np.float32)
         data.view(data.dtype.str+','+data.dtype.str).sort(order=['f0'], axis=0)
-        plt.semilogy(data[:,0],data[:,1],style,color=color,label=f.replace('calc_std_settings','std')+', '+sp)
+        plt.semilogy(data[:,0],data[:,1],style,color=color) #,label=f.replace('calc_std_settings','std')+', '+sp)
         #plt.semilogy(data[:,0],data[:,1],'o')
     symbols=['o','x','d','D']
     for isp,sp in enumerate([o[1] for o in tp.comsol_outputs]):

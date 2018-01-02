@@ -6,8 +6,8 @@ import sys
 from units import *
 from read_data import read_data
 
-pH_i=13.0
-nobuffer=True #False #True #False #True #False #True #False #True #False #True #False #True #False #True #False #True
+pH_i=6.8
+nobuffer=False #True #False #True #False #True #False #True #False #True #False #True #False #True #False #True #False #True #False #True #False #True
 
 use_elreac=True
 if nobuffer:
@@ -81,10 +81,10 @@ system=\
     #according to Einstein-Stokes relation: D_in_electrolyte = D_in_water * mu0/mu
     'epsilon': 78.36,
 #    'exclude species': ['CO32-','HCO3-'], #exclude this species from PNP equations
-    'migration': False, #True,
+    'migration': True,
     'electrode reactions': True,
     'electrolyte reactions': use_elreac, #False,
-    'phiPZC': 0.0,
+    'phiPZC': -0.75, #+unit_R*298.14/unit_F*pH_i*np.log(10.), #value at SHE: https://www.sciencedirect.com/science/article/pii/S002207280300799X
     'Stern capacitance': 20 #std: 20
     }
 ###########################################################################
