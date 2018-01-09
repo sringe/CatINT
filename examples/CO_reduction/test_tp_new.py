@@ -7,7 +7,12 @@ from units import *
 from read_data import read_data
 
 pH_i=6.8
-nobuffer=False #True #False #True #False #True #False #True #False #True #False #True #False #True #False #True #False #True #False #True #False #True
+nobuffer=False #True #False #True #False #True 
+
+educt='CO2' #CO2 or CO
+
+nx=200 #200
+nphi=520 #260 #130
 
 use_elreac=True
 if nobuffer:
@@ -19,34 +24,51 @@ if nobuffer:
 #constant:              (dimensionless (mol/m^3))
 #rates:                 (forward and backward rates)
 
+#all constants & rates at room temperature
+#Millero1997: http://www-naweb.iaea.org/napc/ih/documents/global_cycle/vol%20I/cht_i_09.pdf
 electrolyte_reactions=\
     {
-#    'buffe':            {   'reaction':             'CO2 + H2O <-> H2CO3', 
-#                            'constant':             2.63e-3},                               #KH
+    ##############################################################################################################
     'buffer-acid':      {   'reaction':            'CO2 + H2O <-> HCO3- + H+', 
-#                            'constant':             (4.44e-7)*1000.0,
-    #                        'rates':                [3.7e-2,3.7e-2/(4.44e-7*1000.0)]},                      #K1a (=Kc=K0)
-                            'constant':             0.00138951310, #Schulz2006
-                             'rates':               [3.71e-2,2.67e4/1000.]}, #from Schulz2006
+                            #PURE WATER, Emerson
+                            'constant':             0.000445,                               #Gupta:  0.000444 
+                             'rates':               [3.7e-2,8.3333]},                       #
+                            #salinity S=35, Schulz2006
+#                             'constant':             0.00138951310,
+#                             'rates':               [3.71e-2,26.7]},
+    ##############################################################################################################
     'buffer-acid2':     {   'reaction':             'HCO3- <-> CO32- + H+',
-                            'constant':             1.1888e-06, #Schulz2006
-                            'rates':                [59.44,5e10/1000.]}, #from Schulz2006
-    'buffer-base':      {   'reaction':            'CO2 + OH- <-> HCO3-', 
-#                            'constant':             (4.44e7)/1000.0,                        #K1b (=Kc!=K0, since unit conversion factor is missing)
-#                            'rates':                [(5.93e3)/1000.0,(5.93e3)/(4.44e7)]},   #"k1f, k1r"
-                            'constant':             22966.014418, #Schulz2006
-                            'rates':                [2.23e3/1000.,9.71e-5]}, #Schulz2006
+                            #PURE WATER, Millero1997
+                            #'constant':              4.79e-8,
+                            'constant':             3.5317025629468759e-07,              #https://www.iaea.org/ocean-acidification/act7/Guide%20best%20practices%20low%20res.pdf
+                            'rates':                [59.44,1.68304093e8]},                  #assuming Schulz2006 for hin-reactio !!!!!!!NOT SALINITY CORRECTED!!!!!!!
+##                            'rates':                [59.44,12.409e8]},                  #assuming Schulz2006 for hin-reaction !!!!!!!NOT SALINITY CORRECTED!!!!!!!
+                            #salinity S=35, Schulz2006
+#                            'constant':             1.1888e-06,                            #Emerson: 1.0715e-6
+#                            'rates':                [59.44,5e7]},                          
+    ##############################################################################################################
+    'buffer-base':      {   'reaction':            'CO2 + OH- <-> HCO3-',
+                            #PURE WATER, Emerson
+                            'constant':             43750.0,                                #Gupta:  44400.0 
+                            'rates':                [7.0,16e-5]},                           #Gupta:  [5.93,13.4e-5]
+                            #salinity S=35, Schulz2006
+#                             'constant':             22966.014418, #Schulz2006, m^3/mol
+#                             'rates':                [2.23,9.71e-5]}, #Schulz2006
+    ##############################################################################################################
     'buffer-base2':     {   'reaction':            'HCO3- + OH- <-> CO32- + H2O', 
-#                            'constant':             (4.66e3)/1000.0,
-#                            'rates':                [(1.0e8)/1000.0,(1.0e8)/(4.66e3)]},     #"k2f,k2r"
-                            'constant':             19.60784, #Schulz2006
-                            'rates':                [6e9/1000.,3.06e5]}, #Schulz2006
-#    'buffer2':          {   'reaction':            'CO2 + CO32- + H2O <->  2 HCO3-', 
-#                            'constant':             9.52e3}                                 #K3
+                            #PURE WATER ???? Gupta
+                            'constant':              4.66,
+                            'rates':                [1.0e5,21459.2274]},
+                            #salinity S=35, Schulz2006
+#                             'constant':             19.60784, #Schulz2006, m^3/mol
+#                             'rates':                [6e6,306000]}, #Schulz2006
+    ##############################################################################################################
     'self-dissociation of water':            {   'reaction':             'H2O <-> OH- + H+',
-                            'constant':             1e-14,
-                            'rates':                [1.3e8*1e-14,1.3e8]} # from https://en.wikipedia.org/wiki/Self-ionization_of_water
+                            'constant':             1e-8, #(mol/m^3)^2
+                            'rates':                [2.4e-5*1000.,2.4e-5/1e-14/1000.]} #Singh
+    ##############################################################################################################
     }
+
 electrode_reactions={
     'C1':   {'reaction': 'CO + 5 H2O + 6 e- -> C1 + 6 OH-'}, #methane
     'C2':   {'reaction': '2 CO + 7 H2O + 8 e- -> C2 + 8 OH-'}} #ethanol
@@ -84,7 +106,7 @@ system=\
     'migration': True,
     'electrode reactions': True,
     'electrolyte reactions': use_elreac, #False,
-    'phiPZC': -0.75, #+unit_R*298.14/unit_F*pH_i*np.log(10.), #value at SHE: https://www.sciencedirect.com/science/article/pii/S002207280300799X
+    'phiPZC': -0.07, #+unit_R*298.14/unit_F*pH_i*np.log(10.), #value at SHE: https://www.sciencedirect.com/science/article/pii/S002207280300799X
     'Stern capacitance': 20 #std: 20
     }
 ###########################################################################
@@ -114,16 +136,18 @@ CO_i = 9.5e-4*system['pressure']*1000.
 
 ##1) option: initialize with CO2_i and OHm_i
 OHm_i=10**(pH_i-14.)*1000.0
-HCO3m_i=electrolyte_reactions['buffer-base']['constant']*CO2_i*OHm_i
-CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
-print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i
+#HCO3m_i=electrolyte_reactions['buffer-base']['constant']*CO2_i*OHm_i
+#CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
+#print 'HCO3m_i OHm_i CO2_i CO32m_i'
+#print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
 ##2) option: initialize with HCO3m_i and OHm_i
 #print 'CO2 before',CO2_i
-#OHm_i=10**(pH_i-14.)*1000.0
-#HCO3m_i=0.1*1000.
-#CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
-#CO2_i=HCO3m_i/OHm_i/electrolyte_reactions['buffer-base']['constant']
-#print 'CO2 after',CO2_i
+OHm_i=10**(pH_i-14.)*1000.0
+HCO3m_i=0.1*1000.
+CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
+CO2_i=HCO3m_i/OHm_i/electrolyte_reactions['buffer-base']['constant']
+print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
+#sys.exit()
 
 Hm_i=10**(-pH_i)*1000.0
 
@@ -143,7 +167,7 @@ Hm_i=10**(-pH_i)*1000.0
 #bic_i = np.sqrt(electrolyte_reactions['buffer2']['constant']*CO2_i*CO32m_i)
 
 if nobuffer:
-    K_i = OHm_i
+    K_i = OHm_i #+0.1/1000.
 else:
     K_i = HCO3m_i+CO32m_i*2+OHm_i-Hm_i
 
@@ -206,6 +230,13 @@ if not nobuffer:
                             'name':                 'bicarbonate',
                             'diffusion':            1.185e-009,
                             'bulk concentration':   HCO3m_i}
+
+#else:
+#    species['Cl-']={    'symbol':               'Cl^-',
+#                        'name':                 'chlorine',
+#                        'diffusion':            1.185e-009,
+#                        'bulk concentration':   0.1/1000.}
+    
 ###########################################################################
 
 ###########################################################################
@@ -217,12 +248,12 @@ comsol_params={}
 comsol_params['A']=['1.e13[1/s]','Exponential prefactor']
 #comsol_params['A2']=['1.e13[1/s]','Exponential prefactor']
 comsol_params['Ga_CHO']=[str(1.11746219*unit_F)+'[J/mol]','CHO Activation Energy']
-comsol_params['Ga_CHOH']=[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Energy']
+comsol_params['Ga_CHOH']=[str(1.8*unit_F)+'[J/mol]','CHOH Activation Energy'] #[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Energy']
 comsol_params['Ga_OCCO']=[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy']
-comsol_params['Ga_OCCOH']=[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy']
+comsol_params['Ga_OCCOH']=[str(1.15*unit_F)+'[J/mol]','OCCOH Activation Energy'] #[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy']
 #comsol_params['eVToJmol']=[str(eVTokcal*1000*calToJ)+'[J/eV/mol]','eV to J/mol Conversion factor']
-comsol_params['alpha_CHO']=['0.8','Butler-Volmer Parameter'] #std 0.5
-comsol_params['alpha_CHOH']=['0.8','Butler-Volmer Parameter'] #std 2.0
+comsol_params['alpha_CHO']=['0.2','Butler-Volmer Parameter'] #std 0.5
+comsol_params['alpha_CHOH']=['0.2','Butler-Volmer Parameter'] #std 2.0
 comsol_params['alpha_OCCOH']=['0.5','Butler-Volmer Parameter'] #std 0.5
 comsol_params['alpha_OCCO']=['0.5','Butler-Volmer Parameter'] #std 0.5
 comsol_params['n_CHO']=['1','Butler-Volmer Parameter'] #std 0.5
@@ -236,9 +267,11 @@ comsol_params['Lmol']=['1[l/mol]','conversion factor']
 #here: 3x3 Cu211 cell as example. area=6.363x7.794*1e-20, active sites=3 (step top sites, 1.004495558139274e-05), 9 (all top sites, 3.013486674417822e-05)
 comsol_params['rho_act']=['1.004495558139274e-05[mol/m^2]','Density of Active Sites'] #from Singh paper: 7.04e-6
 comsol_params['Ga_CO_ads']=[str(-0.3*unit_F)+'[J/mol]','Adsorption barrier for CO on Cu211']
-comsol_params['Kads']=['exp(-Ga_CO_ads/RT)','Equilibrium constant for CO adsorption']
+comsol_params['Ga_CO2_ads']=[str(-0.1*unit_F)+'[J/mol]','Adsorption barrier for CO2 on Cu211'] #https://smartech.gatech.edu/bitstream/handle/1853/43652/fergusson_alexander_i_201205_mast.pdf
+comsol_params['Kads_CO']=['exp(-Ga_CO_ads/RT)','Equilibrium constant for CO adsorption']
+comsol_params['Kads_CO2']=['exp(-Ga_CO2_ads/RT)','Equilibrium constant for CO adsorption']
 comsol_params['max_coverage']=['0.44','Maximal coverage with which the Langmuir isotherm will be scaled'] #0.44
-
+comsol_params['SA']=['1','Surface Area Enhancement Factor']
 ###########################################################################
 #RATE EQUATIONS/FLUXES
 ###########################################################################
@@ -262,11 +295,20 @@ comsol_params['max_coverage']=['0.44','Maximal coverage with which the Langmuir 
 #            ')\
 #        )'sigma_max=5.0 #smoothness factor for maximum, the larger it is the smoother the function is approximated
 
+
 comsol_params['OH_min']=['1e-30 [mol/m^3]','Minimal OH- concentration allowed in the evaluation of the rates'] #of the rate coverage with which the Langmuir isotherm will be scaled'] #0.44
 
 
 comsol_variables={}
-comsol_variables['coverage']=['Kads*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads)*max_coverage','CO Coverage according to Langmuir isotherm']
+
+if educt=='CO2':
+    comsol_variables['coverage']=['Kads_CO2*[[CO2]]*Lmol/(1.+[[CO2]]*Lmol*Kads_CO2)*max_coverage','CO2 Coverage according to Langmuir isotherm = CO coverage (assuming no barrier between the states).']
+elif educt=='CO':
+    comsol_variables['coverage']=['Kads_CO*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads_CO)*max_coverage','CO Coverage according to Langmuir isotherm']
+
+
+
+
 #comsol_variables['jCHO']=['rho_act*coverage*A*(max([[OH-]],OH_min)*Lmol)^(alpha_CHO)*'+\
 #                         'exp(-'+\
 #                            '(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phi)*F_const)/RT+alpha_CHO*(7)*log(10)'+\
@@ -283,19 +325,19 @@ comsol_variables['coverage']=['Kads*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads)*max_covera
 #                        'exp(-'+\
 #                            '(Ga_OCCO+(alpha_OCCO+n_OCCO)*(phiM-phi)*F_const)/RT+alpha_OCCO*(7)*log(10)'+\
 #                        ')','rate of OCCO']
-comsol_variables['jCHO']=['rho_act*coverage*A*'+\
+comsol_variables['jCHO']=['SA*rho_act*coverage*A*'+\
                          'exp('+\
                             '-(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phi)*F_const)/RT+alpha_CHO*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
                          ')','rate of CHO']
-comsol_variables['jCHOH']=['rho_act*coverage*A*'+\
+comsol_variables['jCHOH']=['SA*rho_act*coverage*A*'+\
                          'exp('+\
                             '-(Ga_CHOH+(alpha_CHOH+n_CHOH)*(phiM-phi)*F_const)/RT+alpha_CHOH*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
                          ')','rate of CHOH']
-comsol_variables['jOCCOH']=['rho_act*coverage^2*A*'+\
+comsol_variables['jOCCOH']=['SA*rho_act*coverage^2*A*'+\
                         'exp('+\
                             '-(Ga_OCCOH+(alpha_OCCOH+n_OCCOH)*(phiM-phi)*F_const)/RT+alpha_OCCOH*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
                         ')','rate of OCCOH']
-comsol_variables['jOCCO']=['rho_act*coverage^2*A*'+\
+comsol_variables['jOCCO']=['SA*rho_act*coverage^2*A*'+\
                         'exp('+\
                             '-(Ga_OCCO+(alpha_OCCO+n_OCCO)*(phiM-phi)*F_const)/RT+alpha_OCCO*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
                         ')','rate of OCCO']
@@ -305,7 +347,8 @@ comsol_outputs=[\
         ['jCHO','jCHO','mol/m^2/s'],\
         ['jCHOH','jCHOH','mol/m^2/s'],\
         ['jOCCOH','jOCCOH','mol/m^2/s'],\
-        ['jOCCO','jOCCO','mol/m^2/s']] #last one in list is the name of the file, first one is variable name
+        ['jOCCO','jOCCO','mol/m^2/s'],\
+        ['coverage','coverage','']] #last one in list is the name of the file, first one is variable name
 
 method=0 #method2 with stationary solver only working one, so far...
 
@@ -405,7 +448,7 @@ system['boundary thickness']=boundary_thickness
 potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(0.0,-1.2,130))}
+    descriptors={'phiM':list(np.linspace(0.0,-1.2,nphi))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
@@ -429,7 +472,7 @@ for potential in potentials:
             comsol_variables=comsol_variables,
             comsol_outputs=comsol_outputs,
             descriptors=descriptors,
-            nx=200)
+            nx=nx)
     else:
         tp=Transport(
             species=species,
@@ -441,7 +484,7 @@ for potential in potentials:
             comsol_variables=comsol_variables,
             comsol_outputs=comsol_outputs,
             descriptors=descriptors,
-            nx=200)
+            nx=nx)
     
     
     tp.set_calculator('comsol') #odespy') #--bdf')

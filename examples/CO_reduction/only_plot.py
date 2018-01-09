@@ -7,6 +7,23 @@ from catint.io import read_all
 from itertools import cycle
 import sys
 from units import *
+import re
+
+SA=1
+
+def plot_leis_high_surface_data():
+    data=[]
+    for line in open('data/COR_high_surface.txt'):
+        if line.startswith('#'):
+            header=line.split()
+        else:
+            data.append(line.split())
+            nmol=len(line.split())
+    data=np.array(data)
+    for i in range(nmol):
+        if header[i]=='etol':
+            print data[:,i]
+            plt.semilogy(data[:,0],[float(d)/SA for d in data[:,i]],'--o',color='red',label=header[i])
 
 def plot_leis_data():
     data=np.loadtxt('data/CO2R_lei.txt')
@@ -70,16 +87,30 @@ def plot_xinyans_equation():
     plt.semilogy(voltage, [C1_rate(v, CO_cvg) for v in voltage], '-', color='b', label = 'C1_rate')
     plt.semilogy(voltage, [C2_rate(v, CO_cvg) for v in voltage], '-', color='orange', label = 'C2_rate')
 
-colors=cycle(['orange','b']) #,'k','r','y'])
+colors=cycle(['orange','lightblue','r','blue','darkred','black']) #,'k','r','y'])
 #colors=cycle(['orange','b','k','r','y'])
-styles=cycle(['-','--','-.',':','o','d','x'])
+styles=cycle(['-','--']) #,'-.',':','o','d','x'])
 
 #folders=glob('calc_std_settings*') #obj') #calc_std*')
 folders=sys.argv[1:] #glob('test') #calc_std_settings*') #obj') #calc_std*')
 tp=Transport()
-
+oldlabel=''
 for f in folders:
-    style=next(styles)
+    print f
+    pH=re.findall('pH(\d+)',f)
+    if len(pH)>0:
+        newlabel=re.findall('pH(\d+)',f)[0]
+    else:
+        newlabel='none'
+    print newlabel
+    if newlabel!=oldlabel:
+        style=next(styles)
+#    if newlabel=='6.8':
+#        style=styles[0]
+#    else: #if newlabel=='13.0':
+#        style=styles[1]
+    oldlabel=newlabel
+#    style=next(styles)
 #    p=Plot(transport=tp,init_from_file='calc_std_settings')
     read_all(tp,f,only=['electrode_reactions','species','comsol_outputs','comsol_outputs_data']) #system')
     for sp in tp.electrode_reactions:
@@ -89,12 +120,17 @@ for f in folders:
         for v1,v2 in jout:
             data.append([float(v1),jout[(v1,v2)]])
         data=np.array(data)
+        if 'CD' in f:
+            data[:,1]=data[:,1]/SA
 #        data=np.sort(a.view(a.dtype.str+','+a.dtype.str), order=['f1'], axis=0).view(np.float32)
         data.view(data.dtype.str+','+data.dtype.str).sort(order=['f0'], axis=0)
+#        print 'data',f,sp,data[0,1]
         plt.semilogy(data[:,0],data[:,1],style,color=color) #,label=f.replace('calc_std_settings','std')+', '+sp)
         #plt.semilogy(data[:,0],data[:,1],'o')
     symbols=['o','x','d','D']
-    for isp,sp in enumerate([o[1] for o in tp.comsol_outputs]):
+    isp=-1
+    for sp in [o[1] for o in tp.comsol_outputs if o[1] != 'coverage']:
+        isp+=1
         symbol=symbols[isp]
         jout=tp.comsol_outputs_data[sp]
         data=[]
@@ -108,12 +144,13 @@ for f in folders:
         else:
             nel=8
             nc=2
-        #plt.semilogy(data[:,0],data[:,1]*nel*unit_F/10,symbol,color=color,label=f.replace('calc_std_settings','std')+', '+sp)
+#        plt.semilogy(data[:,0],data[:,1]*nel*unit_F/10,symbol,color=color,label=f.replace('calc_std_settings','std')+', '+sp)
 plt.ylim([1e-8,5e2])
 plt.xlim([-1.03,0.0])
 plt.xlabel('Voltage vs RHE (V)')
 plt.ylabel(r'$j$ (mA/cm$^2$)')
-plot_leis_data()
+#plot_leis_data()
+#plot_leis_high_surface_data()
 plot_kanans_data()
 #plot_xinyans_equation()
 plt.legend()

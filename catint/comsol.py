@@ -64,7 +64,7 @@ class Comsol():
                 for pars in studies[study][method]:
                     self.tp.logger.info('Parameter set passed to COMSOL is {}'.format(studies[study][method]))
         if 'cont' in self.tp.desc_method:
-            self.tp.logger.info('Solutions will be updated from calculations with last parameter set')
+            self.tp.logger.info('Solutions will be initialized with solutions of previous parameter set')
         else:
             self.tp.logger.info('Solutions will be reinitialized for each parameter set')
 #        self.write_parameter_file()
@@ -95,7 +95,7 @@ class Comsol():
         else:
             potential_r=0.0
         lines=[
-            'L_cell '+str(max(self.tp.xmesh))+' Cell length',
+            'L_cell '+str(max(self.tp.xmesh))+'[m] Cell length',
 #            lambdaD/epsilon Cell length',
             'epsilon lambdaD/L_cell Dimensionless Debye length scale',
             'T '+str(self.tp.system['temperature'])+'[K] Temperature',
@@ -247,6 +247,7 @@ class Comsol():
 #            inp.write('    model.component("comp1").variable("var1").set("deltaphi", "phiM-phi", "Metal - reaction plane potential difference");\n')
             #inp.write('    model.component("comp1").variable("var1").set("rho_s", "epsS*deltaphi/lambdaS", "Surface charge density");\n')
             inp.write('    model.component("comp1").variable("var1").set("rho_s", "((phiM-phiPZC)-phi)*CS", "Surface charge density");\n')
+            #inp.write('    model.component("comp1").variable("var1").set("rho_s", "((phiM-phiPZC))*CS", "Surface charge density");\n')
             if self.tp.pb_bound['potential']['bulk'] is not None:
                 potential_r=self.tp.pb_bound['potential']['bulk']
             else:
