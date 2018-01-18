@@ -140,14 +140,21 @@ OHm_i=10**(pH_i-14.)*1000.0
 #CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
 #print 'HCO3m_i OHm_i CO2_i CO32m_i'
 #print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
-##2) option: initialize with HCO3m_i and OHm_i
+##2) option: initialize with HCO3m_i and OHm_i #!currently used!!
 #print 'CO2 before',CO2_i
-OHm_i=10**(pH_i-14.)*1000.0
-HCO3m_i=0.1*1000.
-CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
-CO2_i=HCO3m_i/OHm_i/electrolyte_reactions['buffer-base']['constant']
-print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
-#sys.exit()
+#OHm_i=10**(pH_i-14.)*1000.0
+#HCO3m_i=0.1*1000.
+#CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
+#CO2_i=HCO3m_i/OHm_i/electrolyte_reactions['buffer-base']['constant']
+#print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
+#3) option: initialize with CO2_i and HCO3m_i
+HCO3m_i=0.5*1000
+OHm_i=HCO3m_i*CO2_i/electrolyte_reactions['buffer-base']['constant']
+pH_i=14+np.log10(OHm_i/1000.)
+print 'pH',pH_i
+
+
+sys.exit()
 
 Hm_i=10**(-pH_i)*1000.0
 
@@ -248,12 +255,12 @@ comsol_params={}
 comsol_params['A']=['1.e13[1/s]','Exponential prefactor']
 #comsol_params['A2']=['1.e13[1/s]','Exponential prefactor']
 comsol_params['Ga_CHO']=[str(1.11746219*unit_F)+'[J/mol]','CHO Activation Energy']
-comsol_params['Ga_CHOH']=[str(1.8*unit_F)+'[J/mol]','CHOH Activation Energy'] #[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Energy']
+comsol_params['Ga_CHOH']=[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Energy']
 comsol_params['Ga_OCCO']=[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy']
-comsol_params['Ga_OCCOH']=[str(1.15*unit_F)+'[J/mol]','OCCOH Activation Energy'] #[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy']
+comsol_params['Ga_OCCOH']=[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy']
 #comsol_params['eVToJmol']=[str(eVTokcal*1000*calToJ)+'[J/eV/mol]','eV to J/mol Conversion factor']
-comsol_params['alpha_CHO']=['0.2','Butler-Volmer Parameter'] #std 0.5
-comsol_params['alpha_CHOH']=['0.2','Butler-Volmer Parameter'] #std 2.0
+comsol_params['alpha_CHO']=['0.8','Butler-Volmer Parameter'] #std 0.5
+comsol_params['alpha_CHOH']=['0.8','Butler-Volmer Parameter'] #std 2.0
 comsol_params['alpha_OCCOH']=['0.5','Butler-Volmer Parameter'] #std 0.5
 comsol_params['alpha_OCCO']=['0.5','Butler-Volmer Parameter'] #std 0.5
 comsol_params['n_CHO']=['1','Butler-Volmer Parameter'] #std 0.5
