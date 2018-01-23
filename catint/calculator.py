@@ -18,7 +18,7 @@ from scipy.integrate import ode
 from scipy import interpolate
 import os
 import odespy, numpy
-from comsol import Comsol
+from comsol_wrapper import Comsol
 #from catmap import Catmap
 
 class Calculator():

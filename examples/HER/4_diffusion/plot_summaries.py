@@ -5,6 +5,7 @@ import numpy as np
 import os
 from catmap.model import ReactionModel
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import cm
 from matplotlib import rc
 import matplotlib.mlab as mlab
 from matplotlib.ticker import NullFormatter
@@ -63,14 +64,14 @@ def get_data(pickle_file):
     return data
 
 #SETTINGS
+pH = ['0','2.5','3','4','7','10','14']
 def convert_TOF(A): # Given a list, convert all the TOF to j(mA/cm2) using 0.161*TOF(According to Heine's ORR paper)
     B = [-0.161*rate for rate in A]
     return B
 colormap = plt.get_cmap('gist_ncar')
-color_list = ['black', 'darkgreen', 'blue', 'firebrick', 'darkviolet']
+color_list = ['black','darkviolet','darkblue','blue','darkgreen','darkyellow','orange','red','firebrick']
 
 #PLOTS
-pH = ['0','4','7','10','14']
 for i in range(0,len(pH)): 
     j = pH[i]
     log_file = 'HER_pH'+j+'.log'
@@ -80,6 +81,12 @@ for i in range(0,len(pH)):
     idx=phX.prod_names.index('H2_g')
     data=np.column_stack((phX.voltage, phX.production_rate[:,idx]))
     plt.plot(data[np.argsort(data[:, 0])][:,0],convert_TOF(data[np.argsort(data[:, 0])][:,1]), color = color_list[i], linewidth=1.5, label='pH '+j)
+    pol_file = 'pol_pH'+j+'.tsv'
+    x=data[np.argsort(data[:, 0])][:,0]
+    y=convert_TOF(data[np.argsort(data[:, 0])][:,1])
+    #print(np.shape(x))
+    #print(np.shape(y))
+    np.savetxt(pol_file, np.array([x,y]).T)
     
 fig1 = plt.figure(1, figsize=(7.5, 5.5))
 ax = fig1.add_subplot(1,1,1)
