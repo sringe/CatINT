@@ -149,7 +149,7 @@ OHm_i=10**(pH_i-14.)*1000.0
 #print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
 #3) option: initialize with CO2_i and HCO3m_i
 HCO3m_i=0.5*1000
-OHm_i=HCO3m_i*CO2_i/electrolyte_reactions['buffer-base']['constant']
+OHm_i=HCO3m_i/CO2_i/electrolyte_reactions['buffer-base']['constant']
 pH_i=14+np.log10(OHm_i/1000.)
 print 'pH',pH_i
 

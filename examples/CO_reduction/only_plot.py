@@ -9,7 +9,7 @@ import sys
 from units import *
 import re
 
-SA=1
+SA=380
 
 def plot_leis_high_surface_data():
     data=[]
@@ -87,8 +87,9 @@ def plot_xinyans_equation():
     plt.semilogy(voltage, [C1_rate(v, CO_cvg) for v in voltage], '-', color='b', label = 'C1_rate')
     plt.semilogy(voltage, [C2_rate(v, CO_cvg) for v in voltage], '-', color='orange', label = 'C2_rate')
 
-colors=cycle(['orange','lightblue','r','blue','darkred','black']) #,'k','r','y'])
+#colors=cycle(['orange','lightblue','r','blue','darkred','black']) #,'k','r','y'])
 #colors=cycle(['orange','b','k','r','y'])
+colors=cycle(['orange','blue','red','olive']) #'orange','blue','blue','orange','blue','blue'])
 styles=cycle(['-','--']) #,'-.',':','o','d','x'])
 
 #folders=glob('calc_std_settings*') #obj') #calc_std*')
@@ -150,7 +151,7 @@ plt.xlim([-1.03,0.0])
 plt.xlabel('Voltage vs RHE (V)')
 plt.ylabel(r'$j$ (mA/cm$^2$)')
 plot_leis_data()
-#plot_leis_high_surface_data()
+plot_leis_high_surface_data()
 plot_kanans_data()
 #plot_xinyans_equation()
 plt.legend()
