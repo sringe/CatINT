@@ -23,13 +23,12 @@ from shutil import copy
 class Transport(object):
 
     def __init__(self, species=None,electrode_reactions=None,electrolyte_reactions=None,\
-            system=None,pb_bound=None,nx=100,scf_bound=False,\
+            system=None,pb_bound=None,nx=100,\
             comsol_params={},comsol_variables={},comsol_outputs={},descriptors=None):
 
         ##############################################
         ###########FOLDERS AND FILES##################
         ##############################################
-
 
         #folder and file names
         self.outputfoldername='ci_results' #folder where all results will be saved with the self.save function
@@ -80,8 +79,23 @@ class Transport(object):
         
         #all the possible keys:
         species_keys=['bulk concentration', 'diffusion', 'name', 'symbol', 'flux']
-        system_keys=['phiM','Stern capacitance','phiPZC','temperature','pressure','water viscosity','electrolyte viscosity',\
-                'epsilon','migration','electrode reactions','electrolyte reactions','boundary thickness','exclude species']
+        system_keys=[
+                'phiM',                     #V
+                'Stern capacitance',        #mF/cm^2
+                'phiPZC',                   #V
+                'temperature',              #K
+                'pressure',     
+                'water viscosity',
+                'electrolyte viscosity',
+                'epsilon',                  #epsilon_0
+                'migration',
+                'electrode reactions',
+                'electrolyte reactions',
+                'boundary thickness',       #m
+                'exclude species',
+                'active site density',       #mol/m^2
+                'kinetics'                  #rate-equation, catmap, fixed
+                ]
 
         #go over input data and put in some defaults if none
         if species is None:
@@ -111,8 +125,6 @@ class Transport(object):
             'potential': {'wall':'phiM'},
             'gradient': {'bulk':0.0}}
 
-        #self-consistent boundary condition
-        self.scf_bound=scf_bound
 
         system_defaults={
                 'epsilon':78.36,
@@ -124,6 +136,7 @@ class Transport(object):
                 'electrode reactions': False,
                 'electrolyte reactions': False,
                 'exclude species': ['H2O','e-'],
+                'kinetics':'fixed', #fixed fluxes during transport simulation
                 'pressure':1}
         if system is None:
             self.system=system_defaults
@@ -405,6 +418,14 @@ class Transport(object):
                 if any([type(self.electrode_reactions[reaction]['current density'])==str for reaction in self.electrode_reactions]):
                     self.logger.info('Current densities are given as string. Assuming an equation (works only with COMSOL)')
                     isstring=True
+            if isstring and self.system['kinetics']=='fixed':
+                self.logger.warning('Found rate equations in the definition of electrode reactions. These have  by default a higher priority,\
+                        and it is therefore assumed that the actual kinetic method wanted is rate-equation instead of the currently selected\
+                        fixed method. Switching therefore here to a rate-equation based definition of reaction fluxes.')
+                self.system['kinetics']='rate-equation'
+            if isstring and self.system['kinetics']=='catmap':
+                self.logger.info('Found rate equations, although catmap has been selected as method for evaluating kinetics. The rate equations\
+                        will be used only for the initialization (first transport calculation).')
             for sp in self.species:
                 if isstring:
                     self.species[sp]['flux']='0.0'

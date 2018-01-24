@@ -19,7 +19,7 @@ from scipy import interpolate
 import os
 import odespy, numpy
 from comsol_wrapper import Comsol
-#from catmap import Catmap
+from catmap_wrapper import CatMAP
 
 class Calculator():
 
@@ -43,6 +43,8 @@ class Calculator():
         if calc is None:
             calc=self.tp.calc
 
+        if self.system['kinetics']=='catmap':
+            catmap=CatMAP()
         
         self.tp.ntout=ntout
 #        if os.path.exists('results.txt'):
@@ -1128,8 +1130,12 @@ class Calculator():
                     self.tp.all_data[str(value1)][str(value2)]['system'][desc_keys[0]]=self.tp.system[desc_keys[0]]
                     self.tp.all_data[str(value1)][str(value2)]['system'][desc_keys[1]]=self.tp.system[desc_keys[1]]
                     
-                    if not self.tp.scf_bound:
+                    if self.tp.system['kinetics'] != 'catmap':
                         self.run_single_step(label=label,desc_val=[str(value1),str(value2)])
+                    else:
+                        while self.scf_accuracy>tau_scf:
+                            self.run_single_step(label=label,desc_val=[str(value1),str(value2)])
+                            catmap.run(desc_val=[str(value1),str(value2)])
         else:
             if not self.tp.scf_bound:
                 self.run_single_step()

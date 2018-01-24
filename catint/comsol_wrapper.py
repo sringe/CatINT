@@ -163,7 +163,8 @@ class Comsol():
                         i+1, self.tp.species[sp]['charge'],self.tp.species[sp]['name']))
 
             for i,sp in enumerate(self.tp.species):
-                if type(self.tp.species[sp]['flux'])!=str:
+#                if type(self.tp.species[sp]['flux'])!=str:
+                if self.tp.system['kinetics']!='rate-equation':
                     #define fluxes here as parameters
                     inp.write('    model.param().set("j{}", "{}[mol/m^2/s]", "{} flux");\n'.format(\
                         i+1, self.tp.species[sp]['flux'],self.tp.species[sp]['name']))
@@ -275,7 +276,8 @@ class Comsol():
 
             #rates
             for i,sp in enumerate(self.tp.species):
-                if type(self.tp.species[sp]['flux'])==str:
+                if self.tp.system['kinetics']=='rate-equation':
+#                if type(self.tp.species[sp]['flux'])==str:
                     mod_str=''
                     #flux is given as equation, have to replace concentrations with correct number here
                     string=self.tp.species[sp]['flux']

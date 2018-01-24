@@ -118,7 +118,8 @@ system=\
     'electrode reactions': True,
     'electrolyte reactions': use_elreac, #False,
     'phiPZC': -0.07, #+unit_R*298.14/unit_F*pH_i*np.log(10.), #value at SHE: https://www.sciencedirect.com/science/article/pii/S002207280300799X
-    'Stern capacitance': 20 #std: 20
+    'Stern capacitance': 20, #std: 20
+    'kinetics': 'catmap'
     }
 ###########################################################################
 
@@ -227,18 +228,18 @@ species=\
                             'name':                 'carbon monoxide',
                             'diffusion':            2.03e-9,
                             'bulk concentration':   CO_i},
-    'CH4':              {   'symbol':               'CH_4',
-                            'name':                 'methane',
-                            'diffusion':            1.49e-009},
-   # 'C2H4':             {   'symbol':               'C_2H_4',
-   #                         'name':                 'ethylene',
-   #                         'diffusion':            1.87e-009},
-    'HCOO-':            {   'symbol':               'HCOO^-',
-                            'name':                 'formate',
-                            'diffusion':            1.454e-009},
-    'C2':             {     'name':                 'C2-species', #assuming EtOH
-                            'symbol':               'C_2H_5OH',
-                            'diffusion':            0.84e-009},
+#    'CH4':              {   'symbol':               'CH_4',
+#                            'name':                 'methane',
+#                            'diffusion':            1.49e-009},
+#   # 'C2H4':             {   'symbol':               'C_2H_4',
+#   #                         'name':                 'ethylene',
+#   #                         'diffusion':            1.87e-009},
+#    'HCOO-':            {   'symbol':               'HCOO^-',
+#                            'name':                 'formate',
+#                            'diffusion':            1.454e-009},
+#    'C2':             {     'name':                 'C2-species', #assuming EtOH
+#                            'symbol':               'C_2H_5OH',
+#                            'diffusion':            0.84e-009},
     }
 
 if not nobuffer:
@@ -289,6 +290,9 @@ comsol_params['Lmol']=['1[l/mol]','conversion factor']
 #active site density. singh paper: 7.04e-6[mol/m^2]
 #here: 3x3 Cu211 cell as example. area=6.363x7.794*1e-20, active sites=3 (step top sites, 1.004495558139274e-05), 9 (all top sites, 3.013486674417822e-05)
 comsol_params['rho_act']=['1.004495558139274e-05[mol/m^2]','Density of Active Sites'] #from Singh paper: 7.04e-6
+
+system['active site density']=1.004495558139274e-05
+
 comsol_params['Ga_CO_ads']=[str(-0.3*unit_F)+'[J/mol]','Thermochemical adsorption barrier for CO on Cu211']
 comsol_params['Ga_CO2_ads']=[str(-0.1*unit_F)+'[J/mol]','Thermochemical adsorption barrier for CO2 on Cu211'] #https://smartech.gatech.edu/bitstream/handle/1853/43652/fergusson_alexander_i_201205_mast.pdf
 comsol_params['G_H_ads']=[str(-0.1*unit_F)+'[J/mol]','HCO3- -> *H thermochemical barrier'] #http://pubs.rsc.org/en/Content/ArticlePDF/2014/CP/c3cp54822h
@@ -425,12 +429,13 @@ for potential in potentials:
     #tp.set_initial_concentrations('Gouy-Chapman')
     
     cm=CatMAP(transport=tp,model_name='CO2')
-    cm.run()
+    for p in np.linspace(-1.5,0.2,40):
+        cm.run([p,300])
 
     sys.exit()
     c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
     #scale_pb_grid
-    c.run() #1.0)
+    c.run([0.2,300]) #1.0)
     tp.save() #saves all data to pickle files to enable restart or plotting later
     
 #    p=Plot(transport=tp)
