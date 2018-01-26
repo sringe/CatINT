@@ -24,7 +24,7 @@ from catmap_wrapper import CatMAP
 class Calculator():
 
     def __init__(self,transport=None,dt=None,tmax=None,ntout=1,calc=None,
-            scale_pb_grid=None,tau_jacobi=1e-7,tau_scf=1e-5,mode='time-dependent',\
+            scale_pb_grid=None,tau_jacobi=1e-7,tau_scf=1e-7,mode='time-dependent',\
                 desc_method='internal-cont'):
 
         self.mode=mode #calculation mode for comsol: time-dependent or stationary. the local
@@ -43,8 +43,8 @@ class Calculator():
         if calc is None:
             calc=self.tp.calc
 
-        if self.system['kinetics']=='catmap':
-            catmap=CatMAP()
+        if self.tp.system['kinetics']=='catmap':
+            catmap=CatMAP(transport=self.tp)
         
         self.tp.ntout=ntout
 #        if os.path.exists('results.txt'):
@@ -1111,7 +1111,7 @@ class Calculator():
         return cout
 
     def run(self):
-        if self.tp.descriptors is not None and self.tp.desc_method == 'external':
+        if self.tp.descriptors is not None and (self.tp.desc_method == 'external' or self.tp.system['kinetics'] == 'catmap'):
             desc_keys=[key for key in self.tp.descriptors]
             i1=0
             i2=0
@@ -1130,15 +1130,58 @@ class Calculator():
                     self.tp.all_data[str(value1)][str(value2)]['system'][desc_keys[0]]=self.tp.system[desc_keys[0]]
                     self.tp.all_data[str(value1)][str(value2)]['system'][desc_keys[1]]=self.tp.system[desc_keys[1]]
                     
+
                     if self.tp.system['kinetics'] != 'catmap':
                         self.run_single_step(label=label,desc_val=[str(value1),str(value2)])
                     else:
-                        while self.scf_accuracy>tau_scf:
+                        istep=0
+                        scf_accuracy=np.inf
+                        while scf_accuracy>self.tau_scf:
+                            istep+=1
+                            if self.tp.initialize_catmap_with_rates and istep==1:
+                                #set the kinetics to rate-equation only for the first step
+                                #comsol is then initialized by the rate equations given as input
+                                self.tp.system['kinetics']='rate-equation'
+                            self.tp.logger.info('Solving transport step {}. Current accuracy in current density = {} mV/cm^2'.format(istep,scf_accuracy))
+
+                            #COMSOL
+                            if 'internal' in self.tp.desc_method:
+                                #we have to still slowly ramp up the flux inside comsol
+                                #so for internal comsol, pass a list of descriptors which goes until the current potential
+                                #then the last potential (datapoint) will be the result we are up to
+                                desc_copy=self.tp.descriptors.copy()
+                                i=-1
+                                desc_keys=[key for key in desc_copy]
+                                desc_list_new=[]
+                                for dd in self.tp.descriptors[desc_keys[0]]:
+                                    if dd <= value1:
+                                        desc_list_new.append(dd)
+                                #replace the first descriptor 
+                                self.tp.descriptors[desc]=desc_list_new
+
+                            #run
                             self.run_single_step(label=label,desc_val=[str(value1),str(value2)])
+
+                            if 'internal' in self.tp.desc_method:
+                                #copy the descriptor list back
+                                self.tp.descriptors=desc_copy
+
+                            #CATMAP
+                            current_density=[]
+                            for sp in self.tp.species:
+                                current_density.append(self.tp.electrode_reactions[sp]['electrode_current_density'][(str(value1),str(value2))])
                             catmap.run(desc_val=[str(value1),str(value2)])
+                            scf_accuracy=self.evaluate_accuracy(current_density,old_current_density)
+                            old_current_density=current_density.copy()
+                            if self.tp.initialize_catmap_with_rates and istep==1:
+                                #set the kinetics back to the catmap kinetics, next steps the fluxes are defined by catmap
+                                self.tp.system['kinetics']='catmap'
         else:
-            if not self.tp.scf_bound:
+            if self.tp.system['kinetics'] != 'catmap':
                 self.run_single_step()
+            else:
+                self.tp.logger.error('Catmap has been selected but current descriptor method is Comsol internal which does not work. Stopping here.')
+                sys.exit()
 #                elif se
         #elif self.scf_bound:
         #    #electrode boundary is defined by catmap calculation
@@ -1155,6 +1198,15 @@ class Calculator():
         #        catmap.run()
         #        #update concentrations
         #        cout_old=cout[-1]
+
+    def evaluate_accuracy(par,par_old):
+        rmsd=0
+        n=0
+        for val1,val2 in zip(par,par_old):
+            n+=1
+            rmsd+=(val1-val2)**2
+        rmsd=np.sqrt(rmsd/n)
+        return rmsd
 
     def converged(self,old,new):
         cmrsd=0.0

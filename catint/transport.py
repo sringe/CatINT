@@ -175,7 +175,7 @@ class Transport(object):
             if 'bulk concentration' not in self.species[sp]:
                 self.species[sp]['bulk concentration']=0.0
 
-            self.species[sp]['updated concentration']=self.species[sp]['bulk concentration']
+            self.species[sp]['surface concentration']=self.species[sp]['bulk concentration']
 
         self.eps = self.system['epsilon']*unit_eps0 #1.1e11 #*unit_eps0
         self.beta = 1./(self.system['temperature'] * unit_R)
@@ -394,6 +394,8 @@ class Transport(object):
                 self.species[sp]['flux']=0.0
             return
 
+        self.initialize_catmap_with_rates=False
+
         fluxes_type=None
         #first check if rates or current densities have been specified in the electrode reaction section (priority):
         if any(sum([['rates' in self.electrode_reactions[reaction]] for reaction in self.electrode_reactions],[])):
@@ -426,6 +428,7 @@ class Transport(object):
             if isstring and self.system['kinetics']=='catmap':
                 self.logger.info('Found rate equations, although catmap has been selected as method for evaluating kinetics. The rate equations\
                         will be used only for the initialization (first transport calculation).')
+                self.initialize_catmap_with_rates=True
             for sp in self.species:
                 if isstring:
                     self.species[sp]['flux']='0.0'

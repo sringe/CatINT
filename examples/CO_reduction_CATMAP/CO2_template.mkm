@@ -29,7 +29,7 @@ species_definitions['ele_g'] = {'pressure':1.0, 'composition':{}}
 species_definitions['CO_g'] = {'pressure':0.0}
 species_definitions['CO2_g'] = {'pressure':1.0}
 species_definitions['H2_g'] = {'pressure':0.0}
-species_definitions['H2O_g'] = {'pressure':0.035}
+species_definitions['H2O_g'] = {'pressure':1.0}
 species_definitions['t'] = {'site_names': ['211'], 'total':1.0}
 
 data_file = 'CO2.pkl'

@@ -1040,6 +1040,10 @@ class Comsol():
             for ix,xx in enumerate(self.tp.xmesh):
                 self.tp.total_charge[ix]+=self.tp.charges[i_sp]*self.tp.species[sp]['concentration'][ix]
 
+        #update surface concentrations
+        for i_sp,sp in enumerate(self.tp.species):
+            self.tp.species[sp]['surface concentration']=self.tp.species[sp]['concentration'][0]
+
         #evaluate and save properties for each descriptor (so far the electrode current density and the comsol outputs - self.tp.comsol_outputs):
         data=[]
         i1=0

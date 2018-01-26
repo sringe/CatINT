@@ -39,11 +39,12 @@ class CatMAP():
             self.tp=transport
         self.tp.path=path
         self.output_folder='results_catmap'
-        self.catmap_model=model_name+'.mkm'
         if model_name is not None:
             self.model_name=model_name
         else:
             self.model_name='catmap'
+        model_name=self.model_name
+        self.catmap_model=model_name+'.mkm'
         self.output_base_folder=self.tp.outputfoldername+'/catmap_output'
         self.input_base_folder=self.tp.outputfoldername+'/catmap_input'
 
@@ -169,9 +170,9 @@ class CatMAP():
         for line in open(self.catmap_model):
             i+=1
             for sp in self.tp.species:
-                species=self.tp.species[sp]['symbol']
-                if all([a in line for a in ['species_definitions',species,'concentration']]):
-                    replace_line(self.catmap_model,i-1,"species_definitions['"+species+"_g'] = {'concentration':"+self.tp.species[sp]['updated concentration']+"}")
+                sp_cm=self.species_to_catmap(sp)
+                if all([a in line for a in ['species_definitions',sp_cm+'_g','pressure']]):
+                    replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':"+str(self.tp.species[sp]['surface concentration']/1000.)+"}")
             if 'descriptor_range' in line:
                 replace_line(self.catmap_model,i-1,'descriptor_ranges = [['+str(min_desc)+','+str(max_desc)+'],['+str(desc_val[1])+','+str(desc_val[1])+']]')
             if line.strip().startswith('resolution'):
@@ -199,12 +200,7 @@ class CatMAP():
             #1) the TOF's save them as fluxes for the individual species
             ###############
             tof=None
-            name=self.tp.species[sp]['symbol'].replace('_','')
-            name=name.replace('^','')
-            if name=='OH-':
-                name='OH'
-            if name=='H+':
-                name='H'
+            name=self.species_to_catmap(sp)
             name+='_g'
             #"tof" is the signed rate of conversion/active site/s
             if name in data.prod_names:
@@ -345,4 +341,14 @@ class CatMAP():
         f = open(output_variable+'_table.txt','w')
         f.write(table)
         f.close()
+
+    def species_to_catmap(self,sp):
+        species=self.tp.species[sp]['symbol']
+        species=species.replace('^','')
+        species=species.replace('_','')
+        if species=='H+':
+            species='H'
+        elif species=='OH-':
+            species='OH'
+        return species
 

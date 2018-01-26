@@ -428,14 +428,14 @@ for potential in potentials:
     #tp.set_calculator('Crank-Nicolson--LF')
     #tp.set_initial_concentrations('Gouy-Chapman')
     
-    cm=CatMAP(transport=tp,model_name='CO2')
-    for p in np.linspace(-1.5,0.2,40):
-        cm.run([p,300])
-
-    sys.exit()
+    #cm=CatMAP(transport=tp,model_name='CO2')
+    #for p in np.linspace(-1.5,0.2,40):
+    #    cm.run([p,300])
+    #sys.exit()
+    #c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
     c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
     #scale_pb_grid
-    c.run([0.2,300]) #1.0)
+    c.run()
     tp.save() #saves all data to pickle files to enable restart or plotting later
     
 #    p=Plot(transport=tp)
