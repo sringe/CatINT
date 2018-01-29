@@ -68,8 +68,40 @@ If a total current density is given, a check will be performed if the partial cu
 
 In COMSOL, we can define fluxes also as equations depending e.g. on the local concentrations of the species and the local potential. We can e.g. define the flux of H$_2$ in terms of a Butler-Volmer relation:
 
-$j_\mathrm{H_2}=\rho\cdot\theta_\mathrm{H}\cdot A\cdot \exp(-[G_a+\alpha\cdot F\cdot(\Phi_\mathrm{M}-\Phi)]/RT)$,
+$j_\mathrm{H_2}=\rho\cdot\theta_\mathrm{H}\cdot A\cdot \exp(-[G_a^\mathrm{eq}+\alpha\cdot F\cdot \eta]/RT)$,
 
-where $\rho$ is the active site density, $\theta_\mathrm{H}$ is the coverage of H, $G_a$ is the activation barrier of the rate-determining step, $\alpha$ the transfer coefficient and $\Phi_\mathrm{M}-\Phi$ the difference between 
+where $\rho$ is the active site density, $\theta_\mathrm{H}$ is the coverage of H, $G_a$ is the activation barrier of the rate-determining step and $\alpha$ the transfer coefficient. $\eta$ is the overpotential. Against a reference electrode which does not vary with pH, this is just given as the difference between potential at the reaction plane and potential at the electrode:
 
-    species['H2']['flux-equation'] = 'rho*[[H2]]*exp(-Ga+(Vm-))' #(mol/s/m^2)
+$\eta = (\Phi^\mathrm{M}-\Phi^\ddagger)-(\Phi^\mathrm{M,eq}-\underbrace{\Phi^{\ddagger,\mathrm{eq}}}_{\approx 0})=(\Phi^\mathrm{M}-\Phi^\ddagger)-\Phi^\mathrm{M,eq}$.
+
+We now define some COMSOL variables and parameters:
+
+    comsol_params['Ga']=[str(-0.3*unit_F)+'[J/mol]','Adsorption barrier H']
+    comsol_params['alpha']=['0.5','Transfer Coefficient']
+    comsol_params['A']=['1.e13[1/s]','Exponential prefactor']
+    comsol_params['rho']=['1e-05[mol/m^2]','Density of Active Sites']
+    comsol_params['theta_max']=['0.4','Maximum Coverage']
+    comsol_params['Lmol']=['1[l/mol]','unit conversion factor']
+    comsol_params['Kads']=['1e-4','Adsorption equilibrium constant']
+    comsol_params['phiEq']=['-0.1[V]','equilibrium potential']
+
+What is missing now is to define the coverage of H. We can assume a Langmuir isotherm with a maximum coverage of $\theta_\mathrm{H}^\mathrm{max}$:
+
+$\theta_\mathrm{H}=\frac{\sqrt{K_\mathrm{ads}\cdot a_\mathrm{H_2}}}{1+\sqrt{a_\mathrm{H_2}K_\mathrm{ads}}}\theta_\mathrm{H}^\mathrm{max}$
+
+We add the coverage via a COMSOL variable:
+
+    comsol_variables['coverage']=['Kads*[[H2]]*Lmol/(1.+[[H2]]*Lmol*Kads)*theta_max','H Coverage according to Langmuir isotherm']
+
+Note that the surface concentrations of species are indicated here by the double brackets [[...]]. Any species surface concentration can be referred like this.    
+
+Finally, we can define the H$_2$ flux as:
+
+    species['H2']['flux-equation'] = 
+	    'rho*coverage*exp(-(Ga+alpha*F*(phiM-phi-phiEq))/RT)' #(mol/s/m^2)
+
+Fixed flux expressions can be combined with flux-equation expressions and the remaining species fluxes will be automatically calculated
+
+## CatMAP
+
+The most advanced method of defining reactant fluxes is via a mean-field kinetic model. 
