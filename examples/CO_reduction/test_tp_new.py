@@ -136,8 +136,8 @@ CO_i = 9.5e-4*system['pressure']*1000.
 
 ##1) option: initialize with CO2_i and OHm_i
 OHm_i=10**(pH_i-14.)*1000.0
-#HCO3m_i=electrolyte_reactions['buffer-base']['constant']*CO2_i*OHm_i
-#CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
+HCO3m_i=electrolyte_reactions['buffer-base']['constant']*CO2_i*OHm_i
+CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
 #print 'HCO3m_i OHm_i CO2_i CO32m_i'
 #print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
 ##2) option: initialize with HCO3m_i and OHm_i #!currently used!!
@@ -148,13 +148,13 @@ OHm_i=10**(pH_i-14.)*1000.0
 #CO2_i=HCO3m_i/OHm_i/electrolyte_reactions['buffer-base']['constant']
 #print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
 #3) option: initialize with CO2_i and HCO3m_i
-HCO3m_i=0.5*1000
-OHm_i=HCO3m_i/CO2_i/electrolyte_reactions['buffer-base']['constant']
+#HCO3m_i=0.5*1000
+#OHm_i=HCO3m_i/CO2_i/electrolyte_reactions['buffer-base']['constant']
 pH_i=14+np.log10(OHm_i/1000.)
 print 'pH',pH_i
 
 
-sys.exit()
+#sys.exit()
 
 Hm_i=10**(-pH_i)*1000.0
 
@@ -438,8 +438,11 @@ elif method==3:
                 ')'+\
             ')^(1./sigma_max)'
 
-electrode_reactions['C1']['rates']=[C1_rate,'0.0']
-electrode_reactions['C2']['rates']=[C2_rate,'0.0']
+#electrode_reactions['C1']['rates']=[C1_rate,'0.0']
+#electrode_reactions['C2']['rates']=[C2_rate,'0.0']
+
+species['C1']['flux-equation']=C1_rate
+species['C2']['flux-equation']=C2_rate
 
 boundary_thickness=7.93E-05 #in m
 

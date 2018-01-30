@@ -78,7 +78,7 @@ class Transport(object):
         ##############################################
         
         #all the possible keys:
-        species_keys=['bulk concentration', 'diffusion', 'name', 'symbol', 'flux']
+        species_keys=['bulk concentration', 'diffusion', 'name', 'symbol', 'flux','current density','flux-equation']
         system_keys=[
                 'phiM',                     #V
                 'Stern capacitance',        #mF/cm^2
@@ -94,7 +94,7 @@ class Transport(object):
                 'boundary thickness',       #m
                 'exclude species',
                 'active site density',       #mol/m^2
-                'kinetics'                  #rate-equation, catmap, fixed
+                'current density'
                 ]
 
         #go over input data and put in some defaults if none
@@ -340,6 +340,12 @@ class Transport(object):
         #self.external_charge=self.gaussian(sigma=5e-6,z=1.0,mu=4.e-5,cmax=5e-5)+self.gaussian(sigma=5e-6,z=-1.0,mu=5.e-5,cmax=5e-5)
         self.count=1
 
+
+        #define additional parameters which should be used inside comsol
+        self.comsol_params=comsol_params
+        #comsol variables depending on variables updated during the calculation
+        self.comsol_variables=comsol_variables
+
         #STATIONARY-STATE REACTION RATES/FLUXES
         self.initialize_fluxes()
 
@@ -373,10 +379,6 @@ class Transport(object):
         self.potential=np.zeros([self.nx])
         self.total_charge=np.zeros([self.nx])
 
-        #define additional parameters which should be used inside comsol
-        self.comsol_params=comsol_params
-        #comsol variables depending on variables updated during the calculation
-        self.comsol_variables=comsol_variables
         #additional comsol outputs on top of the standard outputs
         #these must be tabulated on the xgrid
         if comsol_outputs is None:
@@ -394,102 +396,140 @@ class Transport(object):
                 self.species[sp]['flux']=0.0
             return
 
-        self.initialize_catmap_with_rates=False
+        #some consistency check, either flux, current density or flux-equation should be given, NOT all
+        for sp in self.species:
+            count=0
+            for key in self.species[sp]:
+                if key in ['flux','current density','flux-equation']:
+                    count+=1
+            if count>1:
+                self.logger.error('Flux of species {} has been defined by more than one method.'.format(sp))
+                sys.exit()
+                
+        #another check, the current density method should be only selected if the species is a product:
+        for sp in self.species:
+            if 'current density' in self.species[sp]:
+                if sp not in self.electrode_reactions:
+                    self.logger.error('Flux of species {} has been given as current density but this species is not product.'.format(sp))
 
-        fluxes_type=None
-        #first check if rates or current densities have been specified in the electrode reaction section (priority):
-        if any(sum([['rates' in self.electrode_reactions[reaction]] for reaction in self.electrode_reactions],[])):
-            self.logger.info('Found rates specified for electrode reactions. Taking these to calculate fluxes.')
-            method='rates'
-        elif any(sum([['current density' in self.electrode_reactions[reaction]] for reaction in self.electrode_reactions],[])):
-            self.logger.info('Found current densities specified for electrode reactions. Taking these to calculate fluxes.')
-            method='current density'
-        else:
-            self.logger.info('Found no electrode reaction rates, taking fluxes specified in the species section (or no flux otherwise).')
-            method='species flux'
-        isstring=False
-        if method in ['rates','current density']:
-            if method=='rates':
-                if any(sum([[rate for rate in self.electrode_reactions[reaction]['rates']] for reaction in self.electrode_reactions],[])):
-                    self.logger.info('Rates are given as string. Assuming an equation (works only with COMSOL)')
-                    isstring=True
-                    if not all(sum([[rate for rate in self.electrode_reactions[reaction]['rates']] for reaction in self.electrode_reactions],[])):
-                        self.logger.error('For equations, all rates must be given as strings, so far.')
-                        sys.exit()
-            elif method=='current density':
-                if any([type(self.electrode_reactions[reaction]['current density'])==str for reaction in self.electrode_reactions]):
-                    self.logger.info('Current densities are given as string. Assuming an equation (works only with COMSOL)')
-                    isstring=True
-            if isstring and self.system['kinetics']=='fixed':
-                self.logger.warning('Found rate equations in the definition of electrode reactions. These have  by default a higher priority,\
-                        and it is therefore assumed that the actual kinetic method wanted is rate-equation instead of the currently selected\
-                        fixed method. Switching therefore here to a rate-equation based definition of reaction fluxes.')
-                self.system['kinetics']='rate-equation'
-            if isstring and self.system['kinetics']=='catmap':
-                self.logger.info('Found rate equations, although catmap has been selected as method for evaluating kinetics. The rate equations\
-                        will be used only for the initialization (first transport calculation).')
-                self.initialize_catmap_with_rates=True
+        #last check, check if more than one flux per equation has been defined which is not necessary!
+        ers=self.electrode_reactions
+        for er in ers:
+            educts=ers[er]['reaction'][0]
+            products=ers[er]['reaction'][1]
+            count=0
+            for ep in sum([educts,products],[]):
+                if ep in self.system['exclude species']:
+                    continue
+                if any([a in ['flux','current density','flux-equation'] for a in self.species[ep]]):
+                    count+=1
+            if count>1:
+                self.logger.error('More than one flux has been defined for equation {}. Select one of the fluxes, the rest will be automatically calculated.'.format(ers[er]['reaction']))
+                sys.exit()
+            if count==0:
+                self.logger.error('No flux defined in equation {}. Define one flux.'.format(ers[er]['reaction']))
+                sys.exit()
+
+        #first search fluxes. if any flux is given as equation, we create a comsol parameter first for
+        #the fixed fluxes
+        using_equations=False
+        for sp in self.species:
+            if 'flux-equation' in self.species[sp]:
+                using_equations=True
+                break
+
+        #is this a reduction or oxidation?
+        for er in ers:
+            educts=ers[er]['reaction'][0]
+            products=ers[er]['reaction'][1]
+            if 'e-' in educts:
+                e_in_educts=True
+            elif 'e-' in products:
+                e_in_educts=False
+            else:
+                self.logger.error('No electron found in the reactions.')
+                sys.exit()
+
+        #convert given current densities into fluxes
+        if using_equations:
+            print 'using equations'
+            #convert fixed fluxes to strings
             for sp in self.species:
-                if isstring:
-                    self.species[sp]['flux']='0.0'
-                else:
-                    self.species[sp]['flux']=0.0
-
-            #first set the fluxes of all products
-            ers=self.electrode_reactions
-            missing_species=[]
-            for er in ers:
-                if method=='rates':
-                    self.species[er]['flux']=ers[er]['rates'][0]
-                elif method=='current density':
-                    self.species[er]['flux']=ers[er]['current density'][0]
-                    if isstring:
-                        self.species[er]['flux']+='/'+self.electrode_reactions[er]['nel']+'/F_const' #unit_F
+                if 'flux' in self.species[sp]:
+                    self.species[sp]['flux']=str(self.species[sp]['flux'])
+                elif 'current density' in self.species[sp]:
+                    if e_in_educts:
+                        sign='(-1)'
                     else:
-                        self.species[er]['flux']*=1./self.electrode_reactions[er]['nel']/unit_F
-                for reac in sum(ers[er]['reaction'],[]):
-                    if reac not in ers and reac not in ['e-'] and reac not in self.system['exclude species'] and reac not in missing_species:
-                        missing_species+=[reac]
+                        sign='1'
+                    self.species[sp]['flux']=sign+'*'+str(self.species[sp]['current density']/self.electrode_reactions[sp]['nel']/unit_F)
+                elif 'flux-equation' in self.species[sp]:
+                    self.species[sp]['flux']=self.species[sp]['flux-equation']
+        else:
+            for sp in self.species:
+                if 'current density' in self.species[sp]:
+                    if e_in_educts:
+                        sign=-1
+                    else:
+                        sign=1
+                    self.species[sp]['flux']=sign*self.species[sp]['current density']/self.electrode_reactions[er]['nel']/unit_F
 
+        ers=self.electrode_reactions
+        #first set the fluxes of all products
+        missing_species=[]
+        for er in ers:
+            #check for undefined fluxes
+            for reac in sum(ers[er]['reaction'],[]):
+                if reac not in ers and reac not in ['e-'] and reac not in self.system['exclude species'] and reac not in missing_species:
+                    missing_species+=[reac]
             if len(missing_species)>0:
                 self.logger.info('Calculating fluxes of {} as sum of other fluxes'.format(missing_species))
-            #calculate fluxes of remaining species by using the fluxes of products evaluated before
-            for er in ers:
-                educts=ers[er]['reaction'][0]
-                products=ers[er]['reaction'][1]
-                for missing in missing_species:
-                    if True: #missing in educts:
-                        for sp in products:
-                            if sp not in missing_species and sp not in self.system['exclude species'] and sp not in ['H2O','OH-','H+','e-']:
-                                #get number of missing molecules:
-                                if missing in educts:
-                                    if isstring:
-                                        factor='(-1)'
-                                    else:
-                                        factor=(-1)
-                                else:
-                                    if isstring:
-                                        factor='1'
-                                    else:
-                                        factor=1
-                                if isstring:
-                                    self.species[missing]['flux']+='+'+str(factor)+'*'+self.species[sp]['flux']+'*'+str(max(educts.count(missing),products.count(missing))) #/self.electrode_reactions[sp]['nel']
-                                else:
-                                    self.species[missing]['flux']+=factor*self.species[sp]['flux']*max(educts.count(missing),products.count(missing)) #/self.electrode_reactions[sp]['nel']
-
-        elif method=='species flux':
-            for sp in self.species:
-                if 'flux' not in self.species[sp]:
-                    self.species[sp]['flux']=0.0
+        ref_sp={}
+        for er in ers:
+            educts=ers[er]['reaction'][0]
+            products=ers[er]['reaction'][1]
+            #determine the species from which flux the remaining fluxes will be calculated
+            for ep in sum([educts,products],[]):
+                if ep in self.system['exclude species']:
+                    continue
+                if any([a in ['flux','current density','flux-equation'] for a in self.species[ep]]):
+                    ref_sp[er]=ep
+                    break
+        #calculate fluxes of remaining species by using the fluxes of products evaluated before
+        for er in ers:
+            educts=ers[er]['reaction'][0]
+            products=ers[er]['reaction'][1]
+            sp=ref_sp[er]
+            #adjust fluxes of all missing species
+            for missing in missing_species:
+                count_missing=max(educts.count(missing),products.count(missing))*1.
+                count_ref=max(educts.count(sp),products.count(sp))*1.
+                both_in_educts=(missing in educts)*(sp in educts)
+                both_in_products=(missing in products)*(sp in products)
+                if both_in_educts or both_in_products:
+                    if using_equations:
+                        factor='1'
+                    else:
+                        factor=1
                 else:
-                    if type(self.species[sp]['flux'])==str:
-                        self.logger.info('Flux of species '+sp+' cannot be equation. Please specify rate in electrode reactions.') #is assumed to be an equation.')
-                        sys.exit()
-            #we need to calculate the flux of the educt as the sum of all the product rates
-            #only do this, if the rate is not given as function
-#            if not any([type(self.species[sp]['flux'])==str for sp in self.species]):
-                #functions work only for comsol and are implemented in comsol calculator
-#                self.evaluate_fluxes()
+                    if using_equations:
+                        factor='(-1)'
+                    else:
+                        factor=(-1.)
+                if not using_equations and 'flux' not in self.species[missing]:
+                    self.species[missing]['flux']=0.0
+                elif using_equations and 'flux' not in self.species[missing]:
+                    self.species[missing]['flux']='0'
+                if using_equations:
+                    self.species[missing]['flux']+='+'+str(factor)+'*'+self.species[sp]['flux']+'*'+str(count_missing/count_ref)
+                else:
+                    self.species[missing]['flux']+=factor*self.species[sp]['flux']*count_missing/count_ref
+
+        #finally set all remaining fluxes equal to zero
+        for sp in self.species:
+            if 'flux' not in self.species[sp]:
+                self.species[sp]['flux']=0.0
+
 
     def initialize_reactions(self,reactions):
         """ replace the reaction string by a list"""
