@@ -100,11 +100,6 @@ Finally, we can define the H$_2$ flux as:
     species['H2']['flux-equation'] = 
 	    'rho*coverage*exp(-(Ga+alpha*F_const*(phiM-phi-phiEq))/RT)' #(mol/s/m^2)
 
-We can also define a current density equation in the same way:
-
-    species['H2']['current density-equation'] = 
-	    '-2*F_const*rho*coverage*exp(-(Ga+alpha*F_const*(phiM-phi-phiEq))/RT)' #(mol/s/m^2)
-
 Fixed flux expressions can be combined with flux-equation expressions and the remaining species fluxes will be automatically calculated. 
 
 ## CatMAP
