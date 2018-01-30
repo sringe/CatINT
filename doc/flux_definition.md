@@ -38,7 +38,7 @@ Alternatively, we can provide them as current densities:
     species['H2']['flux'] = 1e-4 #(mol/s/m^2)
     species['CO']['flux'] = 1e-5 #(mol/s/m^2)
     
-The fluxes of the remaining species will be calculate automatically from the rate equation, i.e.
+Not, however, that only one flux should be defined per equation. The fluxes of the remaining species will be calculated automatically from the reaction equation, for example:
 
 $j_\mathrm{OH^-} = 2 \times j_\mathrm{H_2} + 2 \times j_\mathrm{CO}$
 $j_\mathrm{CO_2} = -j_\mathrm{CO}$
@@ -66,7 +66,7 @@ If a total current density is given, a check will be performed if the partial cu
 
 ## Rate-Equations
 
-In COMSOL, we can define fluxes also as equations depending e.g. on the local concentrations of the species and the local potential. We can e.g. define the flux of H$_2$ in terms of a Butler-Volmer relation:
+In COMSOL (and only here, not for any other of the FD solvers), we can define fluxes also as equations depending e.g. on the local concentrations of the species and the local potential. We can e.g. define the flux of H$_2$ in terms of a Butler-Volmer relation:
 
 $j_\mathrm{H_2}=\rho\cdot\theta_\mathrm{H}\cdot A\cdot \exp(-[G_a^\mathrm{eq}+\alpha\cdot F\cdot \eta]/RT)$,
 
@@ -98,9 +98,9 @@ Note that the surface concentrations of species are indicated here by the double
 Finally, we can define the H$_2$ flux as:
 
     species['H2']['flux-equation'] = 
-	    'rho*coverage*exp(-(Ga+alpha*F*(phiM-phi-phiEq))/RT)' #(mol/s/m^2)
+	    'rho*coverage*exp(-(Ga+alpha*F_const*(phiM-phi-phiEq))/RT)' #(mol/s/m^2)
 
-Fixed flux expressions can be combined with flux-equation expressions and the remaining species fluxes will be automatically calculated
+Fixed flux expressions can be combined with flux-equation expressions and the remaining species fluxes will be automatically calculated. 
 
 ## CatMAP
 
