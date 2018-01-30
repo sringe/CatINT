@@ -104,4 +104,8 @@ Fixed flux expressions can be combined with flux-equation expressions and the re
 
 ## CatMAP
 
-The most advanced method of defining reactant fluxes is via a mean-field kinetic model. 
+The most advanced method of defining reactant fluxes is via a mean-field kinetic model. This requires to evaluate all fluxes via CatMAP, by setting:
+
+       species['H2']['flux'] = 'catmap'
+
+If any of the fluxes is set to 'catmap', a full CatMAP calculation will be started to evaluate the reaction fluxes. These will be passed to CatINT in order to evaluate the surface concentrations which again requires a CatMAP calculation. An SCF cycle is performed until convergence.
