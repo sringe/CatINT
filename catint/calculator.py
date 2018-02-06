@@ -1,6 +1,10 @@
 """
 calculator class
-uses finite difference techniques to solve the PNP equations
+solves the transport equations
+either by using finite difference techniques to solve the PNP equations
+or by calling COMSOL
+kinetics are implemented as fixed fluxes, rate equations or 
+full microkinetic modeling via CatMAP
 ---
 Stefan Ringe (stefan.ringe.tum@gmail.com)
 """
@@ -20,11 +24,12 @@ import os
 import odespy, numpy
 from comsol_wrapper import Comsol
 from catmap_wrapper import CatMAP
+from copy import deepcopy
 
 class Calculator():
 
     def __init__(self,transport=None,dt=None,tmax=None,ntout=1,calc=None,
-            scale_pb_grid=None,tau_jacobi=1e-7,tau_scf=1e-7,mode='time-dependent',\
+            scale_pb_grid=None,tau_jacobi=1e-7,tau_scf=1e-10,mode='time-dependent',\
                 desc_method='internal-cont'):
 
         self.mode=mode #calculation mode for comsol: time-dependent or stationary. the local
@@ -43,8 +48,8 @@ class Calculator():
         if calc is None:
             calc=self.tp.calc
 
-        if self.tp.system['kinetics']=='catmap':
-            catmap=CatMAP(transport=self.tp)
+        if self.tp.use_catmap:
+            self.catmap=CatMAP(transport=self.tp)
         
         self.tp.ntout=ntout
 #        if os.path.exists('results.txt'):
@@ -1111,7 +1116,7 @@ class Calculator():
         return cout
 
     def run(self):
-        if self.tp.descriptors is not None and (self.tp.desc_method == 'external' or self.tp.system['kinetics'] == 'catmap'):
+        if self.tp.descriptors is not None and (self.tp.desc_method == 'external' or self.tp.use_catmap):
             desc_keys=[key for key in self.tp.descriptors]
             i1=0
             i2=0
@@ -1131,20 +1136,28 @@ class Calculator():
                     self.tp.all_data[str(value1)][str(value2)]['system'][desc_keys[1]]=self.tp.system[desc_keys[1]]
                     
 
-                    if self.tp.system['kinetics'] != 'catmap':
+                    if not self.tp.use_catmap:
                         self.run_single_step(label=label,desc_val=[str(value1),str(value2)])
                     else:
                         istep=0
                         scf_accuracy=np.inf
                         while scf_accuracy>self.tau_scf:
                             istep+=1
-                            if self.tp.initialize_catmap_with_rates and istep==1:
-                                #set the kinetics to rate-equation only for the first step
-                                #comsol is then initialized by the rate equations given as input
-                                self.tp.system['kinetics']='rate-equation'
                             self.tp.logger.info('Solving transport step {}. Current accuracy in current density = {} mV/cm^2'.format(istep,scf_accuracy))
 
-                            #COMSOL
+                            #1) Microkinetic Model: CatMAP
+                            if istep==1:
+                                self.tp.logger.debug('Electrode Fluxes:')
+                                for sp in self.tp.species:
+                                    self.tp.logger.debug('  {}: {}'.format(sp,self.tp.species[sp]['flux']))
+
+                            #run catmap. the fluxes will be updated automatically
+                            self.catmap.run(desc_val=[str(value1),str(value2)])
+                            self.tp.logger.debug('Electrode Fluxes:')
+                            for sp in self.tp.species:
+                                self.tp.logger.debug('  {}: {}'.format(sp,self.tp.species[sp]['flux']))
+
+                            #2) Transport: COMSOL
                             if 'internal' in self.tp.desc_method:
                                 #we have to still slowly ramp up the flux inside comsol
                                 #so for internal comsol, pass a list of descriptors which goes until the current potential
@@ -1153,59 +1166,49 @@ class Calculator():
                                 i=-1
                                 desc_keys=[key for key in desc_copy]
                                 desc_list_new=[]
-                                for dd in self.tp.descriptors[desc_keys[0]]:
-                                    if dd <= value1:
+                                for idd,dd in enumerate(self.tp.descriptors[desc_keys[0]]):
+                                    if abs(dd) <= abs(value1):
                                         desc_list_new.append(dd)
                                 #replace the first descriptor 
-                                self.tp.descriptors[desc]=desc_list_new
+                                self.tp.descriptors[desc_keys[0]]=desc_list_new
+                                print 'descriptor list',self.tp.descriptors[desc_keys[0]]
 
-                            #run
-                            self.run_single_step(label=label,desc_val=[str(value1),str(value2)])
+                            if istep==1:
+                               self.tp.logger.debug('Surface Concentrations:')
+                               for sp in self.tp.species:
+                                   self.tp.logger.debug('  {}: {} mol/L'.format(sp,self.tp.species[sp]['surface concentration']/1000.))
+
+                            #only_last updates the descriptor based dictionaries only for the last entry in self.tp.descriptors
+                            self.run_single_step(label=label,desc_val=[str(value1),str(value2)],only_last=True)
+
+                            self.tp.logger.debug('Surface Concentrations:')
+                            for sp in self.tp.species:
+                                self.tp.logger.debug('  {}: {} mol/L'.format(sp,self.tp.species[sp]['surface concentration']/1000.))
 
                             if 'internal' in self.tp.desc_method:
                                 #copy the descriptor list back
                                 self.tp.descriptors=desc_copy
-
-                            #CATMAP
+                            #3) Check Convergence
                             current_density=[]
-                            for sp in self.tp.species:
+                            for sp in self.tp.electrode_reactions:
                                 current_density.append(self.tp.electrode_reactions[sp]['electrode_current_density'][(str(value1),str(value2))])
-                            catmap.run(desc_val=[str(value1),str(value2)])
-                            scf_accuracy=self.evaluate_accuracy(current_density,old_current_density)
-                            old_current_density=current_density.copy()
-                            if self.tp.initialize_catmap_with_rates and istep==1:
-                                #set the kinetics back to the catmap kinetics, next steps the fluxes are defined by catmap
-                                self.tp.system['kinetics']='catmap'
+                            if istep>1:
+                                scf_accuracy=self.evaluate_accuracy(current_density,old_current_density)
+                            old_current_density=deepcopy(current_density)
         else:
-            if self.tp.system['kinetics'] != 'catmap':
+            if not self.tp.use_catmap:
                 self.run_single_step()
             else:
                 self.tp.logger.error('Catmap has been selected but current descriptor method is Comsol internal which does not work. Stopping here.')
                 sys.exit()
-#                elif se
-        #elif self.scf_bound:
-        #    #electrode boundary is defined by catmap calculation
-        #    catmap=Catmap()
-        #    scf_converged=False
-        #    cout_old=np.zeros([self.tp.nspecies*self.tp.nx])
-        #    cout=[cout_old,cout_old]
-        #    i=0
-        #    while not self.converged(cout_old,cout[-1]) and i>0:
-        #        i+=1
-        #        #solve PNP equations with current BCs
-        #        self.run_single_step()
-        #        #update BCs by running catmap with current concentrations:
-        #        catmap.run()
-        #        #update concentrations
-        #        cout_old=cout[-1]
 
-    def evaluate_accuracy(par,par_old):
+    def evaluate_accuracy(self,par,par_old):
         rmsd=0
         n=0
         for val1,val2 in zip(par,par_old):
             n+=1
             rmsd+=(val1-val2)**2
-        rmsd=np.sqrt(rmsd/n)
+        rmsd=np.sqrt(rmsd/(n*1.))
         return rmsd
 
     def converged(self,old,new):
@@ -1217,7 +1220,7 @@ class Calculator():
         else:
             return False
 
-    def run_single_step(self,label='',desc_val=[]):
+    def run_single_step(self,label='',desc_val=[],only_last=False):
 #        print 'ntout=',self.tp.ntout
 #        for n in range(len(self.tp.tmesh)):
 #            print 'checking',n, self.tp.nt/float(self.tp.ntout)
@@ -1235,4 +1238,4 @@ class Calculator():
                 self.tp.species[sp]['concentration']=cout[-1,i_sp*self.tp.nx:(i_sp+1)*self.tp.nx]
             self.tp.cout=cout
         else:
-            self.comsol.run(label=label,desc_val=desc_val)
+            self.comsol.run(label=label,desc_val=desc_val,only_last=only_last)

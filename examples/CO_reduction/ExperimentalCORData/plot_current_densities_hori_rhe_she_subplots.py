@@ -130,7 +130,7 @@ def plot_stuff(list_of_data,DATA,fit,joinlines, skip={}, voltage_mode='previous'
             linestyle = "None"
             if joinlines:
                 linestyle=":"
-        if any([a in DATA.label[j] for a in ['n-PrOH','C$_{2+}$']]):
+        if any([a in DATA.label[j] for a in ['n-PrOH']]):
             color[n]='lightblue'
         elif any([a in DATA.label[j] for a in ['C$_2$H$_4$','CH$_3$COO','EtOH','C$_{2+}$','C$_2$']]):
             color[n]='r'
@@ -294,7 +294,7 @@ def plot_data(reference=['all'],species=['all'],pH=['all'],ci_bic=['all'],scale=
     species=species_reduced
 
     species=['C$_1$' if sp=='C1-sum' else sp for sp in species]
-    species=['C$_2$' if sp=='C2-sum' else sp for sp in species]
+    species=['C$_2$,' if sp=='C2-sum' else sp for sp in species]
     species=['C$_{2+}$' if sp=='C2+-sum' else sp for sp in species]
 
     print('Plotting species = {}'.format(species))
@@ -565,7 +565,7 @@ def plot_data(reference=['all'],species=['all'],pH=['all'],ci_bic=['all'],scale=
     plt.show()
 
 #plot_data(reference=['hori','jaramillo'],species=['C1-sum','C2-sum','H$_2$'],pH=['6.8','13'],scale='RHE',system=['all'],fit_tafel=True)
-plot_data(reference=['jaramillo','kanan'],species=['C1','C2-sum','HCOO','H$_2$','CO'],pH=['6.8','7.2'],scale='RHE',system=['all'])
+plot_data(reference=['hori','jaramillo','kanan'],species=['C1','HCOO','C2+-sum','HCOO','H$_2$','CO'],pH=['6.8','7.2'],scale='RHE',system=['all'])
 
 sys.exit()
 

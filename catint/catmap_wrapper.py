@@ -3,7 +3,7 @@ from units import *
 import numpy as np
 import os
 from subprocess import call
-from io import replace_line
+from io import replace_line,insert_line
 from glob import glob
 import sys
 import pickle
@@ -48,6 +48,7 @@ class CatMAP():
         self.output_base_folder=self.tp.outputfoldername+'/catmap_output'
         self.input_base_folder=self.tp.outputfoldername+'/catmap_input'
 
+        self.method=None
 
     def run(self,desc_val):
         desc_keys=[key for key in self.tp.descriptors]
@@ -97,14 +98,15 @@ class CatMAP():
             copy(energies_file,self.model_name+'_energies.txt')
 
         #setting up the model
-        model = ReactionModel(setup_file = mkm_file)
+        model = ReactionModel(setup_file = mkm_file, max_log_line_length=0) #we set the maximum line length to 0, because we work
+        #with pickle files anyhow
         #output
-        model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy']
+        model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency']
         #run!
-        stdout = sys.stdout
-        sys.stdout = open('std.log', 'w')
+#        stdout = sys.stdout
+#        sys.stdout = open('std.log', 'w')
         model.run()
-        sys.stdout = stdout
+#        sys.stdout = stdout
 
         converged=False
         count=0
@@ -131,7 +133,39 @@ class CatMAP():
         self.read_output(desc_val)
         #species_definitions['CO2_g'] = {'concentration':0.2}
 
-    def update_input(self,desc_val):
+    def update_input(self,desc_val,method='single_point'):
+
+        #go over input file and check if single point or full descriptor range is used as method:
+        found_resolution=False
+        found_descriptor_range=False
+        found_descriptors=False
+        self.method=method
+
+        i=0
+        for line in open(self.catmap_model):
+            i+=1
+            if line.lstrip().startswith('#'):
+                continue
+            if 'descriptor_range' in line:
+                found_descriptor_range=True
+            if 'resolution' in line:
+                found_resolution=True
+            if 'descriptors' in line:
+                self.method='single_point'
+                found_descriptors=True
+                idesc=i
+        if self.method=='single_point':
+            if not found_resolution:
+                insert_line(self.catmap_model,idesc,'resolution = [1,1]\n')
+                found_resolution=True
+            if not found_descriptor_range:
+                insert_line(self.catmap_model,idesc,'descriptor_range = [[0,0],[0,0]]')
+                found_descriptor_range=True
+        if not all([found_descriptor_range,found_resolution]):
+                #or found_descriptors):
+            self.tp.logger.error('Missing resolution definition or descriptor range')
+            sys.exit()
+
         def convert(name_catint):
             if name_catint=='phiM':
                 name_catmap='voltage'
@@ -140,43 +174,55 @@ class CatMAP():
             return name_catmap
         #1) work on input files
         #we need to replace the concentration lines in the file
-        i=0
         desc_keys=[key for key in self.tp.descriptors]
         desc_1=convert(desc_keys[0])
         desc_2=convert(desc_keys[1])
-        desc_list=self.tp.descriptors[desc_keys[0]]
-        if len(desc_list)<5 and desc_1 != 'voltage':
-            self.tp.logger.warning('It could be that no pkl files are written out because the given descriptor axis is too coarse, consider a denser axis')
-        if desc_1=='voltage':
-            #use manual range here that contains current descriptor value
-            val=desc_val[0]
-            desc_list=[val]
-            while val<max(self.max_desc,max(self.tp.descriptors['phiM'])):
-                val+=self.delta_desc
-                desc_list.append(val)
-            val=desc_val[0]
-            while val>min(self.min_desc,min(self.tp.descriptors['phiM'])):
-                val-=self.delta_desc
-                desc_list.append(val)
-        desc_list=sorted(desc_list,key=float)
-        min_desc=min(desc_list)
-        max_desc=max(desc_list)
-        n_desc=len(desc_list)
-        delta_desc=desc_list[1]-desc_list[0]
-        if delta_desc<1e-9:
-            self.tp.logger.warning('The descriptor separation is smaller then 1e-9. The index assignment of the catmap data will fail, so I quit here')
-            sys.exit()
 
+        if self.method=='descriptor_range':
+            desc_list=self.tp.descriptors[desc_keys[0]]
+            if len(desc_list)<5 and desc_1 != 'voltage':
+                self.tp.logger.warning('It could be that no pkl files are written out because the given descriptor axis is too coarse, consider a denser axis')
+            if desc_1=='voltage':
+                #use manual range here that contains current descriptor value
+                val=desc_val[0]
+                desc_list=[val]
+                while val<max(self.max_desc,max(self.tp.descriptors['phiM'])):
+                    val+=self.delta_desc
+                    desc_list.append(val)
+                val=desc_val[0]
+                while val>min(self.min_desc,min(self.tp.descriptors['phiM'])):
+                    val-=self.delta_desc
+                    desc_list.append(val)
+            desc_list=sorted(desc_list,key=float)
+            min_desc=min(desc_list)
+            max_desc=max(desc_list)
+            n_desc=len(desc_list)
+            delta_desc=desc_list[1]-desc_list[0]
+            if delta_desc<1e-9:
+                self.tp.logger.warning('The descriptor separation is smaller then 1e-9. The index assignment of the catmap data will fail, so I quit here')
+                sys.exit()
+
+        i=0
         for line in open(self.catmap_model):
             i+=1
+            if line.lstrip().startswith('#'):
+                continue
             for sp in self.tp.species:
                 sp_cm=self.species_to_catmap(sp)
                 if all([a in line for a in ['species_definitions',sp_cm+'_g','pressure']]):
                     replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':"+str(self.tp.species[sp]['surface concentration']/1000.)+"}")
-            if 'descriptor_range' in line:
-                replace_line(self.catmap_model,i-1,'descriptor_ranges = [['+str(min_desc)+','+str(max_desc)+'],['+str(desc_val[1])+','+str(desc_val[1])+']]')
-            if line.strip().startswith('resolution'):
-                replace_line(self.catmap_model,i-1,'resolution = ['+str(n_desc)+', 1]') #descriptor_names= [\''+desc_1+'\', \''+desc_2+'\']')
+            if self.method=='descriptor_range':
+                if 'descriptor_range' in line:
+                    replace_line(self.catmap_model,i-1,'descriptor_ranges = [['+str(min_desc)+','+str(max_desc)+'],['+str(desc_val[1])+','+str(desc_val[1])+']]')
+                if line.strip().startswith('resolution'):
+                    replace_line(self.catmap_model,i-1,'resolution = ['+str(n_desc)+', 1]') #descriptor_names= [\''+desc_1+'\', \''+desc_2+'\']')
+            elif self.method=='single_point':
+                if 'descriptor_range' in line:
+                    replace_line(self.catmap_model,i-1,'descriptor_ranges = [['+str(desc_val[0])+','+str(desc_val[0])+'],['+str(desc_val[1])+','+str(desc_val[1])+']]')
+                if line.strip().startswith('resolution'):
+                    replace_line(self.catmap_model,i-1,'resolution = [1,1]') #descriptor_names= [\''+desc_1+'\', \''+desc_2+'\']')
+                if 'descriptors' in line:
+                    replace_line(self.catmap_model,i-1,'descriptors = ['+str(desc_val[0])+','+str(desc_val[1])+']')
             if 'descriptor_names' in line:
                 replace_line(self.catmap_model,i-1,'descriptor_names= [\''+desc_1+'\', \''+desc_2+'\']')
 
@@ -193,8 +239,9 @@ class CatMAP():
         model = ReactionModel(setup_file = log_file)
         pickle_file = self.model_name+'.pkl'
         data = self.get_data(pickle_file,model)
-        idx=data.prod_names.index('H2_g')
         os.chdir(root)
+        for sp in self.tp.species:
+            self.tp.species[sp]['flux']=0.0
         for sp in self.tp.species: #prod in self.tp.electrode_reactions:
             ###############
             #1) the TOF's save them as fluxes for the individual species
@@ -203,18 +250,9 @@ class CatMAP():
             name=self.species_to_catmap(sp)
             name+='_g'
             #"tof" is the signed rate of conversion/active site/s
-            if name in data.prod_names:
-                idx=data.prod_names.index(name)
-                tof=data.production_rate[:,idx]
-            get_cons=False
-            if tof is None and name in data.cons_names:
-                get_cons=True
-            if tof is not None:
-                if all([t==0 for t in tof]) and name in data.cons_names:
-                    get_cons=True
-            if get_cons:
-                idx=data.cons_names.index(name)
-                tof=-data.consumption_rate[:,idx]
+            if name in data.turnover_frequency_names:
+                idx=data.turnover_frequency_names.index(name)
+                tof=data.turnover_frequency[:,idx]
             if tof is None:
                 continue
             data_ref=np.column_stack((data.voltage, tof))
@@ -223,12 +261,10 @@ class CatMAP():
 #            currents=self.convert_TOF(data_ref[np.argsort(data_ref[:, 0])][:,1])
             pol_file=self.output_folder+'/j_'+name.split('_')[0]+'.tsv'
             np.savetxt(pol_file, np.array([voltages,rates]).T)
-            #set the rate of the reactions to result
-#            self.tp.electrode_reactions[prod]['rates']=[str(rates),'0.0']
             iv=-1
             for v in voltages:
                 iv+=1
-                if abs(v-desc_val[0])<1e-10:
+                if abs(v-float(desc_val[0]))<1e-10:
                     index=iv
                     break
             self.tp.species[sp]['flux']=rates[index]
@@ -266,12 +302,16 @@ class CatMAP():
         #PRODUCT NAMES
         data.prod_names = model.output_labels['production_rate']
         data.cons_names = model.output_labels['consumption_rate']
+        data.turnover_frequency_names = model.output_labels['turnover_frequency']
         production_rate_map = np.array(a['production_rate_map'])
         consumption_rate_map = np.array(a['consumption_rate_map'])
+        turnover_frequency_map = np.array(a['turnover_frequency_map'])
         production_rate_mpf = production_rate_map[:,1]
         consumption_rate_mpf = consumption_rate_map[:,1]
+        turnover_frequency_mpf = turnover_frequency_map[:,1]
         data.production_rate = np.zeros((len(production_rate_mpf),len(data.prod_names)))
-        data.consumption_rate = np.zeros((len(consumption_rate_mpf),len(data.prod_names)))
+        data.consumption_rate = np.zeros((len(consumption_rate_mpf),len(data.cons_names)))
+        data.turnover_frequency = np.zeros((len(turnover_frequency_mpf),len(data.turnover_frequency_names)))
         data.voltage = np.zeros((len(production_rate_mpf),1))
         for i in range(0,len(production_rate_mpf)):
             data.voltage[i][0] = production_rate_map[:,0][i][0]
@@ -280,6 +320,8 @@ class CatMAP():
                 data.production_rate[i][j]=float_rate
                 float_rate = float(consumption_rate_mpf[i][j])
                 data.consumption_rate[i][j]=float_rate
+                float_rate = float(turnover_frequency_mpf[i][j])
+                data.turnover_frequency[i][j]=float_rate
         #RATES
         data.rate_names = model.output_labels['rate']
         rate_map = np.array(a['rate_map'])
