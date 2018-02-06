@@ -473,7 +473,8 @@ class Transport(object):
                         sign='(-1)'
                     else:
                         sign='1'
-                    self.species[sp]['flux']=sign+'*'+str(self.species[sp]['current density']/self.electrode_reactions[sp]['nel']/unit_F)
+                    nprod=len([a for a in self.electrode_reactions[sp]['reaction'][1] if a==sp])
+                    self.species[sp]['flux']=sign+'*'+str(self.species[sp]['current density']/self.electrode_reactions[sp]['nel']/unit_F*nprod)
                 elif 'flux-equation' in self.species[sp]:
                     self.species[sp]['flux']=self.species[sp]['flux-equation']
         else:
@@ -483,7 +484,8 @@ class Transport(object):
                         sign=-1
                     else:
                         sign=1
-                    self.species[sp]['flux']=sign*self.species[sp]['current density']/self.electrode_reactions[er]['nel']/unit_F
+                    nprod=len([a for a in self.electrode_reactions[sp]['reaction'][1] if a==sp])
+                    self.species[sp]['flux']=sign*self.species[sp]['current density']/self.electrode_reactions[er]['nel']/unit_F*nprod
 
         ers=self.electrode_reactions
         #first set the fluxes of all products

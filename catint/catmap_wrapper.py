@@ -8,6 +8,7 @@ from glob import glob
 import sys
 import pickle
 from catmap.model import ReactionModel
+from catmap import analyze
 from string import Template
 from shutil import copy
 
@@ -102,6 +103,13 @@ class CatMAP():
         #with pickle files anyhow
         #output
         model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency']
+        ma = analyze.MechanismAnalysis(model)
+        ma.energy_type = 'free_energy' #can also be free_energy/potential_energy
+        ma.include_labels = False #way too messy with labels
+        ma.pressure_correction = False #assume all pressures are 1 bar (so that energies are the same as from DFT)
+        ma.include_labels = True
+        fig = ma.plot(save='FED.png')
+        sys.exit()
         #run!
 #        stdout = sys.stdout
 #        sys.stdout = open('std.log', 'w')
@@ -209,7 +217,8 @@ class CatMAP():
                 continue
             for sp in self.tp.species:
                 sp_cm=self.species_to_catmap(sp)
-                if all([a in line for a in ['species_definitions',sp_cm+'_g','pressure']]):
+                sol=re.findall('species_definitions\[\''+sp_cm+'_g\'\].*{\'pressure\':.*}',line)
+                if len(sol)>0:
                     replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':"+str(self.tp.species[sp]['surface concentration']/1000.)+"}")
             if self.method=='descriptor_range':
                 if 'descriptor_range' in line:
@@ -257,7 +266,13 @@ class CatMAP():
                 continue
             data_ref=np.column_stack((data.voltage, tof))
             voltages=data_ref[np.argsort(data_ref[:, 0])][:,0]
-            rates=data_ref[np.argsort(data_ref[:, 0])][:,1]*self.tp.system['active site density']
+            if sp in self.tp.electrode_reactions:
+                nprod=len([a for a in self.tp.electrode_reactions[sp]['reaction'][1] if a==sp])
+                nel=self.tp.electrode_reactions[sp]['nel']
+            else:
+                nprod=1
+                nel=1
+            rates=data_ref[np.argsort(data_ref[:, 0])][:,1]*self.tp.system['active site density']*nel*unit_F/nprod/10.
 #            currents=self.convert_TOF(data_ref[np.argsort(data_ref[:, 0])][:,1])
             pol_file=self.output_folder+'/j_'+name.split('_')[0]+'.tsv'
             np.savetxt(pol_file, np.array([voltages,rates]).T)
@@ -282,6 +297,16 @@ class CatMAP():
                 cov_file=self.output_folder+'/cov_'+name.split('_')[0]+'.tsv'
                 np.savetxt(cov_file,np.array([voltages,coverages]).T)
                 self.tp.species[sp]['coverage']=coverages[index]
+        #print all intermediate coverages also
+        for name in cov_names:
+            if name in cov_names and name not in self.tp.species:
+                idx=cov_names.index(name)
+                data_ref=np.column_stack((data.voltage, data.coverage[:,idx]))
+                voltages=data_ref[np.argsort(data_ref[:, 0])][:,0]
+                coverages=data_ref[np.argsort(data_ref[:, 0])][:,1]
+                cov_file=self.output_folder+'/cov_'+name.split('_')[0]+'.tsv'
+                np.savetxt(cov_file,np.array([voltages,coverages]).T)
+
 
     def get_data(self,pickle_file,model):
         a = pickle.load(open(pickle_file))

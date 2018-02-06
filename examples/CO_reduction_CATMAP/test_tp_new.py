@@ -7,6 +7,9 @@ import sys
 from units import *
 from read_data import read_data
 
+only_catmap=True
+#if only_catmap, run only catmap calculation without transport!
+
 pH_i=6.8
 nobuffer=False #True #False #True #False #True 
 
@@ -74,11 +77,12 @@ electrolyte_reactions=\
 
 electrode_reactions={
     #'H2':           {   'reaction':            '2 H2O + 2 e- -> H2 + 2 OH-'},
-    'H2':           {   'reaction':             '2 HCO3- + 2 e- -> H2 + 2 CO32-'},
-    'CO':           {   'reaction':             'CO2 + 2 H+ + 2 e- -> CO + H2O'}}
-#    'CH4':          {'reaction':                'CO + 5 H2O + 6 e- -> CH4 + 6 OH-'}, #methane
+    #'H2':           {   'reaction':             '2 HCO3- + 2 e- -> H2 + 2 CO32-'},
+    'H2':           {   'reaction':             '2 H+ + 2 e- -> H2'},
+    'CO':           {   'reaction':             'CO2 + 2 H+ + 2 e- -> CO + H2O'},
+    'CH4':          {'reaction':                'CO + 6 H+ + 6 e- -> CH4 + H2O'}, #methane
 #    'HCOO-':        {   'reaction':             'CO2 + 2 H2O + 2 e- -> HCOO- + 2 OH-'},  #consider HCOOH here
-#    'C2':         {   'reaction':               '2 CO2 + 9 H2O + 12 e- -> C2 + 12 OH-'}}
+    'CH3CH2OH':     {   'reaction':               '2 CO2 + 12 H+ + 12 e- -> CH3CH2OH + 3 H2O'}}
    # 'C2H4':         {   'reaction':            '2 CO2 + 8 H2O + 12 e- -> C2H4 + 12 OH-'}}
 
 #if educt=='CO2':
@@ -227,18 +231,18 @@ species=\
                             'name':                 'carbon monoxide',
                             'diffusion':            2.03e-9,
                             'bulk concentration':   CO_i},
-#    'CH4':              {   'symbol':               'CH_4',
-#                            'name':                 'methane',
-#                            'diffusion':            1.49e-009},
+    'CH4':              {   'symbol':               'CH_4',
+                            'name':                 'methane',
+                            'diffusion':            1.49e-009},
 #   # 'C2H4':             {   'symbol':               'C_2H_4',
 #   #                         'name':                 'ethylene',
 #   #                         'diffusion':            1.87e-009},
 #    'HCOO-':            {   'symbol':               'HCOO^-',
 #                            'name':                 'formate',
 #                            'diffusion':            1.454e-009},
-#    'C2':             {     'name':                 'C2-species', #assuming EtOH
-#                            'symbol':               'C_2H_5OH',
-#                            'diffusion':            0.84e-009},
+    'CH3CH2OH':             {'name':                 'C2-species', #assuming EtOH
+                            'symbol':               'CH_3CH_2OH',
+                            'diffusion':            0.84e-009},
     }
 
 if not nobuffer:
@@ -332,14 +336,16 @@ for potential in potentials:
     #tp.set_calculator('Crank-Nicolson--LF')
     #tp.set_initial_concentrations('Gouy-Chapman')
     
-    #cm=CatMAP(transport=tp,model_name='CO2')
-    #for p in np.linspace(-1.5,0.2,40):
-    #    cm.run([p,300])
+    if only_catmap:
+        cm=CatMAP(transport=tp)
+        for p in np.linspace(-1.5,0.2,40):
+            cm.run([p,300])
     #c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
-    c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
+    if not only_catmap:
+        c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
     #scale_pb_grid
-    c.run()
-    tp.save() #saves all data to pickle files to enable restart or plotting later
+        c.run()
+        tp.save() #saves all data to pickle files to enable restart or plotting later
     
 #    p=Plot(transport=tp)
 #    p.plot(large_plots=['concentrations_reaction','desc_current_density'],\
