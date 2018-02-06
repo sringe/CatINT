@@ -1,0 +1,52 @@
+scaler = 'ThermodynamicScaler'
+
+rxn_expressions = [
+    'H_g + ele_g + *_t <-> H-ele*_t -> H*_t; beta=0.7',      # Volmer 1
+    'H_g + ele_g + H*_t <-> H2-ele*_t -> H2_g + *_t; beta=0.5',  # Heyrovsky 2
+    'H*_t + H*_t <-> H-H*_t + *_t -> H2_g + 2*_t',               # Tafel 3
+
+    'CO2_g + *_t <-> CO2-*_t -> CO2*_t',       #CO2 adsorption
+    'CO2*_t + H_g + ele_g <-> CO2-H-ele*_t -> COOH*_t; beta=0.5',          #CO2 to COOH (barrier less)
+    'COOH*_t + H_g + ele_g <-> CO-OHH-ele*_t -> CO*_t + H2O_g; beta=0.5',  #COOH to CO (rate-limiting)
+    'CO*_t <-> CO-*_t -> CO_g + *_t'            #CO desorption
+]
+
+prefactor_list = [1e13]*len(rxn_expressions)  #Heine: prefactor for CO is 1e8
+
+surface_names = ['Cu']
+
+descriptor_names= ['voltage', 'temperature'] #descriptor names
+descriptor_ranges = [[-1.5,0.2],[300,300]]
+descriptors = [0,0]
+resolution = [30, 1]
+
+beta = 0.5
+
+ph_var = 7
+
+species_definitions = {}
+species_definitions['H_g'] = {'pressure':1.0}
+species_definitions['ele_g'] = {'pressure':1.0, 'composition':{}}
+species_definitions['CO_g'] = {'pressure':0.0}
+species_definitions['CO2_g'] = {'pressure':1.0}
+species_definitions['H2_g'] = {'pressure':0.0}
+species_definitions['H2O_g'] = {'pressure':1.0}
+species_definitions['t'] = {'site_names': ['211'], 'total':1.0}
+
+data_file = 'catmap.pkl'
+input_file = 'catmap_energies.txt' #2_energies.txt'
+
+gas_thermo_mode = 'ideal_gas' 
+adsorbate_thermo_mode = 'harmonic_adsorbate'
+electrochemical_thermo_mode = 'simple_electrochemical'
+
+decimal_precision = 100
+tolerance = 1e-25
+max_rootfinding_iterations = 200
+max_bisections = 3
+
+rxn_mechanisms = { 'HER_Tafel':[1,1,3],
+                   'HER_Heyrovsky':[1,2],
+                   'CO2R':[4,5,6,7]
+}
+
