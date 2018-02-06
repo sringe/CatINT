@@ -136,7 +136,6 @@ class Transport(object):
                 'electrode reactions': False,
                 'electrolyte reactions': False,
                 'exclude species': ['H2O','e-'],
-                'kinetics':'fixed', #fixed fluxes during transport simulation
                 'pressure':1}
         if system is None:
             self.system=system_defaults
@@ -355,11 +354,11 @@ class Transport(object):
         for isp,sp in enumerate(self.species):
             flux_bound[str(isp)]={}
         for isp,sp in enumerate(self.species):
-            if 'flux' in self.species[sp]:
-                pass
-                #self.species[sp]['flux']*=-1
-            else:
-                self.species[sp]['flux']=0.0
+            #if 'flux' in self.species[sp]:
+            #    pass
+            #    #self.species[sp]['flux']*=-1
+            #else:
+            #    self.species[sp]['flux']=0.0
             flux_bound[str(isp)]['l']=self.species[sp]['flux']
 
         #debugging fluxes
@@ -396,6 +395,19 @@ class Transport(object):
                 self.species[sp]['flux']=0.0
             return
 
+        self.use_catmap=False
+
+        for sp in self.species:
+            if 'flux' in self.species[sp]:
+                if self.species[sp]['flux']=='catmap':
+                    self.use_catmap=True
+        if self.use_catmap:
+            for sp in self.species:
+                if not 'flux' in self.species[sp]:
+                    self.species[sp]['flux']='catmap'
+            self.logger.info('Found flux = catmap, all fluxes will be calculated by CatMAP.')
+            return
+                
         #some consistency check, either flux, current density or flux-equation should be given, NOT all
         for sp in self.species:
             count=0
@@ -452,7 +464,6 @@ class Transport(object):
 
         #convert given current densities into fluxes
         if using_equations:
-            print 'using equations'
             #convert fixed fluxes to strings
             for sp in self.species:
                 if 'flux' in self.species[sp]:
@@ -528,7 +539,10 @@ class Transport(object):
         #finally set all remaining fluxes equal to zero
         for sp in self.species:
             if 'flux' not in self.species[sp]:
-                self.species[sp]['flux']=0.0
+                if using_equations:
+                    self.species[sp]['flux']='0.0'
+                else:
+                    self.species[sp]['flux']=0.0
 
 
     def initialize_reactions(self,reactions):
@@ -569,6 +583,9 @@ class Transport(object):
 
 
     def initialize_descriptors(self,descriptors):
+        #if internal comsol iteration should be used the potential should be 
+        #like 0,-0.1,-0.2,-0.3...
+        #or 0,0.1,0.2,0.3...
 
         #list of descriptors over which to iterate
         if descriptors is not None:
@@ -589,6 +606,7 @@ class Transport(object):
                 self.descriptors['temperature']=[str(self.system['temperature'])]
             else:
                 self.descriptors['phiM']=[str(self.system['phiM'])]
+
 
         desc_keys=[key for key in self.descriptors]
         if len(desc_keys)!=2:

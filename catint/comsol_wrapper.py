@@ -9,7 +9,7 @@ from copy import deepcopy
 
 class Comsol():
     """This class does all operations need to write input files for comsol and read output"""
-    def __init__(self,path=os.getcwd(),transport=None,exe_path='/Applications/COMSOL53/Multiphysics/bin/comsol',mode='time-dependent'): 
+    def __init__(self,path=os.getcwd(),transport=None,exe_path='/Applications/COMSOL53a/Multiphysics/bin/comsol',mode='time-dependent'): 
         if transport is None:
             self.tp.logger.error('No transport object provided for calculator. Stopping here.')
             sys.exit()
@@ -29,7 +29,9 @@ class Comsol():
         
 
     def run(self,label='',desc_val=[],
-            studies=None):
+            studies=None,only_last=False):
+        #only_last: if True, update only the data in the global arrays and dictionaries
+        #corresponding to the last parameter in the parameter list
         self.results_folder=self.results_folder_base+'_'+label
         desc_keys=[key for key in self.tp.descriptors]
         if studies is None:
@@ -39,17 +41,19 @@ class Comsol():
                 studies[self.mode]={'None':{'None':None}}
             else:
                 #so far we can only have a single descriptor for comsol, choose the first one here:
-                idesc=-1
-                for desc in self.tp.descriptors:
-                    idesc+=1
-                    if len(self.tp.descriptors[desc])>1:
-                        if idesc>0:
-                            self.tp.logger.error('Please chose first descriptor as parametric COMSOL sweep')
-                            sys.exit()
-                        desc_choice=desc
-                        desc_val=self.tp.descriptors[desc_choice]
-                        break
-                studies[self.mode]={'parametric':{desc_choice:desc_val}}
+                #idesc=-1
+                #for desc in self.tp.descriptors:
+                #    idesc+=1
+                #    if len(self.tp.descriptors[desc])>1:
+                #        if idesc>0:
+                #            self.tp.logger.error('Please chose first descriptor as parametric COMSOL sweep')
+                #            sys.exit()
+                #        desc_choice=desc
+                #        desc_val=self.tp.descriptors[desc_choice]
+                #        break
+                desc_choice=desc_keys[0]
+                c_desc_val=self.tp.descriptors[desc_choice] #[desc_val[0]]
+                studies[self.mode]={'parametric':{desc_choice:c_desc_val}}
         for study in studies:
             if study=='time-dependent' and 'parametric' in studies[study]:
                 self.tp.logger.error('Internal parametric sweep in COMSOL does currently only work with stationary solver')
@@ -68,14 +72,14 @@ class Comsol():
         else:
             self.tp.logger.info('Solutions will be reinitialized for each parameter set')
 #        self.write_parameter_file()
-        self.write_input(desc_val=desc_val)
+        self.write_input()
         self.tp.logger.info('Compiling COMSOL.')
         call(self.exe+" compile "+'/'.join([os.getcwd(),self.inp_file_name]),shell=True)
         self.tp.logger.info('Starting COMSOL.')
         call(self.exe+" batch -inputfile "+'/'.join([os.getcwd(),'.'.join(self.inp_file_name.split('.')[:-1])+".class"]),shell=True)
         #~/software/transport/examples/diffuse_double_layer_with_charge_transfer_nonstatic_2.java
         self.tp.logger.info('Reading COMSOL output.')
-        self.read_output(desc_val)
+        self.read_output(desc_val,only_last=only_last)
 
     def write_parameter_file(self,file_name='comsol_parameters.txt'):
         variable_names=[['D'+str(i+1) for i in range(len(self.tp.D))],\
@@ -128,7 +132,7 @@ class Comsol():
             for line in lines:
                 outfile.write(line+'\n')
 
-    def write_input(self,file_name='pnp_transport.java',model_name='pnp_transport.mph',model_comments='',desc_val=[]):
+    def write_input(self,file_name='pnp_transport.java',model_name='pnp_transport.mph',model_comments=''):
         self.inp_file_name=file_name
         with open(file_name,'w') as inp:
 
@@ -663,8 +667,8 @@ class Comsol():
                         if 'internal' in self.tp.desc_method:
                             if self.tp.desc_method.split('-')[1]=='reinit':
                                 inp.write('    model.sol("sol1").feature("s1").feature("p1").set("pcontinuationmode", "no");\n')
-#                            else:
-#                                inp.write('    model.sol("sol1").feature("s1").feature("p1").set("preusesol", "yes")\n')
+                            else:
+                                inp.write('    model.sol("sol1").feature("s1").feature("p1").set("preusesol", "yes");\n')
                         else:
                             inp.write('    model.sol("sol1").feature("s1").feature("p1").set("pcontinuationmode", "no");\n')
 
@@ -776,14 +780,18 @@ class Comsol():
         #make a copy of the input file into the results folder
         copy(root+'/'+file_name,self.results_folder+'/'+file_name)
 
-    def read_output(self,desc_val=[]):
+    def read_output(self,desc_val=[],only_last=False):
         """reads the output files of COMSOL written to the results folder"""
         #modify the Description line of the output with proper concentrations:
         if self.tp.descriptors is not None:
             label_append=' || '
             keys=[key for key in self.tp.descriptors]
-            label_append+=keys[0]+'='+str(desc_val[0])+', '
-            label_append+=keys[1]+'='+str(desc_val[1])
+            vals=[]
+            print self.tp.descriptors
+            for key in keys:
+                vals.append(self.tp.descriptors[key][0])
+            label_append+=keys[0]+'='+str(vals[0])+', '
+            label_append+=keys[1]+'='+str(vals[1])
         else:
             label_append=''
 #            label_append=''
@@ -961,6 +969,8 @@ class Comsol():
         #compress cout_tmp to cout (save only relevant time steps)
         if 'internal' in self.tp.desc_method:
             for desc in int_desc_list:
+                if only_last and desc!=int_desc_list[-1]:
+                    continue
                 tmp_ar=deepcopy(self.tp.all_data[str(desc)][str(int_desc_non)]['system']['cout'])
                 self.tp.all_data[str(desc)][str(int_desc_non)]['system']['cout']=np.zeros([self.tp.ntout,self.tp.nspecies*self.tp.nx])
                 nn=-1
@@ -1001,6 +1011,8 @@ class Comsol():
 
         if 'internal' in self.tp.desc_method:
             for desc in int_desc_list:
+                if only_last and desc!=int_desc_list[-1]:
+                    continue
                 for par in ['potential','efield','current_density']:
                     self.tp.all_data[str(desc)][str(int_desc_non)]['system'][par]=np.array(self.tp.all_data[str(desc)][str(int_desc_non)]['system'][par])
                 for oout in self.tp.comsol_outputs:
@@ -1028,6 +1040,8 @@ class Comsol():
             self.tp.cout=cout
         else:
             for desc in int_desc_list:
+                if only_last and desc!=int_desc_list[-1]:
+                    continue
                 for i_sp,sp in enumerate(self.tp.species):
                     self.tp.species[sp]['concentration']=self.tp.all_data[str(desc)][str(int_desc_non)]['system']['cout'][-1,i_sp*self.tp.nx:(i_sp+1)*self.tp.nx]
                     self.tp.all_data[str(desc)][str(int_desc_non)]['species'][sp]['concentration']=self.tp.species[sp]['concentration']
@@ -1069,6 +1083,8 @@ class Comsol():
         else:
             i2+=1
             for desc in int_desc_list:
+                if only_last and desc!=int_desc_list[-1]:
+                    continue
                 for sp in self.tp.electrode_reactions:
                     nprod=len([a for a in self.tp.electrode_reactions[sp]['reaction'][1] if a==sp])
                     isp=[i for i,sp2 in enumerate(self.tp.species) if sp2==sp][0] #index in species array
