@@ -38,22 +38,22 @@ prefactor_list = [1e13]*len(rxn_expressions)  #Heine: prefactor for CO is 1e8
 surface_names = ['Cu']
 
 descriptor_names= ['voltage', 'temperature'] #descriptor names
-descriptor_ranges = [[-1.5,0.2],[300,300]]
+descriptor_ranges = [[-1.0,0.2],[300,300]]
 descriptors = [0,0]
 resolution = [30, 1]
 
 beta = 0.5
 
-ph_var = 7
+pH = 7
 
 species_definitions = {}
 species_definitions['H_g'] = {'pressure':1.0}
 species_definitions['ele_g'] = {'pressure':1.0, 'composition':{}}
-species_definitions['CO_g'] = {'pressure':0.0}
+species_definitions['CO_g'] = {'pressure':0.00001}
 species_definitions['CO2_g'] = {'pressure':1.0}
 species_definitions['CH4_g'] = {'pressure':1.0}
 species_definitions['CH3CH2OH_g'] = {'pressure':1.0}
-species_definitions['H2_g'] = {'pressure':0.0}
+species_definitions['H2_g'] = {'pressure':0.00001}
 species_definitions['H2O_g'] = {'pressure':1.0}
 species_definitions['t'] = {'site_names': ['211'], 'total':1.0}
 
@@ -63,6 +63,7 @@ input_file = 'catmap_energies.txt' #2_energies.txt'
 gas_thermo_mode = 'ideal_gas' 
 adsorbate_thermo_mode = 'harmonic_adsorbate'
 electrochemical_thermo_mode = 'simple_electrochemical'
+potential_reference_scale = 'RHE'
 
 decimal_precision = 100
 tolerance = 1e-25

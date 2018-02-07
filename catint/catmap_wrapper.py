@@ -103,13 +103,21 @@ class CatMAP():
         #with pickle files anyhow
         #output
         model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency']
-        ma = analyze.MechanismAnalysis(model)
-        ma.energy_type = 'free_energy' #can also be free_energy/potential_energy
-        ma.include_labels = False #way too messy with labels
-        ma.pressure_correction = False #assume all pressures are 1 bar (so that energies are the same as from DFT)
-        ma.include_labels = True
-        fig = ma.plot(save='FED.png')
-        sys.exit()
+        def plot_fed(corr):
+            ma = analyze.MechanismAnalysis(model)
+            ma.surface_colors = ['k','b','r','yellow','green','orange','cyan']
+            ma.label_args['size'] = 14
+            ma.energy_type = 'free_energy' #can also be free_energy/potential_energy
+            ma.include_labels = True #way too messy with labels
+            ma.pressure_correction = corr #assume all pressures are 1 bar (so that energies are the same as from DFT)
+            ma.coverage_correction = False
+            ma.include_labels = True
+            if not corr:
+                fig = ma.plot(save='FED.pdf',plot_variants=[desc_val[0]])
+            else:
+                fig = ma.plot(save='FED_pressure_corrected.pdf',plot_variants=[desc_val[0]])
+        plot_fed(True)
+        plot_fed(False)
         #run!
 #        stdout = sys.stdout
 #        sys.stdout = open('std.log', 'w')
@@ -234,7 +242,10 @@ class CatMAP():
                     replace_line(self.catmap_model,i-1,'descriptors = ['+str(desc_val[0])+','+str(desc_val[1])+']')
             if 'descriptor_names' in line:
                 replace_line(self.catmap_model,i-1,'descriptor_names= [\''+desc_1+'\', \''+desc_2+'\']')
-
+            sol=re.findall('pH[ ]*=[ ]*\d',line)
+            if len(sol)>0:
+                print 'found ph in line',line
+                replace_line(self.catmap_model,i-1,'pH = '+str(self.tp.system['pH'])+'')
 
     #SETTINGS
     def convert_TOF(self,A): # Given a list, convert all the TOF to j(mA/cm2) using 0.161*TOF(According to Heine's ORR paper)
