@@ -174,7 +174,24 @@ class Transport(object):
             if 'bulk concentration' not in self.species[sp]:
                 self.species[sp]['bulk concentration']=0.0
 
+        #get pH
+        if 'pH' in self.system:
+            self.logger.info('pH given in system list, updating H+ and OH- concentrations if applicable')
+            if 'H+' in self.species:
+                self.species['H+']['bulk concentration']=10**(-self.system['pH'])*1000.
+            if 'OH-' in self.species:
+                self.species['OH-']['bulk concentration']=10**(-(14-self.system['pH']))*1000.
+        else:
+            if 'H+' in self.species:
+                self.system['pH']=-np.log10(self.species['H+']['bulk concentration']/1000.)
+            elif 'OH-' in self.species:
+                self.system['pH']=14+np.log10(self.species['OH-']['bulk concentration']/1000.)
+
+
+        #initialize concentrations at electrode
+        for sp in self.species:
             self.species[sp]['surface concentration']=self.species[sp]['bulk concentration']
+
 
         self.eps = self.system['epsilon']*unit_eps0 #1.1e11 #*unit_eps0
         self.beta = 1./(self.system['temperature'] * unit_R)

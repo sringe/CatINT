@@ -10,7 +10,7 @@ from read_data import read_data
 only_catmap=True
 #if only_catmap, run only catmap calculation without transport!
 
-pH_i=6.8
+pH_i=2.0
 nobuffer=False #True #False #True #False #True 
 
 educt='CO2' #CO2 or CO
@@ -167,7 +167,7 @@ print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
 #OHm_i=HCO3m_i/CO2_i/electrolyte_reactions['buffer-base']['constant']
 #pH_i=14+np.log10(OHm_i/1000.)
 #print 'pH',pH_i
-
+CO2_i = 1000*2285.71428571#0.0362261301134
 
 Hm_i=10**(-pH_i)*1000.0
 

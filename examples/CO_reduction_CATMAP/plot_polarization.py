@@ -1,3 +1,4 @@
+from itertools import cycle
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
@@ -47,8 +48,11 @@ def read_data(files):
         pdata[sp]=np.array(pdata[sp])
     return pdata
 
+linestyles=cycle(['-','--',':'])
+
 k=-1
 for arg in sys.argv[1:]:
+    linestyle=next(linestyles)
     k+=1
     results_folder=arg+'/catmap_output'
     
@@ -70,14 +74,20 @@ for arg in sys.argv[1:]:
             func=ax1.semilogy
         else:
             func=ax1.plot
-        func(x,y,'-',color=color,label=sp) #,label=arg.split('/')[-1])
+        if k==0:
+            func(x,y,linestyle,color=color,label=sp) #,label=arg.split('/')[-1])
+        else:
+            func(x,y,linestyle,color=color)
     for isp,sp in enumerate(cdata):
         x=cdata[sp][:,0]
         y=cdata[sp][:,1]
         color=exp.get_color(sp)
         if color is None:
             color=colorlist[sp]
-        ax2.plot(x,y,'-',color=color,label=sp)
+        if k==0:
+            ax2.plot(x,y,linestyle,color=color,label=sp)
+        else:
+            ax2.plot(x,y,linestyle,color=color)
     ax1.legend()
 #    data=np.loadtxt('data.txt')
 #    ax1.plot(data[:,0],data[:,1],'-')
