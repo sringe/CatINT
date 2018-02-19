@@ -20,7 +20,7 @@ class Comsol():
         self.results_folder_base=self.tp.outputfoldername+'/comsol_results'
         self.results_folder=self.results_folder_base
         self.outputs=['concentrations','electrostatics','current_density','electrode_flux']
-        for out in self.tp.comsol_outputs:
+        for out in self.tp.comsol_args['outputs']:
             self.outputs.append(out)
         self.mode=mode
         #additionally specified comsol output
@@ -152,9 +152,9 @@ class Comsol():
             #PARAMETER
 
             #additional parameters from input
-            for pa in self.tp.comsol_params:
-                pa_val=self.tp.comsol_params[pa][0]
-                pa_des=self.tp.comsol_params[pa][1]
+            for pa in self.tp.comsol_args['parameter']:
+                pa_val=self.tp.comsol_args['parameter'][pa][0]
+                pa_des=self.tp.comsol_args['parameter'][pa][1]
                 inp.write('    model.param().set("'+pa+'", "'+str(pa_val)+'",   "'+pa_des+'");\n')
 
             #diffusion coefficients
@@ -261,9 +261,9 @@ class Comsol():
             inp.write('    model.component("comp1").variable("var1").selection().set(new int[]{1});\n')
             inp.write('    model.component("comp1").variable().create("var2");\n')
             #additional parameters from input
-            for pa in self.tp.comsol_variables:
-                pa_val=self.tp.comsol_variables[pa][0]
-                pa_des=self.tp.comsol_variables[pa][1]
+            for pa in self.tp.comsol_args['variables']:
+                pa_val=self.tp.comsol_args['variables'][pa][0]
+                pa_des=self.tp.comsol_args['variables'][pa][1]
                 matches=re.findall('\[\[(.*?)\]\]',pa_val,re.DOTALL)
                 for match in matches:
                     pa_val=pa_val.replace('[['+match+']]','cp'+str([ii+1 for ii,spp in enumerate(self.tp.species) if spp==match][0]))
@@ -757,7 +757,7 @@ class Comsol():
                 export_data('j','mol/m^2/s','Electrode flux'+label_append, self.results_folder+'/electrode_flux.txt',4)
             i=0
             for out in self.outputs:
-                if out in self.tp.comsol_outputs:
+                if out in self.tp.comsol_args['outputs']:
                     i+=1
                     export_data([out[0]],[out[1]],out[0]+label_append, self.results_folder+'/'+out[1]+'.txt',i+4)
 
@@ -813,18 +813,18 @@ class Comsol():
                     self.tp.all_data[str(d1)][str(d2)]['system']['potential']=[]
                     self.tp.all_data[str(d1)][str(d2)]['system']['efield']=[]
                     self.tp.all_data[str(d1)][str(d2)]['system']['current_density']=[]
-                    for iout,oout in enumerate(self.tp.comsol_outputs):
+                    for iout,oout in enumerate(self.tp.comsol_args['outputs']):
                         out=oout[1]
                         if out not in self.tp.comsol_outputs_data:
                             self.tp.comsol_outputs_data[out]={(str(d1),str(d2)):[]}
                         else:
                             self.tp.comsol_outputs_data[out][(str(d1),str(d2))]=[]
         comsol_outputs_data=[]
-        for i in range(len(self.tp.comsol_outputs)):
+        for i in range(len(self.tp.comsol_args['outputs'])):
             comsol_outputs_data.append([])
         for ioutput,output in enumerate(self.outputs):
             #add some more info to the description line
-            if output in self.tp.comsol_outputs:
+            if output in self.tp.comsol_args['outputs']:
                 toutput=output[1]
             else:
                 toutput=output
@@ -909,14 +909,14 @@ class Comsol():
                                             self.tp.all_data[str(int_desc_list[i_de])][str(int_desc_non)]['system']['current_density'].append(float(lss))
                                     if i_sp==0:
                                         self.tp.current_density.append(float(lss))
-                    elif output in self.tp.comsol_outputs:
+                    elif output in self.tp.comsol_args['outputs']:
                         ls=line.split()
                         for j,lss in enumerate(ls):
                             if j>0:
                                 i_de=j-1
                                 if 'internal' in self.tp.desc_method:
                                     self.tp.comsol_outputs_data[output[1]][(str(int_desc_list[i_de]),str(int_desc_non))].append(float(lss))
-                                comsol_outputs_data[self.tp.comsol_outputs.index(output)].append(float(lss))
+                                comsol_outputs_data[self.tp.comsol_args['outputs'].index(output)].append(float(lss))
                 elif i>8 and [key for key in self.studies][0]=='time-dependent':
                     if output in ['concentrations','electrode_flux']:
                         #read a selection of time steps here
@@ -955,7 +955,7 @@ class Comsol():
                                     elif output=='current_density': 
                                         if i_sp==0:
                                             self.tp.current_density.append(float(lss))
-                    elif output in self.tp.comsol_outputs:
+                    elif output in self.tp.comsol_args['outputs']:
                         ls=line.split()
                         i_t=np.zeros([2],dtype=int)-1
                         for j,lss in enumerate(ls):
@@ -965,7 +965,7 @@ class Comsol():
                                 n=i_t[i_sp]
                                 if n==self.tp.nt-1:
                                     if i_sp==0:
-                                        comsol_outputs_data[self.tp.comsol_outputs.index(output)].append(float(lss))
+                                        comsol_outputs_data[self.tp.comsol_args['outputs'].index(output)].append(float(lss))
         #compress cout_tmp to cout (save only relevant time steps)
         if 'internal' in self.tp.desc_method:
             for desc in int_desc_list:
@@ -1015,7 +1015,7 @@ class Comsol():
                     continue
                 for par in ['potential','efield','current_density']:
                     self.tp.all_data[str(desc)][str(int_desc_non)]['system'][par]=np.array(self.tp.all_data[str(desc)][str(int_desc_non)]['system'][par])
-                for oout in self.tp.comsol_outputs:
+                for oout in self.tp.comsol_args['outputs']:
                     out=oout[1]
                     self.tp.comsol_outputs_data[out][(str(desc),str(int_desc_non))]=np.array(self.tp.comsol_outputs_data[out][(str(desc),str(int_desc_non))])
 
@@ -1063,7 +1063,7 @@ class Comsol():
         elif 'OH-' in self.tp.species:
             self.tp.system['surface pH']=14+np.log10(self.tp.species['OH-']['surface concentration']/1000.)
 
-        #evaluate and save properties for each descriptor (so far the electrode current density and the comsol outputs - self.tp.comsol_outputs):
+        #evaluate and save properties for each descriptor (so far the electrode current density and the comsol outputs - self.tp.comsol_args['outputs']):
         data=[]
         i1=0
         i2=0
@@ -1080,7 +1080,7 @@ class Comsol():
                 c_current_density=self.tp.electrode_flux[-1][isp*self.tp.nx]*self.tp.electrode_reactions[sp]['nel']*unit_F/nprod/10.
                 self.tp.electrode_reactions[sp]['electrode_current_density'][(str(desc_val[0]),str(desc_val[1]))]=c_current_density
             
-            for iout,oout in enumerate(self.tp.comsol_outputs):
+            for iout,oout in enumerate(self.tp.comsol_args['outputs']):
                 out=oout[1]
                 if out not in self.tp.comsol_outputs_data:
                     self.tp.comsol_outputs_data[out]={(str(desc_val[0]),str(desc_val[1])):comsol_outputs_data[iout]}

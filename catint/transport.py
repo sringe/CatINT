@@ -24,14 +24,19 @@ class Transport(object):
 
     def __init__(self, species=None,electrode_reactions=None,electrolyte_reactions=None,\
             system=None,pb_bound=None,nx=100,\
-            comsol_params={},comsol_variables={},comsol_outputs={},descriptors=None):
+            descriptors=None,model_name=None,\
+            comsol_args={},catmap_args={}):
 
         ##############################################
         ###########FOLDERS AND FILES##################
         ##############################################
 
         #folder and file names
-        self.outputfoldername='ci_results' #folder where all results will be saved with the self.save function
+        if model_name is None:
+            self.model_name='catint'
+        else:
+            self.model_name=model_name
+        self.outputfoldername=self.model_name+'_results' #folder where all results will be saved with the self.save function
         self.inputfilename=sys.argv[0] #the input file
         if not os.path.exists(self.outputfoldername):
             os.makedirs(self.outputfoldername)
@@ -360,11 +365,6 @@ class Transport(object):
         self.count=1
 
 
-        #define additional parameters which should be used inside comsol
-        self.comsol_params=comsol_params
-        #comsol variables depending on variables updated during the calculation
-        self.comsol_variables=comsol_variables
-
         #STATIONARY-STATE REACTION RATES/FLUXES
         self.initialize_fluxes()
 
@@ -398,15 +398,15 @@ class Transport(object):
         self.potential=np.zeros([self.nx])
         self.total_charge=np.zeros([self.nx])
 
-        #additional comsol outputs on top of the standard outputs
-        #these must be tabulated on the xgrid
-        if comsol_outputs is None:
-            self.comsol_outputs=[]
-        else:
-            self.comsol_outputs=comsol_outputs
-
-
         self.initialize_descriptors(descriptors)
+
+        self.catmap_args=catmap_args
+        #create empty lists
+        for a in ['outputs','variables','parameter']:
+            if not a in comsol_args:
+                comsol_args[a]=[]
+        self.comsol_args=comsol_args
+
 
     def initialize_fluxes(self):
 

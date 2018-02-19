@@ -127,4 +127,6 @@ for arg in sys.argv[1:]:
 print 'plotting exp'
 exp.plot_data(reference=['hori','jaramillo'],ax=ax1,species=['H$_2$','CO','CH$_4$','C2-sum','HCOOH'],pH=['6.8','7.2'],system=['pc-Cu'],scale='RHE',only_points=True,take_log=j_log_plot)
 ax1.set_ylim([1e-12,1e4])
+ax1.set_xlim([-1.2,0])
+ax2.set_xlim([-1.2,0])
 plt.show()
