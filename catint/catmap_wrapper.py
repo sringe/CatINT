@@ -122,9 +122,9 @@ class CatMAP():
             ma.coverage_correction = False
             ma.include_labels = True
             if not corr:
-                fig = ma.plot(save='FED.pdf',plot_variants=[desc_val[0]])
+                fig = ma.plot(save='FED.pdf',plot_variants=[float(desc_val[0])])
             else:
-                fig = ma.plot(save='FED_pressure_corrected.pdf',plot_variants=[desc_val[0]])
+                fig = ma.plot(save='FED_pressure_corrected.pdf',plot_variants=[float(desc_val[0])])
 #        plot_fed(True)
         if not self.use_interactions:
             plot_fed(False)
@@ -316,8 +316,8 @@ class CatMAP():
                 sol=re.findall('species_definitions\[\''+sp_cm+'_g\'\].*{\'pressure\':.*}',line)
                 if len(sol)>0:
                     #shortly check if concentrations are very negative, stop if they are:
-                    if self.tp.species[sp]['surface concentration']<-1e-8:
-                        self.tp.logger.warning('Surface concentration of {} is more negative than 1e-8 mol/m^3, stopping to be safe.'.format(sp))
+                    if self.tp.species[sp]['surface concentration']<-1e-4:
+                        self.tp.logger.warning('Surface concentration of {} is more negative than 1e-4 mol/m^3, stopping to be safe.'.format(sp))
                         sys.exit()
                     replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':"+str(max(0.,self.tp.species[sp]['surface concentration']/1000.))+"}")
             if self.method=='descriptor_range':
