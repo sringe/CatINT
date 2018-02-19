@@ -518,18 +518,23 @@ class EXPDATA():
 #        plt.ylim([-6,2])
 #        plt.show()
     def get_color(self,species):
+        species=species.strip()
         color=None #'k'
-        if any([a in species for a in ['n-PrOH','C$_{2+}$']]):
+        if any([species.startswith(a) for a in ['n-PrOH','C$_{2+}$']]):
             color='lightblue'
-        elif any([a in species for a in ['CH3CH2OH','C$_2$H$_4$','CH$_3$COO','etol','C2','EtOH','C$_{2+}$','C$_2$']]):
+        elif any([species.startswith(a) for a in ['CH3CH2OH','C$_2$H$_4$','CH$_3$COO','etol','C2','EtOH','C$_{2+}$','C$_2$']]):
             color='r'
-        elif any([a in species for a in ['CH$_4$','C$_1$','CH4']]):
+        elif any([species.startswith(a) for a in ['CH$_4$','C$_1$','CH4','C1']]):
             color='orange'
-        elif any([a in species for a in ['HCOO','HCOO-','HCOOH']]):
+        elif any([species.startswith(a) for a in ['HCOO','HCOO-','HCOOH']]):
             color='b'
-        elif any([a in species for a in ['H$_2','H2']]):
+        elif any([species.startswith(a) for a in ['H$_2','H2']]):
             color='k'
-        elif 'CO' in species:
+        elif any([species.startswith(a) for a in ['CO2','CO$_2$']]):
+            color='darkred'
+        elif species.startswith('COOH'):
+            color='g'
+        elif species.startswith('CO'):
             color='olive'
         else:
             pass

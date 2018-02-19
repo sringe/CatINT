@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 from catint.plot import Plot
@@ -43,15 +44,19 @@ for f in folders:
     ax1.plot(pHs[:,0],pHs[:,1],'-',label=f.replace('calc_std_settings','std'))
 
     #2nd the coverages:
-    #cov=tp.comsol_outputs_data['coverage']
-    #coverages=[]
-    #for key1,key2 in cov:
-    #    coverages.append([float(key1),cov[(key1,key2)][0]])
-    #coverages=np.array(coverages)
-    #coverages.view(coverages.dtype.str+','+coverages.dtype.str).sort(order=['f0'], axis=0)
+    cov=tp.comsol_outputs_data['coverage']
+    coverages=[]
+    for key1,key2 in cov:
+        if not math.isnan(cov[(key1,key2)][0]):
+            coverages.append([float(key1),cov[(key1,key2)][0]])
+        else:
+            coverages.append([float(key1),0.0])
+    coverages=np.array(coverages)
+    coverages.view(coverages.dtype.str+','+coverages.dtype.str).sort(order=['f0'], axis=0)
 
-    #all_coverages.append(coverages)
-
+    all_coverages.append(coverages)
+    print 'coverages',coverages
+    ax2.plot(coverages[:,0],coverages[:,1],'-',label=f.replace('calc_std_settings','std'))
 #ax2.semilogy(coverages[:,0],all_coverages[1][:,1]/all_coverages[0][:,1],'-',label=f)
 
 

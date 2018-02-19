@@ -1057,6 +1057,12 @@ class Comsol():
         for i_sp,sp in enumerate(self.tp.species):
             self.tp.species[sp]['surface concentration']=self.tp.species[sp]['concentration'][0]
 
+        #update surface pH
+        if 'H+' in self.tp.species:
+            self.tp.system['surface pH']=-np.log10(self.tp.species['H+']['surface concentration']/1000.)
+        elif 'OH-' in self.tp.species:
+            self.tp.system['surface pH']=14+np.log10(self.tp.species['OH-']['surface concentration']/1000.)
+
         #evaluate and save properties for each descriptor (so far the electrode current density and the comsol outputs - self.tp.comsol_outputs):
         data=[]
         i1=0
