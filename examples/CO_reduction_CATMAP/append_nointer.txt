@@ -1,0 +1,5 @@
+
+####
+##no interactions, comment this out
+for sp in ['OCCOH_t','OC-CO_t','OCCO-H2O-ele_t','OCCO_t']:
+        species_definitions[sp] = {'n_sites':2}
