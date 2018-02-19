@@ -33,7 +33,8 @@ class CatMAP():
         self.max_desc=max_desc
         self.min_desc=min_desc
 
-        self.n_inter=n_inter #number of steps to converge interactions
+        self.n_inter_max=100
+
 
         self.use_interactions=False
 
@@ -42,12 +43,16 @@ class CatMAP():
             sys.exit()
         else:
             self.tp=transport
+        if not 'n_inter' in self.tp.catmap_args:
+            self.n_inter=n_inter #number of steps to converge interactions
+        else:
+            self.n_inter=self.tp.catmap_args['n_inter']
         self.tp.path=path
         self.output_folder='results_catmap'
         if model_name is not None:
-            self.model_name=model_name
+            self.model_name='catmap_'+model_name
         else:
-            self.model_name='catmap'
+            self.model_name='catmap_'+self.tp.model_name
         model_name=self.model_name
         self.catmap_model=model_name+'.mkm'
         self.output_base_folder=self.tp.outputfoldername+'/catmap_output'
@@ -123,24 +128,64 @@ class CatMAP():
 #        plot_fed(True)
         if not self.use_interactions:
             plot_fed(False)
+        else:
+            pass
+           # idx = [i for i in range(len(model.interacting_energy_map)) if model.interacting_energy_map[i][0][0] == -0.88][0]
+           # descrip, coverages = model.coverage_map[idx]
+           # rxn_parameters = model.scaler.get_rxn_parameters(descrip)
+           # rate_constants = model.solver.get_rate_constants(rxn_parameters,coverages)
+           # kfs, krs, dkfs, dkrs = model.rate_constants(rxn_parameters,coverages,
+           # model._gas_energies,model._site_energies,
+           # model.temperature,model.interaction_response_function,
+           # model._mpfloat,model._matrix,model._math.exp)
+           # model.solver.get_interacting_energies(rxn_parameters)
+           # all_ads = model.adsorbate_names + model.transition_state_names
+           # N_ads = len(all_ads)
+           # energies = rxn_parameters[:N_ads]
+           # eps_vector = rxn_parameters[N_ads:]
+           # cvg = coverages + [0]*len(model.transition_state_names)
+           # model.interaction_function(cvg,energies,eps_vector,model.thermodynamics.adsorbate_interactions.interaction_response_function,False,False)
         
         #slowly ramp up the interactions if desired
-        if self.use_interactions:
-            inter=np.linspace(0,self.interaction_strength,self.n_inter)
-        else:
-            inter=[0]
-
-        for ii in inter:
-            i=0
+        if self.n_inter.isdigit():
             if self.use_interactions:
-                for line in open(self.catmap_model):
-                    i+=1
-                    if 'interaction_strength' in line:
-                        replace_line(mkm_file,i-1,'interaction_strength = '+str(ii))
-                self.tp.logger.info('Running interaction_strength = {}'.format(ii))
-            model = ReactionModel(setup_file = mkm_file, max_log_line_length=0)
-            model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency']
-            model.run()
+                inter=np.linspace(0,self.interaction_strength,self.n_inter)
+            else:
+                inter=[0]
+        else:
+            if self.use_interactions:
+                inter=[self.interaction_strength]
+            else:
+                inter=[0]
+
+        jj=0
+        while True:
+            try:
+                for ii in inter:
+                    i=0
+                    if self.use_interactions:
+                        for line in open(self.catmap_model):
+                            i+=1
+                            if 'interaction_strength' in line:
+                                replace_line(mkm_file,i-1,'interaction_strength = '+str(ii))
+                        self.tp.logger.info('Running interaction_strength = {}'.format(ii))
+                    model = ReactionModel(setup_file = mkm_file, max_log_line_length=0)
+                    model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency']
+                    model.run()
+            except:
+                self.tp.logger.warning('CatMAP did not converge with interaction strength = {}'.format(ii))
+                if self.n_inter=='automatic':
+                    jj+=1
+                    if 10*jj>self.n_inter_max:
+                        self.tp.logger.error('Adjusted interaction ramping range is larger than n_inter_max. Adjust n_inter_max in order to run finer range')
+                        sys.exit()
+                    self.tp.logger.warning('Adjusting interaction ramping to range 0 to 1 with {} steps'.format(10*jj))
+                    inter=np.linspace(0,self.interaction_strength,10*jj)
+                    pass
+                else:
+                    break
+            else:
+                break
 
         #run!
 #        stdout = sys.stdout

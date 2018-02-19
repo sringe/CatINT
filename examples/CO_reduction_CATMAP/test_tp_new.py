@@ -14,14 +14,14 @@ only_catmap=True
 proton_donor='H2O'
 interactions=True
 
-n_inter=10
+n_inter=100
 
-pH_i=7.
+pH_i=6.8
 nobuffer=False #True #False #True #False #True 
 
 educt='CO2' #CO2 or CO
 
-nx=600 #200
+nx=200 #200
 nphi=13 #520 #260 #130
 
 SA=1
@@ -283,13 +283,13 @@ if not nobuffer:
 #Additional COMSOL variable definitions
 ###########################################################################
 
-
-comsol_params={}
-comsol_params['e0']=['1[C]','electronic charge']
+comsol_args={}
+comsol_args['parameter']={}
+comsol_args['parameter']['e0']=['1[C]','electronic charge']
 
 system['active site density']=1.004495558139274e-05
 
-comsol_params['SA']=[SA,'Surface Area Enhancement Factor']
+comsol_args['parameter']['SA']=[SA,'Surface Area Enhancement Factor']
 
 ###########################################################################
 #RATE EQUATIONS/FLUXES
@@ -327,13 +327,16 @@ for potential in potentials:
     ###########################################################################
     #SETUP AND RUN
     ###########################################################################
+    catmap_args={'n_inter':'automatic'}
     if nobuffer:
         tp=Transport(
             species=species,
             electrode_reactions=electrode_reactions,
             system=system,
             pb_bound=pb_bound,
-            comsol_params=comsol_params,
+            comsol_args=comsol_args,
+            catmap_args=catmap_args,
+            model_name='ohdonor_mod',
             descriptors=descriptors,
             nx=nx)
     else:
@@ -343,30 +346,35 @@ for potential in potentials:
             electrolyte_reactions=electrolyte_reactions,
             system=system,
             pb_bound=pb_bound,
-            comsol_params=comsol_params,
+            comsol_args=comsol_args,
+            model_name='ohdonor_mod',
+            catmap_args=catmap_args,
             descriptors=descriptors,
             nx=nx)
     
     
-    tp.set_calculator('comsol') #odespy') #--bdf')
-    #tp.set_calculator('Crank-Nicolson--LF')
-    #tp.set_initial_concentrations('Gouy-Chapman')
+    tp.set_calculator('comsol') 
+
+    #modify catmap input file
+    if proton_donor=='H2O':
+        if interactions:
+            #append interaction list:
+            fname='append_inter.txt'
+        else:
+            fname='append_nointer.txt'
+        copy('catmap_ohdonor_template.mkm','catmap_ohdonor_mod_template.mkm')
+        copy('catmap_ohdonor_energies.txt','catmap_ohdonor_mod_energies.txt')
+        with open("catmap_ohdonor_mod_template.mkm", "a") as myfile:
+            for line in open(fname,'r'):
+                myfile.write(line+'\n')
+        if only_catmap:
+            cm=CatMAP(transport=tp,n_inter='automatic',model_name='ohdonor_mod')
+    elif proton_donor=='H':
+        if only_catmap:
+            cm=CatMAP(transport=tp,n_inter=n_inter,model_name='hdonor')
     
     if only_catmap:
-        if proton_donor=='H2O':
-            if interactions:
-                #append interaction list:
-                fname='append_inter.txt'
-            else:
-                fname='append_nointer.txt'
-            copy('catmap_ohdonor_template.mkm','catmap_ohdonor_mod_template.mkm')
-            with open("catmap_ohdonor_mod_template.mkm", "a") as myfile:
-                for line in open(fname,'r'):
-                    myfile.write(line+'\n')
-            cm=CatMAP(transport=tp,n_inter=n_inter,model_name='catmap_ohdonor_mod')
-        elif proton_donor=='H':
-            cm=CatMAP(transport=tp,n_inter=n_inter,model_name='catmap_hdonor')
-        for p in np.linspace(-0.5,0.0,10):
+        for p in np.linspace(-1.0,0.0,10):
             cm.run([p,300])
     #c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
     if not only_catmap:
