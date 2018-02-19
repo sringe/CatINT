@@ -8,11 +8,11 @@ import sys
 from units import *
 from read_data import read_data
 
-only_catmap=True
+only_catmap=False
 #if only_catmap, run only catmap calculation without transport!
 
 proton_donor='H2O'
-interactions=True
+interactions=False
 
 n_inter=100
 
