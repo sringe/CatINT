@@ -25,13 +25,17 @@ class Object(object):
 class CatMAP():
     """This class modifies the concentrations in the catmap input file (defined by user) and runs catmap. The output is the read in and the boundary conditions adjusted properly"""
 
-    def __init__(self,path=os.getcwd(),transport=None,model_name=None,delta_desc=0.05,min_desc=-1.5,max_desc=0.2):
+    def __init__(self,path=os.getcwd(),transport=None,model_name=None,delta_desc=0.05,min_desc=-1.5,max_desc=0.2,n_inter=1):
         #delta_desc is the descriptor delta with which the descriptor axes is resolved
         #in case of potential 0.05 is fine
         #max and min_desc are the  bounds of the descriptor region (here default for potential being the descriptor)
         self.delta_desc=delta_desc
         self.max_desc=max_desc
         self.min_desc=min_desc
+
+        self.n_inter=n_inter #number of steps to converge interactions
+
+        self.use_interactions=False
 
         if transport is None:
             self.tp.logger.error('No transport object provided for calculator. Stopping here.')
@@ -116,12 +120,31 @@ class CatMAP():
                 fig = ma.plot(save='FED.pdf',plot_variants=[desc_val[0]])
             else:
                 fig = ma.plot(save='FED_pressure_corrected.pdf',plot_variants=[desc_val[0]])
-        plot_fed(True)
-        plot_fed(False)
+#        plot_fed(True)
+        if not self.use_interactions:
+            plot_fed(False)
+        
+        #slowly ramp up the interactions if desired
+        if self.use_interactions:
+            inter=np.linspace(0,self.interaction_strength,self.n_inter)
+        else:
+            inter=[0]
+
+        for ii in inter:
+            i=0
+            if self.use_interactions:
+                for line in open(self.catmap_model):
+                    i+=1
+                    if 'interaction_strength' in line:
+                        replace_line(mkm_file,i-1,'interaction_strength = '+str(ii))
+                self.tp.logger.info('Running interaction_strength = {}'.format(ii))
+            model = ReactionModel(setup_file = mkm_file, max_log_line_length=0)
+            model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency']
+            model.run()
+
         #run!
 #        stdout = sys.stdout
 #        sys.stdout = open('std.log', 'w')
-        model.run()
 #        sys.stdout = stdout
 
         converged=False
@@ -218,16 +241,40 @@ class CatMAP():
                 self.tp.logger.warning('The descriptor separation is smaller then 1e-9. The index assignment of the catmap data will fail, so I quit here')
                 sys.exit()
 
+        #check if interactions are desired, if yes read out the desired interaction strength
+        if any([line.strip().startswith('adsorbate_interaction_model') for line in open(self.catmap_model)]): # or \
+                #any(['max_coverage' in line for line in open(self.catmap_model)]):
+            self.use_interactions=True
+
+        if self.use_interactions:
+            for line in open(self.catmap_model):
+                sol=re.findall('interaction_strength[ ]*=[ ]*([0-9.]+)',line)
+                if len(sol)>0:
+                    self.interaction_strength=float(sol[0])
+
         i=0
         for line in open(self.catmap_model):
             i+=1
             if line.lstrip().startswith('#'):
                 continue
+            if line.strip().startswith('input_file'):
+                replace_line(self.catmap_model,i-1,'input_file = \''+self.model_name+'_energies.txt\'')
+                continue
+            if line.strip().startswith('data_file'):
+                replace_line(self.catmap_model,i-1,'data_file = \''+self.model_name+'.pkl\'')
+                continue
+            if line.strip().startswith('bulk_ph'):
+                replace_line(self.catmap_model,i-1,'bulk_ph = '+str(self.tp.system['pH']))
+                continue
             for sp in self.tp.species:
                 sp_cm=self.species_to_catmap(sp)
                 sol=re.findall('species_definitions\[\''+sp_cm+'_g\'\].*{\'pressure\':.*}',line)
                 if len(sol)>0:
-                    replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':"+str(self.tp.species[sp]['surface concentration']/1000.)+"}")
+                    #shortly check if concentrations are very negative, stop if they are:
+                    if self.tp.species[sp]['surface concentration']<-1e-8:
+                        self.tp.logger.warning('Surface concentration of {} is more negative than 1e-8 mol/m^3, stopping to be safe.'.format(sp))
+                        sys.exit()
+                    replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':"+str(max(0.,self.tp.species[sp]['surface concentration']/1000.))+"}")
             if self.method=='descriptor_range':
                 if 'descriptor_range' in line:
                     replace_line(self.catmap_model,i-1,'descriptor_ranges = [['+str(min_desc)+','+str(max_desc)+'],['+str(desc_val[1])+','+str(desc_val[1])+']]')
@@ -244,8 +291,7 @@ class CatMAP():
                 replace_line(self.catmap_model,i-1,'descriptor_names= [\''+desc_1+'\', \''+desc_2+'\']')
             sol=re.findall('pH[ ]*=[ ]*\d',line)
             if len(sol)>0:
-                print 'found ph in line',line
-                replace_line(self.catmap_model,i-1,'pH = '+str(self.tp.system['pH'])+'')
+                replace_line(self.catmap_model,i-1,'pH = '+str(self.tp.system['surface pH'])+'')
 
     #SETTINGS
     def convert_TOF(self,A): # Given a list, convert all the TOF to j(mA/cm2) using 0.161*TOF(According to Heine's ORR paper)
@@ -269,10 +315,13 @@ class CatMAP():
             tof=None
             name=self.species_to_catmap(sp)
             name+='_g'
+            idx=None
             #"tof" is the signed rate of conversion/active site/s
             if name in data.turnover_frequency_names:
                 idx=data.turnover_frequency_names.index(name)
                 tof=data.turnover_frequency[:,idx]
+            elif sp not in self.tp.system['exclude species'] and sp not in self.tp.electrolyte_list:
+                self.tp.logger.warning('No CatMAP TOF data was found for species {}. Check your species definition names. CatINT uses the CatINT equation names to map to the CatMAP names!'.format(sp))
             if tof is None:
                 continue
             data_ref=np.column_stack((data.voltage, tof))
@@ -324,6 +373,8 @@ class CatMAP():
         data = Object()
         #COVERAGES
         data.coverage_names = model.output_labels['coverage']
+        print 'data.coverage_names names',data.coverage_names
+        print 'interacting names',model.output_labels['interacting_energy']
         coverage_map = np.array(a['coverage_map'])
         data.voltage = []
         scaler_array = coverage_map[:,0]
@@ -354,8 +405,14 @@ class CatMAP():
             for j in range(0,len(data.prod_names)):
                 float_rate = float(production_rate_mpf[i][j])
                 data.production_rate[i][j]=float_rate
+        for i in range(0,len(production_rate_mpf)):
+            for j in range(0,len(data.prod_names)):
                 float_rate = float(consumption_rate_mpf[i][j])
                 data.consumption_rate[i][j]=float_rate
+#                float_rate = float(turnover_frequency_mpf[i][j])
+#                data.turnover_frequency[i][j]=float_rate
+        for i in range(0,len(turnover_frequency_mpf)):
+            for j in range(0,len(data.turnover_frequency_names)):
                 float_rate = float(turnover_frequency_mpf[i][j])
                 data.turnover_frequency[i][j]=float_rate
         #RATES

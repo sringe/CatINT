@@ -6,14 +6,15 @@ import sys
 from units import *
 from read_data import read_data
 
-pH_i=6.8
-nobuffer=False #True #False #True #False #True 
+pH_i=13.0
+nobuffer=True #False #True #False #True #False #True #False #True #False #True #False #True #False #True 
 
-educt='CO2' #CO2 or CO
+educt='CO' #CO2 or CO
 
 nx=200 #200
 nphi=520 #260 #130
 
+SA=1
 use_elreac=True
 if nobuffer:
     use_elreac=False
@@ -71,8 +72,10 @@ electrolyte_reactions=\
 
 electrode_reactions={
     'C1':   {'reaction': 'CO + 5 H2O + 6 e- -> C1 + 6 OH-'}, #methane
-    'C2':   {'reaction': '2 CO + 7 H2O + 8 e- -> C2 + 8 OH-'}} #ethanol
-
+    'C2':   {'reaction': '2 CO + 7 H2O + 8 e- -> C2 + 8 OH-'}, #ethanol
+#    'H2':   {   'reaction':            '2 H2O + 2 e- -> H2 + 2 OH-'}}
+    #'H2':           {   'reaction':             '2 HCO3- + 2 e- -> H2 + 2 CO32-'},
+    }
 #reactions=\
 #    {
 #    'buffe':           {   'reactants':            [['CO2','H2O'],['H2CO3']],
@@ -213,9 +216,7 @@ species=\
                             'bulk concentration':   Hm_i},
 #    'H2':               {   'symbol':               'H_2',
 #                            'name':                 'hydrogen',
-#                            'diffusion':            4.50e-009,
-#                            'zeff':                 2.0,
-#                            'req':                  [1]},
+#                            'diffusion':            4.50e-009},
     'CO':               {   'symbol':               'CO',
                             'name':                 'carbon monoxide',
                             'diffusion':            2.03e-9,
@@ -254,19 +255,24 @@ if not nobuffer:
 comsol_params={}
 comsol_params['A']=['1.e13[1/s]','Exponential prefactor']
 #comsol_params['A2']=['1.e13[1/s]','Exponential prefactor']
-comsol_params['Ga_CHO']=[str(1.11746219*unit_F)+'[J/mol]','CHO Activation Energy']
-comsol_params['Ga_CHOH']=[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Energy']
-comsol_params['Ga_OCCO']=[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy']
-comsol_params['Ga_OCCOH']=[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy']
+comsol_params['Ga_CHO']=[str(1.11746219*unit_F)+'[J/mol]','CHO Activation Energy'] #[str(1.11746219*unit_F)+'[J/mol]','CHO Activation Energy']
+comsol_params['Ga_CHOH']=[str(1.9*unit_F)+'[J/mol]','CHOH Activation Energy'] #[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Energy']
+comsol_params['Ga_OCCO']=[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy'] #[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy']
+comsol_params['Ga_OCCOH']=[str(1.5*unit_F)+'[J/mol]','OCCOH Activation Energy'] #[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy']
+comsol_params['DG_CHOH']=[str(0.0*unit_F)+'[J/mol]', 'CHOH free energy barrier']
+comsol_params['DG_OCCOH']=[str(0.0*unit_F)+'[J/mol]','OCCOH free energy barrier']
+#comsol_params['Ga_H']=[str(0.9*unit_F)+'[J/mol]','H Activation Energy']
 #comsol_params['eVToJmol']=[str(eVTokcal*1000*calToJ)+'[J/eV/mol]','eV to J/mol Conversion factor']
-comsol_params['alpha_CHO']=['0.8','Butler-Volmer Parameter'] #std 0.5
+comsol_params['alpha_CHO']=['0.5','Butler-Volmer Parameter'] #std 0.5
 comsol_params['alpha_CHOH']=['0.8','Butler-Volmer Parameter'] #std 2.0
-comsol_params['alpha_OCCOH']=['0.5','Butler-Volmer Parameter'] #std 0.5
+comsol_params['alpha_OCCOH']=['0.9','Butler-Volmer Parameter'] #std 0.5
 comsol_params['alpha_OCCO']=['0.5','Butler-Volmer Parameter'] #std 0.5
 comsol_params['n_CHO']=['1','Butler-Volmer Parameter'] #std 0.5
+#comsol_params['alpha_H']=['0.5','Butler-Volmer Parameter'] #std 0.5
 comsol_params['n_CHOH']=['1','Butler-Volmer Parameter'] #std 2.0
 comsol_params['n_OCCOH']=['0','Butler-Volmer Parameter'] #std 0.5
 comsol_params['n_OCCO']=['0','Butler-Volmer Parameter'] #std 0.5
+#comsol_params['n_H']=['0','Butler-Volmer Parameter'] #std 0.5
 comsol_params['e0']=['1[C]','electronic charge']
 comsol_params['erho']=['80.3e-6[C/cm^2]','surface density of active sites x elementary charge']
 comsol_params['Lmol']=['1[l/mol]','conversion factor']
@@ -274,11 +280,14 @@ comsol_params['Lmol']=['1[l/mol]','conversion factor']
 #here: 3x3 Cu211 cell as example. area=6.363x7.794*1e-20, active sites=3 (step top sites, 1.004495558139274e-05), 9 (all top sites, 3.013486674417822e-05)
 comsol_params['rho_act']=['1.004495558139274e-05[mol/m^2]','Density of Active Sites'] #from Singh paper: 7.04e-6
 comsol_params['Ga_CO_ads']=[str(-0.3*unit_F)+'[J/mol]','Adsorption barrier for CO on Cu211']
-comsol_params['Ga_CO2_ads']=[str(-0.1*unit_F)+'[J/mol]','Adsorption barrier for CO2 on Cu211'] #https://smartech.gatech.edu/bitstream/handle/1853/43652/fergusson_alexander_i_201205_mast.pdf
+comsol_params['Ga_CO2_ads']=[str(-0.859729294*unit_F)+'[J/mol]','Adsorption barrier for CO2 on Cu211'] #https://smartech.gatech.edu/bitstream/handle/1853/43652/fergusson_alexander_i_201205_mast.pdf
+#comsol_params['G_H_ads']=['??','Adsorption Barrier for H on Cu211. this is an electrochemical adsorption process!!!']
 comsol_params['Kads_CO']=['exp(-Ga_CO_ads/RT)','Equilibrium constant for CO adsorption']
 comsol_params['Kads_CO2']=['exp(-Ga_CO2_ads/RT)','Equilibrium constant for CO adsorption']
 comsol_params['max_coverage']=['0.44','Maximal coverage with which the Langmuir isotherm will be scaled'] #0.44
-comsol_params['SA']=['1','Surface Area Enhancement Factor']
+#comsol_params['Kads_H']=['exp(-G_H_ads/RT)','Equilibrium constant for HCO3- -> *H']
+#comsol_params['max_coverage_H']=['1.','Maximal coverage with which the Langmuir isotherm will be scaled'] #0.44
+comsol_params['SA']=[SA,'Surface Area Enhancement Factor']
 ###########################################################################
 #RATE EQUATIONS/FLUXES
 ###########################################################################
@@ -308,12 +317,19 @@ comsol_params['OH_min']=['1e-30 [mol/m^3]','Minimal OH- concentration allowed in
 
 comsol_variables={}
 
+comsol_variables['coverage_only_CO']=['Kads_CO*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads_CO)*max_coverage','CO Coverage according to Langmuir isotherm if there is no other species']
+#comsol_variables['coverage_only_H']=['sqrt(Kads_H*Lmol)/(1.+sqrt(Lmol*Kads_H))*max_coverage_H','H Coverage according to Langmuir isotherm assuming H2O as proton donor']
+comsol_params['phiM_ref_she']=['-7*log(10.)*R_const*298.14/F_const','Reference potential vs. SHE']
+
 if educt=='CO2':
     comsol_variables['coverage']=['Kads_CO2*[[CO2]]*Lmol/(1.+[[CO2]]*Lmol*Kads_CO2)*max_coverage','CO2 Coverage according to Langmuir isotherm = CO coverage (assuming no barrier between the states).']
 elif educt=='CO':
     comsol_variables['coverage']=['Kads_CO*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads_CO)*max_coverage','CO Coverage according to Langmuir isotherm']
+    #competetive adsorption with H2
+    #comsol_variables['coverage']=['(coverage_only_CO-coverage_only_CO*coverage_only_H)/(1-coverage_only_H*coverage_only_CO)','CO coverage according to Langmuir isotherm including competitive ads.']
 
-
+#comsol_variables['coverage_H']=['Kads_H*[[HCO3-]]*Lmol/(1.+[[HCO3-]]*Lmol*Kads_H)*max_coverage_H','H Coverage according to Langmuir isotherm']
+#comsol_variables['coverage_H']=['(1-coverage)*coverage_only_H','H coverage according to Langmuir isotherm including competitive ads.']
 
 
 #comsol_variables['jCHO']=['rho_act*coverage*A*(max([[OH-]],OH_min)*Lmol)^(alpha_CHO)*'+\
@@ -334,40 +350,50 @@ elif educt=='CO':
 #                        ')','rate of OCCO']
 comsol_variables['jCHO']=['SA*rho_act*coverage*A*'+\
                          'exp('+\
-                            '-(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phi)*F_const)/RT+alpha_CHO*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+                            '-(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phiM_ref_she)*F_const)/RT+alpha_CHO*(14+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
                          ')','rate of CHO']
 comsol_variables['jCHOH']=['SA*rho_act*coverage*A*'+\
                          'exp('+\
-                            '-(Ga_CHOH+(alpha_CHOH+n_CHOH)*(phiM-phi)*F_const)/RT+alpha_CHOH*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+                            '-(Ga_CHOH+DG_CHOH+(alpha_CHOH+n_CHOH)*(phiM-phiM_ref_she)*F_const)/RT+alpha_CHOH*(14+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
                          ')','rate of CHOH']
 comsol_variables['jOCCOH']=['SA*rho_act*coverage^2*A*'+\
                         'exp('+\
-                            '-(Ga_OCCOH+(alpha_OCCOH+n_OCCOH)*(phiM-phi)*F_const)/RT+alpha_OCCOH*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+                            '-(Ga_OCCOH+DG_OCCOH+(alpha_OCCOH+n_OCCOH)*(phiM-phiM_ref_she)*F_const)/RT+alpha_OCCOH*(14+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
                         ')','rate of OCCOH']
 comsol_variables['jOCCO']=['SA*rho_act*coverage^2*A*'+\
                         'exp('+\
-                            '-(Ga_OCCO+(alpha_OCCO+n_OCCO)*(phiM-phi)*F_const)/RT+alpha_OCCO*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+                            '-(Ga_OCCO+(alpha_OCCO+n_OCCO)*(phiM-phiM_ref_she)*F_const)/RT+alpha_OCCO*(14+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
                         ')','rate of OCCO']
+#comsol_variables['jH']=['SA*rho_act*coverage_H^2*A*'+\
+#                        'exp('+\
+#                            '-(Ga_H+(alpha_H+n_H)*(phiM)*F_const)/RT+alpha_H*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+#                        ')','rate of H']
 #additional comsol outputs
 #name, equation, unit
 comsol_outputs=[\
         ['jCHO','jCHO','mol/m^2/s'],\
         ['jCHOH','jCHOH','mol/m^2/s'],\
         ['jOCCOH','jOCCOH','mol/m^2/s'],\
+#        ['jH','jH','mol/m^2/s'],\
         ['jOCCO','jOCCO','mol/m^2/s'],\
-        ['coverage','coverage','']] #last one in list is the name of the file, first one is variable name
+        ['coverage','coverage','']]
+        #last one in list is the name of the file, first one is variable name
+#        ['coverage_H','coverage_H','']] #last one in list is the name of the file, first one is variable name
 
 method=0 #method2 with stationary solver only working one, so far...
 
+#H2_rate='jH'
 if method==0: 
-    C1_rate='min('+\
-                'jCHO, '+\
-                'jCHOH'+\
-            ')'#/F_const/'+str(species['C1']['zeff'])
-    C2_rate='min('+\
-                'jOCCOH, '+\
-                'jOCCO'+\
-            ')'
+    C1_rate='jCHOH'
+#    C1_rate='min('+\
+#                'jCHO, '+\
+#                'jCHOH'+\
+#            ')'#/F_const/'+str(species['C1']['zeff'])
+    C2_rate='jOCCOH'
+#    C2_rate='min('+\
+#                'jOCCOH, '+\
+#                'jOCCO'+\
+#            ')'
 elif method==1:
     comsol_params['sigma_min']=['10.0','Smooth the calculation of the maximum by exponential summation. The larger this is, the smoother the maximum function is around the maximum']
     C1_rate='-1./sigma_min*'+\
@@ -443,6 +469,7 @@ elif method==3:
 
 species['C1']['flux-equation']=C1_rate
 species['C2']['flux-equation']=C2_rate
+#species['H2']['flux-equation']=H2_rate
 
 boundary_thickness=7.93E-05 #in m
 

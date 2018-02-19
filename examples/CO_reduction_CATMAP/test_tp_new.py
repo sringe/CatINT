@@ -1,3 +1,4 @@
+from shutil import copyfile as copy
 from catint.transport import Transport
 from catint.calculator import Calculator
 from catint.plot import Plot
@@ -10,12 +11,17 @@ from read_data import read_data
 only_catmap=True
 #if only_catmap, run only catmap calculation without transport!
 
-pH_i=2.0
+proton_donor='H2O'
+interactions=True
+
+n_inter=10
+
+pH_i=7.
 nobuffer=False #True #False #True #False #True 
 
 educt='CO2' #CO2 or CO
 
-nx=200 #200
+nx=600 #200
 nphi=13 #520 #260 #130
 
 SA=1
@@ -78,12 +84,21 @@ electrolyte_reactions=\
 electrode_reactions={
     #'H2':           {   'reaction':            '2 H2O + 2 e- -> H2 + 2 OH-'},
     #'H2':           {   'reaction':             '2 HCO3- + 2 e- -> H2 + 2 CO32-'},
-    'H2':           {   'reaction':             '2 H+ + 2 e- -> H2'},
-    'CO':           {   'reaction':             'CO2 + 2 H+ + 2 e- -> CO + H2O'},
-    'CH4':          {'reaction':                'CO + 6 H+ + 6 e- -> CH4 + H2O'}, #methane
 #    'HCOO-':        {   'reaction':             'CO2 + 2 H2O + 2 e- -> HCOO- + 2 OH-'},  #consider HCOOH here
-    'CH3CH2OH':     {   'reaction':               '2 CO2 + 12 H+ + 12 e- -> CH3CH2OH + 3 H2O'}}
    # 'C2H4':         {   'reaction':            '2 CO2 + 8 H2O + 12 e- -> C2H4 + 12 OH-'}}
+
+   ###acidic
+#    'H2':           {   'reaction':             '2 H+ + 2 e- -> H2'},
+#    'CO':           {   'reaction':             'CO2 + 2 H+ + 2 e- -> CO + H2O'},
+#    'CH4':          {'reaction':                'CO2 + 8 H+ + 8 e- -> CH4 + 2 H2O'}, #methane
+#    'CH3CH2OH':     {   'reaction':               '2 CO2 + 12 H+ + 12 e- -> CH3CH2OH + 3 H2O'},
+
+    ###alkaline
+    'H2':           {   'reaction':            '2 H2O + 2 e- -> H2 + 2 OH-'},
+    'CO':           {   'reaction':            'CO2 + 2 e- + H2O -> CO + 2 OH-'},
+    'CH4':          {   'reaction':            'CO2 + 6 H2O + 8 e- -> CH4 + 8 OH-'},
+    'CH3CH2OH':     {   'reaction':            '2 CO2 + 9 H2O + 12 e- -> CH3CH2OH + 12 OH-'},
+    'HCOOH':        {   'reaction':            'CO2 + 2 H2O + 2 e- -> HCOOH + 2 OH-'}}  #consider HCOOH here
 
 #if educt=='CO2':
 #    electrode_reactions['CO']={   'reaction':            'CO2 + H2O + 2 e- ->  CO + 2 OH-'}
@@ -123,6 +138,7 @@ system=\
     'electrolyte reactions': use_elreac, #False,
     'phiPZC': -0.07, #+unit_R*298.14/unit_F*pH_i*np.log(10.), #value at SHE: https://www.sciencedirect.com/science/article/pii/S002207280300799X
     'Stern capacitance': 20, #std: 20
+    'pH':pH_i
     }
 ###########################################################################
 
@@ -138,7 +154,7 @@ data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
 #set up the initial concentrationss from this constants:
 CO2_i = 0.03419*system['pressure']*1000. #initial CO2(aq) bulk concentrations at t=0 and Pressure P in [mol/m3] units
 #                        #from Henry constant (29.41 atm/M
-CO_i = 9.5e-4*system['pressure']*1000.
+CO_i = 0.0 #9.5e-4*system['pressure']*1000.
 #CO32m_i = ((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)-\
 #            (np.sqrt((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)**2\
 #            -4.0*(bic_i)**2)))/2  #initial (CO3)2- bulk concentrations at t=0 [mol/m3]
@@ -151,23 +167,23 @@ CO_i = 9.5e-4*system['pressure']*1000.
 
 ##1) option: initialize with CO2_i and OHm_i
 OHm_i=10**(pH_i-14.)*1000.0
-#HCO3m_i=electrolyte_reactions['buffer-base']['constant']*CO2_i*OHm_i
-#CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
+HCO3m_i=electrolyte_reactions['buffer-base']['constant']*CO2_i*OHm_i
+CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
 #print 'HCO3m_i OHm_i CO2_i CO32m_i'
 #print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
 ##2) option: initialize with HCO3m_i and OHm_i #!currently used!!
 #print 'CO2 before',CO2_i
-OHm_i=10**(pH_i-14.)*1000.0
-HCO3m_i=0.1*1000.
-CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
-CO2_i=HCO3m_i/OHm_i/electrolyte_reactions['buffer-base']['constant']
+#OHm_i=10**(pH_i-14.)*1000.0
+#HCO3m_i=0.1*1000.
+#CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
+#CO2_i=HCO3m_i/OHm_i/electrolyte_reactions['buffer-base']['constant']
 print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
 #3) option: initialize with CO2_i and HCO3m_i
 #HCO3m_i=0.5*1000
 #OHm_i=HCO3m_i/CO2_i/electrolyte_reactions['buffer-base']['constant']
 #pH_i=14+np.log10(OHm_i/1000.)
 #print 'pH',pH_i
-CO2_i = 1000*2285.71428571#0.0362261301134
+#CO2_i = 1000*2285.71428571#0.0362261301134
 
 Hm_i=10**(-pH_i)*1000.0
 
@@ -237,9 +253,9 @@ species=\
 #   # 'C2H4':             {   'symbol':               'C_2H_4',
 #   #                         'name':                 'ethylene',
 #   #                         'diffusion':            1.87e-009},
-#    'HCOO-':            {   'symbol':               'HCOO^-',
-#                            'name':                 'formate',
-#                            'diffusion':            1.454e-009},
+    'HCOOH':            {   'symbol':               'HCOOH', #important to specify this as HCOO^-, because it will readily dissociate, make this a buffer reaction?
+                            'name':                 'formate',
+                            'diffusion':            1.454e-009},
     'CH3CH2OH':             {'name':                 'C2-species', #assuming EtOH
                             'symbol':               'CH_3CH_2OH',
                             'diffusion':            0.84e-009},
@@ -284,8 +300,8 @@ species['CO']['flux']='catmap' #CO_rate
 
 boundary_thickness=7.93E-05 #in m
 
-if not nobuffer:
-    visc=viscosity(species['HCO3-']['bulk concentration']/10**3), #Pa*s at 25C of KHCO3 solution
+#if not nobuffer:
+#    visc=viscosity(species['HCO3-']['bulk concentration']/10**3), #Pa*s at 25C of KHCO3 solution
 system['boundary thickness']=boundary_thickness
 #system['electrolyte viscosity']=visc[0]
 
@@ -337,8 +353,20 @@ for potential in potentials:
     #tp.set_initial_concentrations('Gouy-Chapman')
     
     if only_catmap:
-        cm=CatMAP(transport=tp)
-        for p in np.linspace(-1.5,0.2,40):
+        if proton_donor=='H2O':
+            if interactions:
+                #append interaction list:
+                fname='append_inter.txt'
+            else:
+                fname='append_nointer.txt'
+            copy('catmap_ohdonor_template.mkm','catmap_ohdonor_mod_template.mkm')
+            with open("catmap_ohdonor_mod_template.mkm", "a") as myfile:
+                for line in open(fname,'r'):
+                    myfile.write(line+'\n')
+            cm=CatMAP(transport=tp,n_inter=n_inter,model_name='catmap_ohdonor_mod')
+        elif proton_donor=='H':
+            cm=CatMAP(transport=tp,n_inter=n_inter,model_name='catmap_hdonor')
+        for p in np.linspace(-0.5,0.0,10):
             cm.run([p,300])
     #c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
     if not only_catmap:

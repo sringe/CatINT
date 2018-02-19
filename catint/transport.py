@@ -82,6 +82,7 @@ class Transport(object):
         system_keys=[
                 'phiM',                     #V
                 'Stern capacitance',        #mF/cm^2
+                'pH',
                 'phiPZC',                   #V
                 'temperature',              #K
                 'pressure',     
@@ -187,6 +188,8 @@ class Transport(object):
             elif 'OH-' in self.species:
                 self.system['pH']=14+np.log10(self.species['OH-']['bulk concentration']/1000.)
 
+
+        self.system['surface pH']=self.system['pH']
 
         #initialize concentrations at electrode
         for sp in self.species:

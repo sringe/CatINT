@@ -9,7 +9,7 @@ exp=EXPDATA()
 
 j_log_plot=True
 
-fig=plt.figure(figsize=(7, 10))
+fig=plt.figure(figsize=(6, 7))
 
 colorlist={}
 colorlist['CO']='r'
@@ -23,9 +23,18 @@ colorlist['OCCOH']='darkred'
 colorlist['CHO']='0.75'
 colorlist['OCCO']='g'
 colorlist['COOH']='darkblue'
-symbols=['x','o']
+symbols={
+        'CO':'x',
+        'H2':'o',
+        'COOH':'d',
+        'HCOOH':'3',
+        'CO2':'D',
+        'CH4':'p',
+        'CH3CH2OH':'1',
+        'CHO':'2'
+        }
 
-products=['CO','CH4','CH3CH2OH','H2']
+products=['CO','CH4','CH3CH2OH','H2','HCOOH']
 
 def read_data(files):
     pdata={}
@@ -63,6 +72,7 @@ for arg in sys.argv[1:]:
     pdata=read_data(glob(results_folder+'/*/j*'))
     cdata=read_data(glob(results_folder+'/*/cov*'))
     for isp,sp in enumerate(pdata):
+        print 'checking',sp
         if sp not in products:
             continue
         x=pdata[sp][:,0]
@@ -70,12 +80,17 @@ for arg in sys.argv[1:]:
         color=exp.get_color(sp)
         if color is None:
             color=colorlist[sp]
+        if sp in symbols:
+            symbol=symbols[sp]
+        else:
+            symbol=''
+#        symbol=''
         if j_log_plot:
             func=ax1.semilogy
         else:
             func=ax1.plot
         if k==0:
-            func(x,y,linestyle,color=color,label=sp) #,label=arg.split('/')[-1])
+            func(x,y,linestyle+symbol,color=color,label=sp) #,label=arg.split('/')[-1])
         else:
             func(x,y,linestyle,color=color)
     for isp,sp in enumerate(cdata):
@@ -84,10 +99,16 @@ for arg in sys.argv[1:]:
         color=exp.get_color(sp)
         if color is None:
             color=colorlist[sp]
-        if k==0:
-            ax2.plot(x,y,linestyle,color=color,label=sp)
+        if sp in symbols:
+            symbol=symbols[sp]
         else:
-            ax2.plot(x,y,linestyle,color=color)
+            symbol=''
+#        symbol=''
+        print 'the color',sp,color
+        if k==0:
+            ax2.plot(x,y,linestyle+symbol,color=color,label=sp)
+        else:
+            ax2.plot(x,y,linestyle+symbol,color=color)
     ax1.legend()
 #    data=np.loadtxt('data.txt')
 #    ax1.plot(data[:,0],data[:,1],'-')
@@ -103,5 +124,7 @@ for arg in sys.argv[1:]:
 #        else:
 #            ax2.semilogy(x,y,'-',color=colorlist[species])
     ax2.legend()
-exp.plot_data(reference=['hori','jaramillo'],ax=ax1,species=['H$_2$','CO','CH$_4$','C2-sum'],pH=['6.8','7.2'],system=['pc-Cu'],scale='RHE',only_points=True,take_log=j_log_plot)
+print 'plotting exp'
+exp.plot_data(reference=['hori','jaramillo'],ax=ax1,species=['H$_2$','CO','CH$_4$','C2-sum','HCOOH'],pH=['6.8','7.2'],system=['pc-Cu'],scale='RHE',only_points=True,take_log=j_log_plot)
+ax1.set_ylim([1e-12,1e4])
 plt.show()

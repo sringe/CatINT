@@ -9,7 +9,12 @@ import sys
 from units import *
 import re
 
-SA=380
+from catint.experimental import EXPDATA
+
+exp=EXPDATA()
+SA=1 #380
+
+cut=-2 #-0.78
 
 def plot_leis_high_surface_data():
     data=[]
@@ -90,13 +95,13 @@ def plot_xinyans_equation():
 #colors=cycle(['orange','lightblue','r','blue','darkred','black']) #,'k','r','y'])
 #colors=cycle(['orange','b','k','r','y'])
 colors=cycle(['orange','blue','red','olive']) #'orange','blue','blue','orange','blue','blue'])
-styles=cycle(['-','--']) #,'-.',':','o','d','x'])
+styles=cycle(['-']) #,'--']) #,'-.',':','o','d','x'])
 
 #folders=glob('calc_std_settings*') #obj') #calc_std*')
 folders=sys.argv[1:] #glob('test') #calc_std_settings*') #obj') #calc_std*')
 tp=Transport()
 oldlabel=''
-for f in folders:
+for iif,f in enumerate(folders):
     print f
     pH=re.findall('pH(\d+)',f)
     if len(pH)>0:
@@ -111,11 +116,13 @@ for f in folders:
 #    else: #if newlabel=='13.0':
 #        style=styles[1]
     oldlabel=newlabel
-#    style=next(styles)
+    style=next(styles)
 #    p=Plot(transport=tp,init_from_file='calc_std_settings')
     read_all(tp,f,only=['electrode_reactions','species','comsol_outputs','comsol_outputs_data']) #system')
     for sp in tp.electrode_reactions:
-        color=next(colors)
+        #color=next(colors)
+        print 'checking species',sp
+        color=exp.get_color(sp)
         jout=tp.electrode_reactions[sp]['electrode_current_density']
         data=[]
         for v1,v2 in jout:
@@ -126,9 +133,16 @@ for f in folders:
 #        data=np.sort(a.view(a.dtype.str+','+a.dtype.str), order=['f1'], axis=0).view(np.float32)
         data.view(data.dtype.str+','+data.dtype.str).sort(order=['f0'], axis=0)
 #        print 'data',f,sp,data[0,1]
-        plt.semilogy(data[:,0],data[:,1],style,color=color) #,label=f.replace('calc_std_settings','std')+', '+sp)
+        pdata=[]
+        if iif==0:
+            for x,y in data:
+                if x>cut: #-0.78:
+                    pdata.append([x,y])
+            data=np.array(pdata)
+        plt.semilogy(data[:,0],data[:,1],style,color=color,label=sp) #,label=f.replace('calc_std_settings','std')+', '+sp)
         #plt.semilogy(data[:,0],data[:,1],'o')
-    symbols=['o','x','d','D']
+    #symbols=['o','x','d','D']
+    symbols=['o','x','d','D','1','2','p']*3
     isp=-1
     for sp in [o[1] for o in tp.comsol_outputs if o[1] != 'coverage']:
         isp+=1
@@ -139,22 +153,28 @@ for f in folders:
             data.append([float(v1),jout[(v1,v2)][0]])
         data=np.array(data)
         data.view(data.dtype.str+','+data.dtype.str).sort(order=['f0'], axis=0)
-        if sp in ['CHO','HCOH']:
+        if sp in ['CHO','CHOH']:
             nel=6
             nc=1
         else:
             nel=8
             nc=2
-#        plt.semilogy(data[:,0],data[:,1]*nel*unit_F/10,symbol,color=color,label=f.replace('calc_std_settings','std')+', '+sp)
-plt.ylim([1e-8,5e2])
-plt.xlim([-1.03,0.0])
+        #plt.semilogy(data[:,0],data[:,1]*nel*unit_F/10,symbol,color=color,label=f.replace('calc_std_settings','std')+', '+sp)
+#plt.ylim([1e-8,5e2])
+#plt.xlim([-1.03,0.0])
+plt.xlim([-1.2,-0.31])
+plt.ylim([3.3e-6,39.63])
 plt.xlabel('Voltage vs RHE (V)')
 plt.ylabel(r'$j$ (mA/cm$^2$)')
-plot_leis_data()
-plot_leis_high_surface_data()
-plot_kanans_data()
+#plot_leis_data()
+#plot_leis_high_surface_data()
+#plot_kanans_data()
 #plot_xinyans_equation()
-plt.legend()
+#plt.legend()
+#exp.plot_data(reference=['jaramillo'],species=['CH$_4$','HCOO','C2-sum','CO'],pH=['6.8','13'],scale='RHE',only_points=True) #,take_log=False)
+exp.plot_data(reference=['jaramillo'],species=['CH$_4$','C2-sum','H$_2$'],pH=['13'],scale='RHE',only_points=True) #,take_log=False)
+#plt.grid()
+plt.savefig('result.pdf')
 plt.show()
 plt.close() #empty()
 sys.exit()
