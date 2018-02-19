@@ -21,7 +21,15 @@ from scipy.optimize import minimize
 from scipy.integrate import ode
 from scipy import interpolate
 import os
-import odespy, numpy
+import numpy
+import imp
+try:
+    imp.find_module('odespy')
+    found = True
+except ImportError:
+    found = False
+if found:
+    import odespy
 from comsol_wrapper import Comsol
 from catmap_wrapper import CatMAP
 from copy import deepcopy
