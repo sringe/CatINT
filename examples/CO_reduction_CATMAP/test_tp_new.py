@@ -1,10 +1,12 @@
+import sys
+sys.path.insert(0,'/scratch/users/sringe/transport/CatINT')
+sys.path.insert(0,'/scratch/users/sringe/transport/catmap')
 from shutil import copyfile as copy
 from catint.transport import Transport
 from catint.calculator import Calculator
 from catint.plot import Plot
 from catint.catmap_wrapper import CatMAP
 import numpy as np
-import sys
 from units import *
 from read_data import read_data
 

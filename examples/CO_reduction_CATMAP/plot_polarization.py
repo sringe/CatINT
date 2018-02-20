@@ -1,7 +1,8 @@
 from itertools import cycle
+import sys
+sys.path.insert(0,'/scratch/users/sringe/transport/CatINT')
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
 from glob import glob
 from catint.experimental import EXPDATA
 
