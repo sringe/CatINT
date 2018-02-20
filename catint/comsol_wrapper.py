@@ -64,21 +64,21 @@ class Comsol():
         self.studies=studies
         for study in studies:
             for method in studies[study]:
-                self.tp.logger.info('Will perform {} calculation with {} setting COMSOL'.format(study,method))
+                self.tp.logger.info(' | CS | Will perform {} calculation with {} setting COMSOL'.format(study,method))
                 for pars in studies[study][method]:
-                    self.tp.logger.info('Parameter set passed to COMSOL is {}'.format(studies[study][method]))
+                    self.tp.logger.info(' | CS | Parameter set passed to COMSOL is {}'.format(studies[study][method]))
         if 'cont' in self.tp.desc_method:
-            self.tp.logger.info('Solutions will be initialized with solutions of previous parameter set')
+            self.tp.logger.info(' | CS | Solutions will be initialized with solutions of previous parameter set')
         else:
-            self.tp.logger.info('Solutions will be reinitialized for each parameter set')
+            self.tp.logger.info(' | CS | Solutions will be reinitialized for each parameter set')
 #        self.write_parameter_file()
         self.write_input()
-        self.tp.logger.info('Compiling COMSOL.')
+        self.tp.logger.info(' | CS | Compiling COMSOL.')
         call(self.exe+" compile "+'/'.join([os.getcwd(),self.inp_file_name]),shell=True)
-        self.tp.logger.info('Starting COMSOL.')
+        self.tp.logger.info(' | CS | Starting COMSOL.')
         call(self.exe+" batch -inputfile "+'/'.join([os.getcwd(),'.'.join(self.inp_file_name.split('.')[:-1])+".class"]),shell=True)
         #~/software/transport/examples/diffuse_double_layer_with_charge_transfer_nonstatic_2.java
-        self.tp.logger.info('Reading COMSOL output.')
+        self.tp.logger.info(' | CS | Reading COMSOL output.')
         self.read_output(desc_val,only_last=only_last)
 
     def write_parameter_file(self,file_name='comsol_parameters.txt'):
@@ -865,7 +865,7 @@ class Comsol():
                     self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux']=np.zeros_like(cout_tmp)
             #now read in all results
             i=0
-            self.tp.logger.info('Reading COMSOL output from'+self.results_folder+'/'+toutput+'.txt')
+            self.tp.logger.info(' | CS | Reading COMSOL output from '+self.results_folder+'/'+toutput+'.txt')
 
             for line in open(self.results_folder+'/'+toutput+'.txt','r'):
                 i+=1
@@ -1007,7 +1007,7 @@ class Comsol():
 
         self.tp.electrode_flux=electrode_flux
 
-        self.tp.logger.info('Wrote out concentrations at '+str(nn+1)+' steps.')
+        self.tp.logger.info(' | CS | Wrote out concentrations at '+str(nn+1)+' steps.')
 
         if 'internal' in self.tp.desc_method:
             for desc in int_desc_list:

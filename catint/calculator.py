@@ -37,7 +37,7 @@ from copy import deepcopy
 class Calculator():
 
     def __init__(self,transport=None,dt=None,tmax=None,ntout=1,calc=None,
-            scale_pb_grid=None,tau_jacobi=1e-7,tau_scf=1e-10,mode='time-dependent',\
+            scale_pb_grid=None,tau_jacobi=1e-7,tau_scf=5e-5,mode='time-dependent',\
                 desc_method='internal-cont'):
 
         self.mode=mode #calculation mode for comsol: time-dependent or stationary. the local
@@ -1149,9 +1149,10 @@ class Calculator():
                     else:
                         istep=0
                         scf_accuracy=np.inf
+                        self.tp.logger.info('Starting iterative solution with CatMAP and COMSOL')
                         while scf_accuracy>self.tau_scf:
                             istep+=1
-                            self.tp.logger.info('Solving transport step {}. Current accuracy in current density = {} mV/cm^2'.format(istep,scf_accuracy))
+                            self.tp.logger.info(' | Solving transport step {}. Current accuracy in current density = {} mV/cm^2'.format(istep,scf_accuracy))
 
                             #1) Microkinetic Model: CatMAP
                             if istep==1:
@@ -1213,17 +1214,21 @@ class Calculator():
     def evaluate_accuracy(self,par,par_old):
         rmsd=0
         n=0
-        for val1,val2 in zip(par,par_old):
-            n+=1
-            rmsd+=(val1-val2)**2
-        rmsd=np.sqrt(rmsd/(n*1.))
+        par_sum=sum(par)
+        self.tp.logger.debug(' | Current current density = {} mV/cm^2'.format(par_sum))
+        par_old_sum=sum(par_old)
+        rmsd=np.sqrt((par_sum-par_old_sum)**2)
+#        for val1,val2 in zip(par,par_old):
+#            n+=1
+#            rmsd+=(val1-val2)**2
+#        rmsd=np.sqrt(rmsd/(n*1.))
         return rmsd
 
     def converged(self,old,new):
         cmrsd=0.0
         for isp in range(self.tp.nspecies):
-            crmsd+=sum((old[isp*self.tp.nx]-new[isp*self.tp.nx])**2)
-        if sum(crmsd)<self.tp.tau_scf:
+            crmsd+=(old[isp*self.tp.nx]-new[isp*self.tp.nx])**2 #RMSD
+        if np.sqrt(sum(crmsd)/len(crmsd))<self.tp.tau_scf:
             return True
         else:
             return False

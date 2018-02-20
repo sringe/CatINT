@@ -62,7 +62,7 @@ class CatMAP():
 
     def run(self,desc_val):
         desc_keys=[key for key in self.tp.descriptors]
-        self.tp.logger.info('Starting CatMAP for {} = {}'.format(desc_keys[0],desc_val[0]))
+        self.tp.logger.info(' | CM | Starting CatMAP for {} = {}'.format(desc_keys[0],desc_val[0]))
         #create output folder
         if not os.path.isdir(self.output_base_folder):
             os.makedirs(self.output_base_folder)
@@ -168,7 +168,7 @@ class CatMAP():
                             i+=1
                             if 'interaction_strength' in line:
                                 replace_line(mkm_file,i-1,'interaction_strength = '+str(ii))
-                        self.tp.logger.info('Running interaction_strength = {}'.format(ii))
+                        self.tp.logger.info(' | CM | Running interaction_strength = {}'.format(ii))
                     model = ReactionModel(setup_file = mkm_file, max_log_line_length=0)
                     model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency']
                     model.run()
@@ -212,7 +212,7 @@ class CatMAP():
         if not converged:
             self.tp.logger.error('CatMAP did not converge')
         else:
-            self.tp.logger.info('CatMAP finished successfully in {} steps'.format(max_iter))
+            self.tp.logger.info(' | CM | CatMAP finished successfully in {} steps'.format(max_iter))
 
         self.read_output(desc_val)
         #species_definitions['CO2_g'] = {'concentration':0.2}
