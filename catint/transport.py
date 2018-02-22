@@ -5,7 +5,7 @@ Stefan Ringe (stefan.ringe.tum@gmail.com)
 """
 import scipy.integrate as integrate
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 #from ase import units
 from units import *
 from itertools import cycle
@@ -15,10 +15,11 @@ import collections
 import logging
 import os
 import re
-from io import save_all
+from io import save_all,MPIFileHandler
 import subprocess
 from glob import glob
 from shutil import copy
+from mpi4py import MPI
 
 class Transport(object):
 
@@ -26,6 +27,14 @@ class Transport(object):
             system=None,pb_bound=None,nx=100,\
             descriptors=None,model_name=None,\
             comsol_args={},catmap_args={}):
+
+        #MPI setup
+        self.mpi_comm = MPI.COMM_WORLD
+        comm=self.mpi_comm
+        self.mpi_rank = self.mpi_comm.Get_rank()
+        rank=self.mpi_rank
+        self.mpi_size = self.mpi_comm.Get_size()
+        size=self.mpi_size
 
         ##############################################
         ###########FOLDERS AND FILES##################
@@ -39,7 +48,8 @@ class Transport(object):
         self.outputfoldername=self.model_name+'_results' #folder where all results will be saved with the self.save function
         self.inputfilename=sys.argv[0] #the input file
         if not os.path.exists(self.outputfoldername):
-            os.makedirs(self.outputfoldername)
+            if rank==0:
+                os.makedirs(self.outputfoldername)
         else:
 #            existing_files=sorted(glob(self.outputfoldername+'_[0-9]+'))
             existing_files=sorted([f for f in os.listdir('.') if re.search(self.outputfoldername+'_[0-9]+', f)])
@@ -48,29 +58,44 @@ class Transport(object):
             else:
                 number=2
             self.outputfoldername='_'.join(sum([[self.outputfoldername],[str(number).zfill(4)]],[]))
-            os.makedirs(self.outputfoldername)
+            if rank==0:
+                os.makedirs(self.outputfoldername)
         self.logfilename=self.outputfoldername+'/transport.log' # the log file
         #copy input file for later reference
-        copy(self.inputfilename,self.outputfoldername+'/'+self.inputfilename)
+        if rank==0:
+            copy(self.inputfilename,self.outputfoldername+'/'+self.inputfilename)
 
+        #wait for all processors
+        comm.Barrier()
+
+#        logger = logging.getLogger("node[%i]"%comm.rank)
         # set up logging to file - see previous section for more details
         logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                     datefmt='%m-%d %H:%M',
-                    filename=self.logfilename,
+                    filename='.'.join(self.logfilename.split('.')[:-1])+'_id'+str(rank).zfill(3)+'.log',
                     filemode='w')
-        # define a Handler which writes INFO messages or higher to the sys.stderr
-        console = logging.StreamHandler()
-        console.setLevel(logging.INFO)
-        # set a format which is simpler for console use
-        formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-        # tell the handler to use this format
-        console.setFormatter(formatter)
-        # add the handler to the root logger
-        logging.getLogger('').addHandler(console)
+#        mh = MPIFileHandler(self.logfilename)
+#        formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+#        mh.setFormatter(formatter)
+#        logger.addHandler(mh)
+
+        if rank==0:
+            # define a Handler which writes INFO messages or higher to the sys.stderr
+            console = logging.StreamHandler()
+            console.setLevel(logging.INFO)
+            # set a format which is simpler for console use
+            formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+            # tell the handler to use this format
+            console.setFormatter(formatter)
+            # add the handler to the root logger
+            logging.getLogger('').addHandler(console)
         
         # Now, we can log to the root logger, or any other logger. First the root...
-        logging.info('Starting Transport Calculation. Current Version: {}'.format(subprocess.check_output(["git", "describe","--always"]).strip()))
+        try:
+            logging.info('Starting Transport Calculation. Current Version: {}'.format(subprocess.check_output(["git", "describe","--always"]).strip()))
+        except:
+            logging.info('Starting Transport Calculation. Current Version not available.')
         
         # Now, define a couple of other loggers which might represent areas in your
         # application:
