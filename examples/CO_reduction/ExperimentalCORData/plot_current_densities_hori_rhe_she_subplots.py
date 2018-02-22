@@ -566,7 +566,7 @@ def plot_data(reference=['all'],species=['all'],pH=['all'],ci_bic=['all'],scale=
 
 #plot_data(reference=['hori','jaramillo'],species=['C1-sum','C2-sum','H$_2$'],pH=['6.8','13'],scale='RHE',system=['all'],fit_tafel=True)
 #plot_data(reference=['hori','jaramillo','kanan'],species=['C1','HCOO','C2+-sum','HCOO','H$_2$','CO'],pH=['6.8','7.2'],scale='RHE',system=['all'])
-plot_data(reference=['hori','jaramillo'],species=['H$_2$'],pH=['6.8','13'],scale='RHE')
+plot_data(reference=['hori','jaramillo'],species=['H$_2$'],pH=['6.8','13'],scale='SHE')
 
 sys.exit()
 
