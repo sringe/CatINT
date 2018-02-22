@@ -10,7 +10,7 @@ Stefan Ringe (stefan.ringe.tum@gmail.com)
 """
 import scipy.integrate as integrate
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 #from ase import units
 from scipy.sparse import diags
 from scipy.linalg import block_diag
@@ -23,6 +23,7 @@ from scipy import interpolate
 import os
 import numpy
 import imp
+import mpi4py
 try:
     imp.find_module('odespy')
     found = True
@@ -1124,6 +1125,7 @@ class Calculator():
         return cout
 
     def run(self):
+        itask=0
         if self.tp.descriptors is not None and (self.tp.desc_method == 'external' or self.tp.use_catmap):
             desc_keys=[key for key in self.tp.descriptors]
             i1=0
@@ -1133,7 +1135,12 @@ class Calculator():
                 i2=0
                 for value2 in self.tp.descriptors[desc_keys[1]]:
                     i2+=1
-                    self.tp.logger.info('Starting calculation for '+desc_keys[0]+'='+str(value1)+' and '+desc_keys[1]+'='+str(value2))
+                    itask+=1
+                    #only proceed if this should be performed for current task
+                    if itask%self.tp.mpi_size!=self.tp.mpi_rank:
+                        continue
+
+                    self.tp.logger.info('Starting calculation for {} = {} and {} = {} on CPU {} of {}'.format(desc_keys[0],value1,desc_keys[1],value2,self.tp.mpi_rank,self.tp.mpi_size))
                     label=str(i1).zfill(4)+'_'+str(i2).zfill(4)
                     #=desc_keys[0]+'='+str(value1)+'_'+desc_keys[1]+'='+str(value2)
                     #update the iterating descriptor based property in system properties
@@ -1204,6 +1211,10 @@ class Calculator():
                             if istep>1:
                                 scf_accuracy=self.evaluate_accuracy(current_density,old_current_density)
                             old_current_density=deepcopy(current_density)
+            #synchronize all_data over CPUs
+            self.tp.mpi_comm.Barrier()
+#            self.tp.all_data 
+#
         else:
             if not self.tp.use_catmap:
                 self.run_single_step()
