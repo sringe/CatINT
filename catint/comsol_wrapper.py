@@ -33,6 +33,9 @@ class Comsol():
         #only_last: if True, update only the data in the global arrays and dictionaries
         #corresponding to the last parameter in the parameter list
         self.results_folder=self.results_folder_base+'_'+label
+        print self.results_folder
+        print label
+        sys.exit()
         desc_keys=[key for key in self.tp.descriptors]
         if studies is None:
             studies={}
