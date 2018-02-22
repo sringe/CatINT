@@ -24,7 +24,7 @@ nobuffer=False #True #False #True #False #True
 educt='CO2' #CO2 or CO
 
 nx=200 #200
-nphi=13 #520 #260 #130
+nphi=26 #520 #260 #130
 
 SA=1
 
