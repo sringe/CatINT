@@ -1,5 +1,8 @@
+import os
 import pickle
 from shutil import copyfile as copy
+import logging
+from mpi4py import MPI
 
 def save_obj(folder,obj, name ):
     with open(folder+'/'+ name + '.pkl', 'wb') as f:
@@ -84,6 +87,33 @@ def read_all(tp,fname,only=None):
 
 def print_diff(dictname,varname,missing):
     print('  DIFF -- {} key of {} is missing in model {}'.format(varname,dictname,missing))
+
+class MPIFileHandler(logging.FileHandler):                                      
+    def __init__(self,filename, mode=MPI.MODE_WRONLY|MPI.MODE_CREATE|MPI.MODE_APPEND , encoding=None, delay=0, comm=MPI.COMM_WORLD ):
+        encoding = None                                                         
+        self.baseFilename = os.path.abspath(filename)                           
+        self.mode = mode                                                        
+        self.encoding = encoding                                                
+        self.comm = comm                                                        
+        if delay:                                                               
+            #We don't open the stream, but we still need to call the            
+            #Handler constructor to set level, formatter, lock etc.             
+            logging.Handler.__init__(self)                                      
+            self.stream = None                                                  
+        else:                                                                   
+           logging.StreamHandler.__init__(self, self._open())                   
+                                                                                
+    def _open(self):                                                            
+        stream = MPI.File.Open( self.comm, self.baseFilename, self.mode )
+#        stream = MPILogFile.Open( self.comm, self.baseFilename, self.mode )     
+        stream.Set_atomicity(True)                                              
+        return stream                                                           
+                                                                                
+    def close(self):                                                            
+        if self.stream:                                                         
+            self.stream.Sync()                                                  
+            self.stream.Close()                                                 
+            self.stream = None               
 
 #def diff(tp1,tp2):
 #    """shows difference between two transport models"""

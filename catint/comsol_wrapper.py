@@ -9,7 +9,7 @@ from copy import deepcopy
 
 class Comsol():
     """This class does all operations need to write input files for comsol and read output"""
-    def __init__(self,path=os.getcwd(),transport=None,exe_path='/Applications/COMSOL53a/Multiphysics/bin/comsol',mode='time-dependent'): 
+    def __init__(self,path=os.getcwd(),transport=None,exe_path='/share/PI/suncat/COMSOL/comsol53a/multiphysics/bin/comsol',mode='time-dependent'): 
         if transport is None:
             self.tp.logger.error('No transport object provided for calculator. Stopping here.')
             sys.exit()
@@ -17,7 +17,7 @@ class Comsol():
             self.tp=transport #transport object
         self.tp.path=path
         self.exe=exe_path
-        self.results_folder_base=self.tp.outputfoldername+'/comsol_results'
+        self.results_folder_base=self.tp.outputfoldername+'/comsol_results_id'+str(self.tp.mpi_rank).zfill(3)
         self.results_folder=self.results_folder_base
         self.outputs=['concentrations','electrostatics','current_density','electrode_flux']
         for out in self.tp.comsol_args['outputs']:
