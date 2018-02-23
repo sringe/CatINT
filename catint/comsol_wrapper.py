@@ -9,12 +9,18 @@ from copy import deepcopy
 
 class Comsol():
     """This class does all operations need to write input files for comsol and read output"""
-    def __init__(self,path=os.getcwd(),transport=None,exe_path='/share/PI/suncat/COMSOL/comsol53a/multiphysics/bin/comsol',mode='time-dependent'): 
+    def __init__(self,path=os.getcwd(),transport=None,mode='time-dependent'): 
         if transport is None:
             self.tp.logger.error('No transport object provided for calculator. Stopping here.')
             sys.exit()
         else:
             self.tp=transport #transport object
+        if 'bin_path' in self.tp.comsol_args:
+            exe_path=self.tp.comsol_args['bin_path']
+        else:
+            exe_path='/share/PI/suncat/COMSOL/comsol53a/multiphysics/bin/comsol'
+        if not os.path.exists(exe_path):
+            self.tp.logger.error('Binary path {} of COMSOL does not exist'.format(exe_path))
         self.tp.path=path
         self.exe=exe_path
         self.results_folder_base=self.tp.outputfoldername+'/comsol_results_id'+str(self.tp.mpi_rank).zfill(3)
@@ -33,9 +39,6 @@ class Comsol():
         #only_last: if True, update only the data in the global arrays and dictionaries
         #corresponding to the last parameter in the parameter list
         self.results_folder=self.results_folder_base+'_'+label
-        print self.results_folder
-        print label
-        sys.exit()
         desc_keys=[key for key in self.tp.descriptors]
         if studies is None:
             studies={}
