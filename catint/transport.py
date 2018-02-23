@@ -15,11 +15,19 @@ import collections
 import logging
 import os
 import re
-from io import save_all,MPIFileHandler
+from io import save_all #,MPIFileHandler
 import subprocess
 from glob import glob
 from shutil import copy
-from mpi4py import MPI
+import imp
+use_mpi=False
+try:
+    imp.find_module('mpi4py')
+    use_mpi=True
+except ImportError:
+    pass
+if use_mpi:
+    from mpi4py import MPI
 
 class Transport(object):
 
@@ -29,12 +37,16 @@ class Transport(object):
             comsol_args={},catmap_args={}):
 
         #MPI setup
-        self.mpi_comm = MPI.COMM_WORLD
-        comm=self.mpi_comm
-        self.mpi_rank = self.mpi_comm.Get_rank()
-        rank=self.mpi_rank
-        self.mpi_size = self.mpi_comm.Get_size()
-        size=self.mpi_size
+        if use_mpi:
+            self.mpi_comm = MPI.COMM_WORLD
+            comm=self.mpi_comm
+            self.mpi_rank = self.mpi_comm.Get_rank()
+            rank=self.mpi_rank
+            self.mpi_size = self.mpi_comm.Get_size()
+            size=self.mpi_size
+        else:
+            self.mpi_rank=rank=0
+            self.mpi_size=size=1
 
         ##############################################
         ###########FOLDERS AND FILES##################
@@ -66,7 +78,8 @@ class Transport(object):
             copy(self.inputfilename,self.outputfoldername+'/'+self.inputfilename)
 
         #wait for all processors
-        comm.Barrier()
+        if use_mpi:
+            comm.Barrier()
 
 #        logger = logging.getLogger("node[%i]"%comm.rank)
         # set up logging to file - see previous section for more details
@@ -210,13 +223,16 @@ class Transport(object):
             self.logger.info('pH given in system list, updating H+ and OH- concentrations if applicable')
             if 'H+' in self.species:
                 self.species['H+']['bulk concentration']=10**(-self.system['pH'])*1000.
-            if 'OH-' in self.species:
+            elif 'OH-' in self.species:
                 self.species['OH-']['bulk concentration']=10**(-(14-self.system['pH']))*1000.
         else:
             if 'H+' in self.species:
                 self.system['pH']=-np.log10(self.species['H+']['bulk concentration']/1000.)
             elif 'OH-' in self.species:
                 self.system['pH']=14+np.log10(self.species['OH-']['bulk concentration']/1000.)
+            else:
+                #setting the pH to an arbitrary value, it is not relevant here
+                self.system['pH']=7.0
 
 
         self.system['surface pH']=self.system['pH']
@@ -427,9 +443,14 @@ class Transport(object):
 
         self.catmap_args=catmap_args
         #create empty lists
+        comsol_keys=['outputs','variables','parameter','bin_path']
         for a in ['outputs','variables','parameter']:
             if not a in comsol_args:
                 comsol_args[a]=[]
+        for a in comsol_args:
+            if a not in comsol_keys:
+                self.logger.error('{} is not a standard key of COMSOL. Implement this first. Exiting here to be sure that this key is what you want'.format(a))
+                sys.exit()
         self.comsol_args=comsol_args
 
 

@@ -22,8 +22,22 @@ from scipy.integrate import ode
 from scipy import interpolate
 import os
 import numpy
+from comsol_wrapper import Comsol
+from catmap_wrapper import CatMAP
+from copy import deepcopy
 import imp
-import mpi4py
+
+#import mpi if available
+use_mpi=False
+try:
+    imp.find_module('mpi4py')
+    use_mpi=True
+except ImportError:
+    pass
+if use_mpi:
+    from mpi4py import MPI
+
+#import odespy if available
 try:
     imp.find_module('odespy')
     found = True
@@ -31,9 +45,6 @@ except ImportError:
     found = False
 if found:
     import odespy
-from comsol_wrapper import Comsol
-from catmap_wrapper import CatMAP
-from copy import deepcopy
 
 class Calculator():
 
