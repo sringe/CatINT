@@ -252,42 +252,42 @@ if not nobuffer:
 ###########################################################################
 
 comsol_args={}
-comsol_args['params']={}
-comsol_args['params']['A']=['1.e13[1/s]','Exponential prefactor']
-#comsol_args['params']['A2']=['1.e13[1/s]','Exponential prefactor']
-comsol_args['params']['Ga_CHO']=[str(1.11746219*unit_F)+'[J/mol]','CHO Activation Energy'] #[str(1.11746219*unit_F)+'[J/mol]','CHO Activation Energy']
-comsol_args['params']['Ga_CHOH']=[str(1.9*unit_F)+'[J/mol]','CHOH Activation Energy'] #[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Energy']
-comsol_args['params']['Ga_OCCO']=[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy'] #[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy']
-comsol_args['params']['Ga_OCCOH']=[str(1.5*unit_F)+'[J/mol]','OCCOH Activation Energy'] #[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy']
-comsol_args['params']['DG_CHOH']=[str(0.0*unit_F)+'[J/mol]', 'CHOH free energy barrier']
-comsol_args['params']['DG_OCCOH']=[str(0.0*unit_F)+'[J/mol]','OCCOH free energy barrier']
-#comsol_args['params']['Ga_H']=[str(0.9*unit_F)+'[J/mol]','H Activation Energy']
-#comsol_args['params']['eVToJmol']=[str(eVTokcal*1000*calToJ)+'[J/eV/mol]','eV to J/mol Conversion factor']
-comsol_args['params']['alpha_CHO']=['0.5','Butler-Volmer Parameter'] #std 0.5
-comsol_args['params']['alpha_CHOH']=['0.8','Butler-Volmer Parameter'] #std 2.0
-comsol_args['params']['alpha_OCCOH']=['0.9','Butler-Volmer Parameter'] #std 0.5
-comsol_args['params']['alpha_OCCO']=['0.5','Butler-Volmer Parameter'] #std 0.5
-comsol_args['params']['n_CHO']=['1','Butler-Volmer Parameter'] #std 0.5
-#comsol_args['params']['alpha_H']=['0.5','Butler-Volmer Parameter'] #std 0.5
-comsol_args['params']['n_CHOH']=['1','Butler-Volmer Parameter'] #std 2.0
-comsol_args['params']['n_OCCOH']=['0','Butler-Volmer Parameter'] #std 0.5
-comsol_args['params']['n_OCCO']=['0','Butler-Volmer Parameter'] #std 0.5
-#comsol_args['params']['n_H']=['0','Butler-Volmer Parameter'] #std 0.5
-comsol_args['params']['e0']=['1[C]','electronic charge']
-comsol_args['params']['erho']=['80.3e-6[C/cm^2]','surface density of active sites x elementary charge']
-comsol_args['params']['Lmol']=['1[l/mol]','conversion factor']
+comsol_args['parameter']={}
+comsol_args['parameter']['A']=['1.e13[1/s]','Exponential prefactor']
+#comsol_args['parameter']['A2']=['1.e13[1/s]','Exponential prefactor']
+comsol_args['parameter']['Ga_CHO']=[str(1.11746219*unit_F)+'[J/mol]','CHO Activation Energy'] #[str(1.11746219*unit_F)+'[J/mol]','CHO Activation Energy']
+comsol_args['parameter']['Ga_CHOH']=[str(1.9*unit_F)+'[J/mol]','CHOH Activation Energy'] #[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Energy']
+comsol_args['parameter']['Ga_OCCO']=[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy'] #[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy']
+comsol_args['parameter']['Ga_OCCOH']=[str(1.5*unit_F)+'[J/mol]','OCCOH Activation Energy'] #[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy']
+comsol_args['parameter']['DG_CHOH']=[str(0.0*unit_F)+'[J/mol]', 'CHOH free energy barrier']
+comsol_args['parameter']['DG_OCCOH']=[str(0.0*unit_F)+'[J/mol]','OCCOH free energy barrier']
+#comsol_args['parameter']['Ga_H']=[str(0.9*unit_F)+'[J/mol]','H Activation Energy']
+#comsol_args['parameter']['eVToJmol']=[str(eVTokcal*1000*calToJ)+'[J/eV/mol]','eV to J/mol Conversion factor']
+comsol_args['parameter']['alpha_CHO']=['0.5','Butler-Volmer Parameter'] #std 0.5
+comsol_args['parameter']['alpha_CHOH']=['0.8','Butler-Volmer Parameter'] #std 2.0
+comsol_args['parameter']['alpha_OCCOH']=['0.9','Butler-Volmer Parameter'] #std 0.5
+comsol_args['parameter']['alpha_OCCO']=['0.5','Butler-Volmer Parameter'] #std 0.5
+comsol_args['parameter']['n_CHO']=['1','Butler-Volmer Parameter'] #std 0.5
+#comsol_args['parameter']['alpha_H']=['0.5','Butler-Volmer Parameter'] #std 0.5
+comsol_args['parameter']['n_CHOH']=['1','Butler-Volmer Parameter'] #std 2.0
+comsol_args['parameter']['n_OCCOH']=['0','Butler-Volmer Parameter'] #std 0.5
+comsol_args['parameter']['n_OCCO']=['0','Butler-Volmer Parameter'] #std 0.5
+#comsol_args['parameter']['n_H']=['0','Butler-Volmer Parameter'] #std 0.5
+comsol_args['parameter']['e0']=['1[C]','electronic charge']
+comsol_args['parameter']['erho']=['80.3e-6[C/cm^2]','surface density of active sites x elementary charge']
+comsol_args['parameter']['Lmol']=['1[l/mol]','conversion factor']
 #active site density. singh paper: 7.04e-6[mol/m^2]
 #here: 3x3 Cu211 cell as example. area=6.363x7.794*1e-20, active sites=3 (step top sites, 1.004495558139274e-05), 9 (all top sites, 3.013486674417822e-05)
-comsol_args['params']['rho_act']=['1.004495558139274e-05[mol/m^2]','Density of Active Sites'] #from Singh paper: 7.04e-6
-comsol_args['params']['Ga_CO_ads']=[str(-0.3*unit_F)+'[J/mol]','Adsorption barrier for CO on Cu211']
-comsol_args['params']['Ga_CO2_ads']=[str(-0.859729294*unit_F)+'[J/mol]','Adsorption barrier for CO2 on Cu211'] #https://smartech.gatech.edu/bitstream/handle/1853/43652/fergusson_alexander_i_201205_mast.pdf
-#comsol_args['params']['G_H_ads']=['??','Adsorption Barrier for H on Cu211. this is an electrochemical adsorption process!!!']
-comsol_args['params']['Kads_CO']=['exp(-Ga_CO_ads/RT)','Equilibrium constant for CO adsorption']
-comsol_args['params']['Kads_CO2']=['exp(-Ga_CO2_ads/RT)','Equilibrium constant for CO adsorption']
-comsol_args['params']['max_coverage']=['0.44','Maximal coverage with which the Langmuir isotherm will be scaled'] #0.44
-#comsol_args['params']['Kads_H']=['exp(-G_H_ads/RT)','Equilibrium constant for HCO3- -> *H']
-#comsol_args['params']['max_coverage_H']=['1.','Maximal coverage with which the Langmuir isotherm will be scaled'] #0.44
-comsol_args['params']['SA']=[SA,'Surface Area Enhancement Factor']
+comsol_args['parameter']['rho_act']=['1.004495558139274e-05[mol/m^2]','Density of Active Sites'] #from Singh paper: 7.04e-6
+comsol_args['parameter']['Ga_CO_ads']=[str(-0.3*unit_F)+'[J/mol]','Adsorption barrier for CO on Cu211']
+comsol_args['parameter']['Ga_CO2_ads']=[str(-0.859729294*unit_F)+'[J/mol]','Adsorption barrier for CO2 on Cu211'] #https://smartech.gatech.edu/bitstream/handle/1853/43652/fergusson_alexander_i_201205_mast.pdf
+#comsol_args['parameter']['G_H_ads']=['??','Adsorption Barrier for H on Cu211. this is an electrochemical adsorption process!!!']
+comsol_args['parameter']['Kads_CO']=['exp(-Ga_CO_ads/RT)','Equilibrium constant for CO adsorption']
+comsol_args['parameter']['Kads_CO2']=['exp(-Ga_CO2_ads/RT)','Equilibrium constant for CO adsorption']
+comsol_args['parameter']['max_coverage']=['0.44','Maximal coverage with which the Langmuir isotherm will be scaled'] #0.44
+#comsol_args['parameter']['Kads_H']=['exp(-G_H_ads/RT)','Equilibrium constant for HCO3- -> *H']
+#comsol_args['parameter']['max_coverage_H']=['1.','Maximal coverage with which the Langmuir isotherm will be scaled'] #0.44
+comsol_args['parameter']['SA']=[SA,'Surface Area Enhancement Factor']
 ###########################################################################
 #RATE EQUATIONS/FLUXES
 ###########################################################################
@@ -312,14 +312,14 @@ comsol_args['params']['SA']=[SA,'Surface Area Enhancement Factor']
 #        )'sigma_max=5.0 #smoothness factor for maximum, the larger it is the smoother the function is approximated
 
 
-comsol_args['params']['OH_min']=['1e-30 [mol/m^3]','Minimal OH- concentration allowed in the evaluation of the rates'] #of the rate coverage with which the Langmuir isotherm will be scaled'] #0.44
+comsol_args['parameter']['OH_min']=['1e-30 [mol/m^3]','Minimal OH- concentration allowed in the evaluation of the rates'] #of the rate coverage with which the Langmuir isotherm will be scaled'] #0.44
 
 
 comsol_args['variables']={}
 
 comsol_args['variables']['coverage_only_CO']=['Kads_CO*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads_CO)*max_coverage','CO Coverage according to Langmuir isotherm if there is no other species']
 #comsol_args['variables']['coverage_only_H']=['sqrt(Kads_H*Lmol)/(1.+sqrt(Lmol*Kads_H))*max_coverage_H','H Coverage according to Langmuir isotherm assuming H2O as proton donor']
-comsol_args['params']['phiM_ref_she']=['-7*log(10.)*R_const*298.14/F_const','Reference potential vs. SHE']
+comsol_args['parameter']['phiM_ref_she']=['-7*log(10.)*R_const*298.14/F_const','Reference potential vs. SHE']
 
 if educt=='CO2':
     comsol_args['variables']['coverage']=['Kads_CO2*[[CO2]]*Lmol/(1.+[[CO2]]*Lmol*Kads_CO2)*max_coverage','CO2 Coverage according to Langmuir isotherm = CO coverage (assuming no barrier between the states).']
@@ -395,7 +395,7 @@ if method==0:
 #                'jOCCO'+\
 #            ')'
 elif method==1:
-    comsol_args['params']['sigma_min']=['10.0','Smooth the calculation of the maximum by exponential summation. The larger this is, the smoother the maximum function is around the maximum']
+    comsol_args['parameter']['sigma_min']=['10.0','Smooth the calculation of the maximum by exponential summation. The larger this is, the smoother the maximum function is around the maximum']
     C1_rate='-1./sigma_min*'+\
             'log('+\
                 'exp(sigma_min*jCHO)+'+\
@@ -422,8 +422,8 @@ elif method==2:
                 ')'+\
             ')'
 elif method==3:
-    comsol_args['params']['avoid_div_zero']=['0.0','Avoid division by zero by adding small value on top of numerator and denominator']
-    comsol_args['params']['sigma_max']=['5.0','Smooth the calculation of the maximum by exponential summation. The larger this is, the smoother the maximum function is around the maximum']
+    comsol_args['parameter']['avoid_div_zero']=['0.0','Avoid division by zero by adding small value on top of numerator and denominator']
+    comsol_args['parameter']['sigma_max']=['5.0','Smooth the calculation of the maximum by exponential summation. The larger this is, the smoother the maximum function is around the maximum']
     C1_rate='rho_act*coverage*A*'+\
             '('+\
                 '(1.+avoid_div_zero)/'+\
@@ -477,6 +477,8 @@ if not nobuffer:
     visc=viscosity(species['HCO3-']['bulk concentration']/10**3), #Pa*s at 25C of KHCO3 solution
 system['boundary thickness']=boundary_thickness
 #system['electrolyte viscosity']=visc[0]
+
+comsol_args['bin_path']='/Applications/COMSOL53a/Multiphysics/bin/comsol'
 
 ###########################################################################
 #BOUNDARY CONDITIONS FOR PBE
