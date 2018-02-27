@@ -15,7 +15,7 @@ import collections
 import logging
 import os
 import re
-from io import save_all #,MPIFileHandler
+from io import sync_mpi,save_all #,MPIFileHandler
 import subprocess
 from glob import glob
 from shutil import copy
@@ -59,20 +59,29 @@ class Transport(object):
             self.model_name=model_name
         self.outputfoldername=self.model_name+'_results' #folder where all results will be saved with the self.save function
         self.inputfilename=sys.argv[0] #the input file
-        if not os.path.exists(self.outputfoldername):
-            if rank==0:
+
+        print 'currently rank=',rank
+        if rank==0:
+            if not os.path.exists(self.outputfoldername):
                 os.makedirs(self.outputfoldername)
-        else:
-#            existing_files=sorted(glob(self.outputfoldername+'_[0-9]+'))
-            existing_files=sorted([f for f in os.listdir('.') if re.search(self.outputfoldername+'_[0-9]+', f)])
-            if len(existing_files)>0: #self.outputfoldername.split('_')[-1].isdigit():
-                number=int(existing_files[-1].split('_')[-1])+1
             else:
-                number=2
-            self.outputfoldername='_'.join(sum([[self.outputfoldername],[str(number).zfill(4)]],[]))
-            if rank==0:
+                existing_files=sorted([f for f in os.listdir('.') if re.search(self.outputfoldername+'_[0-9]+', f)])
+                if len(existing_files)>0: #self.outputfoldername.split('_')[-1].isdigit():
+                    number=int(existing_files[-1].split('_')[-1])+1
+                else:
+                    number=2
+                self.outputfoldername='_'.join(sum([[self.outputfoldername],[str(number).zfill(4)]],[]))
+                print 'making folder',rank,self.outputfoldername
                 os.makedirs(self.outputfoldername)
-        self.logfilename=self.outputfoldername+'/transport.log' # the log file
+            self.logfilename=self.outputfoldername+'/transport.log' # the log file
+        else:
+            self.logfilename=None
+            self.outputfoldername=None
+
+        if use_mpi:
+            self.logfilename=sync_mpi(self.logfilename)
+            self.outputfoldername=sync_mpi(self.logfilename)
+
         #copy input file for later reference
         if rank==0:
             copy(self.inputfilename,self.outputfoldername+'/'+self.inputfilename)
@@ -1006,5 +1015,6 @@ class Transport(object):
         self.calc=calc
 
     def save(self):
-        self.logger.info('Saving all data into binary pickle files.')
-        save_all(self)
+        if self.mpi_rank==0:
+            self.logger.info('Saving all data into binary pickle files.')
+            save_all(self)

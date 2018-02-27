@@ -1,3 +1,4 @@
+from time import sleep
 import os
 import pickle
 from shutil import copyfile as copy
@@ -97,6 +98,32 @@ def read_all(tp,fname,only=None):
 def print_diff(dictname,varname,missing):
     print('  DIFF -- {} key of {} is missing in model {}'.format(varname,dictname,missing))
 
+def mpi_make_dir(folder):
+    """this function blocks all processors inspite of the rank==0 processor from processing until rank==0 has created the folder"""
+    if os.path.isdir(folder):
+        return
+    comm = MPI.COMM_WORLD
+    rank=comm.Get_rank()
+    size=comm.Get_size()
+    if rank==0 and not os.path.isdir(folder):
+        os.makedirs(folder)
+#    elif rank>0:
+#        while not os.path.isdir(folder):
+#            sleep(0.1)
+    comm.Barrier()
+    return
+
+def sync_mpi(var):
+    comm=MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()
+    if rank==0:
+        for ir in range(1,size):
+            comm.send(var, dest=ir, tag=11)
+        return var
+    else:
+        return comm.recv(source=0, tag=11)
+#
 #    class MPIFileHandler(logging.FileHandler):                                      
 #        def __init__(self,filename, mode=MPI.MODE_WRONLY|MPI.MODE_CREATE|MPI.MODE_APPEND , encoding=None, delay=0, comm=MPI.COMM_WORLD ):
 #            encoding = None                                                         
