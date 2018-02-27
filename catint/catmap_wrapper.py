@@ -3,7 +3,7 @@ from units import *
 import numpy as np
 import os
 from subprocess import call
-from io import replace_line,insert_line
+from io import replace_line,insert_line,mpi_make_dir
 from glob import glob
 import sys
 import pickle
@@ -63,12 +63,10 @@ class CatMAP():
     def run(self,desc_val):
         desc_keys=[key for key in self.tp.descriptors]
         self.tp.logger.info(' | CM | Starting CatMAP for {} = {}'.format(desc_keys[0],desc_val[0]))
-        #create output folder
-        if not os.path.isdir(self.output_base_folder):
-            os.makedirs(self.output_base_folder)
-        #create input/running folder
-        if not os.path.isdir(self.input_base_folder):
-            os.makedirs(self.input_base_folder)
+        #create output folder (only rank==0 can do this, others have to wait)
+        mpi_make_dir(self.output_base_folder)
+        #create input/running folder (only rank==0 can do this, others have to wait)
+        mpi_make_dir(self.input_base_folder)
 
         self.input_folder=self.input_base_folder+'/desc_'+str(desc_val[0])
         self.output_folder=self.output_base_folder+'/desc_'+str(desc_val[0])

@@ -1233,6 +1233,8 @@ class Calculator():
                 self.tp.logger.error('Catmap has been selected but current descriptor method is Comsol internal which does not work. Stopping here.')
                 sys.exit()
 
+        self.tp.comm.Barrier()
+
     def evaluate_accuracy(self,par,par_old):
         rmsd=0
         n=0
