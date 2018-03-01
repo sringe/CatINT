@@ -38,7 +38,7 @@ class EXPDATA():
         self.marker=['o','o','o','o','o','o','o','v','v','v','v','v','v','v']
         
         root=os.getcwd()
-        os.chdir('../CO_reduction/ExperimentalCORData')
+        os.chdir('/'.join(os.path.realpath(__file__).split('/')[:-1])+'/../examples/CO_reduction/ExperimentalCORData')
 
         self.DATA_hs=self.get_data('COR_hori_ph_normalized_SHE.csv')
         self.DATA_hr=self.get_data('COR_hori_ph_normalized_RHE.csv') #hori_data_RHE.csv')
