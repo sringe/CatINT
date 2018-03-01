@@ -13,6 +13,7 @@ except ImportError:
     pass
 if use_mpi:
     from mpi4py import MPI
+use_mpi=False
 
 def save_obj(folder,obj, name ):
     with open(folder+'/'+ name + '.pkl', 'wb') as f:
@@ -123,6 +124,34 @@ def sync_mpi(var):
         return var
     else:
         return comm.recv(source=0, tag=11)
+
+def reduce_dict_mpi(data):
+    """gather all results from data from all processors at proc=0
+    and merge the resulting list of dictionaries into a single
+    updated data dict"""
+    comm=MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()
+    data = comm.gather(data, root=0)
+    data=sync_mpi(data)
+    return reduce(merge,data)
+
+def merge(a, b, path=None):
+    "merges two dictionaries"
+    if path is None: path = []
+    for key in b:
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                merge(a[key], b[key], path + [str(key)])
+            elif a[key] == b[key]:
+                pass # same leaf value
+            else:
+                raise Exception('Conflict at %s' % '.'.join(path + [str(key)]))
+        else:
+            a[key] = b[key]
+    return a
+
+
 #
 #    class MPIFileHandler(logging.FileHandler):                                      
 #        def __init__(self,filename, mode=MPI.MODE_WRONLY|MPI.MODE_CREATE|MPI.MODE_APPEND , encoding=None, delay=0, comm=MPI.COMM_WORLD ):

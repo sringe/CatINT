@@ -28,6 +28,7 @@ except ImportError:
     pass
 if use_mpi:
     from mpi4py import MPI
+use_mpi=False
 
 class Transport(object):
 
@@ -80,7 +81,7 @@ class Transport(object):
 
         if use_mpi:
             self.logfilename=sync_mpi(self.logfilename)
-            self.outputfoldername=sync_mpi(self.logfilename)
+            self.outputfoldername=sync_mpi(self.outputfoldername)
 
         #copy input file for later reference
         if rank==0:
@@ -229,7 +230,7 @@ class Transport(object):
 
         #get pH
         if 'pH' in self.system:
-            self.logger.info('pH given in system list, updating H+ and OH- concentrations if applicable')
+            self.logger.info('pH given in system list, updating H+ and OH- concentrations if species exist')
             if 'H+' in self.species:
                 self.species['H+']['bulk concentration']=10**(-self.system['pH'])*1000.
             elif 'OH-' in self.species:
@@ -449,6 +450,11 @@ class Transport(object):
         self.total_charge=np.zeros([self.nx])
 
         self.initialize_descriptors(descriptors)
+
+        ntasks=np.prod(map(len,[self.descriptors[key] for key in self.descriptors]))
+        if size!=ntasks and use_mpi:
+            self.logger.error('# of CPUs is different from # of tasks. This is currently not supported.')
+            sys.exit()
 
         self.catmap_args=catmap_args
         #create empty lists

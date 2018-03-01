@@ -26,6 +26,7 @@ from comsol_wrapper import Comsol
 from catmap_wrapper import CatMAP
 from copy import deepcopy
 import imp
+from io import sync_mpi,reduce_dict_mpi
 
 #import mpi if available
 use_mpi=False
@@ -36,6 +37,7 @@ except ImportError:
     pass
 if use_mpi:
     from mpi4py import MPI
+use_mpi=False
 
 #import odespy if available
 try:
@@ -1242,7 +1244,7 @@ class Calculator():
                             old_current_density=deepcopy(current_density)
 
             #synchronize all_data over CPUs
-            self.tp.mpi_comm.Barrier()
+            self.tp.all_data=reduce_dict_mpi(self.tp.all_data)
 #            self.tp.all_data 
 #
         else:
