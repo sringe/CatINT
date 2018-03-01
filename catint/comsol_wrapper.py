@@ -17,8 +17,10 @@ class Comsol():
             self.tp=transport #transport object
         if 'bin_path' in self.tp.comsol_args:
             exe_path=self.tp.comsol_args['bin_path']
-        else:
+        elif os.path.exists('/share/PI/suncat/COMSOL/comsol53a/multiphysics/bin/comsol'):
             exe_path='/share/PI/suncat/COMSOL/comsol53a/multiphysics/bin/comsol'
+        else:
+            exe_path='/Applications/COMSOL53a/Multiphysics/bin/comsol'
         if not os.path.exists(exe_path):
             self.tp.logger.error('Binary path {} of COMSOL does not exist'.format(exe_path))
         self.tp.path=path
@@ -81,8 +83,10 @@ class Comsol():
         self.write_input()
         self.tp.logger.info(' | CS | Compiling COMSOL.')
         call(self.exe+" compile "+'/'.join([os.getcwd(),self.inp_file_name]),shell=True)
+        self.tp.logger.info('Compiling {}'.format('/'.join([os.getcwd(),self.inp_file_name])))
         self.tp.logger.info(' | CS | Starting COMSOL.')
         call(self.exe+" batch -inputfile "+'/'.join([os.getcwd(),'.'.join(self.inp_file_name.split('.')[:-1])+".class"]),shell=True)
+        self.tp.logger.info('Running {}'.format('/'.join([os.getcwd(),'.'.join(self.inp_file_name.split('.')[:-1])+".class"])))
         #~/software/transport/examples/diffuse_double_layer_with_charge_transfer_nonstatic_2.java
         self.tp.logger.info(' | CS | Reading COMSOL output.')
         self.read_output(desc_val,only_last=only_last)
