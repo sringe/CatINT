@@ -49,7 +49,7 @@ if found:
 class Calculator():
 
     def __init__(self,transport=None,dt=None,tmax=None,ntout=1,calc=None,
-            scale_pb_grid=None,tau_jacobi=1e-7,tau_scf=5e-5,mode='time-dependent',\
+            scale_pb_grid=None,tau_jacobi=1e-7,tau_scf=5e-5,mix_scf=0.5,mode='time-dependent',\
                 desc_method='internal-cont'):
 
         self.mode=mode #calculation mode for comsol: time-dependent or stationary. the local
@@ -58,6 +58,7 @@ class Calculator():
 
 
         self.tau_scf=tau_scf
+        self.mix_scf=mix_scf
 
         if transport is None:
             self.tp.logger.error('No transport object provided for calculator. Stopping here.')
@@ -1168,15 +1169,32 @@ class Calculator():
                         istep=0
                         scf_accuracy=np.inf
                         self.tp.logger.info('Starting iterative solution with CatMAP and COMSOL')
+                        self.tp.logger.info('  using a current density accuracy cutoff of {} mV/cm^2 and a linear mixing parameter of {}'.format(self.tau_scf,self.mix_scf))
                         while scf_accuracy>self.tau_scf:
                             istep+=1
                             self.tp.logger.info(' | Solving transport step {}. Current accuracy in current density = {} mV/cm^2'.format(istep,scf_accuracy))
+
+                            #linear mixing
+                            if istep>2:
+                                #mix fluxes
+                                for sp in self.tp.species:
+#                                    self.tp.species[sp]['flux']=self.mix_scf*self.tp.species[sp]['flux']+(1.-self.mix_scf)*fl_old[sp]
+                                    self.tp.species[sp]['surface concentration']=self.mix_scf*self.tp.species[sp]['surface concentration']+\
+                                            (1.-self.mix_scf)*sc_old[sp]
+
+                            #for linear mixing, safe all current densities and surface concentrations (input for comsol and catmap, respectively)
+                            sc_old={}
+ #                           fl_old={}
+                            for sp in self.tp.species:
+                                sc_old[sp]=self.tp.species[sp]['surface concentration']
+ #                               fl_old[sp]=self.tp.species[sp]['flux']
 
                             #1) Microkinetic Model: CatMAP
                             if istep==1:
                                 self.tp.logger.debug('Electrode Fluxes:')
                                 for sp in self.tp.species:
                                     self.tp.logger.debug('  {}: {}'.format(sp,self.tp.species[sp]['flux']))
+
 
                             #run catmap. the fluxes will be updated automatically
                             self.catmap.run(desc_val=[str(value1),str(value2)])
@@ -1222,6 +1240,7 @@ class Calculator():
                             if istep>1:
                                 scf_accuracy=self.evaluate_accuracy(current_density,old_current_density)
                             old_current_density=deepcopy(current_density)
+
             #synchronize all_data over CPUs
             self.tp.mpi_comm.Barrier()
 #            self.tp.all_data 
