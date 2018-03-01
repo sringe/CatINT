@@ -14,7 +14,7 @@ only_catmap=False
 #if only_catmap, run only catmap calculation without transport!
 
 proton_donor='H2O'
-interactions=False
+interactions=True
 
 n_inter=100
 

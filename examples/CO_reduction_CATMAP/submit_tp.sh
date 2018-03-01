@@ -6,7 +6,7 @@
 #SBATCH --error=err_work.log
 #SBATCH --ntasks-per-node=16
 #SBATCH --nodes=1
-#SBATCH --time=0:10:00
+#SBATCH --time=1:00:00
 #SBATCH --qos=normal
 #SBATCH --mem-per-cpu=4000
 
@@ -18,4 +18,5 @@ NCPU=`echo " $NTASKS * $NNODES " | bc`
 module load anaconda/anaconda.4.4.0.python2.7
 module load mpich/3.1.4/intel
 #module load openmpi/1.8.
-mpiexec -n 16 python test_tp_new.py
+#mpiexec -n 16 
+python test_tp_new.py

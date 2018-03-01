@@ -797,7 +797,6 @@ class Comsol():
             label_append=' || '
             keys=[key for key in self.tp.descriptors]
             vals=[]
-            print self.tp.descriptors
             for key in keys:
                 vals.append(self.tp.descriptors[key][0])
             label_append+=keys[0]+'='+str(vals[0])+', '
@@ -839,6 +838,9 @@ class Comsol():
             else:
                 toutput=output
             file_lines=''
+            if not os.path.exists(self.results_folder+'/'+toutput+'.txt'):
+                self.tp.logger.error('{} does not exist, did COMSOL probably crash before? Stopping here to be safe.'.format(self.results_folder+'/'+toutput+'.txt'))
+                sys.exit()
             with open(self.results_folder+'/'+toutput+'.txt', 'r') as f:
                 for x in f.readlines():
                     if 'Description' in x:
