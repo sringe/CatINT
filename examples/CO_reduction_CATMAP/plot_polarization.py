@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from glob import glob
 from catint.experimental import EXPDATA
 
+pH = 6.8
+
 exp=EXPDATA()
 
 j_log_plot=True
@@ -34,6 +36,7 @@ symbols={
         'CH3CH2OH':'1',
         'CHO':'2'
         }
+
 
 products=['CO','CH4','CH3CH2OH','H2','HCOOH']
 
@@ -85,15 +88,15 @@ for arg in sys.argv[1:]:
             symbol=symbols[sp]
         else:
             symbol=''
-#        symbol=''
+        symbol=''
         if j_log_plot:
             func=ax1.semilogy
         else:
             func=ax1.plot
         if k==0:
-            func(x,y,linestyle+symbol,color=color,label=sp) #,label=arg.split('/')[-1])
+            func(x+0.059*pH,y,linestyle+symbol,color=color,label=sp) #,label=arg.split('/')[-1])
         else:
-            func(x,y,linestyle,color=color)
+            func(x+0.059*pH,y,linestyle,color=color)
     for isp,sp in enumerate(cdata):
         x=cdata[sp][:,0]
         y=cdata[sp][:,1]
@@ -107,9 +110,9 @@ for arg in sys.argv[1:]:
 #        symbol=''
         print 'the color',sp,color
         if k==0:
-            ax2.plot(x,y,linestyle+symbol,color=color,label=sp)
+            ax2.plot(x+0.059*pH,y,linestyle+symbol,color=color,label=sp)
         else:
-            ax2.plot(x,y,linestyle+symbol,color=color)
+            ax2.plot(x+0.059*pH,y,linestyle+symbol,color=color)
     ax1.legend()
 #    data=np.loadtxt('data.txt')
 #    ax1.plot(data[:,0],data[:,1],'-')
@@ -127,7 +130,7 @@ for arg in sys.argv[1:]:
     ax2.legend()
 print 'plotting exp'
 exp.plot_data(reference=['hori','jaramillo'],ax=ax1,species=['H$_2$','CO','CH$_4$','C2-sum','HCOOH'],pH=['6.8','7.2'],system=['pc-Cu'],scale='RHE',only_points=True,take_log=j_log_plot)
-ax1.set_ylim([1e-12,1e4])
-ax1.set_xlim([-1.2,0])
-ax2.set_xlim([-1.2,0])
+ax1.set_ylim([1e-8,1e4])
+ax1.set_xlim([-1.2,0.1])
+ax2.set_xlim([-1.2,0.1])
 plt.show()
