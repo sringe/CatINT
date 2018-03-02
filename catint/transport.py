@@ -458,10 +458,12 @@ class Transport(object):
 
         self.catmap_args=catmap_args
         #create empty lists
-        comsol_keys=['outputs','variables','parameter','bin_path']
+        comsol_keys=['outputs','variables','parameter','bin_path','nx']
         for a in ['outputs','variables','parameter']:
             if not a in comsol_args:
                 comsol_args[a]=[]
+        if not 'nx' in comsol_args:
+            comsol_args['nx']=32 #default to 32 steps for flux ramping
         for a in comsol_args:
             if a not in comsol_keys:
                 self.logger.error('{} is not a standard key of COMSOL. Implement this first. Exiting here to be sure that this key is what you want'.format(a))

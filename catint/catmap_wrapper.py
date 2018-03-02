@@ -156,6 +156,13 @@ class CatMAP():
             else:
                 inter=[0]
 
+#        #redirect stdout to file
+#        old = os.dup(1)
+#        sys.stdout.flush()
+#        os.close(1)
+#        print os.getcwd()
+#        os.open(self.input_folder+"/catmap_run.err", os.O_CREAT)
+
         jj=0
         while True:
             try:
@@ -184,6 +191,11 @@ class CatMAP():
                     break
             else:
                 break
+
+#        sys.stdout.flush()
+#        os.close(1)
+#        os.dup(old) # should dup to 1
+#        os.close(old) # get rid of left overs
 
         #run!
 #        stdout = sys.stdout

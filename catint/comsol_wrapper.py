@@ -82,10 +82,10 @@ class Comsol():
 #        self.write_parameter_file()
         self.write_input()
         self.tp.logger.info(' | CS | Compiling COMSOL.')
-        call(self.exe+" compile "+'/'.join([os.getcwd(),self.inp_file_name]),shell=True)
+        call(self.exe+" compile "+'/'.join([os.getcwd(),self.inp_file_name])+' | tee '+self.results_folder+'/comsol_compile.err',shell=True)
         self.tp.logger.info('Compiling {}'.format('/'.join([os.getcwd(),self.inp_file_name])))
         self.tp.logger.info(' | CS | Starting COMSOL.')
-        call(self.exe+" batch -inputfile "+'/'.join([os.getcwd(),'.'.join(self.inp_file_name.split('.')[:-1])+".class"]),shell=True)
+        call(self.exe+" batch -inputfile "+'/'.join([os.getcwd(),'.'.join(self.inp_file_name.split('.')[:-1])+".class"])+' | tee '+self.results_folder+'/comsol_run.err',shell=True)
         self.tp.logger.info('Running {}'.format('/'.join([os.getcwd(),'.'.join(self.inp_file_name.split('.')[:-1])+".class"])))
         #~/software/transport/examples/diffuse_double_layer_with_charge_transfer_nonstatic_2.java
         self.tp.logger.info(' | CS | Reading COMSOL output.')
@@ -816,12 +816,23 @@ class Comsol():
         self.tp.potential=[]
         self.tp.efield=[]
         self.tp.current_density=[]
+        if self.tp.use_catmap:
+            #so far our implementation cannot safe the data properly for each descriptor
+            #setting it to zero. this will contain the data for one comsol iteration later
+            #at the whole descriptor range, however with the same input settings for each descriptor!
+            self.tp.all_data={}
+            desc_keys=[key for key in self.tp.descriptors]
+            for value1 in self.tp.descriptors[desc_keys[0]]:
+                for value2 in self.tp.descriptors[desc_keys[1]]:
+                    self.tp.all_data[str(value1)]={str(value2):{'species':self.tp.species.copy()}}
+                    self.tp.all_data[str(value1)][str(value2)]['system']=self.tp.system.copy()
         if 'internal' in self.tp.desc_method:
             for id1,d1 in enumerate(self.tp.all_data):
                 for id2,d2 in enumerate(self.tp.all_data[d1]):
-                    self.tp.all_data[str(d1)][str(d2)]['system']['potential']=[]
-                    self.tp.all_data[str(d1)][str(d2)]['system']['efield']=[]
-                    self.tp.all_data[str(d1)][str(d2)]['system']['current_density']=[]
+                    for key in ['potential','efield','current_density']:
+#                        if (key not in self.tp.all_data[str(d1)][str(d2)]['system']) or\
+#                                (not only_last or d1==int_desc_list[-1]):
+                         self.tp.all_data[str(d1)][str(d2)]['system'][key]=[]
                     for iout,oout in enumerate(self.tp.comsol_args['outputs']):
                         out=oout[1]
                         if out not in self.tp.comsol_outputs_data:
@@ -871,10 +882,12 @@ class Comsol():
                 electrode_flux_tmp=np.zeros_like(cout_tmp)
             if 'internal' in self.tp.desc_method and output=='concentrations':
                 for desc in int_desc_list:
+#                    if desc==int_desc_list[-1] or not only_last:
                     self.tp.all_data[str(desc)][str(int_desc_non)]['system']['cout']=np.zeros_like(cout_tmp) #([self.tp.nt,self.tp.nspecies*self.tp.nx])
             if 'internal' in self.tp.desc_method and output=='electrode_flux':
                 for desc in int_desc_list:
-                    self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux']=np.zeros_like(cout_tmp)
+#                    if desc==int_desc_list[-1] or not only_last:
+                     self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux']=np.zeros_like(cout_tmp)
             #now read in all results
             i=0
             self.tp.logger.info(' | CS | Reading COMSOL output from '+self.results_folder+'/'+toutput+'.txt')
@@ -888,6 +901,7 @@ class Comsol():
                             if j>0:
                                 i_sp=(j-1)%(self.tp.nspecies)
                                 i_de=(j-1-i_sp)/(self.tp.nspecies)
+#                                if int_desc_list[i_de] == int_desc_list[-1] or not only_last:
                                 if 'internal' in self.tp.desc_method:
                                     if output=='concentrations':
                                         self.tp.all_data[str(int_desc_list[i_de])][str(int_desc_non)]['system']['cout'][-2,i_sp*self.tp.nx+i-9]=float(lss)
@@ -904,6 +918,7 @@ class Comsol():
                                 if output=='electrostatics':
                                     i_sp=(j-1)%2
                                     i_de=(j-1-i_sp)/2
+#                                    if int_desc_list[i_de] == int_desc_list[-1] or not only_last:
                                     if 'internal' in self.tp.desc_method:
                                         if i_sp==0:
                                             self.tp.all_data[str(int_desc_list[i_de])][str(int_desc_non)]['system']['potential'].append(float(lss))
@@ -916,6 +931,7 @@ class Comsol():
                                 elif output=='current_density':
                                     i_sp=(j-1)%1
                                     i_de=(j-1-i_sp)
+#                                    if int_desc_list[i_de] == int_desc_list[-1] or not only_last:
                                     if 'internal' in self.tp.desc_method:
                                         if i_sp==0:
                                             self.tp.all_data[str(int_desc_list[i_de])][str(int_desc_non)]['system']['current_density'].append(float(lss))
@@ -926,7 +942,7 @@ class Comsol():
                         for j,lss in enumerate(ls):
                             if j>0:
                                 i_de=j-1
-                                if 'internal' in self.tp.desc_method:
+                                if 'internal' in self.tp.desc_method: # and (int_desc_list[i_de] == int_desc_list[-1] or not only_last):
                                     self.tp.comsol_outputs_data[output[1]][(str(int_desc_list[i_de]),str(int_desc_non))].append(float(lss))
                                 comsol_outputs_data[self.tp.comsol_args['outputs'].index(output)].append(float(lss))
                 elif i>8 and [key for key in self.studies][0]=='time-dependent':
