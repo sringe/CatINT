@@ -82,10 +82,10 @@ class Comsol():
 #        self.write_parameter_file()
         self.write_input()
         self.tp.logger.info(' | CS | Compiling COMSOL.')
-        call(self.exe+" compile "+'/'.join([os.getcwd(),self.inp_file_name])+' | tee '+self.results_folder+'/comsol_compile.err',shell=True)
+        call(self.exe+" compile "+'/'.join([os.getcwd(),self.inp_file_name])+' | tee '+self.results_folder+'/comsol_compile.out',shell=True)
         self.tp.logger.info('Compiling {}'.format('/'.join([os.getcwd(),self.inp_file_name])))
         self.tp.logger.info(' | CS | Starting COMSOL.')
-        call(self.exe+" batch -inputfile "+'/'.join([os.getcwd(),'.'.join(self.inp_file_name.split('.')[:-1])+".class"])+' | tee '+self.results_folder+'/comsol_run.err',shell=True)
+        call(self.exe+" batch -inputfile "+'/'.join([os.getcwd(),'.'.join(self.inp_file_name.split('.')[:-1])+".class"])+' | tee '+self.results_folder+'/comsol_run.out',shell=True)
         self.tp.logger.info('Running {}'.format('/'.join([os.getcwd(),'.'.join(self.inp_file_name.split('.')[:-1])+".class"])))
         #~/software/transport/examples/diffuse_double_layer_with_charge_transfer_nonstatic_2.java
         self.tp.logger.info(' | CS | Reading COMSOL output.')
