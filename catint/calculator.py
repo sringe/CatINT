@@ -1161,8 +1161,8 @@ class Calculator():
                     self.tp.system[desc_keys[0]]=value1
                     self.tp.system[desc_keys[1]]=value2
                     #update descriptor based data collection
-                    self.tp.all_data[str(value1)][str(value2)]['system'][desc_keys[0]]=self.tp.system[desc_keys[0]]
-                    self.tp.all_data[str(value1)][str(value2)]['system'][desc_keys[1]]=self.tp.system[desc_keys[1]]
+                    #self.tp.all_data[str(value1)][str(value2)]['system'][desc_keys[0]]=self.tp.system[desc_keys[0]]
+                    #self.tp.all_data[str(value1)][str(value2)]['system'][desc_keys[1]]=self.tp.system[desc_keys[1]]
                     
 
                     if not self.tp.use_catmap:
@@ -1212,11 +1212,12 @@ class Calculator():
                                 desc_copy=self.tp.descriptors.copy()
                                 i=-1
                                 desc_keys=[key for key in desc_copy]
-                                desc_list_new=[]
-                                for idd,dd in enumerate(self.tp.descriptors[desc_keys[0]]):
-                                    if abs(dd) <= abs(value1):
-                                        desc_list_new.append(dd)
+#                                desc_list_new=[]
+#                                for idd,dd in enumerate(self.tp.descriptors[desc_keys[0]]):
+#                                    if abs(dd) <= abs(value1):
+#                                        desc_list_new.append(dd)
                                 #replace the first descriptor 
+                                desc_list_new=np.linspace(0,value1,self.tp.comsol_args['nx'])
                                 self.tp.descriptors[desc_keys[0]]=desc_list_new
                                 print 'descriptor list',self.tp.descriptors[desc_keys[0]]
 
@@ -1244,9 +1245,7 @@ class Calculator():
                             old_current_density=deepcopy(current_density)
 
             #synchronize all_data over CPUs
-            self.tp.all_data=reduce_dict_mpi(self.tp.all_data)
-#            self.tp.all_data 
-#
+#            self.tp.all_data=reduce_dict_mpi(self.tp.all_data)
         else:
             if not self.tp.use_catmap:
                 self.run_single_step()

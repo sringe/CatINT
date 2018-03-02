@@ -25,10 +25,12 @@ for arg in sys.argv[1:]:
             phis.append(cphi)
         acc=re.findall('Current accuracy in current density = (.*) mV',line)
         if len(acc)>0:
-            tmp.append(float(acc[0]))
+            if acc[0] != 'inf': #float(acc[0])>0:
+                tmp.append(float(acc[0]))
         cur=re.findall('\| Current current density = (.*) mV',line)
         if len(cur)>0:
-            tmp2.append(float(cur[0]))
+            if cur[0] != 'inf': #float(cur[0])>0:
+                tmp2.append(float(cur[0]))
     accs.append(tmp)
     curs.append(tmp2)
     i=-1
