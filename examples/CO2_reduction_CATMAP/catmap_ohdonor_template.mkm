@@ -8,8 +8,18 @@ rxn_expressions = [
     #3 Tafel
     'H*_t + H*_t <-> H-H*_t + *_t -> H2_g + 2*_t',
 
-    #4 CO adsorption
-    'CO_g + *_t <-> CO-*_t -> CO*_t',
+    #CO2 to CO
+    #
+    #4 CO2 adsorption
+    'CO2_g + *_t -> CO2*_t',
+    #5 CO2 to COOH
+    'CO2*_t + H2O_g + ele_g -> COOH*_t + OH_g',
+    #6 *COOH to *CO
+    'COOH*_t + H2O_g + ele_g <-> COOH-H2O-ele*_t -> CO*_t + H2O_g + OH_g; beta=0.2',
+    #7 *CO to CO
+    'CO*_t <-> CO-*_t -> CO_g + *_t',
+    #8 COOH to formate
+    'COOH*_t + H2O_g + ele_g <-> COOH-H2O-ele*_t <->  HCOOH_g + *_t + OH_g; beta=0.2',
 
     #9 CO to CHO (barrierless)
     'CO*_t + H2O_g + ele_g <-> CHO*_t + OH_g',
