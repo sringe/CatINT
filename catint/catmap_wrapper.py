@@ -123,7 +123,8 @@ class CatMAP():
                 fig = ma.plot(save='FED.pdf',plot_variants=[float(desc_val[0])])
             else:
                 fig = ma.plot(save='FED_pressure_corrected.pdf',plot_variants=[float(desc_val[0])])
-#        plot_fed(True)
+        #plot_fed(True)
+        #plot_fed(False)
         if not self.use_interactions:
             plot_fed(False)
         else:
