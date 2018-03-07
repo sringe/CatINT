@@ -61,7 +61,12 @@ class Comsol():
                 #        break
                 desc_choice=desc_keys[0]
                 c_desc_val=self.tp.descriptors[desc_choice] #[desc_val[0]]
+#                if not self.tp.use_catmap:
                 studies[self.mode]={'parametric':{desc_choice:c_desc_val}}
+#                else:
+#                    #we have to tune the fluxes directly here:
+#                    studies[self.mode]={'parametric':{'flux_factor':np.linspace(0,1,self.tp.comsol_args['nx'])}}
+#        print 'the descriptor',self.tp.descriptors
         for study in studies:
             if study=='time-dependent' and 'parametric' in studies[study]:
                 self.tp.logger.error('Internal parametric sweep in COMSOL does currently only work with stationary solver')
@@ -179,7 +184,7 @@ class Comsol():
             for i,sp in enumerate(self.tp.species):
                 if type(self.tp.species[sp]['flux'])!=str:
                     #define fluxes here as parameters
-                    inp.write('    model.param().set("j{}", "{}[mol/m^2/s]", "{} flux");\n'.format(\
+                    inp.write('    model.param().set("j{}", "flux_factor*{}[mol/m^2/s]", "{} flux");\n'.format(\
                         i+1, self.tp.species[sp]['flux'],self.tp.species[sp]['name']))
 
 
@@ -809,10 +814,12 @@ class Comsol():
             int_desc_list=[self.studies['stationary']['parametric'][d1] for d1 in self.studies['stationary']['parametric']][0]
             int_desc=[d1 for d1 in self.studies['stationary']['parametric']][0]
             #get the first value of the descriptor which is not used as parametric sweep
+#            int_desc_list=self.tp.descriptors['phiM'] #[self.tp.descriptors[desc] for desc in self.tp.descriptors if desc=='phiM']
             int_desc_non=[self.tp.descriptors[desc][0] for desc in self.tp.descriptors if desc!=int_desc][0]
         else:
             int_desc_list=[]
             int_desc=None
+ #       print 'int_desc_list',int_desc_list
         self.tp.potential=[]
         self.tp.efield=[]
         self.tp.current_density=[]
@@ -882,12 +889,12 @@ class Comsol():
                 electrode_flux_tmp=np.zeros_like(cout_tmp)
             if 'internal' in self.tp.desc_method and output=='concentrations':
                 for desc in int_desc_list:
-#                    if desc==int_desc_list[-1] or not only_last:
+                #    if desc==int_desc_list[-1] or not only_last:
                     self.tp.all_data[str(desc)][str(int_desc_non)]['system']['cout']=np.zeros_like(cout_tmp) #([self.tp.nt,self.tp.nspecies*self.tp.nx])
             if 'internal' in self.tp.desc_method and output=='electrode_flux':
                 for desc in int_desc_list:
-#                    if desc==int_desc_list[-1] or not only_last:
-                     self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux']=np.zeros_like(cout_tmp)
+                    #if desc==int_desc_list[-1] or not only_last:
+                    self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux']=np.zeros_like(cout_tmp)
             #now read in all results
             i=0
             self.tp.logger.info(' | CS | Reading COMSOL output from '+self.results_folder+'/'+toutput+'.txt')

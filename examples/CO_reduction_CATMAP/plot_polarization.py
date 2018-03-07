@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 from glob import glob
 from catint.experimental import EXPDATA
 
+from matplotlib import rc
+rc('text', usetex=False)
+
 pH = 6.8
 
 exp=EXPDATA()
