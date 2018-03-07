@@ -17,7 +17,7 @@ if 1 == len(surface_names):
         numBeforePt = 0
         numAfterPt = 0
 else:
-        numBeforePt = len(surface_names)-surface_names.index('Pt')
+        numBeforePt = len(surface_names)-surface_names.index('Cu')
         numAfterPt = len(surface_names)-numBeforePt-1
         transition_state_cross_interaction_mode = 'transition_state_scaling' #use TS scaling for TS interaction
 

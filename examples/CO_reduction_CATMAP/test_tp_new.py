@@ -10,6 +10,7 @@ import numpy as np
 from units import *
 from read_data import read_data
 
+
 only_catmap=False
 #if only_catmap, run only catmap calculation without transport!
 
@@ -23,8 +24,8 @@ nobuffer=False #True #False #True #False #True
 
 educt='CO2' #CO2 or CO
 
-nx=200 #200
-nx_comsol=32
+nx=300 #200
+nx_comsol=100
 nphi=32 #520 #260 #130
 
 SA=1
@@ -317,7 +318,7 @@ potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-0.6,-1.7,nphi))}
+    descriptors={'phiM':list(np.linspace(-0.8,-1.7,nphi))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
@@ -382,7 +383,7 @@ for potential in potentials:
             cm.run([p,300])
     #c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
     if not only_catmap:
-        c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
+        c=Calculator(transport=tp,tau_jacobi=1e-5,tau_scf=1e-7,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
     #scale_pb_grid
         c.run()
         tp.save() #saves all data to pickle files to enable restart or plotting later

@@ -9,24 +9,24 @@ full microkinetic modeling via CatMAP
 Stefan Ringe (stefan.ringe.tum@gmail.com)
 """
 import scipy.integrate as integrate
-import numpy as np
-#import matplotlib.pyplot as plt
-#from ase import units
 from scipy.sparse import diags
 from scipy.linalg import block_diag
-from units import *
-import sys
-from copy import deepcopy
 from scipy.optimize import minimize
 from scipy.integrate import ode
 from scipy import interpolate
+import numpy as np
+#import matplotlib.pyplot as plt
+#from ase import units
+from units import *
+import sys
+from copy import deepcopy
 import os
-import numpy
-from comsol_wrapper import Comsol
-from catmap_wrapper import CatMAP
+import math
 from copy import deepcopy
 import imp
 from io import sync_mpi,reduce_dict_mpi
+from comsol_wrapper import Comsol
+from catmap_wrapper import CatMAP
 
 #import mpi if available
 use_mpi=False
@@ -1140,19 +1140,22 @@ class Calculator():
 
     def run(self):
         itask=0
+        desc_copy_glob=self.tp.descriptors.copy()
         if self.tp.descriptors is not None and (self.tp.desc_method == 'external' or self.tp.use_catmap):
-            desc_keys=[key for key in self.tp.descriptors]
+            desc_keys=[key for key in desc_copy_glob]
             i1=0
             i2=0
-            for value1 in self.tp.descriptors[desc_keys[0]]:
+            for value1 in desc_copy_glob[desc_keys[0]]:
                 i1+=1
                 i2=0
-                for value2 in self.tp.descriptors[desc_keys[1]]:
+                for value2 in desc_copy_glob[desc_keys[1]]:
                     i2+=1
                     itask+=1
                     #only proceed if this should be performed for current task
                     if itask%self.tp.mpi_size!=self.tp.mpi_rank:
                         continue
+
+                    self.tp.system['phiM']=float(value1)
 
                     self.tp.logger.info('Starting calculation for {} = {} and {} = {} on CPU {} of {}'.format(desc_keys[0],value1,desc_keys[1],value2,self.tp.mpi_rank,self.tp.mpi_size))
                     label=str(i1).zfill(4)+'_'+str(i2).zfill(4)
@@ -1169,11 +1172,19 @@ class Calculator():
                         self.run_single_step(label=label,desc_val=[str(value1),str(value2)])
                     else:
                         istep=0
+                        step_to_check=0
                         scf_accuracy=np.inf
                         self.tp.logger.info('Starting iterative solution with CatMAP and COMSOL')
                         self.tp.logger.info('  using a current density accuracy cutoff of {} mV/cm^2 and a linear mixing parameter of {}'.format(self.tau_scf,self.mix_scf))
+                        accuracies=[]
                         while scf_accuracy>self.tau_scf:
                             istep+=1
+                            #evaluate how the accuracy during the last 50 steps, if it does not significantly decrease, reduce the mixing factor
+                            if istep-step_to_check>80 and abs(accuracy[-2]-accuracy[-1])>1e-1:
+                                #still no convergence, try to decrease mixing factor
+                                self.scf_mix*=0.9
+                                self.tp.logger.info(' | Accuracy is still < 1e-1, decreasing mixing factor in order to speed up the convergence')
+                                step_to_check=istep
                             self.tp.logger.info(' | Solving transport step {}. Current accuracy in current density = {} mV/cm^2'.format(istep,scf_accuracy))
 
                             #linear mixing
@@ -1211,27 +1222,42 @@ class Calculator():
                                 #then the last potential (datapoint) will be the result we are up to
                                 desc_copy=self.tp.descriptors.copy()
                                 i=-1
+                                self.tp.descriptors={}
                                 desc_keys=[key for key in desc_copy]
+                                self.tp.descriptors[desc_keys[1]]=desc_copy[desc_keys[1]]
 #                                desc_list_new=[]
 #                                for idd,dd in enumerate(self.tp.descriptors[desc_keys[0]]):
 #                                    if abs(dd) <= abs(value1):
 #                                        desc_list_new.append(dd)
                                 #replace the first descriptor 
-                                desc_list_new=np.linspace(0,value1,self.tp.comsol_args['nx'])
-                                self.tp.descriptors[desc_keys[0]]=desc_list_new
-                                print 'descriptor list',self.tp.descriptors[desc_keys[0]]
-
-                            if istep==1:
-                               self.tp.logger.debug('Surface Concentrations:')
-                               for sp in self.tp.species:
-                                   self.tp.logger.debug('  {}: {} mol/L'.format(sp,self.tp.species[sp]['surface concentration']/1000.))
-
-                            #only_last updates the descriptor based dictionaries only for the last entry in self.tp.descriptors
-                            self.run_single_step(label=label,desc_val=[str(value1),str(value2)],only_last=True)
+#                                desc_list_new=np.linspace(0,value1,self.tp.comsol_args['nx'])
+#                                self.tp.descriptors[desc_keys[0]]=desc_list_new
+                                self.tp.descriptors['flux_factor']=np.linspace(0,1,self.tp.comsol_args['nx'])
 
                             self.tp.logger.debug('Surface Concentrations:')
                             for sp in self.tp.species:
                                 self.tp.logger.debug('  {}: {} mol/L'.format(sp,self.tp.species[sp]['surface concentration']/1000.))
+
+                            #only_last updates the descriptor based dictionaries only for the last entry in self.tp.descriptors
+                            self.run_single_step(label=label,desc_val=[str(value1),str(value2)],only_last=True)
+
+
+                            while any([math.isnan(self.tp.species[sp]['surface concentration']) for sp in self.tp.species]):
+                                #rerun comsol with finer mesh
+                                self.tp.logger.warning(' | CS | NaN appeared in surface concentrations, rerunning COMSOL with slower ramping')
+                                self.tp.comsol_args['nx']*=1.1
+                                self.tp.comsol_args['nx']=int(self.tp.comsol_args['nx'])
+                                if self.tp.comsol_args['nx']>10000:
+                                    self.tp.logger.error(' | CS | ramping # nx is larger than 10000, stopping here, we will probably not get any convergence')
+                                    sys.exit()
+
+                                self.tp.logger.warning(' | CS | Current ramping of {} steps'.format(self.tp.comsol_args['nx']))
+
+                                self.run_single_step(label=label,desc_val=[str(value1),str(value2)],only_last=True)
+
+                                self.tp.logger.debug('Surface Concentrations:')
+                                for sp in self.tp.species:
+                                    self.tp.logger.debug('  {}: {} mol/L'.format(sp,self.tp.species[sp]['surface concentration']/1000.))
 
                             if 'internal' in self.tp.desc_method:
                                 #copy the descriptor list back
@@ -1239,10 +1265,11 @@ class Calculator():
                             #3) Check Convergence
                             current_density=[]
                             for sp in self.tp.electrode_reactions:
-                                current_density.append(self.tp.electrode_reactions[sp]['electrode_current_density'][(str(value1),str(value2))])
+                                current_density.append(self.tp.electrode_reactions[sp]['electrode_current_density'][(str(1.0),str(value2))])
                             if istep>1:
                                 scf_accuracy=self.evaluate_accuracy(current_density,old_current_density)
                             old_current_density=deepcopy(current_density)
+                            accuracies.append(scf_accuracy)
 
             #synchronize all_data over CPUs
 #            self.tp.all_data=reduce_dict_mpi(self.tp.all_data)
