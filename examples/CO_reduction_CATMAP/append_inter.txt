@@ -13,14 +13,6 @@ interaction_scaling_constraint_dict = {
 
 interaction_strength = 1.0
 
-if 1 == len(surface_names):
-        numBeforePt = 0
-        numAfterPt = 0
-else:
-        numBeforePt = len(surface_names)-surface_names.index('Cu')
-        numAfterPt = len(surface_names)-numBeforePt-1
-        transition_state_cross_interaction_mode = 'transition_state_scaling' #use TS scaling for TS interaction
-
 species_definitions['t']['interaction_response_parameters'] = {'cutoff':0.25,'smoothing':0.05}
 
 eHCO=0.7274
@@ -33,19 +25,19 @@ eH=0.0
 # is considered via the geometric mean sqrt(CO-self-interaction*species-self-interaction)
 
 species_definitions['CO_t'] = {
-                'self_interaction_parameter':[None]*numBeforePt+[eCO]+[None]*numAfterPt,
+                'self_interaction_parameter':[eCO],
                 'cross_interaction_parameters':
                         {
-                        'H_t': [None]*numBeforePt+[eHCO]+[None]*numAfterPt,
-                        'H2O-ele_t': [None]*numBeforePt+[eHCO*1.08]+[None]*numAfterPt,
-                        'H-H2O-ele_t': [None]*numBeforePt+[eHCO*0.7]+[None]*numAfterPt,
-                        'H-H_t': [None]*numBeforePt+[eHCO*1.59]+[None]*numAfterPt,
+                        'H_t': [eHCO],
+                        'H2O-ele_t': [eHCO*1.08],
+                        'H-H2O-ele_t': [eHCO*0.7],
+                        'H-H_t': [eHCO*1.59],
                         
-                        'OC-CO_t': [None]*numBeforePt+[1.*eCO]+[None]*numAfterPt,
-                        'OCCO_t': [None]*numBeforePt+[1.*eCO]+[None]*numAfterPt,
+                        'OC-CO_t': [1.*eCO],
+                        'OCCO_t': [1.*eCO],
 
-                        'OCCO-H2O-ele_t': [None]*numBeforePt+[1.*eCO]+[None]*numAfterPt,
-                        'OCCOH_t': [None]*numBeforePt+[0.44*eCO]+[None]*numAfterPt
+                        'OCCO-H2O-ele_t': [1.*eCO],
+                        'OCCOH_t': [0.44*eCO]
                         }
                 }
 
@@ -54,7 +46,7 @@ for species in ['CHOH_t', 'CHO_t','CO2_t','COOH_t','COOH-H2O-ele_t','CHO-H2O-ele
         species_definitions[species] = species_definitions['CO_t']
 
 species_definitions['OCCO_t'] = {
-        'self_interaction_parameter':[None]*numBeforePt+[1*eCO]+[None]*numAfterPt,
+        'self_interaction_parameter':[1*eCO],
         'n_sites':2
          }
 

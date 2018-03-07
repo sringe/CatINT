@@ -101,6 +101,9 @@ def print_diff(dictname,varname,missing):
 
 def mpi_make_dir(folder):
     """this function blocks all processors inspite of the rank==0 processor from processing until rank==0 has created the folder"""
+    if not use_mpi:
+        os.makedirs(folder)
+        return
     if os.path.isdir(folder):
         return
     comm = MPI.COMM_WORLD
@@ -115,6 +118,8 @@ def mpi_make_dir(folder):
     return
 
 def sync_mpi(var):
+    if not use_mpi:
+        return var
     comm=MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
@@ -129,6 +134,8 @@ def reduce_dict_mpi(data):
     """gather all results from data from all processors at proc=0
     and merge the resulting list of dictionaries into a single
     updated data dict"""
+    if not use_mpi:
+        return data
     comm=MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()

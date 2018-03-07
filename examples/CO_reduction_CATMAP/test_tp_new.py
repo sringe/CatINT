@@ -11,7 +11,7 @@ from units import *
 from read_data import read_data
 
 
-only_catmap=False
+only_catmap=True
 #if only_catmap, run only catmap calculation without transport!
 
 proton_donor='H2O'
@@ -379,7 +379,7 @@ for potential in potentials:
             cm=CatMAP(transport=tp,n_inter=n_inter,model_name='hdonor')
     
     if only_catmap:
-        for p in np.linspace(-1.0,0.0,10):
+        for p in np.linspace(-1.5,0.0,50):
             cm.run([p,300])
     #c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
     if not only_catmap:
