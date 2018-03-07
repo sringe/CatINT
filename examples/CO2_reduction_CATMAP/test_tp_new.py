@@ -11,7 +11,7 @@ from units import *
 from read_data import read_data
 
 
-only_catmap=False
+only_catmap=True
 #if only_catmap, run only catmap calculation without transport!
 
 proton_donor='H2O'
@@ -19,10 +19,10 @@ interactions=True
 
 n_inter=100
 
-pH_i=13.0
-nobuffer=True
+pH_i=6.8
+nobuffer=False #True #False #True #False #True 
 
-educt='CO' #CO2 or CO
+educt='CO2' #CO2 or CO
 
 nx=300 #200
 nx_comsol=100
@@ -99,8 +99,10 @@ electrode_reactions={
 
     ###alkaline
     'H2':           {   'reaction':            '2 H2O + 2 e- -> H2 + 2 OH-'},
-    'CH4':          {   'reaction':            'CO + 5 H2O + 6 e- -> CH4 + 6 OH-'},
-    'CH3CH2OH':     {   'reaction':            '2 CO + 7 H2O + 8 e- -> CH3CH2OH + 8 OH-'}}
+    'CO':           {   'reaction':            'CO2 + 2 e- + H2O -> CO + 2 OH-'},
+    'CH4':          {   'reaction':            'CO2 + 6 H2O + 8 e- -> CH4 + 8 OH-'},
+    'CH3CH2OH':     {   'reaction':            '2 CO2 + 9 H2O + 12 e- -> CH3CH2OH + 12 OH-'}}
+#    'HCOOH':        {   'reaction':            'CO2 + 2 H2O + 2 e- -> HCOOH + 2 OH-'}}  #consider HCOOH here
 
 #if educt=='CO2':
 #    electrode_reactions['CO']={   'reaction':            'CO2 + H2O + 2 e- ->  CO + 2 OH-'}
@@ -156,8 +158,7 @@ data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
 #set up the initial concentrationss from this constants:
 CO2_i = 0.03419*system['pressure']*1000. #initial CO2(aq) bulk concentrations at t=0 and Pressure P in [mol/m3] units
 #                        #from Henry constant (29.41 atm/M
-
-CO_i = 9.5e-4*system['pressure']*1000.
+CO_i = 0.0 #9.5e-4*system['pressure']*1000.
 #CO32m_i = ((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)-\
 #            (np.sqrt((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)**2\
 #            -4.0*(bic_i)**2)))/2  #initial (CO3)2- bulk concentrations at t=0 [mol/m3]
@@ -231,6 +232,10 @@ species=\
                             'name':                 'potassium',
                             'diffusion':            1.957e-9,
                             'bulk concentration':   K_i},
+    'CO2':              {   'symbol':               'CO_2',
+                            'name':                 'carbon dioxide',
+                            'diffusion':            1.91e-9,
+                            'bulk concentration':   CO2_i},
     'OH-':              {   'symbol':               'OH^-',
                             'name':                 'hydroxyl',
                             'diffusion':            5.273e-9,
@@ -252,6 +257,9 @@ species=\
 #   # 'C2H4':             {   'symbol':               'C_2H_4',
 #   #                         'name':                 'ethylene',
 #   #                         'diffusion':            1.87e-009},
+    'HCOOH':            {   'symbol':               'HCOOH', #important to specify this as HCOO^-, because it will readily dissociate, make this a buffer reaction?
+                            'name':                 'formate',
+                            'diffusion':            1.454e-009},
     'CH3CH2OH':             {'name':                 'C2-species', #assuming EtOH
                             'symbol':               'CH_3CH_2OH',
                             'diffusion':            0.84e-009},
@@ -311,7 +319,7 @@ potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-0.6,-1.7,nphi))}
+    descriptors={'phiM':list(np.linspace(-0.8,-1.7,nphi))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
