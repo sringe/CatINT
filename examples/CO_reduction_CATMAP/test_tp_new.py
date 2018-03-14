@@ -11,7 +11,7 @@ from units import *
 from read_data import read_data
 
 
-only_catmap=False
+only_catmap=True
 #if only_catmap, run only catmap calculation without transport!
 
 proton_donor='H2O'
@@ -156,8 +156,8 @@ data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
 #set up the initial concentrationss from this constants:
 CO2_i = 0.03419*system['pressure']*1000. #initial CO2(aq) bulk concentrations at t=0 and Pressure P in [mol/m3] units
 #                        #from Henry constant (29.41 atm/M
-
-CO_i = 9.5e-4*system['pressure']*1000.
+print 'CO_i',9.5e-4*system['pressure']*1000.
+CO_i = 1000. #9.5e-4*system['pressure']*1000.
 #CO32m_i = ((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)-\
 #            (np.sqrt((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)**2\
 #            -4.0*(bic_i)**2)))/2  #initial (CO3)2- bulk concentrations at t=0 [mol/m3]

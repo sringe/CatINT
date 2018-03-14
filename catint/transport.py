@@ -367,7 +367,6 @@ class Transport(object):
             self.logger.info('Rescaling diffusion coefficients from water viscosity {} to electrolyte viscosity {}'.format(self.system['water viscosity'], self.system['electrolyte viscosity']))
             self.D=np.array([d*float(self.system['water viscosity'])/float(self.system['electrolyte viscosity']) for d in self.D])
             
-
         self.mu = self.D * self.charges *self.beta  #ion mobilities according to Einstein relation
 
         #Debye-Hueckel screening length
