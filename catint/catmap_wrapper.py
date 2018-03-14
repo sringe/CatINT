@@ -126,7 +126,8 @@ class CatMAP():
         #plot_fed(True)
         #plot_fed(False)
         if not self.use_interactions:
-            plot_fed(False)
+        #    plot_fed(False)
+            pass
         else:
             pass
            # idx = [i for i in range(len(model.interacting_energy_map)) if model.interacting_energy_map[i][0][0] == -0.88][0]
