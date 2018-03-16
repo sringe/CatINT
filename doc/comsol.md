@@ -7,7 +7,7 @@ There is a range of predefined COMSOL variables which will be written by default
 
 There are some generalized `COMSOL` functions available for use, some of them listed here (`[var]` stands for the variable name):
 
-|Functional Call | Equation |Meaning|
+|Functional Call | Equation |Description|
 --- | --- | --- |
 |`[var]x`, `d([var],x])` | $\frac{\mathrm{d}[\mathrm{var}]}{\mathrm{d}x}$|derivative with respect to x-direction
 |`[var].at0(0,[var])`|$[\mathrm{var}](x=0)$|value of the variable at $x=0$
