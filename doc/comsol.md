@@ -22,7 +22,7 @@ Species dependent variables can be requested by putting the species name `sp` in
 |Variable Name `CatINT` | Variable Name `COMSOL` |Equation | Description |
  --- | --- | --- | --- |
 |`j[[sp]]`|`j1,j2,...` |$j_i(x)$|Flux of species `sp` |
-|`c[[sp]]`|`cp1,cp2,...`|$c_i(x)$|Concentration of species `sp` |
+|`cp[[sp]]`|`cp1,cp2,...`|$c_i(x)$|Concentration of species `sp` |
 |`ci[[sp]]`|`ci1,ci2,...`|$c_i(t=0)$|Initial Concentration
 
 
