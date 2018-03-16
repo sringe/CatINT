@@ -19,7 +19,7 @@ There are some generalized `COMSOL` functions available for use, some of them li
 Species dependent variables can be requested by putting the species name `sp` into double brackets behind the physical property symbol:
 
 |Variable Name `CatINT` | Variable Name `COMSOL` |Equation | Description |
- --- |--- |--- |--- |--- |--- |--- |--- |---
+ --- | --- | --- | --- |
 |`j[[sp]]`|`j1,j2,...` |$j_i(x)$|Flux of species `sp` |
 |`c[[sp]]`|`cp1,cp2,...`|$c_i(x)$|Concentration of species `sp` |
 |`ci[[sp]]`|`ci1,ci2,...`|$c_i(t=0)$|Initial Concentration
@@ -28,7 +28,7 @@ Species dependent variables can be requested by putting the species name `sp` in
 ## Global Variables
 
 |Variable Name `CatINT` | Variable Name `COMSOL` |Equation | Description |
- --- |--- |--- |--- |--- |--- |--- |--- |---
+ --- | --- | --- | --- |
 |`phi`|-- | Electrostatic Potential in Solution |
 |`rho_s`|$\left(\Phi^\mathrm{M}-\Phi^\mathrm{PZC}\right)\cdot C_\mathrm{S}$  | Surface Charge Density |
 |`rho_c`|$\rho_\mathrm{c}=F^2 \sum_i z_i^2 u_i c_i(x)$ | Electrolyte Conductivity|
