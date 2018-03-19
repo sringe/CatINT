@@ -450,7 +450,10 @@ class Transport(object):
 
         self.initialize_descriptors(descriptors)
 
-        ntasks=np.prod(map(len,[self.descriptors[key] for key in self.descriptors]))
+        if hasattr(self,'descriptors') and use_mpi:
+            ntasks=np.prod(map(len,[self.descriptors[key] for key in self.descriptors]))
+        else:
+            ntasks=1
         if size!=ntasks and use_mpi:
             self.logger.error('# of CPUs is different from # of tasks. This is currently not supported.')
             sys.exit()
