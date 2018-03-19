@@ -78,17 +78,17 @@ electrode_reactions={
     }
 #reactions=\
 #    {
-#    'buffe':           {   'reactants':            [['CO2','H2O'],['H2CO3']],
+#    'buffe':           {   'reactants':            cp[['CO2','H2O'],['H2CO3']],
 #                            'constant':             2.63e-3},                               #KH
-#    'buffer-acid':      {   'reactants':            [['CO2','H2O'],['HCO3-','H+']],
+#    'buffer-acid':      {   'reactants':            cp[['CO2','H2O'],['HCO3-','H+']],
 #                            'constant':             (4.44e-7)*1000.0},                      #K1a
-#    'buffer-base':      {   'reactants':            [['CO2','OH-'],['HCO3-']],
+#    'buffer-base':      {   'reactants':            cp[['CO2','OH-'],['HCO3-']],
 #                            'constant':             (4.44e7)/1000.0,                        #K1b
 #                            'rates':                [(5.93e3)/1000.0,(5.93e3)/(4.44e7)]},   #"k1f, k1r"
-#    'buffer-base2':     {   'reactants':            [['HCO3-','OH-'],['CO32-','H2O']],
+#    'buffer-base2':     {   'reactants':            cp[['HCO3-','OH-'],['CO32-','H2O']],
 #                            'constant':             (4.66e3)/1000.0,
 #                            'rates':                [(1.0e8)/1000.0,(1.0e8)/(4.66e3)]},     #"k2f,k2r"
-#    'buffer2':          {   'reactants':            [['CO2','CO32-','H2O'],['HCO3-','HCO3-']],
+#    'buffer2':          {   'reactants':            cp[['CO2','CO32-','H2O'],['HCO3-','HCO3-']],
 #                            'constant':             9.52e3}                                 #K3
 #    }
 ###########################################################################
@@ -256,9 +256,9 @@ comsol_args['parameter']={}
 comsol_args['parameter']['A']=['1.e13[1/s]','Exponential prefactor']
 #comsol_args['parameter']['A2']=['1.e13[1/s]','Exponential prefactor']
 comsol_args['parameter']['Ga_CHO']=[str(1.11746219*unit_F)+'[J/mol]','CHO Activation Energy'] #[str(1.11746219*unit_F)+'[J/mol]','CHO Activation Energy']
-comsol_args['parameter']['Ga_CHOH']=[str(1.9*unit_F)+'[J/mol]','CHOH Activation Energy'] #[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Energy']
+comsol_args['parameter']['Ga_CHOH']=[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Energy'] #[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Energy']
 comsol_args['parameter']['Ga_OCCO']=[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy'] #[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy']
-comsol_args['parameter']['Ga_OCCOH']=[str(1.5*unit_F)+'[J/mol]','OCCOH Activation Energy'] #[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy']
+comsol_args['parameter']['Ga_OCCOH']=[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy'] #[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy']
 comsol_args['parameter']['DG_CHOH']=[str(0.0*unit_F)+'[J/mol]', 'CHOH free energy barrier']
 comsol_args['parameter']['DG_OCCOH']=[str(0.0*unit_F)+'[J/mol]','OCCOH free energy barrier']
 #comsol_args['parameter']['Ga_H']=[str(0.9*unit_F)+'[J/mol]','H Activation Energy']
@@ -299,14 +299,14 @@ comsol_args['parameter']['SA']=[SA,'Surface Area Enhancement Factor']
 #C1_rate='rho_act*coverage*A*\
 #        exp(-\
 #            max(\
-#                (Ga_CHO+(alpha1+'+str(nCHO)+')*(phiM-phi)*F_const)/RT+alpha1*(7+log10(max([[OH-]],0.0)*Lmol))*'+str(np.log(10.))+', \
-#                (Ga_CHOH+(alpha2+'+str(nCHOH)+')*(phiM-phi)*F_const)/RT+alpha2*(7+log10(max([[OH-]],0.0)*Lmol))*'+str(np.log(10.))+\
+#                (Ga_CHO+(alpha1+'+str(nCHO)+')*(phiM-phi)*F_const)/RT+alpha1*(7+log10(max(cOH_at_0,0.0)*Lmol))*'+str(np.log(10.))+', \
+#                (Ga_CHOH+(alpha2+'+str(nCHOH)+')*(phiM-phi)*F_const)/RT+alpha2*(7+log10(max(cOH_at_0,0.0)*Lmol))*'+str(np.log(10.))+\
 #            ')\
 #        )'#/F_const/'+str(species['C1']['zeff'])
 #C2_rate='rho_act*coverage^2*A*\
 #        exp(-\
 #            max(\
-#                (Ga_OCCOH+(alpha1+'+str(nOCCOH)+')*(phiM-phi)*F_const)/RT+alpha1*(7+log10(max([[OH-]],0.0)*Lmol))*'+str(np.log(10.))+', \
+#                (Ga_OCCOH+(alpha1+'+str(nOCCOH)+')*(phiM-phi)*F_const)/RT+alpha1*(7+log10(max(cOH_at_0,0.0)*Lmol))*'+str(np.log(10.))+', \
 #                (Ga_OCCO+'+str(nOCCO)+'*(phiM-phi)*F_const)/RT'\
 #            ')\
 #        )'sigma_max=5.0 #smoothness factor for maximum, the larger it is the smoother the function is approximated
@@ -317,56 +317,62 @@ comsol_args['parameter']['OH_min']=['1e-30 [mol/m^3]','Minimal OH- concentration
 
 comsol_args['variables']={}
 
-comsol_args['variables']['coverage_only_CO']=['Kads_CO*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads_CO)*max_coverage','CO Coverage according to Langmuir isotherm if there is no other species']
+comsol_args['variables']['coverage_only_CO']=['Kads_CO*cp[[CO]]*Lmol/(1.+cp[[CO]]*Lmol*Kads_CO)*max_coverage','CO Coverage according to Langmuir isotherm if there is no other species']
 #comsol_args['variables']['coverage_only_H']=['sqrt(Kads_H*Lmol)/(1.+sqrt(Lmol*Kads_H))*max_coverage_H','H Coverage according to Langmuir isotherm assuming H2O as proton donor']
-comsol_args['parameter']['phiM_ref_she']=['-7*log(10.)*R_const*298.14/F_const','Reference potential vs. SHE']
+comsol_args['parameter']['phiM_ref_she']=['-7*log(10.)*RT/F_const','Reference potential vs. SHE']
+
+comsol_args['variables']['cOH_at_0']=['comp1.at0(0,cp[[OH-]])','OH- concentration at the electrode']
 
 if educt=='CO2':
-    comsol_args['variables']['coverage']=['Kads_CO2*[[CO2]]*Lmol/(1.+[[CO2]]*Lmol*Kads_CO2)*max_coverage','CO2 Coverage according to Langmuir isotherm = CO coverage (assuming no barrier between the states).']
+    comsol_args['variables']['coverage']=['Kads_CO2*cp[[CO2]]*Lmol/(1.+cp[[CO2]]*Lmol*Kads_CO2)*max_coverage','CO2 Coverage according to Langmuir isotherm = CO coverage (assuming no barrier between the states).']
 elif educt=='CO':
-    comsol_args['variables']['coverage']=['Kads_CO*[[CO]]*Lmol/(1.+[[CO]]*Lmol*Kads_CO)*max_coverage','CO Coverage according to Langmuir isotherm']
+    comsol_args['variables']['coverage']=['Kads_CO*cp[[CO]]*Lmol/(1.+cp[[CO]]*Lmol*Kads_CO)*max_coverage','CO Coverage according to Langmuir isotherm']
     #competetive adsorption with H2
     #comsol_args['variables']['coverage']=['(coverage_only_CO-coverage_only_CO*coverage_only_H)/(1-coverage_only_H*coverage_only_CO)','CO coverage according to Langmuir isotherm including competitive ads.']
 
-#comsol_args['variables']['coverage_H']=['Kads_H*[[HCO3-]]*Lmol/(1.+[[HCO3-]]*Lmol*Kads_H)*max_coverage_H','H Coverage according to Langmuir isotherm']
+#comsol_args['variables']['coverage_H']=['Kads_H*cp[[HCO3-]]*Lmol/(1.+cp[[HCO3-]]*Lmol*Kads_H)*max_coverage_H','H Coverage according to Langmuir isotherm']
 #comsol_args['variables']['coverage_H']=['(1-coverage)*coverage_only_H','H coverage according to Langmuir isotherm including competitive ads.']
 
 
-#comsol_args['variables']['jCHO']=['rho_act*coverage*A*(max([[OH-]],OH_min)*Lmol)^(alpha_CHO)*'+\
+#comsol_args['variables']['jCHO']=['rho_act*coverage*A*(max(cOH_at_0,OH_min)*Lmol)^(alpha_CHO)*'+\
 #                         'exp(-'+\
 #                            '(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phi)*F_const)/RT+alpha_CHO*(7)*log(10)'+\
 #                         ')','rate of CHO']
-#comsol_args['variables']['jCHOH']=['rho_act*coverage*A*(max([[OH-]],OH_min)*Lmol)^(alpha_CHO)*'+\
+#comsol_args['variables']['jCHOH']=['rho_act*coverage*A*(max(cOH_at_0,OH_min)*Lmol)^(alpha_CHO)*'+\
 #                         'exp(-'+\
 #                            '(Ga_CHOH+(alpha_CHOH+n_CHOH)*(phiM-phi)*F_const)/RT+alpha_CHOH*(7)*log(10)'+\
 #                         ')','rate of CHOH']
-#comsol_args['variables']['jOCCOH']=['rho_act*coverage^2*A*(max([[OH-]],OH_min)*Lmol)^(alpha_CHO)*'+\
+#comsol_args['variables']['jOCCOH']=['rho_act*coverage^2*A*(max(cOH_at_0,OH_min)*Lmol)^(alpha_CHO)*'+\
 #                        'exp(-'+\
 #                            '(Ga_OCCOH+(alpha_OCCOH+n_OCCOH)*(phiM-phi)*F_const)/RT+alpha_OCCOH*(7)*log(10)'+\
 #                        ')','rate of OCCOH']
-#comsol_args['variables']['jOCCO']=['rho_act*coverage^2*A*(max([[OH-]],OH_min)*Lmol)^(alpha_CHO)*'+\
+#comsol_args['variables']['jOCCO']=['rho_act*coverage^2*A*(max(cOH_at_0,OH_min)*Lmol)^(alpha_CHO)*'+\
 #                        'exp(-'+\
 #                            '(Ga_OCCO+(alpha_OCCO+n_OCCO)*(phiM-phi)*F_const)/RT+alpha_OCCO*(7)*log(10)'+\
 #                        ')','rate of OCCO']
+boundary_thickness=7.93E-05 #in m
+system['boundary thickness']=boundary_thickness
+#'delta_phi_inf_min_iR
+comsol_args['variables']['delta_phi']=['0.0','Electrolyte potential drop']
 comsol_args['variables']['jCHO']=['SA*rho_act*coverage*A*'+\
                          'exp('+\
-                            '-(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phiM_ref_she)*F_const)/RT+alpha_CHO*(14+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+                            '-(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phiM_ref_she+delta_phi)*F_const)/RT+alpha_CHO*(14+log10(max(cOH_at_0,OH_min)*Lmol))*log(10)'+\
                          ')','rate of CHO']
 comsol_args['variables']['jCHOH']=['SA*rho_act*coverage*A*'+\
                          'exp('+\
-                            '-(Ga_CHOH+DG_CHOH+(alpha_CHOH+n_CHOH)*(phiM-phiM_ref_she)*F_const)/RT+alpha_CHOH*(14+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+                            '-(Ga_CHOH+DG_CHOH+(alpha_CHOH+n_CHOH)*(phiM-phiM_ref_she+delta_phi)*F_const)/RT+alpha_CHOH*(14+log10(max(cOH_at_0,OH_min)*Lmol))*log(10)'+\
                          ')','rate of CHOH']
 comsol_args['variables']['jOCCOH']=['SA*rho_act*coverage^2*A*'+\
                         'exp('+\
-                            '-(Ga_OCCOH+DG_OCCOH+(alpha_OCCOH+n_OCCOH)*(phiM-phiM_ref_she)*F_const)/RT+alpha_OCCOH*(14+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+                            '-(Ga_OCCOH+DG_OCCOH+(alpha_OCCOH+n_OCCOH)*(phiM-phiM_ref_she+delta_phi)*F_const)/RT+alpha_OCCOH*(14+log10(max(cOH_at_0,OH_min)*Lmol))*log(10)'+\
                         ')','rate of OCCOH']
 comsol_args['variables']['jOCCO']=['SA*rho_act*coverage^2*A*'+\
                         'exp('+\
-                            '-(Ga_OCCO+(alpha_OCCO+n_OCCO)*(phiM-phiM_ref_she)*F_const)/RT+alpha_OCCO*(14+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+                            '-(Ga_OCCO+(alpha_OCCO+n_OCCO)*(phiM-phiM_ref_she+delta_phi)*F_const)/RT+alpha_OCCO*(14+log10(max(cOH_at_0,OH_min)*Lmol))*log(10)'+\
                         ')','rate of OCCO']
 #comsol_args['variables']['jH']=['SA*rho_act*coverage_H^2*A*'+\
 #                        'exp('+\
-#                            '-(Ga_H+(alpha_H+n_H)*(phiM)*F_const)/RT+alpha_H*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+#                            '-(Ga_H+(alpha_H+n_H)*(phiM)*F_const)/RT+alpha_H*(7+log10(max(cOH_at_0,OH_min)*Lmol))*log(10)'+\
 #                        ')','rate of H']
 #additional comsol outputs
 #name, equation, unit
@@ -410,15 +416,15 @@ elif method==2:
     C1_rate='rho_act*coverage*A*'+\
             'exp(-'+\
                 'max('+\
-                    '(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phi)*F_const)/RT+alpha_CHO*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10), '+\
-                    '(Ga_CHOH+(alpha_CHOH+n_CHOH)*(phiM-phi)*F_const)/RT+alpha_CHOH*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+                    '(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phi)*F_const)/RT+alpha_CHO*(7+log10(max(cOH_at_0,OH_min)*Lmol))*log(10), '+\
+                    '(Ga_CHOH+(alpha_CHOH+n_CHOH)*(phiM-phi)*F_const)/RT+alpha_CHOH*(7+log10(max(cOH_at_0,OH_min)*Lmol))*log(10)'+\
                 ')'+\
             ')'#/F_const/'+str(species['C1']['zeff'])
     C2_rate='rho_act*coverage^2*A*'+\
             'exp(-'+\
                 'max('+\
-                    '(Ga_OCCOH+(alpha_OCCOH+n_OCCOH)*(phiM-phi)*F_const)/RT+alpha_OCCOH*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10), '+\
-                    '(Ga_OCCO+(alpha_OCCO+n_OCCO)*(phiM-phi)*F_const)/RT+alpha_OCCO*(7+log10(max([[OH-]],OH_min)*Lmol))*log(10)'+\
+                    '(Ga_OCCOH+(alpha_OCCOH+n_OCCOH)*(phiM-phi)*F_const)/RT+alpha_OCCOH*(7+log10(max(cOH_at_0,OH_min)*Lmol))*log(10), '+\
+                    '(Ga_OCCO+(alpha_OCCO+n_OCCO)*(phiM-phi)*F_const)/RT+alpha_OCCO*(7+log10(max(cOH_at_0,OH_min)*Lmol))*log(10)'+\
                 ')'+\
             ')'
 elif method==3:
@@ -428,13 +434,13 @@ elif method==3:
             '('+\
                 '(1.+avoid_div_zero)/'+\
                 '('+\
-                    '((1+avoid_div_zero)/(max([[OH-]],OH_min)*Lmol+avoid_div_zero))^(sigma_max*alpha_CHO)*'+\
+                    '((1+avoid_div_zero)/(max(cOH_at_0,OH_min)*Lmol+avoid_div_zero))^(sigma_max*alpha_CHO)*'+\
                         'exp(-'+\
                             'sigma_max*('+\
                                 '(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phi)*F_const)/RT+alpha_CHO*7*log(10)'+\
                             ')'+\
                         ')+'+\
-                    '((1+avoid_div_zero)/(max([[OH-]],OH_min)*Lmol+avoid_div_zero))^(sigma_max*alpha_CHOH)*'+\
+                    '((1+avoid_div_zero)/(max(cOH_at_0,OH_min)*Lmol+avoid_div_zero))^(sigma_max*alpha_CHOH)*'+\
                         'exp(-'+\
                             'sigma_max*('+\
                                 '(Ga_CHOH+(alpha_CHOH+n_CHOH)*(phiM-phi)*F_const)/RT+alpha_CHOH*7*log(10)'+\
@@ -448,7 +454,7 @@ elif method==3:
             '('+\
                 '(1.+avoid_div_zero)/'+\
                 '('+\
-                    '((1+avoid_div_zero)/(max([[OH-]],OH_min)*Lmol+avoid_div_zero))^(sigma_max*alpha_OCCOH)*'+\
+                    '((1+avoid_div_zero)/(max(cOH_at_0,OH_min)*Lmol+avoid_div_zero))^(sigma_max*alpha_OCCOH)*'+\
                         'exp(-'+\
                             'sigma_max*('+\
                                 '(Ga_OCCOH+(alpha_OCCOH+n_OCCOH)*(phiM-phi)*F_const)/RT+alpha_OCCOH*7*log(10)'+\
@@ -471,11 +477,9 @@ species['C1']['flux-equation']=C1_rate
 species['C2']['flux-equation']=C2_rate
 #species['H2']['flux-equation']=H2_rate
 
-boundary_thickness=7.93E-05 #in m
 
 if not nobuffer:
     visc=viscosity(species['HCO3-']['bulk concentration']/10**3), #Pa*s at 25C of KHCO3 solution
-system['boundary thickness']=boundary_thickness
 #system['electrolyte viscosity']=visc[0]
 
 comsol_args['bin_path']='/Applications/COMSOL53a/Multiphysics/bin/comsol'

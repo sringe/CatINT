@@ -180,6 +180,9 @@ class CatMAP():
                     model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency']
                     model.run()
             except:
+                if not self.use_interactions:
+                    self.tp.logger.error('Unexpected end of CatMAP, heck error files for hints.')
+                    sys.exit()
                 self.tp.logger.warning('CatMAP did not converge with interaction strength = {}'.format(ii))
                 if self.n_inter=='automatic':
                     jj+=1
@@ -389,7 +392,7 @@ class CatMAP():
             else:
                 nprod=1
                 nel=1
-            rates=data_ref[np.argsort(data_ref[:, 0])][:,1]*self.tp.system['active site density']*nel*unit_F/nprod/10.
+            rates=data_ref[np.argsort(data_ref[:, 0])][:,1] *self.tp.system['active site density']*nel*unit_F/nprod/10.
 #            currents=self.convert_TOF(data_ref[np.argsort(data_ref[:, 0])][:,1])
             pol_file=self.output_folder+'/j_'+name.split('_')[0]+'.tsv'
             np.savetxt(pol_file, np.array([voltages,rates]).T)

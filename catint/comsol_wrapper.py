@@ -257,12 +257,17 @@ class Comsol():
             inp.write('    model.component("comp1").geom("geom1").feature("i1").set("p2", "L_cell");\n')
             inp.write('    model.component("comp1").geom("geom1").run();\n')
 
+            ##############################################
+            #VARIABLES
+            ##############################################
+
             inp.write('/*\n')
             inp.write(' *VARIABLES\n')
             inp.write(' */\n')
-            #VARIABLES
             inp.write('    model.component("comp1").variable().create("var1");\n')
             
+            #### BOUNDARY VARIABLES
+
 #            inp.write('    model.component("comp1").variable("var1").set("deltaphi", "phiM-phi", "Metal - reaction plane potential difference");\n')
             #inp.write('    model.component("comp1").variable("var1").set("rho_s", "epsS*deltaphi/lambdaS", "Surface charge density");\n')
             inp.write('    model.component("comp1").variable("var1").set("rho_s", "((phiM-phiPZC)-phi)*CS", "Surface charge density");\n')
@@ -274,25 +279,64 @@ class Comsol():
 #            inp.write('    model.component("comp1").variable("var1").set("phiM", "'+self.tp.system['phiM']+'[V]", "Metal phase potential (cell voltage)");\n')
             inp.write('    model.component("comp1").variable("var1").selection().geom("geom1", 0);\n')
             inp.write('    model.component("comp1").variable("var1").selection().set(new int[]{1});\n')
+
+            #### DOMAIN VARIABLES
+
             inp.write('    model.component("comp1").variable().create("var2");\n')
+
             #additional parameters from input
             for pa in self.tp.comsol_args['variables']:
                 pa_val=self.tp.comsol_args['variables'][pa][0]
                 pa_des=self.tp.comsol_args['variables'][pa][1]
                 matches=re.findall('\[\[(.*?)\]\]',pa_val,re.DOTALL)
                 for match in matches:
-                    pa_val=pa_val.replace('[['+match+']]','cp'+str([ii+1 for ii,spp in enumerate(self.tp.species) if spp==match][0]))
+                    pa_val=pa_val.replace('[['+match+']]',str([ii+1 for ii,spp in enumerate(self.tp.species) if spp==match][0]))
+
+
 
 
                 inp.write('    model.component("comp1").variable("var2").set("'+pa+'", "'+str(pa_val)+'",   "'+pa_des+'");\n')
+
+            #some default domain variables
+            # - conductivity
+            cond_str='F_const^2*('
+            for i in range(len(self.tp.species)):
+                if i!=0:
+                    cond_str+='+'
+                cond_str+='tds.z_cp'+str(i+1)+'^2*cp'+str(i+1)+'*tds.um_cp'+str(i+1)+'xx'
+            cond_str+=')'
+            inp.write('    model.component("comp1").variable("var2").set("rho_c","'+cond_str+'","Electrolyte conductivity");\n')
+            # - electrolyte current density
+            cur_str='F_const*('
+            for i in range(len(self.tp.species)):
+                if i!=0:
+                    cur_str+='+'
+                cur_str+='tds.tflux_cp'+str(i+1)+'x*tds.z_cp'+str(i+1)
+            cur_str+=')'
+            dflux_charge_str='F_const*('
+            for i in range(len(self.tp.species)):
+                if i!=0:
+                    dflux_charge_str+='+'
+                dflux_charge_str+='tds.z_cp'+str(i+1)+'*tds.dflux_cp'+str(i+1)+'x'
+            dflux_charge_str+=')'
+            inp.write('    model.component("comp1").variable("var2").set("i_el","'+cur_str+'","Electrolyte Current Density");\n')
+            inp.write('    model.component("comp1").variable("var2").set("delta_phi_iRx","-i_el/rho_c","Ohmic Loss Derivative");\n')
+            inp.write('    model.component("comp1").variable("var2").set("delta_phi_iR","intop2(delta_phi_iRx*(x<=dest(x)))","Spatially Dependent Ohmic Loss");\n')
+            inp.write('    model.component("comp1").variable("var2").set("dflux_times_charge","'+dflux_charge_str+'","Diffusion Flux times charge");\n')
+            inp.write('    model.component("comp1").variable("var2").set("delta_phi_diffx","dflux_times_charge/rho_c","Diffusion Flux Derivative");\n')
+            inp.write('    model.component("comp1").variable("var2").set("delta_phi_diff","intop2(delta_phi_diffx*(x<=dest(x)))","Spatially Dependent Diffusion Loss");\n')
+            inp.write('    model.component("comp1").variable("var2").set("delta_phi_iR_inf","comp1.at0('+str(self.tp.system['boundary thickness'])+',delta_phi_iR)","Total iR drop over the whole cell");\n')
+            inp.write('    model.component("comp1").variable("var2").set("delta_phi_inf","comp1.at0('+str(self.tp.system['boundary thickness'])+',phi)-comp1.at0(0,phi)","Total potential drop over the whole cell");\n')
+            inp.write('    model.component("comp1").variable("var2").set("delta_phi_inf_min_iR","delta_phi_inf-delta_phi_iR_inf","Total potential drop over the whole cell minux iR drop");\n')
+
 #            inp.write('    model.component("comp1").variable("var2").set("phiM", "V", "Metal phase potential (ground)");\n')
 #            inp.write('    model.component("comp1").variable("var2").selection().set(new int[]{1});\n')
 #            inp.write('    model.component("comp1").variable().create("var3");\n')
             #inp.write('    model.component("comp1").variable("var3").selection().geom("geom1", 0);\n')
             #inp.write('    model.component("comp1").variable("var3").selection().set(new int[]{2});\n')
 
+            #### FLUXES
 
-            #rates
             for i,sp in enumerate(self.tp.species):
 #                if self.tp.system['kinetics']=='rate-equation':
                 if type(self.tp.species[sp]['flux'])==str:
@@ -313,17 +357,30 @@ class Comsol():
                     inp.write('    model.component("comp1").variable("var2").selection().geom("geom1", 0);\n')
                     inp.write('    model.component("comp1").variable("var2").selection().set(new int[]{1});\n')
 
+            ##############################################
+            #INTEGRATIONS
+            ##############################################
+
             inp.write('/*\n')
             inp.write(' *INTEGRATION\n')
             inp.write(' */\n')
-            #INTEGRATION
+
             inp.write('    model.component("comp1").cpl().create("intop1", "Integration");\n')
             inp.write('    model.component("comp1").cpl().create("intop2", "Integration");\n')
+
+            #### BOUNDARY
+
             inp.write('    model.component("comp1").cpl("intop1").selection().geom("geom1", 0);\n')
             inp.write('    model.component("comp1").cpl("intop1").selection().set(new int[]{2});\n')
+
+            #### DOMAIN
+
             inp.write('    model.component("comp1").cpl("intop2").selection().set(new int[]{1});\n')
 
-            #ELECTROSTATICS
+            ##############################################
+            #ELECTROSTATICS (es)
+            ##############################################
+
             inp.write('/*\n')
             inp.write(' *ELECTROSTATICS\n')
             inp.write(' */\n')
@@ -340,6 +397,18 @@ class Comsol():
             inp.write('    model.component("comp1").physics("es").feature("df1").selection().set(new int[]{1});\n')
             #floating requires one of: AC/DC Module, MEMS Module, Plasma Module, Acoustics Module, Structural Mechanics Module, Semiconductor Module
 #            inp.write('    model.component("comp1").physics("es").create("fp1", "FloatingPotential", 0);\n')
+            inp.write('    model.component("comp1").physics("es").feature("ccn1").set("epsilonr_mat", "userdef");\n')
+            inp.write('    model.component("comp1").physics("es").feature("ccn1").set("epsilonr", new String[][]{{"eps_r"}, {"0"}, {"0"}, {"0"}, {"eps_r"}, {"0"}, {"0"}, {"0"}, {"eps_r"}});\n')
+                #for dirichlet BC's
+                #inp.write('    model.component("comp1").physics("es").feature("pot2").set("V0", "phiM");\n')
+                #inp.write('    model.component("comp1").physics("es").feature("pot2").active(false);\n')
+                #end dirichlet
+            inp.write('    model.component("comp1").physics("es").feature("df1").active(false);\n')
+
+            ##############################################
+            #TRASNPORT OF DILUTE SPECIES (tds)
+            ##############################################
+
             inp.write('    model.component("comp1").physics().create("tds", "DilutedSpecies", "geom1");\n')
 
             inp.write('    model.component("comp1").physics("tds").field("concentration").field("cp1");\n')
@@ -355,40 +424,13 @@ class Comsol():
             inp.write('    model.component("comp1").physics("tds").create("conc1", "Concentration", 0);\n')
             inp.write('    model.component("comp1").physics("tds").feature("conc1").selection().set(new int[]{2});\n')
 
+            #### REACTIONS
+
             if self.tp.use_electrolyte_reactions:
                 inp.write('    model.component("comp1").physics("tds").create("reac1", "Reactions", 1);\n')
                 inp.write('    model.component("comp1").physics("tds").feature("reac1").selection().all();\n')
             inp.write('    model.component("comp1").physics().create("ge", "GlobalEquations", "geom1");\n')
 
-            inp.write('    model.component("comp1").multiphysics().create("pc1", "PotentialCoupling", 1);\n')
-            inp.write('    model.component("comp1").multiphysics("pc1").selection().all();\n')
-            inp.write('    model.component("comp1").multiphysics().create("scdc1", "SpaceChargeDensityCoupling", 1);\n')
-            inp.write('    model.component("comp1").multiphysics("scdc1").selection().all();\n')
-
-            inp.write('    model.component("comp1").mesh("mesh1").create("edg1", "Edge");\n')
-            inp.write('    model.component("comp1").mesh("mesh1").feature("edg1").create("size1", "Size");\n')
-            inp.write('    model.component("comp1").mesh("mesh1").feature("edg1").create("size2", "Size");\n')
-            inp.write('    model.component("comp1").mesh("mesh1").feature("edg1").feature("size2").selection().geom("geom1", 0);\n')
-            inp.write('    model.component("comp1").mesh("mesh1").feature("edg1").feature("size2").selection().set(new int[]{1, 2});\n')
-
-            inp.write('    model.component("comp1").probe().create("pdom1", "DomainPoint");\n')
-            inp.write('    model.component("comp1").probe("pdom1").create("ppb2", "PointExpr");\n')
-            inp.write('    model.component("comp1").probe("pdom1").create("ppb3", "PointExpr");\n')
-
-            inp.write('    model.result().table("tbl1").label("Probe Table 1");\n')
-
-#            inp.write('    model.component("comp1").variable("var3").active(false);\n')
-
-            inp.write('    model.component("comp1").view("view1").axis().set("xmin", 0);\n')
-
-            inp.write('    model.component("comp1").physics("es").feature("ccn1").set("epsilonr", new String[][]{{"eps_r"}, {"0"}, {"0"}, {"0"}, {"eps_r"}, {"0"}, {"0"}, {"0"}, {"eps_r"}});\n')
-            inp.write('    model.component("comp1").physics("es").feature("sfcd1").set("rhoqs", "rho_s");\n')
-                #for dirichlet BC's
-                #inp.write('    model.component("comp1").physics("es").feature("pot2").set("V0", "phiM");\n')
-                #inp.write('    model.component("comp1").physics("es").feature("pot2").active(false);\n')
-                #end dirichlet
-            inp.write('    model.component("comp1").physics("es").feature("df1").active(false);\n')
-#                inp.write('    model.component("comp1").physics("es").feature("fp1").active(false);\n')
             inp.write('    model.component("comp1").physics("tds").prop("ShapeProperty").set("order_concentration", 2);\n')
             if self.tp.use_convection:
                 inp.write('    model.component("comp1").physics("tds").prop("TransportMechanism").set("Convection", true);\n')
@@ -528,6 +570,42 @@ class Comsol():
                         rates_new.append([i,rate])
                 return rates_new
 
+            ##############################################
+            #MULTIPHYSICS: tds-es COUPLING (potential and space charge density)
+            ##############################################
+
+            inp.write('    model.component("comp1").multiphysics().create("pc1", "PotentialCoupling", 1);\n')
+            inp.write('    model.component("comp1").multiphysics("pc1").selection().all();\n')
+            inp.write('    model.component("comp1").multiphysics().create("scdc1", "SpaceChargeDensityCoupling", 1);\n')
+            inp.write('    model.component("comp1").multiphysics("scdc1").selection().all();\n')
+            inp.write('    model.component("comp1").physics("es").feature("sfcd1").set("rhoqs", "rho_s");\n')
+
+            ##############################################
+            #MESH DEFINITION
+            ##############################################
+
+            inp.write('    model.component("comp1").mesh("mesh1").create("edg1", "Edge");\n')
+            inp.write('    model.component("comp1").mesh("mesh1").feature("edg1").create("size1", "Size");\n')
+            inp.write('    model.component("comp1").mesh("mesh1").feature("edg1").create("size2", "Size");\n')
+            inp.write('    model.component("comp1").mesh("mesh1").feature("edg1").feature("size2").selection().geom("geom1", 0);\n')
+            inp.write('    model.component("comp1").mesh("mesh1").feature("edg1").feature("size2").selection().set(new int[]{1, 2});\n')
+
+            ##############################################
+            #PROBES
+            ##############################################
+
+            inp.write('    model.component("comp1").probe().create("pdom1", "DomainPoint");\n')
+            inp.write('    model.component("comp1").probe("pdom1").create("ppb2", "PointExpr");\n')
+            inp.write('    model.component("comp1").probe("pdom1").create("ppb3", "PointExpr");\n')
+
+            inp.write('    model.result().table("tbl1").label("Probe Table 1");\n')
+
+#            inp.write('    model.component("comp1").variable("var3").active(false);\n')
+
+            inp.write('    model.component("comp1").view("view1").axis().set("xmin", 0);\n')
+
+#                inp.write('    model.component("comp1").physics("es").feature("fp1").active(false);\n')
+
             inp.write('/*\n')
             inp.write(' *REACTIONS\n')
             inp.write(' */\n')
@@ -587,7 +665,6 @@ class Comsol():
             inp.write('    model.component("comp1").probe("pdom1").feature("ppb3").set("table", "tbl1");\n')
             inp.write('    model.component("comp1").probe("pdom1").feature("ppb3").set("window", "window1");\n')
 
-            inp.write('    model.component("comp1").physics("es").feature("ccn1").set("epsilonr_mat", "userdef");\n')
 
             inp.write('/*\n')
             inp.write(' *STUDIES\n')
