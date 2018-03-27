@@ -52,10 +52,6 @@ def read_data(files):
         x=data[:,0]
         y=data[:,1]
         species=arg2.split('/')[-1].split('_')[-1].split('.')[0]
-        if k==0:
-            symbol='o'
-        else:
-            symbol='-'
         if species not in pdata:
             pdata[species]=[]
         pdata[species].append([x[0],y[0]])
@@ -65,11 +61,12 @@ def read_data(files):
     return pdata
 
 linestyles=cycle(['-','--',':'])
-
+symbols=cycle(['o','x','1','2'])
 k=-1
 for arg in sys.argv[1:]:
     linestyle=next(linestyles)
     k+=1
+    symbol=next(symbols)
     results_folder=arg+'/catmap_output'
     
     ax1=plt.subplot('211')
@@ -85,33 +82,47 @@ for arg in sys.argv[1:]:
         x=pdata[sp][:,0]
         y=pdata[sp][:,1]
         color=exp.get_color(sp)
-        if color is None:
+        print 'looking for', sp, color
+        if color is None and sp in colorlist:
             color=colorlist[sp]
-        if sp in symbols:
-            symbol=symbols[sp]
-        else:
-            symbol=''
-        symbol=''
+        elif color is None:
+            color='k'
+        #if sp in symbols:
+        #    symbol=symbols[sp]
+        #else:
+        #    symbol=''
+        #if k==0:
+        #    symbol='x'
+        #else:
+        #    symbol='o'
+        #symbol=''
         if j_log_plot:
             func=ax1.semilogy
         else:
             func=ax1.plot
+        print 'the color',k,sp,color
         if k==0:
             func(x+0.059*pH,y,linestyle+symbol,color=color,label=sp) #,label=arg.split('/')[-1])
         else:
-            func(x+0.059*pH,y,linestyle,color=color)
+            func(x+0.059*pH,y,linestyle+symbol,color=color)
     for isp,sp in enumerate(cdata):
         x=cdata[sp][:,0]
         y=cdata[sp][:,1]
         color=exp.get_color(sp)
-        if color is None:
+        if color is None and sp in colorlist:
             color=colorlist[sp]
-        if sp in symbols:
-            symbol=symbols[sp]
-        else:
-            symbol=''
-#        symbol=''
-        print 'the color',sp,color
+        elif color is None:
+            color='k'
+        #if sp in symbols:
+        #    symbol=symbols[sp]
+        #else:
+        #    symbol=''
+        #if k==0:
+        #    symbol='x'
+        #else:
+        #    symbol='o'
+        #symbol=''
+        print 'the color',k,sp,color
         if k==0:
             ax2.plot(x+0.059*pH,y,linestyle+symbol,color=color,label=sp)
         else:

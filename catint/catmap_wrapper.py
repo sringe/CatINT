@@ -118,33 +118,34 @@ class CatMAP():
             ma.include_labels = True #way too messy with labels
             ma.pressure_correction = corr #assume all pressures are 1 bar (so that energies are the same as from DFT)
             ma.coverage_correction = False
-            ma.include_labels = True
+            if self.use_interactions:
+                ma.energy_type = 'interacting_energy'
             if not corr:
                 fig = ma.plot(save='FED.pdf',plot_variants=[float(desc_val[0])])
             else:
                 fig = ma.plot(save='FED_pressure_corrected.pdf',plot_variants=[float(desc_val[0])])
         #plot_fed(True)
-        #plot_fed(False)
-        if not self.use_interactions:
-        #    plot_fed(False)
-            pass
-        else:
-            pass
-           # idx = [i for i in range(len(model.interacting_energy_map)) if model.interacting_energy_map[i][0][0] == -0.88][0]
-           # descrip, coverages = model.coverage_map[idx]
-           # rxn_parameters = model.scaler.get_rxn_parameters(descrip)
-           # rate_constants = model.solver.get_rate_constants(rxn_parameters,coverages)
-           # kfs, krs, dkfs, dkrs = model.rate_constants(rxn_parameters,coverages,
-           # model._gas_energies,model._site_energies,
-           # model.temperature,model.interaction_response_function,
-           # model._mpfloat,model._matrix,model._math.exp)
-           # model.solver.get_interacting_energies(rxn_parameters)
-           # all_ads = model.adsorbate_names + model.transition_state_names
-           # N_ads = len(all_ads)
-           # energies = rxn_parameters[:N_ads]
-           # eps_vector = rxn_parameters[N_ads:]
-           # cvg = coverages + [0]*len(model.transition_state_names)
-           # model.interaction_function(cvg,energies,eps_vector,model.thermodynamics.adsorbate_interactions.interaction_response_function,False,False)
+#        if not self.use_interactions:
+#            plot_fed(False)
+#        #    pass
+#        else:
+#            pass
+        #sys.exit()
+        #idx = [i for i in range(len(model.interacting_energy_map)) if model.interacting_energy_map[i][0][0] == -0.88][0]
+        #descrip, coverages = model.coverage_map[idx]
+        #rxn_parameters = model.scaler.get_rxn_parameters(descrip)
+        #rate_constants = model.solver.get_rate_constants(rxn_parameters,coverages)
+        #kfs, krs, dkfs, dkrs = model.rate_constants(rxn_parameters,coverages,
+        #model._gas_energies,model._site_energies,
+        #model.temperature,model.interaction_response_function,
+        #model._mpfloat,model._matrix,model._math.exp)
+        #model.solver.get_interacting_energies(rxn_parameters)
+        #all_ads = model.adsorbate_names + model.transition_state_names
+        #N_ads = len(all_ads)
+        #energies = rxn_parameters[:N_ads]
+        #eps_vector = rxn_parameters[N_ads:]
+        #cvg = coverages + [0]*len(model.transition_state_names)
+        #model.interaction_function(cvg,energies,eps_vector,model.thermodynamics.adsorbate_interactions.interaction_response_function,False,False)
         
         #slowly ramp up the interactions if desired
         if self.n_inter.isdigit():
@@ -197,6 +198,7 @@ class CatMAP():
             else:
                 break
 
+        plot_fed(False,method=2)
 #        sys.stdout.flush()
 #        os.close(1)
 #        os.dup(old) # should dup to 1
@@ -335,6 +337,10 @@ class CatMAP():
                         self.tp.logger.warning('Surface concentration of {} is more negative than 1e-3 mol/L, stopping to be safe.'.format(sp))
                         sys.exit()
                     replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':"+str(max(0.,self.tp.species[sp]['surface concentration']/1000.))+"}")
+            sp_cm='H2O'
+            sol=re.findall('species_definitions\[\''+sp_cm+'_g\'\].*{\'pressure\':.*}',line)
+            if len(sol)>0:
+                replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':1.0}")
             if self.method=='descriptor_range':
                 if 'descriptor_range' in line:
                     replace_line(self.catmap_model,i-1,'descriptor_ranges = [['+str(min_desc)+','+str(max_desc)+'],['+str(desc_val[1])+','+str(desc_val[1])+']]')
@@ -352,7 +358,6 @@ class CatMAP():
             sol=re.findall('pH[ ]*=[ ]*\d',line)
             if len(sol)>0:
                 replace_line(self.catmap_model,i-1,'pH = '+str(self.tp.system['surface pH'])+'')
-
     #SETTINGS
     def convert_TOF(self,A): # Given a list, convert all the TOF to j(mA/cm2) using 0.161*TOF(According to Heine's ORR paper)
         B = [-0.161*rate for rate in A]
@@ -392,7 +397,7 @@ class CatMAP():
             else:
                 nprod=1
                 nel=1
-            rates=data_ref[np.argsort(data_ref[:, 0])][:,1] *self.tp.system['active site density']*nel*unit_F/nprod/10.
+            rates=data_ref[np.argsort(data_ref[:, 0])][:,1]*self.tp.system['active site density']*nel*unit_F/nprod/10.
 #            currents=self.convert_TOF(data_ref[np.argsort(data_ref[:, 0])][:,1])
             pol_file=self.output_folder+'/j_'+name.split('_')[0]+'.tsv'
             np.savetxt(pol_file, np.array([voltages,rates]).T)

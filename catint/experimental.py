@@ -56,7 +56,7 @@ class EXPDATA():
         self.DATA_ss_02_FE=self.get_data('strasser_jpart_KHCO3_02_CO2R_NHE.csv')
         
         self.DATA_lr=self.get_data('COR_lei_normalized_rhe.csv')
-
+#        self.DATA_lr2=self.get_data('COR_lei_high_surface_x380_rhe.csv')
         os.chdir(root)
         
 
@@ -65,6 +65,8 @@ class EXPDATA():
         o = open('CSV/'+filename,'rU')
         DATA = Object()
         DATA.data = np.array(list(csv.reader(o)))
+        print filename
+        print 'check',np.shape(DATA.data)
         DATA.label=[str(d) for d in DATA.data[0,:]] #data[0,1:4]
         DATA.data = np.delete(DATA.data,0,0) # delete header
         return DATA
@@ -472,6 +474,17 @@ class EXPDATA():
                                 self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=take_log,fit_tafel=fit_tafel)
                             else:
                                 self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=take_log,convert='RHE_TO_SHE',fit_tafel=fit_tafel)
+#                        DATA=self.DATA_lr2
+#                        name=','.join(DATA.label[1].split(',')[1:])
+#                        skip=skip_dict[name]
+#                        spp=s2i(species,DATA,pH=cpH)
+#                        if len(spp)>0:
+#                            linestyle=next(linestyles)
+#                            symbol=next(symbols)
+#                            if scale=='RHE':
+#                                self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=take_log,fit_tafel=fit_tafel)
+#                            else:
+#                                self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=take_log,convert='RHE_TO_SHE',fit_tafel=fit_tafel)
                     if isref('hori'):
                         DATA=self.DATA_h2s
                         name=','.join(DATA.label[1].split(',')[1:])
