@@ -157,8 +157,7 @@ data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
 CO2_i = 0.03419*system['pressure']*1000. #initial CO2(aq) bulk concentrations at t=0 and Pressure P in [mol/m3] units
 #                        #from Henry constant (29.41 atm/M
 print 'CO_i',9.5e-4*system['pressure']*1000.
-
-CO_i = 9.5e-4*system['pressure']*1000.
+CO_i = 9.5e-4*system['pressure']*1000.*1000.
 #CO32m_i = ((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)-\
 #            (np.sqrt((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)**2\
 #            -4.0*(bic_i)**2)))/2  #initial (CO3)2- bulk concentrations at t=0 [mol/m3]
@@ -312,7 +311,7 @@ potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-1.2,-1.7,nphi))}
+    descriptors={'phiM':list(np.linspace(-0.9,-1.7,nphi))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
@@ -377,7 +376,7 @@ for potential in potentials:
             cm.run([p,300])
     #c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
     if not only_catmap:
-        c=Calculator(transport=tp,tau_jacobi=1e-5,tau_scf=1e-7,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
+        c=Calculator(transport=tp,tau_jacobi=1e-5,tau_scf=1e-6,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
     #scale_pb_grid
         c.run()
         tp.save() #saves all data to pickle files to enable restart or plotting later
