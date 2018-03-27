@@ -110,7 +110,7 @@ class CatMAP():
         #with pickle files anyhow
         #output
         model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency']
-        def plot_fed(corr):
+        def plot_fed(corr,method=0):
             ma = analyze.MechanismAnalysis(model)
             ma.surface_colors = ['k','b','r','yellow','green','orange','cyan']
             ma.label_args['size'] = 14
@@ -121,9 +121,9 @@ class CatMAP():
             if self.use_interactions:
                 ma.energy_type = 'interacting_energy'
             if not corr:
-                fig = ma.plot(save='FED.pdf',plot_variants=[float(desc_val[0])])
+                fig = ma.plot(save='FED.pdf',plot_variants=[float(desc_val[0])],method=method)
             else:
-                fig = ma.plot(save='FED_pressure_corrected.pdf',plot_variants=[float(desc_val[0])])
+                fig = ma.plot(save='FED_pressure_corrected.pdf',plot_variants=[float(desc_val[0])],method=method)
         #plot_fed(True)
 #        if not self.use_interactions:
 #            plot_fed(False)
