@@ -19,7 +19,7 @@ interactions=False
 
 n_inter=100
 
-pH_i=13.0
+pH_i=7.0
 nobuffer=True
 
 educt='CO' #CO2 or CO
@@ -369,13 +369,13 @@ for potential in potentials:
             for line in open(fname,'r'):
                 myfile.write(line+'\n')
         if only_catmap:
-            cm=CatMAP(transport=tp,n_inter='automatic',model_name='ohdonor_mod')
+            cm=CatMAP(transport=tp,n_inter='automatic',model_name='ohdonor_mod',)
     elif proton_donor=='H':
         if only_catmap:
             cm=CatMAP(transport=tp,n_inter=n_inter,model_name='hdonor')
     
     if only_catmap:
-        for p in np.linspace(-1.0,0.0,50):
+        for p in np.linspace(0.0,0.0,1):
             cm.run([p,300])
     #c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
     if not only_catmap:

@@ -55,7 +55,7 @@ species_definitions['H2O_g'] = {'pressure':1.0}
 #products
 species_definitions['CO_g'] = {'pressure':0.00001}
 species_definitions['CH4_g'] = {'pressure':0.0}
-species_definitions['HCOOH_g'] = {'pressure':0.0}
+#species_definitions['HCOOH_g'] = {'pressure':0.0}
 species_definitions['CH3CH2OH_g'] = {'pressure':0.0}
 species_definitions['H2_g'] = {'pressure':0.0}
 #surface

@@ -82,7 +82,7 @@ input_file = 'catmap_ohdonor_energies.txt'
 
 potential_reference_scale = 'RHE'
 extrapolated_potential = -0.416985308915 #the potential at which the energies were calculated vs. SHE
-pH = 13.0
+pH = 7.0
 
 gas_thermo_mode = 'ideal_gas' 
 adsorbate_thermo_mode = 'harmonic_adsorbate'

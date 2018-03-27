@@ -62,8 +62,8 @@ for f in folders:
 
 ax1.set_xlabel('Voltage vs. RHE (V)')
 ax2.set_xlabel('Voltage vs. RHE (V)')
-ax2.legend()
-ax1.legend()
+#ax2.legend()
+#ax1.legend()
 ax1.set_ylabel('pH')
 ax2.set_ylabel(r'$\theta_\mathrm{CO}$')
 plt.show()

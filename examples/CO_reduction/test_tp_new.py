@@ -6,15 +6,15 @@ import sys
 from units import *
 from read_data import read_data
 
-pH_i=13.0
-nobuffer=True #False #True #False #True #False #True #False #True #False #True #False #True #False #True 
+pH_i=7.0
+nobuffer=False #True #False #True #False #True #False #True #False #True #False #True #False #True #False #True 
 
 educt='CO' #CO2 or CO
 
 nx=200 #200
 nphi=520 #260 #130
 
-SA=1
+SA=380
 use_elreac=True
 if nobuffer:
     use_elreac=False
@@ -256,9 +256,9 @@ comsol_args['parameter']={}
 comsol_args['parameter']['A']=['1.e13[1/s]','Exponential prefactor']
 #comsol_args['parameter']['A2']=['1.e13[1/s]','Exponential prefactor']
 comsol_args['parameter']['Ga_CHO']=[str(1.11746219*unit_F)+'[J/mol]','CHO Activation Energy'] #[str(1.11746219*unit_F)+'[J/mol]','CHO Activation Energy']
-comsol_args['parameter']['Ga_CHOH']=[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Energy'] #[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Energy']
+comsol_args['parameter']['Ga_CHOH']=[str(1.9*unit_F)+'[J/mol]','CHOH Activation Energy'] #[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Energy']
 comsol_args['parameter']['Ga_OCCO']=[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy'] #[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy']
-comsol_args['parameter']['Ga_OCCOH']=[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy'] #[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy']
+comsol_args['parameter']['Ga_OCCOH']=[str(1.5*unit_F)+'[J/mol]','OCCOH Activation Energy'] #[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy']
 comsol_args['parameter']['DG_CHOH']=[str(0.0*unit_F)+'[J/mol]', 'CHOH free energy barrier']
 comsol_args['parameter']['DG_OCCOH']=[str(0.0*unit_F)+'[J/mol]','OCCOH free energy barrier']
 #comsol_args['parameter']['Ga_H']=[str(0.9*unit_F)+'[J/mol]','H Activation Energy']

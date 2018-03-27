@@ -42,7 +42,7 @@ species_definitions['CO_t'] = {
                 }
 
 #set all remaining species to the same parameters as CO
-for species in ['CHOH_t', 'CHO_t','CO2_t','COOH_t','COOH-H2O-ele_t','CHO-H2O-ele_t']:
+for species in ['CHOH_t', 'CHO_t','CHO-H2O-ele_t']:
         species_definitions[species] = species_definitions['CO_t']
 
 species_definitions['OCCO_t'] = {
