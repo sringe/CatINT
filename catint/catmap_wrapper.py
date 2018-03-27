@@ -335,7 +335,7 @@ class CatMAP():
                     #shortly check if concentrations are very negative, stop if they are:
                     if self.tp.species[sp]['surface concentration']<-1.:
                         self.tp.logger.warning('Surface concentration of {} is more negative than 1e-3 mol/L, stopping to be safe.'.format(sp))
-                        sys.exit()
+#                        sys.exit()
                     replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':"+str(max(0.,self.tp.species[sp]['surface concentration']/1000.))+"}")
             sp_cm='H2O'
             sol=re.findall('species_definitions\[\''+sp_cm+'_g\'\].*{\'pressure\':.*}',line)

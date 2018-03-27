@@ -14,14 +14,14 @@ rxn_expressions = [
     #9 CO to CHO (barrierless)
     'CO*_t + H2O_g + ele_g <-> CHO*_t + OH_g',
     #10 rate-limiting for CH4: CHO to CHOH
-    'CHO*_t + H2O_g + ele_g <-> CHO-H2O-ele*_t <-> CHOH*_t + OH_g; beta=0.2',
+    'CHO*_t + H2O_g + ele_g <-> CHO-H2O-ele*_t <-> CHOH*_t + OH_g; beta=0.7',
     #11 CHOH to CH4 (barrierless)
     'CHOH*_t + 3H2O_g + 4ele_g <-> CH4_g + *_t + 4OH_g',
 
     #12 2CO to OCCO (chemical)
     '2CO*_t <-> OC-CO*_t <-> OCCO*_t; beta=0.5',
     #13 rate-limiting for EtOH/C2H4: OCCO -> OCCOH
-    'OCCO*_t + H2O_g + ele_g <-> OCCO-H2O-ele*_t <-> OCCOH*_t + OH_g; beta=0.8',
+    'OCCO*_t + H2O_g + ele_g <-> OCCO-H2O-ele*_t <-> OCCOH*_t + OH_g; beta=0.9',
     #14 OCCOH to EtOH (or C2H4, same # of electrons) (barrierless)
     'OCCOH*_t + 6H2O_g + 7ele_g <-> CH3CH2OH_g + 2*_t + 7OH_g'
 ]
