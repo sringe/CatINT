@@ -153,12 +153,16 @@ class CatMAP():
                 inter=np.linspace(0,self.interaction_strength,self.n_inter)
             else:
                 inter=[0]
+        elif 'n_inter_min' in self.tp.catmap_args:
+            if self.use_interactions:
+                inter=np.linspace(0,self.interaction_strength,self.tp.catmap_args['n_inter_min'])
+            else:
+                inter=[0]
         else:
             if self.use_interactions:
                 inter=[self.interaction_strength]
             else:
                 inter=[0]
-
 #        #redirect stdout to file
 #        old = os.dup(1)
 #        sys.stdout.flush()
