@@ -9,8 +9,9 @@ from catint.experimental import EXPDATA
 from matplotlib import rc
 #rc('text', usetex=False)
 
+#pH = 6.8
 pH = 13.0
-#exp=EXPDATA()
+exp=EXPDATA()
 
 j_log_plot=True
 
@@ -94,7 +95,7 @@ for arg in sys.argv[1:]:
         #    symbol='x'
         #else:
         #    symbol='o'
-        #symbol=''
+        symbol=''
         if j_log_plot:
             func=ax1.semilogy
         else:
@@ -120,7 +121,7 @@ for arg in sys.argv[1:]:
         #    symbol='x'
         #else:
         #    symbol='o'
-        #symbol=''
+        symbol=''
         print 'the color',k,sp,color
         if k==0:
             ax2.plot(x+0.059*pH,y,linestyle+symbol,color=color,label=sp)
@@ -142,8 +143,11 @@ for arg in sys.argv[1:]:
 #            ax2.semilogy(x,y,'-',color=colorlist[species])
     ax2.legend()
 print 'plotting exp'
-#exp.plot_data(reference=['hori','jaramillo'],ax=ax1,species=['H$_2$','CO','CH$_4$','C2-sum','HCOOH'],pH=[str(pH)],system=['pc-Cu'],scale='RHE',only_points=True,take_log=j_log_plot)
-ax1.set_ylim([1e-8,1e4])
-ax1.set_xlim([-1.2,0.1])
-ax2.set_xlim([-1.2,0.1])
+if pH == 13:
+    exp.plot_data(reference=['hori','jaramillo'],ax=ax1,species=['H$_2$','CO','CH$_4$','C2-sum','HCOOH'],pH=['13.0'],system=['pc-Cu'],scale='RHE',only_points=True,take_log=j_log_plot)
+elif pH == 6.8:
+    exp.plot_data(reference=['hori','jaramillo'],ax=ax1,species=['H$_2$','CO','CH$_4$','C2-sum','HCOOH'],pH=['6.8','7.0','7.2'],system=['pc-Cu'],scale='RHE',only_points=True,take_log=j_log_plot)
+ax1.set_ylim([1e-6,1e3])
+ax1.set_xlim([-1.4,0.1])
+ax2.set_xlim([-1.4,0.1])
 plt.show()
