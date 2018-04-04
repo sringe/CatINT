@@ -11,6 +11,8 @@ import re
 
 from catint.experimental import EXPDATA
 
+pH_shift = 13.0
+
 exp=EXPDATA()
 SA=1 #380
 
@@ -139,7 +141,8 @@ for iif,f in enumerate(folders):
                 if x>cut: #-0.78:
                     pdata.append([x,y])
             data=np.array(pdata)
-        plt.semilogy(data[:,0],data[:,1],style,color=color,label=sp) #,label=f.replace('calc_std_settings','std')+', '+sp)
+        #plt.semilogy(data[:,0],style,color=color,label=sp) #,label=f.replace('calc_std_settings','std')+', '+sp)
+        plt.semilogy([d+0.0592*pH_shift for d in data[:,0]],data[:,1],style,color=color,label=sp) #,label=f.replace('calc_std_settings','std')+', '+sp)
         #plt.semilogy(data[:,0],data[:,1],'o')
     #symbols=['o','x','d','D']
     symbols=['o','x','d','D','1','2','p']*3
@@ -172,7 +175,7 @@ plt.ylabel(r'$j$ (mA/cm$^2$)')
 #plot_xinyans_equation()
 #plt.legend()
 #exp.plot_data(reference=['jaramillo'],species=['CH$_4$','HCOO','C2-sum','CO'],pH=['6.8','13'],scale='RHE',only_points=True) #,take_log=False)
-exp.plot_data(reference=['jaramillo'],species=['CH$_4$','C2-sum','H$_2$'],pH=['13'],scale='RHE',only_points=True) #,take_log=False)
+exp.plot_data(reference=['jaramillo'],species=['CH$_4$','C2-sum','H$_2$'],pH=['13.0'],scale='RHE',only_points=True) #,take_log=False)
 #plt.grid()
 plt.savefig('result.pdf')
 plt.show()

@@ -280,21 +280,27 @@ class Comsol():
             inp.write('    model.component("comp1").variable("var1").selection().geom("geom1", 0);\n')
             inp.write('    model.component("comp1").variable("var1").selection().set(new int[]{1});\n')
 
+            #additional electrode boundary variables from input
+            for pa in self.tp.comsol_args['boundary_variables']:
+                pa_val=self.tp.comsol_args['boundary_variables'][pa][0]
+                pa_des=self.tp.comsol_args['boundary_variables'][pa][1]
+                matches=re.findall('\[\[(.*?)\]\]',pa_val,re.DOTALL)
+                for match in matches:
+                    pa_val=pa_val.replace('[['+match+']]',str([ii+1 for ii,spp in enumerate(self.tp.species) if spp==match][0]))
+                inp.write('    model.component("comp1").variable("var1").set("'+pa+'", "'+str(pa_val)+'",   "'+pa_des+'");\n')
+
+
             #### DOMAIN VARIABLES
 
             inp.write('    model.component("comp1").variable().create("var2");\n')
 
-            #additional parameters from input
-            for pa in self.tp.comsol_args['variables']:
-                pa_val=self.tp.comsol_args['variables'][pa][0]
-                pa_des=self.tp.comsol_args['variables'][pa][1]
+            #additional global variables from input
+            for pa in self.tp.comsol_args['global_variables']:
+                pa_val=self.tp.comsol_args['global_variables'][pa][0]
+                pa_des=self.tp.comsol_args['global_variables'][pa][1]
                 matches=re.findall('\[\[(.*?)\]\]',pa_val,re.DOTALL)
                 for match in matches:
                     pa_val=pa_val.replace('[['+match+']]',str([ii+1 for ii,spp in enumerate(self.tp.species) if spp==match][0]))
-
-
-
-
                 inp.write('    model.component("comp1").variable("var2").set("'+pa+'", "'+str(pa_val)+'",   "'+pa_des+'");\n')
 
             #some default domain variables
@@ -351,11 +357,11 @@ class Comsol():
                     for match in matches:
                         string=string.replace('[['+match+']]','cp'+str([ii+1 for ii,spp in enumerate(self.tp.species) if spp==match][0]))
                     self.tp.species[sp]['flux']=string
-                    inp.write('    model.component("comp1").variable("var2").set("j{}", "{}", "{} flux");\n'.format(\
+                    inp.write('    model.component("comp1").variable("var1").set("j{}", "{}", "{} flux");\n'.format(\
                         i+1, self.tp.species[sp]['flux'],self.tp.species[sp]['name']))
-                elif i==0:
-                    inp.write('    model.component("comp1").variable("var2").selection().geom("geom1", 0);\n')
-                    inp.write('    model.component("comp1").variable("var2").selection().set(new int[]{1});\n')
+#                elif i==0:
+#                    inp.write('    model.component("comp1").variable("var2").selection().geom("geom1", 0);\n')
+#                    inp.write('    model.component("comp1").variable("var2").selection().set(new int[]{1});\n')
 
             ##############################################
             #INTEGRATIONS
@@ -429,7 +435,6 @@ class Comsol():
             if self.tp.use_electrolyte_reactions:
                 inp.write('    model.component("comp1").physics("tds").create("reac1", "Reactions", 1);\n')
                 inp.write('    model.component("comp1").physics("tds").feature("reac1").selection().all();\n')
-            inp.write('    model.component("comp1").physics().create("ge", "GlobalEquations", "geom1");\n')
 
             inp.write('    model.component("comp1").physics("tds").prop("ShapeProperty").set("order_concentration", 2);\n')
             if self.tp.use_convection:
@@ -579,10 +584,15 @@ class Comsol():
             inp.write('    model.component("comp1").multiphysics().create("scdc1", "SpaceChargeDensityCoupling", 1);\n')
             inp.write('    model.component("comp1").multiphysics("scdc1").selection().all();\n')
             inp.write('    model.component("comp1").physics("es").feature("sfcd1").set("rhoqs", "rho_s");\n')
+            
 
             ##############################################
             #MESH DEFINITION
             ##############################################
+
+            inp.write('/*\n')
+            inp.write(' *MESH DEFINITION\n')
+            inp.write(' */\n')
 
             inp.write('    model.component("comp1").mesh("mesh1").create("edg1", "Edge");\n')
             inp.write('    model.component("comp1").mesh("mesh1").feature("edg1").create("size1", "Size");\n')
@@ -617,19 +627,7 @@ class Comsol():
                         
                 inp.write('    model.component("comp1").physics("tds").feature("reac1").active(true);\n')
 
-            inp.write('    model.component("comp1").physics("ge").active(false);\n')
-            inp.write('    model.component("comp1").physics("ge").feature("ge1").set("name", "icell");\n')
 
-            inp.write('/*\n')
-            inp.write(' *GLOBAL EQUATIONS\n')
-            inp.write(' */\n')
-            #global equations
-            inp.write('    model.component("comp1").physics("ge").feature("ge1").set("equation", "intop1(iloc)-icell");\n')
-            inp.write('    model.component("comp1").physics("ge").feature("ge1").set("description", "Cell Voltage");\n')
-            inp.write('    model.component("comp1").physics("ge").feature("ge1").set("DependentVariableQuantity", "electricpotential");\n')
-            inp.write('    model.component("comp1").physics("ge").feature("ge1").set("SourceTermQuantity", "currentdensity");\n')
-            inp.write('    model.component("comp1").physics("ge").feature("ge1")\n')
-            inp.write('         .label("Solve for potential that results in given current_density icell");\n')
 
             inp.write('    model.component("comp1").mesh("mesh1").feature("edg1").feature("size1").set("hauto", 1);\n')
             inp.write('    model.component("comp1").mesh("mesh1").feature("edg1").feature("size1").set("custom", "on");\n')
@@ -664,6 +662,33 @@ class Comsol():
             inp.write('    model.component("comp1").probe("pdom1").feature("ppb3").set("descr", "es.Jdx-r*F_const*charge");\n')
             inp.write('    model.component("comp1").probe("pdom1").feature("ppb3").set("table", "tbl1");\n')
             inp.write('    model.component("comp1").probe("pdom1").feature("ppb3").set("window", "window1");\n')
+
+            ##############################################
+            #GLOBAL ODES AND DAES (ge)
+            ##############################################
+
+
+            if 'global_equations' in self.tp.comsol_args:
+                inp.write('/*\n')
+                inp.write(' *GLOBAL EQUATIONS\n')
+                inp.write(' */\n')
+
+                inp.write('    model.component("comp1").physics().create("ge", "GlobalEquations", "geom1");\n')
+                for ge_name in self.tp.comsol_args['global_equations']:
+                    for func in self.tp.comsol_args['global_equations'][ge_name]:
+                        if type(self.tp.comsol_args['global_equations'][ge_name][func])==str:
+                            inp.write('    model.component("comp1").physics("ge").feature("'+ge_name+'").'+func+'(\"'+self.tp.comsol_args['global_equations'][ge_name][func]+'\");\n')
+                        else:
+                            if 'DependentVariableQuantity' not in self.tp.comsol_args['global_equations'][ge_name][func]:
+                                inp.write('    model.component("comp1").physics("ge").feature("'+ge_name+'").'+func+'(\"DependentVariableQuantity\", \"none\");\n')
+                                if 'CustomDependentVariableUnit' not in self.tp.comsol_args['global_equations'][ge_name][func]:
+                                    self.tp.logger.warning('No unit given for dependent variable in global COMSOL equation, could lead to error')
+                            if 'SourceTermQuantity' not in self.tp.comsol_args['global_equations'][ge_name][func]:
+                                inp.write('    model.component("comp1").physics("ge").feature("'+ge_name+'").'+func+'(\"SourceTermQuantity\", \"none\");\n')
+                                if 'SourceTermVariableUnit' not in self.tp.comsol_args['global_equations'][ge_name][func]:
+                                    self.tp.logger.warning('No unit given for source term in global COMSOL equation, could lead to error')
+                            for key in self.tp.comsol_args['global_equations'][ge_name][func]:
+                                inp.write('    model.component("comp1").physics("ge").feature("'+ge_name+'").'+func+'(\"'+key+'\", \"'+self.tp.comsol_args['global_equations'][ge_name][func][key]+'\");\n')
 
 
             inp.write('/*\n')
@@ -801,7 +826,7 @@ class Comsol():
 
 
             #finally output results
-            def export_data(var_name='cp',unit_name='mol/m^3',label='Concentrations',file_name='results/concentrations.txt',export_count=1):
+            def export_data(var_name='cp',unit_name='mol/m^3',label='Concentrations',file_name='results/concentrations.txt',export_count=1,geom='domain'):
                 """exports a quantity of interest. var_name/unit_name/label can be either a single string, in which case
                 it is assumed that var_name should be exported for each individual species. or it can be a list, over which
                 to iterate the output"""
@@ -834,6 +859,8 @@ class Comsol():
                 inp.write('    model.result().export("data'+str(export_count)+'").set("unit", new String[]{'+unit_str+'});\n')
                 inp.write('    model.result().export("data'+str(export_count)+'").set("descr", new String[]{'+name_str+'});\n')
                 inp.write('    model.result().export("data'+str(export_count)+'").set("filename", "'+root+'/'+file_name+'");\n')
+                if geom!='domain':
+                    inp.write('    model.result().export("data4").set("level", "'+geom+'");\n')
                 inp.write('    model.result().export("data'+str(export_count)+'").run();\n')
 
             label_append=''
@@ -846,7 +873,7 @@ class Comsol():
             if 'current_density' in self.outputs:
                 export_data(['es.Jx'],['A/m^2'],'Current density'+label_append, self.results_folder+'/current_density.txt',3)
             if 'electrode_flux' in self.outputs:
-                export_data('j','mol/m^2/s','Electrode flux'+label_append, self.results_folder+'/electrode_flux.txt',4)
+                export_data('j','mol/m^2/s','Electrode flux'+label_append, self.results_folder+'/electrode_flux.txt',4,geom='point')
             i=0
             for out in self.outputs:
                 if out in self.tp.comsol_args['outputs']:
@@ -900,6 +927,10 @@ class Comsol():
         self.tp.potential=[]
         self.tp.efield=[]
         self.tp.current_density=[]
+        self.tp.electrode_flux=[[]]
+        for sp in self.tp.species:
+            self.tp.electrode_flux.append([])
+
         if self.tp.use_catmap:
             #so far our implementation cannot safe the data properly for each descriptor
             #setting it to zero. this will contain the data for one comsol iteration later
@@ -917,6 +948,9 @@ class Comsol():
 #                        if (key not in self.tp.all_data[str(d1)][str(d2)]['system']) or\
 #                                (not only_last or d1==int_desc_list[-1]):
                          self.tp.all_data[str(d1)][str(d2)]['system'][key]=[]
+                    self.tp.all_data[str(d1)][str(d2)]['system']['electrode_flux']=[[]]
+                    for sp in self.tp.species:
+                        self.tp.all_data[str(d1)][str(d2)]['system']['electrode_flux'].append([])
                     for iout,oout in enumerate(self.tp.comsol_args['outputs']):
                         out=oout[1]
                         if out not in self.tp.comsol_outputs_data:
@@ -962,16 +996,10 @@ class Comsol():
                 self.tp.dx=self.tp.xmax/self.tp.nx
                 cout=np.zeros([self.tp.ntout,self.tp.nspecies*self.tp.nx])
                 cout_tmp=np.zeros([self.tp.nt+1,self.tp.nspecies*self.tp.nx]) ##check here, why do we put nt+1?? if we put nt, we need to correct the stationary solver below
-                electrode_flux=np.zeros_like(cout)
-                electrode_flux_tmp=np.zeros_like(cout_tmp)
             if 'internal' in self.tp.desc_method and output=='concentrations':
                 for desc in int_desc_list:
                 #    if desc==int_desc_list[-1] or not only_last:
                     self.tp.all_data[str(desc)][str(int_desc_non)]['system']['cout']=np.zeros_like(cout_tmp) #([self.tp.nt,self.tp.nspecies*self.tp.nx])
-            if 'internal' in self.tp.desc_method and output=='electrode_flux':
-                for desc in int_desc_list:
-                    #if desc==int_desc_list[-1] or not only_last:
-                    self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux']=np.zeros_like(cout_tmp)
             #now read in all results
             i=0
             self.tp.logger.info(' | CS | Reading COMSOL output from '+self.results_folder+'/'+toutput+'.txt')
@@ -979,7 +1007,7 @@ class Comsol():
             for line in open(self.results_folder+'/'+toutput+'.txt','r'):
                 i+=1
                 if i>8 and [key for key in self.studies][0]=='stationary':
-                    if output in ['concentrations','electrode_flux']:
+                    if output in ['concentrations']:
                         ls=line.split()
                         for j,lss in enumerate(ls):
                             if j>0:
@@ -989,13 +1017,9 @@ class Comsol():
                                 if 'internal' in self.tp.desc_method:
                                     if output=='concentrations':
                                         self.tp.all_data[str(int_desc_list[i_de])][str(int_desc_non)]['system']['cout'][-2,i_sp*self.tp.nx+i-9]=float(lss)
-                                    elif output=='electrode_flux':
-                                        self.tp.all_data[str(int_desc_list[i_de])][str(int_desc_non)]['system']['electrode_flux'][-2,i_sp*self.tp.nx+i-9]=float(lss)
                                 if output=='concentrations':
                                     cout_tmp[-2,i_sp*self.tp.nx+i-9]=float(lss)
-                                elif output=='electrode_flux':
-                                    electrode_flux_tmp[-2,i_sp*self.tp.nx+i-9]=float(lss)
-                    elif output in ['electrostatics','current_density']:
+                    elif output in ['electrostatics','current_density','electrode_flux']:
                         ls=line.split()
                         for j,lss in enumerate(ls):
                             if j>0:
@@ -1021,6 +1045,13 @@ class Comsol():
                                             self.tp.all_data[str(int_desc_list[i_de])][str(int_desc_non)]['system']['current_density'].append(float(lss))
                                     if i_sp==0:
                                         self.tp.current_density.append(float(lss))
+                                elif output=='electrode_flux' and ls[0]=='0':
+                                    i_sp=(j-1)%len(self.tp.species)
+                                    i_de=(j-1-i_sp)/len(self.tp.species)
+                                    if 'internal' in self.tp.desc_method:
+                                        self.tp.all_data[str(int_desc_list[i_de])][str(int_desc_non)]['system']['electrode_flux'][i_sp]=float(lss)
+                                    self.tp.electrode_flux[i_sp]=float(lss)
+
                     elif output in self.tp.comsol_args['outputs']:
                         ls=line.split()
                         for j,lss in enumerate(ls):
@@ -1030,7 +1061,7 @@ class Comsol():
                                     self.tp.comsol_outputs_data[output[1]][(str(int_desc_list[i_de]),str(int_desc_non))].append(float(lss))
                                 comsol_outputs_data[self.tp.comsol_args['outputs'].index(output)].append(float(lss))
                 elif i>8 and [key for key in self.studies][0]=='time-dependent':
-                    if output in ['concentrations','electrode_flux']:
+                    if output in ['concentrations']:
                         #read a selection of time steps here
                         ls=line.split()
                         i_t=np.zeros([self.tp.nspecies],dtype=int)-1
@@ -1043,8 +1074,6 @@ class Comsol():
                                 if n in self.tp.itout:
                                     if output=='concentrations':
                                         cout_tmp[n,i_sp*self.tp.nx+i-9]=float(lss)
-                                    elif output=='electrode_flux':
-                                        electrode_flux_tmp[n,i_sp*self.tp.nx+i-9]=float(lss)
 
                     elif output in ['electrostatics','current_density']:
                         #read only the last time step here
@@ -1093,31 +1122,12 @@ class Comsol():
                 
                 self.tp.all_data[str(desc)][str(int_desc_non)]['system']['cout']=np.array(self.tp.all_data[str(desc)][str(int_desc_non)]['system']['cout'])
 
-                tmp_ar=deepcopy(self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux'])
-                self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux']=np.zeros([self.tp.ntout,self.tp.nspecies*self.tp.nx])
-                nn=-1
-                for n,cc in enumerate(tmp_ar):
-                    if n in self.tp.itout:
-                        nn+=1
-                        self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux'][nn,:]=cc
-
-                self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux']=np.array(self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux'])
-                
-                
         nn=-1
         for n,cc in enumerate(cout_tmp):
 #            if n % int(self.tp.nt/float(self.tp.ntout))==0:
             if n in self.tp.itout:
                 nn+=1
                 cout[nn,:]=cc
-        nn=-1
-        for n,cc in enumerate(electrode_flux_tmp):
-            if n in self.tp.itout:
-                nn+=1
-                electrode_flux[nn,:]=cc
-
-
-        self.tp.electrode_flux=electrode_flux
 
         self.tp.logger.info(' | CS | Wrote out concentrations at '+str(nn+1)+' steps.')
 
@@ -1144,7 +1154,6 @@ class Comsol():
         cout=np.array(cout)
         if not 'internal' in self.tp.desc_method:
             self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['cout']=cout
-            self.tp.all_data[str(desc_val[0])][str(desc_val[1])]['system']['electrode_flux']=electrode_flux
             for i_sp,sp in enumerate(self.tp.species):
                 self.tp.species[sp]['concentration']=cout[-1,i_sp*self.tp.nx:(i_sp+1)*self.tp.nx]
                 if self.tp.descriptors is not None:
@@ -1189,7 +1198,7 @@ class Comsol():
                 nprod=len([a for a in self.tp.electrode_reactions[sp]['reaction'][1] if a==sp])
                 isp=[i for i,sp2 in enumerate(self.tp.species) if sp2==sp][0] #index in species array
                 
-                c_current_density=self.tp.electrode_flux[-1][isp*self.tp.nx]*self.tp.electrode_reactions[sp]['nel']*unit_F/nprod/10.
+                c_current_density=self.tp.electrode_flux[isp]*self.tp.electrode_reactions[sp]['nel']*unit_F/nprod/10.
                 self.tp.electrode_reactions[sp]['electrode_current_density'][(str(desc_val[0]),str(desc_val[1]))]=c_current_density
             
             for iout,oout in enumerate(self.tp.comsol_args['outputs']):
@@ -1206,6 +1215,6 @@ class Comsol():
                 for sp in self.tp.electrode_reactions:
                     nprod=len([a for a in self.tp.electrode_reactions[sp]['reaction'][1] if a==sp])
                     isp=[i for i,sp2 in enumerate(self.tp.species) if sp2==sp][0] #index in species array
-                    c_current_density=self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux'][-1][isp*self.tp.nx]*self.tp.electrode_reactions[sp]['nel']*unit_F/nprod/10.
+                    c_current_density=self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux'][isp]*self.tp.electrode_reactions[sp]['nel']*unit_F/nprod/10.
                     self.tp.electrode_reactions[sp]['electrode_current_density'][(str(desc),str(int_desc_non))]=c_current_density
 
