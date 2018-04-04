@@ -460,8 +460,8 @@ class Transport(object):
 
         self.catmap_args=catmap_args
         #create empty lists
-        comsol_keys=['outputs','variables','parameter','bin_path','nx']
-        for a in ['outputs','variables','parameter']:
+        comsol_keys=['outputs','boundary_variables','global_variables','global_equations','parameter','bin_path','nx']
+        for a in ['outputs','global_variables','boundary_variables','parameter']:
             if not a in comsol_args:
                 comsol_args[a]=[]
         if not 'nx' in comsol_args:
