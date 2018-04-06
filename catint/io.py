@@ -11,6 +11,7 @@ try:
     use_mpi=True
 except ImportError:
     pass
+use_mpi=False
 if use_mpi:
     from mpi4py import MPI
 use_mpi=False

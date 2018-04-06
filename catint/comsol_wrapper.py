@@ -490,7 +490,7 @@ class Comsol():
             #fluxes
             f_str=""
             for i in range(len(self.tp.species)):
-                f_str+="{\"j"+str(i+1)+"*flux_factor\"}"
+                f_str+="{\"j"+str(i+1)+"*flux_factor*SA\"}"
                 if i != len(self.tp.species)-1:
                     f_str+=", "
 

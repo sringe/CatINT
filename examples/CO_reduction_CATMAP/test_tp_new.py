@@ -1,6 +1,6 @@
 import sys
-sys.path.insert(0,'/scratch/users/sringe/transport/CatINT')
-sys.path.insert(0,'/scratch/users/sringe/transport/catmap')
+sys.path.insert(0,'/scratch/users/sringe/transport/catint2')
+sys.path.insert(0,'/scratch/users/sringe/transport/catmap_simpl')
 from shutil import copyfile as copy
 from catint.transport import Transport
 from catint.calculator import Calculator
@@ -372,7 +372,7 @@ for potential in potentials:
             cm=CatMAP(transport=tp,n_inter=n_inter,model_name='hdonor')
     
     if only_catmap:
-        for p in np.linspace(-1.5,0.0,50):
+        for p in np.linspace(-1.7,0.0,50):
             cm.run([p,300])
     #c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
     if not only_catmap:
