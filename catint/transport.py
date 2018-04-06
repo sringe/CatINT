@@ -468,7 +468,7 @@ class Transport(object):
             if not a in comsol_args:
                 comsol_args[a]=[]
         if 'grid_factor' not in comsol_args:
-            comsol_args['grid_factor']=400
+            comsol_args['grid_factor']=200
         if not 'nflux' in comsol_args:
             comsol_args['nflux']=32 #default to 32 steps for flux ramping
         for a in comsol_args:
