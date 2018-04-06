@@ -26,6 +26,7 @@ try:
     use_mpi=True
 except ImportError:
     pass
+use_mpi=False
 if use_mpi:
     from mpi4py import MPI
 use_mpi=False
@@ -250,6 +251,7 @@ class Transport(object):
         #initialize concentrations at electrode
         for sp in self.species:
             self.species[sp]['surface concentration']=self.species[sp]['bulk concentration']
+
 
 
         self.eps = self.system['epsilon']*unit_eps0 #1.1e11 #*unit_eps0

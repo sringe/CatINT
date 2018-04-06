@@ -21,7 +21,7 @@ rxn_expressions = [
     #12 2CO to OCCO (chemical)
     '2CO*_t <-> OC-CO*_t <-> OCCO*_t; beta=0.5',
     #13 rate-limiting for EtOH/C2H4: OCCO -> OCCOH
-    'OCCO*_t + H2O_g + ele_g <-> OCCO-H2O-ele*_t <-> OCCOH*_t + OH_g; beta=0.9',
+    'OCCO*_t + H2O_g + ele_g <-> OCCO-H2O-ele*_t <-> OCCOH*_t + OH_g',
     #14 OCCOH to EtOH (or C2H4, same # of electrons) (barrierless)
     'OCCOH*_t + 6H2O_g + 7ele_g <-> CH3CH2OH_g + 2*_t + 7OH_g'
 ]
@@ -30,8 +30,8 @@ rxn_mechanisms = { 'HER_Tafel':[1,1,3],
                    'HER_Heyrovsky':[1,2],
                    'CO':[4,5,6],
                    'formate':[4,5,8],
-                   'C1':[4,5,6,9,10,11],
-                   'C2':[4,4,5,5,6,6,12,13,14]
+#                   'C1':[4,5,6,9,10,11],
+#                   'C2':[4,4,5,5,6,6,12,13,14]
 }
 
 prefactor_list = [1e13]*len(rxn_expressions)  #Heine: prefactor for CO is 1e8

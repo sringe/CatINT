@@ -19,7 +19,7 @@ interactions=False
 
 n_inter=100
 
-pH_i=7.0
+pH_i=6.8
 nobuffer=True
 
 educt='CO' #CO2 or CO
@@ -157,7 +157,7 @@ data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
 CO2_i = 0.03419*system['pressure']*1000. #initial CO2(aq) bulk concentrations at t=0 and Pressure P in [mol/m3] units
 #                        #from Henry constant (29.41 atm/M
 
-CO_i = 9.5e-4*system['pressure']*1000.*1000.
+CO_i = 1000. #9.5e-4*system['pressure']*1000.
 #CO32m_i = ((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)-\
 #            (np.sqrt((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)**2\
 #            -4.0*(bic_i)**2)))/2  #initial (CO3)2- bulk concentrations at t=0 [mol/m3]
@@ -329,7 +329,7 @@ for potential in potentials:
     #SETUP AND RUN
     ###########################################################################
     catmap_args={   'n_inter':'automatic',\
-                    'n_inter_min':100}
+                    'n_inter_min':10}
     if nobuffer:
         tp=Transport(
             species=species,
@@ -376,7 +376,7 @@ for potential in potentials:
             cm=CatMAP(transport=tp,n_inter=n_inter,model_name='hdonor')
     
     if only_catmap:
-        for p in np.linspace(0.0,0.0,1):
+        for p in np.linspace(-1.7,0.0,30):
             cm.run([p,300])
     #c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
     if not only_catmap:

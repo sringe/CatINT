@@ -35,6 +35,7 @@ try:
     use_mpi=True
 except ImportError:
     pass
+use_mpi=False
 if use_mpi:
     from mpi4py import MPI
 use_mpi=False
@@ -1247,8 +1248,8 @@ class Calculator():
                                 self.tp.logger.warning(' | CS | NaN appeared in surface concentrations, rerunning COMSOL with slower ramping')
                                 self.tp.comsol_args['nx']*=1.1
                                 self.tp.comsol_args['nx']=int(self.tp.comsol_args['nx'])
-                                if self.tp.comsol_args['nx']>10000:
-                                    self.tp.logger.error(' | CS | ramping # nx is larger than 10000, stopping here, we will probably not get any convergence')
+                                if self.tp.comsol_args['nx']>50000:
+                                    self.tp.logger.error(' | CS | ramping # nx is larger than 50000, stopping here, we will probably not get any convergence')
                                     sys.exit()
 
                                 self.tp.logger.warning(' | CS | Current ramping of {} steps'.format(self.tp.comsol_args['nx']))
