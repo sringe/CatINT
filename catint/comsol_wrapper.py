@@ -79,7 +79,7 @@ class Comsol():
             for method in studies[study]:
                 self.tp.logger.info(' | CS | Will perform {} calculation with {} setting COMSOL'.format(study,method))
                 for pars in studies[study][method]:
-                    self.tp.logger.info(' | CS | Parameter set passed to COMSOL is {}'.format(studies[study][method]))
+                    self.tp.logger.debug(' | CS | Descriptors passed to COMSOL are {}'.format(studies[study][method]))
         if 'cont' in self.tp.desc_method:
             self.tp.logger.info(' | CS | Solutions will be initialized with solutions of previous parameter set')
         else:
