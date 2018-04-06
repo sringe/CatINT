@@ -1245,14 +1245,19 @@ class Calculator():
 
                             while any([math.isnan(self.tp.species[sp]['surface concentration']) for sp in self.tp.species]):
                                 #rerun comsol with finer mesh
-                                self.tp.logger.warning(' | CS | NaN appeared in surface concentrations, rerunning COMSOL with slower ramping')
-                                self.tp.comsol_args['nx']*=1.1
-                                self.tp.comsol_args['nx']=int(self.tp.comsol_args['nx'])
-                                if self.tp.comsol_args['nx']>50000:
-                                    self.tp.logger.error(' | CS | ramping # nx is larger than 50000, stopping here, we will probably not get any convergence')
+                                self.tp.logger.warning(' | CS | NaN appeared in surface concentrations, rerunning COMSOL with slower ramping'+\
+                                        ' and finer resolution of grid')
+                                self.tp.comsol_args['nflux']*=1.1
+                                self.tp.comsol_args['nflux']=int(self.tp.comsol_args['nflux'])
+
+                                self.tp.descriptors['flux_factor']=np.linspace(0,1,self.tp.comsol_args['nflux'])
+
+                                if self.tp.comsol_args['nflux']>50000:
+                                    self.tp.logger.error(' | CS | ramping # nflux is larger than 50000, stopping here, we will probably not get any convergence')
                                     sys.exit()
 
-                                self.tp.logger.warning(' | CS | Current ramping of {} steps'.format(self.tp.comsol_args['nx']))
+                                self.tp.logger.warning(' | CS | Current x-axis resolution =  {} intervals.'.format(self.tp.comsol_args['nflux']))
+                                self.tp.logger.warning(' | CS | Current ramping of flux =  {} intervals.'.format(self.tp.comsol_args['nflux']))
 
                                 self.run_single_step(label=label,desc_val=[str(value1),str(value2)],only_last=True)
 
