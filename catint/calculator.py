@@ -310,13 +310,24 @@ class Calculator():
                             #only_last updates the descriptor based dictionaries only for the last entry in self.tp.descriptors
                             self.run_single_step(label=label,desc_val=[str(value1),str(value2)],only_last=True)
 
-
+                            was_nan=False
+                            grid_factor=self.tp.comsol_args['grid_factor']
+                            nflux=self.tp.comsol_args['nflux']
+                            nflux_step=0
                             while any([math.isnan(self.tp.species[sp]['surface concentration']) for sp in self.tp.species]):
+                                was_nan=True
                                 #rerun comsol with finer mesh
                                 self.tp.logger.warning(' | CS | NaN appeared in surface concentrations, rerunning COMSOL with slower ramping'+\
                                         ' and finer resolution of grid')
                                 self.tp.comsol_args['nflux']*=1.1
                                 self.tp.comsol_args['nflux']=int(self.tp.comsol_args['nflux'])
+                                self.tp.logger.info(' | CS | Number of flux ramping steps increased to {}'.format(self.tp.comsol_args['nflux']))
+
+                                if self.tp.comsol_args['nflux']/1000 != nflux_step:
+                                    nflux_step=self.tp.comsol_args['nflux']/1000
+                                    self.tp.logger.info(' | CS | Ramping increase of 1000 did not help, trying to decrease also minimal grid discretization')
+                                    self.tp.comsol_args['grid_factor']*=1.1
+                                    self.tp.logger.info(' | CS | Maximal discretization of x-axis and boundary condition raised to {}'.format(self.tp.comsol_args['grid_factor']))
 
                                 if self.tp.comsol_args['nflux']>20000:
                                     self.tp.logger.error(' | CS | ramping # nflux is larger than 20000, stopping here, we will probably not get any convergence')
@@ -332,6 +343,11 @@ class Calculator():
                                 self.tp.logger.debug('Surface Concentrations:')
                                 for sp in self.tp.species:
                                     self.tp.logger.debug('  {}: {} mol/L'.format(sp,self.tp.species[sp]['surface concentration']/1000.))
+
+                            if was_nan:
+                                #reset the grid_factor to original value:
+                                self.tp.comsol_args['nflux']=nflux
+                                self.tp.comsol_args['grid_factor']=grid_factor
 
                             if 'internal' in self.tp.desc_method:
                                 #copy the descriptor list back

@@ -240,7 +240,7 @@ class Comsol():
                         inp.write('    model.param().set("{}", "{} [{}]", "rate constant: {}");\n'.format(\
                                 'k'+str(i)+'r',self.tp.electrolyte_reactions[reaction]['rates'][1],unit_r,products+' -> '+educts))
             inp.write('    model.param().set("flux_factor", "1", "factor scaling the flux");\n')
-            inp.write('    model.param().set("grid_factor", "'+str(self.tp.nx_init-1)+'", "minimal number of x mesh points (boundary and domain)");\n')
+            inp.write('    model.param().set("grid_factor", "'+str(self.tp.comsol_args['grid_factor'])+'", "minimal number of x mesh points (boundary and domain)");\n')
 
             inp.write('/*\n')
             inp.write(' *MODEL DEFINITION\n')
