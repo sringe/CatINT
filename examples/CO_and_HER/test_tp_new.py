@@ -73,8 +73,7 @@ electrolyte_reactions=\
 electrode_reactions={
     'C1':           {'reaction': 'CO + 5 H2O + 6 e- -> C1 + 6 OH-'}, #methane
     'C2':           {'reaction': '2 CO + 7 H2O + 8 e- -> C2 + 8 OH-'}, #ethanol
-    'H2-Herovski':  {'reaction': 'Hcov + H2O + 2 e- -> H2 + 2 OH-'},
-    'H2-Tafel':     {'reaction': '2 Hcov + 2 e- -> H2'}}
+    'H2':           {'reaction': 'H2O + 2 e- -> H2 + 2 OH-'}}
 
     #'H2':           {   'reaction':             '2 HCO3- + 2 e- -> H2 + 2 CO32-'},
 #    }
@@ -260,9 +259,9 @@ comsol_args={}
 comsol_args['parameter']={}
 comsol_args['parameter']['A']=['1.e13[1/s]','Exponential prefactor']
 #comsol_args['parameter']['A2']=['1.e13[1/s]','Exponential prefactor']
-comsol_args['parameter']['Ga_CHO']=[str(1.11746219*unit_F)+'[J/mol]','CHO Activation Energy'] #[str(1.11746219*unit_F)+'[J/mol]','CHO Activation Energy']
+#comsol_args['parameter']['Ga_CHO']=[str(1.11746219*unit_F)+'[J/mol]','CHO Activation Energy'] #[str(1.11746219*unit_F)+'[J/mol]','CHO Activation Energy']
 comsol_args['parameter']['Ga_CHOH']=[str(2.05*unit_F)+'[J/mol]','CHOH Activation Energy'] #[str(2.37467774*unit_F)+'[J/mol]','CHOH Activation Energy']
-comsol_args['parameter']['Ga_OCCO']=[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy'] #[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy']
+#comsol_args['parameter']['Ga_OCCO']=[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy'] #[str(0.578959276*unit_F)+'[J/mol]','OCCO Activation Energy']
 comsol_args['parameter']['Ga_OCCOH']=[str(1.55*unit_F)+'[J/mol]','OCCOH Activation Energy'] #[str(1.10495851*unit_F)+'[J/mol]','OCCOH Activation Energy']
 comsol_args['parameter']['DG_CHOH']=[str(0.0*unit_F)+'[J/mol]', 'CHOH free energy barrier']
 comsol_args['parameter']['DG_OCCOH']=[str(0.0*unit_F)+'[J/mol]','OCCOH free energy barrier']
@@ -270,16 +269,16 @@ comsol_args['parameter']['Ga_H_Volmer']=[str(1.6*unit_F)+'[J/mol]','Volmer Activ
 comsol_args['parameter']['Ga_H_Tafel']=[str(1.16416*unit_F)+'[J/mol]','Tafel Activation Energy']
 comsol_args['parameter']['Ga_H_Herovski']=[str(2.0*unit_F)+'[J/mol]','Herovski Activation Energy']
 #comsol_args['parameter']['eVToJmol']=[str(eVTokcal*1000*calToJ)+'[J/eV/mol]','eV to J/mol Conversion factor']
-comsol_args['parameter']['alpha_CHO']=['0.5','Butler-Volmer Parameter'] #std 0.5
+#comsol_args['parameter']['alpha_CHO']=['0.5','Butler-Volmer Parameter'] #std 0.5
 comsol_args['parameter']['alpha_CHOH']=['0.8','Butler-Volmer Parameter'] #std 2.0
 comsol_args['parameter']['alpha_OCCOH']=['0.9','Butler-Volmer Parameter'] #std 0.5
-comsol_args['parameter']['alpha_OCCO']=['0.5','Butler-Volmer Parameter'] #std 0.5
-comsol_args['parameter']['n_CHO']=['1','Butler-Volmer Parameter'] #std 0.5
+#comsol_args['parameter']['alpha_OCCO']=['0.5','Butler-Volmer Parameter'] #std 0.5
+#comsol_args['parameter']['n_CHO']=['1','Butler-Volmer Parameter'] #std 0.5
 comsol_args['parameter']['alpha_H_Volmer']=['0.5','Transfer Coefficient Volmer'] #std 0.5
 comsol_args['parameter']['alpha_H_Herovski']=['0.89','Transfer Coefficient Herovski'] #std 0.5
 comsol_args['parameter']['n_CHOH']=['1','Butler-Volmer Parameter'] #std 2.0
 comsol_args['parameter']['n_OCCOH']=['0','Butler-Volmer Parameter'] #std 0.5
-comsol_args['parameter']['n_OCCO']=['0','Butler-Volmer Parameter'] #std 0.5
+#comsol_args['parameter']['n_OCCO']=['0','Butler-Volmer Parameter'] #std 0.5
 comsol_args['parameter']['e0']=['1[C]','electronic charge']
 comsol_args['parameter']['erho']=['80.3e-6[C/cm^2]','surface density of active sites x elementary charge']
 comsol_args['parameter']['Lmol']=['1[l/mol]','conversion factor']
@@ -365,13 +364,13 @@ system['boundary thickness']=boundary_thickness
 #'delta_phi_inf_min_iR
 comsol_args['global_variables']={}
 comsol_args['global_variables']['delta_phi']=['0.0','Electrolyte potential drop']
-comsol_args['boundary_variables']['jCHO']=['SA*rho_act*coverage*A*'+\
-                         'exp('+\
-                        #SHE
-                            '-(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phiM_ref_she)*F_const)/RT-n_CHO*pH_at_0*log(10)'+\
-                        #RHE
-                        #    '-(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phiM_ref_she)*F_const)/RT+alpha_CHO*pH_at_0*log(10)'+\
-                         ')','rate of CHO']
+#comsol_args['boundary_variables']['jCHO']=['SA*rho_act*coverage*A*'+\
+#                         'exp('+\
+#                        #SHE
+#                            '-(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phiM_ref_she)*F_const)/RT-n_CHO*pH_at_0*log(10)'+\
+#                        #RHE
+#                        #    '-(Ga_CHO+(alpha_CHO+n_CHO)*(phiM-phiM_ref_she)*F_const)/RT+alpha_CHO*pH_at_0*log(10)'+\
+#                         ')','rate of CHO']
 comsol_args['boundary_variables']['jCHOH']=['SA*rho_act*coverage*A*'+\
                          'exp('+\
                         #SHE
@@ -386,13 +385,13 @@ comsol_args['boundary_variables']['jOCCOH']=['SA*rho_act*coverage^2*A*'+\
                         #RHE
                         #    '-(Ga_OCCOH+DG_OCCOH+(alpha_OCCOH+n_OCCOH)*(phiM-phiM_ref_she)*F_const)/RT+alpha_OCCOH*pH_at_0*log(10)'+\
                         ')','rate of OCCOH']
-comsol_args['boundary_variables']['jOCCO']=['SA*rho_act*coverage^2*A*'+\
-                        'exp('+\
-                        #SHE
-                            '-(Ga_OCCO+(alpha_OCCO+n_OCCO)*(phiM-phiM_ref_she)*F_const)/RT-n_OCCO*pH_at_0*log(10)'+\
-                        #RHE
-                        #    '-(Ga_OCCO+(alpha_OCCO+n_OCCO)*(phiM-phiM_ref_she)*F_const)/RT+alpha_OCCO*pH_at_0*log(10)'+\
-                        ')','rate of OCCO']
+#comsol_args['boundary_variables']['jOCCO']=['SA*rho_act*coverage^2*A*'+\
+#                        'exp('+\
+#                        #SHE
+#                            '-(Ga_OCCO+(alpha_OCCO+n_OCCO)*(phiM-phiM_ref_she)*F_const)/RT-n_OCCO*pH_at_0*log(10)'+\
+#                        #RHE
+#                        #    '-(Ga_OCCO+(alpha_OCCO+n_OCCO)*(phiM-phiM_ref_she)*F_const)/RT+alpha_OCCO*pH_at_0*log(10)'+\
+#                        ')','rate of OCCO']
 comsol_args['boundary_variables']['jH_Volmer']=['SA*rho_act*A*'+\
                         'exp('+\
                         #SHE
@@ -419,19 +418,6 @@ comsol_args['global_equations']['ge1']=\
             'description':'H coverage equation'},\
         'label': 'Describes H coverage time evolution'}
 
-#additional comsol outputs
-#name, equation, unit
-comsol_args['outputs']=[\
-        ['jCHO','jCHO','mol/m^2/s'],\
-        ['jCHOH','jCHOH','mol/m^2/s'],\
-        ['jOCCOH','jOCCOH','mol/m^2/s'],\
-        ['jH_Volmer','jH_Volmer','mol/m^2/s'],\
-        ['jH_Tafel','jH_Tafel','mol/m^2/s'],\
-        ['jH_Herovski','jH_Herovski','mol/m^2/s'],\
-        ['jOCCO','jOCCO','mol/m^2/s'],\
-        ['coverage','coverage','']]
-        #last one in list is the name of the file, first one is variable name
-#        ['coverage_H','coverage_H','']] #last one in list is the name of the file, first one is variable name
 
 method=0 #method2 with stationary solver only working one, so far...
 

@@ -25,7 +25,7 @@ class Object(object):
 class CatMAP():
     """This class modifies the concentrations in the catmap input file (defined by user) and runs catmap. The output is the read in and the boundary conditions adjusted properly"""
 
-    def __init__(self,path=os.getcwd(),transport=None,model_name=None,delta_desc=0.05,min_desc=-1.5,max_desc=0.2,n_inter=1):
+    def __init__(self,path=os.getcwd(),transport=None,model_name=None,delta_desc=0.05,min_desc=-1.5,max_desc=0.2,n_inter='1'):
         #delta_desc is the descriptor delta with which the descriptor axes is resolved
         #in case of potential 0.05 is fine
         #max and min_desc are the  bounds of the descriptor region (here default for potential being the descriptor)
@@ -43,7 +43,7 @@ class CatMAP():
             sys.exit()
         else:
             self.tp=transport
-        if not 'n_inter' in self.tp.catmap_args:
+        if 'n_inter' not in self.tp.catmap_args:
             self.n_inter=n_inter #number of steps to converge interactions
         else:
             self.n_inter=self.tp.catmap_args['n_inter']
