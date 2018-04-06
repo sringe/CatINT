@@ -467,8 +467,10 @@ class Transport(object):
         for a in ['outputs','global_variables','boundary_variables','parameter']:
             if not a in comsol_args:
                 comsol_args[a]=[]
-        if not 'nx' in comsol_args:
-            comsol_args['nx']=32 #default to 32 steps for flux ramping
+        if 'grid_factor' not in comsol_args:
+            comsol_args['grid_factor']=400
+        if not 'nflux' in comsol_args:
+            comsol_args['nflux']=32 #default to 32 steps for flux ramping
         for a in comsol_args:
             if a not in comsol_keys:
                 self.logger.error('{} is not a standard key of COMSOL. Implement this first. Exiting here to be sure that this key is what you want'.format(a))
