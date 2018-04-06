@@ -301,7 +301,7 @@ class Calculator():
                                 #replace the first descriptor 
 #                                desc_list_new=np.linspace(0,value1,self.tp.comsol_args['nx'])
 #                                self.tp.descriptors[desc_keys[0]]=desc_list_new
-                                self.tp.descriptors['flux_factor']=np.linspace(0,1,self.tp.comsol_args['nx'])
+                                self.tp.descriptors['flux_factor']=np.linspace(0,1,self.tp.comsol_args['nflux'])
 
                             self.tp.logger.debug('Surface Concentrations:')
                             for sp in self.tp.species:
@@ -319,7 +319,7 @@ class Calculator():
                                 #rerun comsol with finer mesh
                                 self.tp.logger.warning(' | CS | NaN appeared in surface concentrations, rerunning COMSOL with slower ramping'+\
                                         ' and finer resolution of grid')
-                                self.tp.comsol_args['nflux']*=1.1
+                                self.tp.comsol_args['nflux']*=1.25
                                 self.tp.comsol_args['nflux']=int(self.tp.comsol_args['nflux'])
                                 self.tp.logger.info(' | CS | Number of flux ramping steps increased to {}'.format(self.tp.comsol_args['nflux']))
 
