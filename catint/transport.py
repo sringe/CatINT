@@ -320,7 +320,8 @@ class Transport(object):
         if self.use_electrode_reactions:
             for el in self.electrode_reactions:
                 for sp in sum(self.electrode_reactions[el]['reaction'],[]):
-                    if sp not in self.species and sp not in self.system['exclude species']:
+                    print 'TEST',sp
+                    if sp not in self.species and sp not in self.system['exclude species'] and not sp.startswith('*'):
                         self.logger.error('Species {} has not been defined, but is used in the electrode reactions, define it first!'.format(sp))
                         self.logger.error('  This is the current species list:')
                         for sp in self.species:
@@ -506,7 +507,7 @@ class Transport(object):
         #another check, the current density method should be only selected if the species is a product:
         for sp in self.species:
             if 'current density' in self.species[sp]:
-                if sp not in self.electrode_reactions:
+                if sp not in [prod.split('-')[0] for prod in self.electrode_reactions]:
                     self.logger.error('Flux of species {} has been given as current density but this species is not product.'.format(sp))
 
         #last check, check if more than one flux per equation has been defined which is not necessary!
@@ -517,6 +518,8 @@ class Transport(object):
             count=0
             for ep in sum([educts,products],[]):
                 if ep in self.system['exclude species']:
+                    continue
+                if '*' in ep:
                     continue
                 if any([a in ['flux','current density','flux-equation'] for a in self.species[ep]]):
                     count+=1
@@ -558,8 +561,10 @@ class Transport(object):
                         sign='(-1)'
                     else:
                         sign='1'
-                    nprod=len([a for a in self.electrode_reactions[sp]['reaction'][1] if a==sp])
-                    self.species[sp]['flux']=sign+'*'+str(self.species[sp]['current density']/self.electrode_reactions[sp]['nel']/unit_F*nprod)
+                    for reac in self.electrode_reactions:
+                        if sp==reac.split('-')[0]:
+                            nprod=len([a for a in self.electrode_reactions[reac]['reaction'][1] if a==sp])
+                            self.species[sp]['flux']=sign+'*'+str(self.species[sp]['current density']/self.electrode_reactions[reac]['nel']/unit_F*nprod)
                 elif 'flux-equation' in self.species[sp]:
                     self.species[sp]['flux']=self.species[sp]['flux-equation']
         else:
@@ -569,8 +574,10 @@ class Transport(object):
                         sign=-1
                     else:
                         sign=1
-                    nprod=len([a for a in self.electrode_reactions[sp]['reaction'][1] if a==sp])
-                    self.species[sp]['flux']=sign*self.species[sp]['current density']/self.electrode_reactions[er]['nel']/unit_F*nprod
+                    for reac in self.electrode_reactions:
+                        if sp==reac.split('-')[0]:
+                            nprod=len([a for a in self.electrode_reactions[reac]['reaction'][1] if a==sp])
+                            self.species[sp]['flux']=sign*self.species[sp]['current density']/self.electrode_reactions[reac]['nel']/unit_F*nprod
 
         ers=self.electrode_reactions
         #first set the fluxes of all products
@@ -578,7 +585,7 @@ class Transport(object):
         for er in ers:
             #check for undefined fluxes
             for reac in sum(ers[er]['reaction'],[]):
-                if reac not in ers and reac not in ['e-'] and reac not in self.system['exclude species'] and reac not in missing_species:
+                if reac not in ers and reac not in ['e-'] and reac not in self.system['exclude species'] and reac not in missing_species and not reac.startswith('*'):
                     missing_species+=[reac]
             if len(missing_species)>0:
                 self.logger.info('Calculating fluxes of {} as sum of other fluxes'.format(missing_species))
@@ -590,6 +597,8 @@ class Transport(object):
             for ep in sum([educts,products],[]):
                 if ep in self.system['exclude species']:
                     continue
+                if '*' in ep:
+                    continue
                 if any([a in ['flux','current density','flux-equation'] for a in self.species[ep]]):
                     ref_sp[er]=ep
                     break
@@ -600,6 +609,8 @@ class Transport(object):
             sp=ref_sp[er]
             #adjust fluxes of all missing species
             for missing in missing_species:
+                if missing not in educts and missing not in products:
+                    continue
                 count_missing=max(educts.count(missing),products.count(missing))*1.
                 count_ref=max(educts.count(sp),products.count(sp))*1.
                 both_in_educts=(missing in educts)*(sp in educts)
@@ -653,7 +664,7 @@ class Transport(object):
                     if len(nel)>0:
                         #this is e-, have to count this
                         reactions[reaction]['nel']=int(nel[0])
-                    N=re.findall('([0-9]+)[ ]+[A-Za-z]+',reactant)
+                    N=re.findall('([0-9]+)[ ]+[*A-Za-z]+',reactant)
                     if len(N)<1:
                         reactants_out.append(reactant.strip())
 #                        reactants_out.append([r.strip() for r in reactants if len(r)>0])

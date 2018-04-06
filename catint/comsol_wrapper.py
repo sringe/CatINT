@@ -1194,7 +1194,8 @@ class Comsol():
                 self.tp.electrode_reactions[reac]['electrode_current_density']={}
         if not 'internal' in self.tp.desc_method:
             i2+=1
-            for sp in self.tp.electrode_reactions:
+            for reac in self.tp.electrode_reactions:
+                sp=reac.split('-')[0]
                 nprod=len([a for a in self.tp.electrode_reactions[sp]['reaction'][1] if a==sp])
                 isp=[i for i,sp2 in enumerate(self.tp.species) if sp2==sp][0] #index in species array
                 
@@ -1212,7 +1213,8 @@ class Comsol():
             for desc in int_desc_list:
                 if only_last and desc!=int_desc_list[-1]:
                     continue
-                for sp in self.tp.electrode_reactions:
+                for reac in self.tp.electrode_reactions:
+                    sp=reac.split('-')[0]
                     nprod=len([a for a in self.tp.electrode_reactions[sp]['reaction'][1] if a==sp])
                     isp=[i for i,sp2 in enumerate(self.tp.species) if sp2==sp][0] #index in species array
                     c_current_density=self.tp.all_data[str(desc)][str(int_desc_non)]['system']['electrode_flux'][isp]*self.tp.electrode_reactions[sp]['nel']*unit_F/nprod/10.
