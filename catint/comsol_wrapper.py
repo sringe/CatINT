@@ -184,7 +184,7 @@ class Comsol():
             for i,sp in enumerate(self.tp.species):
                 if type(self.tp.species[sp]['flux'])!=str:
                     #define fluxes here as parameters
-                    inp.write('    model.param().set("j{}", "flux_factor*{}[mol/m^2/s]", "{} flux");\n'.format(\
+                    inp.write('    model.param().set("j{}", "flux_factor*RF*{}[mol/m^2/s]", "{} flux");\n'.format(\
                         i+1, self.tp.species[sp]['flux'],self.tp.species[sp]['name']))
 
 
@@ -490,7 +490,7 @@ class Comsol():
             #fluxes
             f_str=""
             for i in range(len(self.tp.species)):
-                f_str+="{\"j"+str(i+1)+"*flux_factor*SA\"}"
+                f_str+="{\"j"+str(i+1)+"\"}"
                 if i != len(self.tp.species)-1:
                     f_str+=", "
 

@@ -149,7 +149,8 @@ class Transport(object):
                 'boundary thickness',       #m
                 'exclude species',
                 'active site density',       #mol/m^2
-                'current density'
+                'current density',
+                'roughness factor',                       #roughness factor
                 ]
 
         #go over input data and put in some defaults if none
@@ -469,6 +470,12 @@ class Transport(object):
                 comsol_args[a]=[]
         if 'grid_factor' not in comsol_args:
             comsol_args['grid_factor']=200
+
+        if 'roughness factor' not in self.system:
+            comsol_args['parameter']['RF']=['1','Roughness Factor']
+        else:
+            comsol_args['parameter']['RF']=[str(self.system['roughness factor']),'Roughness Factor']
+
         if not 'nflux' in comsol_args:
             comsol_args['nflux']=32 #default to 32 steps for flux ramping
         for a in comsol_args:
