@@ -327,6 +327,7 @@ class Calculator():
                                     nflux_step=self.tp.comsol_args['nflux']/1000
                                     self.tp.logger.info(' | CS | Ramping increase of 1000 did not help, trying to decrease also minimal grid discretization')
                                     self.tp.comsol_args['grid_factor']*=1.1
+                                    self.tp.comsol_args['grid_factor']=int(self.tp.comsol_args['grid_factor'])
                                     self.tp.logger.info(' | CS | Maximal discretization of x-axis and boundary condition raised to {}'.format(self.tp.comsol_args['grid_factor']))
 
                                 if self.tp.comsol_args['nflux']>20000:
