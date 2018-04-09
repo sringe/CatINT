@@ -361,7 +361,7 @@ class CatMAP():
                 replace_line(self.catmap_model,i-1,'data_file = \''+self.model_name+'.pkl\'')
                 continue
             if line.strip().startswith('bulk_ph'):
-                replace_line(self.catmap_model,i-1,'bulk_ph = '+str(self.tp.system['pH']))
+                replace_line(self.catmap_model,i-1,'bulk_ph = '+str(self.tp.system['bulk_pH']))
                 continue
             for sp in self.tp.species:
                 sp_cm=self.species_to_catmap(sp)
@@ -394,7 +394,7 @@ class CatMAP():
                 replace_line(self.catmap_model,i-1,'descriptor_names= [\''+desc_1+'\', \''+desc_2+'\']')
             sol=re.findall('pH[ ]*=[ ]*\d',line)
             if len(sol)>0:
-                replace_line(self.catmap_model,i-1,'pH = '+str(self.tp.system['surface pH'])+'')
+                replace_line(self.catmap_model,i-1,'pH = '+str(self.tp.system['surface_pH'])+'')
         for sp in self.tp.species:
             if sp not in replaced_species and sp not in self.tp.system['exclude species'] and sp not in self.tp.electrolyte_list:
                 self.tp.logger.warning('Pressure of species {} not in catmap mkm file, give an arbitrary pressure of all species needed which will then be replaced by CatINT'.format(sp))

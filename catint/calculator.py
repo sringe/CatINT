@@ -52,19 +52,15 @@ if found:
 class Calculator():
 
     def __init__(self,transport=None,dt=None,tmax=None,ntout=1,calc=None,
-            scale_pb_grid=None,tau_jacobi=1e-7,tau_scf=5e-5,mix_scf=0.5,mode='time-dependent',\
-                desc_method='internal-cont'):
-
+            scale_pb_grid=None,tau_jacobi=1e-7,tau_scf=5e-5,mix_scf=0.5,mode='time-dependent'):
+    
         self.mode=mode #calculation mode for comsol: time-dependent or stationary. the local
         #solvers here are all time-dependent
-
-
-
         self.tau_scf=tau_scf
         self.mix_scf=mix_scf
 
         if transport is None:
-            self.tp.logger.error('No transport object provided for calculator. Stopping here.')
+            print('No transport object provided for calculator. Stopping here.')
             sys.exit()
         else:
             self.tp=transport #transport object
@@ -79,17 +75,6 @@ class Calculator():
 #        if os.path.exists('results.txt'):
 #            os.remove('results.txt')
 
-        #method for descriptor:
-        #internal: parameters are updated internally in comsol
-        #  internal-reinit: at each parameter set, the solutions are reinitialized (default)
-        #  internal-cont: the solution of the previous parameter set is used to initialize the next
-        #external: parameters are updated within this comsol.py routine and comsol 
-        #  is recompiled and relaunched for each new parameter set
-
-        self.tp.desc_method=desc_method
-        if calc!='comsol' and desc_method!='external':
-            self.tp.logger.warning('Only comsol solver works with internal solution continuation, switching to external here.')
-            self.tp.desc_method='external'
 
 
         self.use_lax_friedrich=False
@@ -209,162 +194,40 @@ class Calculator():
 
     def run(self):
         itask=0
-        desc_copy_glob=self.tp.descriptors.copy()
-        if self.tp.descriptors is not None and (self.tp.desc_method == 'external' or self.tp.use_catmap):
-            desc_keys=[key for key in desc_copy_glob]
+        if self.tp.descriptors is not None and \
+            (self.tp.comsol_args['desc_method'] == 'external' or self.tp.use_catmap):
+
+            desc_keys=[key for key in self.tp.descriptors]
             i1=0
             i2=0
-            for value1 in desc_copy_glob[desc_keys[0]]:
+            for value1 in self.tp.descriptors[desc_keys[0]]:
                 i1+=1
                 i2=0
-                for value2 in desc_copy_glob[desc_keys[1]]:
+                for value2 in self.tp.descriptors[desc_keys[1]]:
                     i2+=1
                     itask+=1
                     #only proceed if this should be performed for current task
                     if itask%self.tp.mpi_size!=self.tp.mpi_rank:
                         continue
 
-                    self.tp.system['phiM']=float(value1)
+                    #update the iterating descriptor based property in system properties
+                    self.tp.system[desc_keys[0]]=float(value1)
+                    self.tp.system[desc_keys[1]]=float(value2)
 
                     self.tp.logger.info('Starting calculation for {} = {} and {} = {} on CPU {} of {}'.format(desc_keys[0],value1,desc_keys[1],value2,self.tp.mpi_rank,self.tp.mpi_size))
                     label=str(i1).zfill(4)+'_'+str(i2).zfill(4)
-                    #=desc_keys[0]+'='+str(value1)+'_'+desc_keys[1]+'='+str(value2)
-                    #update the iterating descriptor based property in system properties
-                    self.tp.system[desc_keys[0]]=value1
-                    self.tp.system[desc_keys[1]]=value2
+
                     #update descriptor based data collection
-                    #self.tp.all_data[str(value1)][str(value2)]['system'][desc_keys[0]]=self.tp.system[desc_keys[0]]
-                    #self.tp.all_data[str(value1)][str(value2)]['system'][desc_keys[1]]=self.tp.system[desc_keys[1]]
-                    
+                    self.tp.update_alldata(value1,value2)
 
                     if not self.tp.use_catmap:
-                        self.run_single_step(label=label,desc_val=[str(value1),str(value2)])
+                        self.run_single_step(label=label)
                     else:
-                        istep=0
-                        step_to_check=0
-                        scf_accuracy=np.inf
-                        self.tp.logger.info('Starting iterative solution with CatMAP and COMSOL')
-                        self.tp.logger.info('  using a current density accuracy cutoff of {} mV/cm^2 and a linear mixing parameter of {}'.format(self.tau_scf,self.mix_scf))
-                        accuracies=[]
-                        while scf_accuracy>self.tau_scf:
-                            istep+=1
-                            #evaluate how the accuracy during the last 50 steps, if it does not significantly decrease, reduce the mixing factor
-                            if istep-step_to_check>80 and abs(accuracy[-2]-accuracy[-1])>1e-1:
-                                #still no convergence, try to decrease mixing factor
-                                self.scf_mix*=0.9
-                                self.tp.logger.info(' | Accuracy is still < 1e-1, decreasing mixing factor in order to speed up the convergence')
-                                step_to_check=istep
-                            self.tp.logger.info(' | Solving transport step {}. Current accuracy in current density = {} mV/cm^2'.format(istep,scf_accuracy))
-
-                            #linear mixing
-                            if istep>2:
-                                #mix fluxes
-                                for sp in self.tp.species:
-#                                    self.tp.species[sp]['flux']=self.mix_scf*self.tp.species[sp]['flux']+(1.-self.mix_scf)*fl_old[sp]
-                                    self.tp.species[sp]['surface concentration']=self.mix_scf*self.tp.species[sp]['surface concentration']+\
-                                            (1.-self.mix_scf)*sc_old[sp]
-
-                            #for linear mixing, safe all current densities and surface concentrations (input for comsol and catmap, respectively)
-                            sc_old={}
- #                           fl_old={}
-                            for sp in self.tp.species:
-                                sc_old[sp]=self.tp.species[sp]['surface concentration']
- #                               fl_old[sp]=self.tp.species[sp]['flux']
-
-                            #1) Microkinetic Model: CatMAP
-                            if istep==1:
-                                self.tp.logger.debug('Electrode Fluxes:')
-                                for sp in self.tp.species:
-                                    self.tp.logger.debug('  {}: {}'.format(sp,self.tp.species[sp]['flux']))
-
-
-                            #run catmap. the fluxes will be updated automatically
-                            self.catmap.run(desc_val=[str(value1),str(value2)])
-                            self.tp.logger.debug('Electrode Fluxes:')
-                            for sp in self.tp.species:
-                                self.tp.logger.debug('  {}: {}'.format(sp,self.tp.species[sp]['flux']))
-
-                            #2) Transport: COMSOL
-                            if 'internal' in self.tp.desc_method:
-                                #we have to still slowly ramp up the flux inside comsol
-                                #so for internal comsol, pass a list of descriptors which goes until the current potential
-                                #then the last potential (datapoint) will be the result we are up to
-                                desc_copy=self.tp.descriptors.copy()
-                                i=-1
-                                self.tp.descriptors={}
-                                desc_keys=[key for key in desc_copy]
-                                self.tp.descriptors[desc_keys[1]]=desc_copy[desc_keys[1]]
-#                                desc_list_new=[]
-#                                for idd,dd in enumerate(self.tp.descriptors[desc_keys[0]]):
-#                                    if abs(dd) <= abs(value1):
-#                                        desc_list_new.append(dd)
-                                #replace the first descriptor 
-#                                desc_list_new=np.linspace(0,value1,self.tp.comsol_args['nx'])
-#                                self.tp.descriptors[desc_keys[0]]=desc_list_new
-                                self.tp.descriptors['flux_factor']=np.linspace(0,1,self.tp.comsol_args['nflux'])
-
-                            self.tp.logger.debug('Surface Concentrations:')
-                            for sp in self.tp.species:
-                                self.tp.logger.debug('  {}: {} mol/L'.format(sp,self.tp.species[sp]['surface concentration']/1000.))
-
-                            #only_last updates the descriptor based dictionaries only for the last entry in self.tp.descriptors
-                            self.run_single_step(label=label,desc_val=[str(value1),str(value2)],only_last=True)
-
-                            was_nan=False
-                            grid_factor=self.tp.comsol_args['grid_factor']
-                            nflux=self.tp.comsol_args['nflux']
-                            nflux_step=0
-                            while any([math.isnan(self.tp.species[sp]['surface concentration']) for sp in self.tp.species]):
-                                was_nan=True
-                                #rerun comsol with finer mesh
-                                self.tp.logger.warning(' | CS | NaN appeared in surface concentrations, rerunning COMSOL with slower ramping'+\
-                                        ' and finer resolution of grid')
-                                self.tp.comsol_args['nflux']*=1.25
-                                self.tp.comsol_args['nflux']=int(self.tp.comsol_args['nflux'])
-                                self.tp.logger.info(' | CS | Number of flux ramping steps increased to {}'.format(self.tp.comsol_args['nflux']))
-
-                                if self.tp.comsol_args['nflux']/1000 != nflux_step:
-                                    nflux_step=self.tp.comsol_args['nflux']/1000
-                                    self.tp.logger.info(' | CS | Ramping increase of 1000 did not help, trying to decrease also minimal grid discretization')
-                                    self.tp.comsol_args['grid_factor']*=1.1
-                                    self.tp.comsol_args['grid_factor']=int(self.tp.comsol_args['grid_factor'])
-                                    self.tp.logger.info(' | CS | Maximal discretization of x-axis and boundary condition raised to {}'.format(self.tp.comsol_args['grid_factor']))
-
-                                if self.tp.comsol_args['nflux']>20000:
-                                    self.tp.logger.error(' | CS | ramping # nflux is larger than 20000, stopping here, we will probably not get any convergence')
-                                    sys.exit()
-
-                                self.tp.descriptors['flux_factor']=np.linspace(0,1,self.tp.comsol_args['nflux'])
-
-#                                self.tp.logger.warning(' | CS | Current x-axis resolution =  {} intervals.'.format(self.tp.comsol_args['nflux']))
-                                self.tp.logger.warning(' | CS | Current ramping of flux =  {} intervals.'.format(self.tp.comsol_args['nflux']))
-
-                                self.run_single_step(label=label,desc_val=[str(value1),str(value2)],only_last=True)
-
-                                self.tp.logger.debug('Surface Concentrations:')
-                                for sp in self.tp.species:
-                                    self.tp.logger.debug('  {}: {} mol/L'.format(sp,self.tp.species[sp]['surface concentration']/1000.))
-
-                            if was_nan:
-                                #reset the grid_factor to original value:
-                                self.tp.comsol_args['nflux']=nflux
-                                self.tp.comsol_args['grid_factor']=grid_factor
-
-                            if 'internal' in self.tp.desc_method:
-                                #copy the descriptor list back
-                                self.tp.descriptors=desc_copy
-                            #3) Check Convergence
-                            current_density=[]
-                            for sp in self.tp.electrode_reactions:
-                                current_density.append(self.tp.electrode_reactions[sp]['electrode_current_density'][(str(1.0),str(value2))])
-                            if istep>1:
-                                scf_accuracy=self.evaluate_accuracy(current_density,old_current_density)
-                            old_current_density=deepcopy(current_density)
-                            accuracies.append(scf_accuracy)
-
+                        self.run_scf_cycle()
             #synchronize all_data over CPUs
 #            self.tp.all_data=reduce_dict_mpi(self.tp.all_data)
         else:
+        #internal treatment of parameter
             if not self.tp.use_catmap:
                 self.run_single_step()
             else:
@@ -396,22 +259,114 @@ class Calculator():
         else:
             return False
 
-    def run_single_step(self,label='',desc_val=[],only_last=False):
-#        print 'ntout=',self.tp.ntout
-#        for n in range(len(self.tp.tmesh)):
-#            print 'checking',n, self.tp.nt/float(self.tp.ntout)
-#            if n%int(self.tp.nt/float(self.tp.ntout))==0: # or n==self.tp.nt-1:
-#                print 'this will be outputted',n
-#        exit()
+    def run_single_step(self,label=''):
+        """run a single transport calculation"""
+#        if self.calc != 'comsol':
+#            cout=self.integrate_pnp(self.tp.dx,self.tp.nx,self.tp.dt,\
+#                len(self.tp.tmesh),self.tp.ntout,method=self.calc)
+#            for i_sp,sp in enumerate(self.tp.species):
+#                self.tp.species[sp]['concentration']=cout[-1,i_sp*self.tp.nx:(i_sp+1)*self.tp.nx]
+#            self.tp.cout=cout
+#        else:
+        self.comsol.run(label=label)
 
-        #keys=[key for key in self.tp.descriptors]
-        #values1=str(self.tp.descriptors[keys[0]][0])
-        #values2=str(self.tp.descriptors[keys[0]][1])
-        if self.calc != 'comsol':
-            cout=self.integrate_pnp(self.tp.dx,self.tp.nx,self.tp.dt,\
-                len(self.tp.tmesh),self.tp.ntout,method=self.calc)
-            for i_sp,sp in enumerate(self.tp.species):
-                self.tp.species[sp]['concentration']=cout[-1,i_sp*self.tp.nx:(i_sp+1)*self.tp.nx]
-            self.tp.cout=cout
-        else:
-            self.comsol.run(label=label,desc_val=desc_val,only_last=only_last)
+    def run_scf_cycle(self):
+        """run scf cycle to converge catmap-comsol iterations"""
+        istep=0
+        step_to_check=0
+        scf_accuracy=np.inf
+        self.tp.logger.info('Starting iterative solution with CatMAP and COMSOL')
+        self.tp.logger.info('  using a current density accuracy cutoff of {} mV/cm^2 and a linear mixing parameter of {}'.format(self.tau_scf,self.mix_scf))
+        accuracies=[]
+        while scf_accuracy>self.tau_scf:
+            istep+=1
+            #evaluate how the accuracy during the last 50 steps, if it does not significantly decrease, reduce the mixing factor
+            if istep-step_to_check>80 and abs(accuracy[-2]-accuracy[-1])>1e-1:
+                #still no convergence, try to decrease mixing factor
+                self.scf_mix*=0.9
+                self.tp.logger.info(' | Accuracy is still < 1e-1, decreasing mixing factor in order to speed up the convergence')
+                step_to_check=istep
+            self.tp.logger.info(' | Solving transport step {}. Current accuracy in current density = {} mV/cm^2'.format(istep,scf_accuracy))
+
+            #linear mixing
+            if istep>2:
+                #mix fluxes
+                for sp in self.tp.species:
+#                    self.tp.species[sp]['flux']=self.mix_scf*self.tp.species[sp]['flux']+(1.-self.mix_scf)*fl_old[sp]
+                    self.tp.species[sp]['surface concentration']=self.mix_scf*self.tp.species[sp]['surface concentration']+\
+                            (1.-self.mix_scf)*sc_old[sp]
+
+            #for linear mixing, safe all surface concentrations
+            sc_old={}
+            for sp in self.tp.species:
+                sc_old[sp]=self.tp.species[sp]['surface concentration']
+
+            #1) Microkinetic Model: CatMAP
+            if istep==1:
+                self.tp.logger.debug('Electrode Fluxes:')
+                for sp in self.tp.species:
+                    self.tp.logger.debug('  {}: {}'.format(sp,self.tp.species[sp]['flux']))
+
+            #run catmap. the fluxes will be updated automatically
+            self.catmap.run()
+            self.tp.logger.debug('Electrode Fluxes:')
+            for sp in self.tp.species:
+                self.tp.logger.debug('  {}: {}'.format(sp,self.tp.species[sp]['flux']))
+
+            #2) Transport: COMSOL
+
+            self.tp.logger.debug('Surface Concentrations:')
+            for sp in self.tp.species:
+                self.tp.logger.debug('  {}: {} mol/L'.format(sp,self.tp.species[sp]['surface concentration']/1000.))
+
+            #only_last updates the descriptor based dictionaries only for the last entry in self.tp.descriptors
+            self.run_single_step(label=label)
+
+            was_nan=False
+            grid_factor=self.tp.comsol_args['grid_factor']
+            nflux=self.tp.comsol_args['nflux']
+            nflux_step=0
+            while any([math.isnan(self.tp.species[sp]['surface concentration']) for sp in self.tp.species]):
+                was_nan=True
+                #rerun comsol with finer mesh
+                self.tp.logger.warning(' | CS | NaN appeared in surface concentrations, rerunning COMSOL with slower ramping'+\
+                        ' and finer resolution of grid')
+                self.tp.comsol_args['nflux']*=1.25
+                self.tp.comsol_args['nflux']=int(self.tp.comsol_args['nflux'])
+                self.tp.logger.info(' | CS | Number of flux ramping steps increased to {}'.format(self.tp.comsol_args['nflux']))
+
+                if self.tp.comsol_args['nflux']/1000 != nflux_step:
+                    nflux_step=self.tp.comsol_args['nflux']/1000
+                    self.tp.logger.info(' | CS | Ramping increase of 1000 did not help, trying to decrease also minimal grid discretization')
+                    self.tp.comsol_args['grid_factor']*=1.1
+                    self.tp.comsol_args['grid_factor']=int(self.tp.comsol_args['grid_factor'])
+                    self.tp.logger.info(' | CS | Maximal discretization of x-axis and boundary condition raised to {}'.format(self.tp.comsol_args['grid_factor']))
+
+                if self.tp.comsol_args['nflux']>20000:
+                    self.tp.logger.error(' | CS | ramping # nflux is larger than 20000, stopping here, we will probably not get any convergence')
+                    sys.exit()
+
+                self.tp.comsol_args['par_values']=np.linspace(0,1,self.tp.comsol_args['nflux'])
+
+#                self.tp.logger.warning(' | CS | Current x-axis resolution =  {} intervals.'.format(self.tp.comsol_args['nflux']))
+                self.tp.logger.warning(' | CS | Current ramping of flux =  {} intervals.'.format(self.tp.comsol_args['nflux']))
+
+                self.run_single_step(label=label)
+
+                self.tp.logger.debug('Surface Concentrations:')
+                for sp in self.tp.species:
+                    self.tp.logger.debug('  {}: {} mol/L'.format(sp,self.tp.species[sp]['surface concentration']/1000.))
+
+            if was_nan:
+                #reset the grid_factor to original value:
+                self.tp.comsol_args['nflux']=nflux
+                self.tp.comsol_args['grid_factor']=grid_factor
+
+            #3) Check Convergence
+            current_density=[]
+            for sp in self.tp.electrode_reactions:
+                current_density.append(self.tp.electrode_reactions[sp]['electrode_current_density'][(str(1.0),str(value2))])
+            if istep>1:
+                scf_accuracy=self.evaluate_accuracy(current_density,old_current_density)
+            old_current_density=deepcopy(current_density)
+            accuracies.append(scf_accuracy)

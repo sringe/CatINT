@@ -11,7 +11,7 @@ nobuffer=True
 #False #True #False #True #False #True #False #True #False #True #False #True #False #True #False #True 
 
 nx=200
-nphi=520 #1040 #260 #130
+nphi=20 #520 #1040 #260 #130
 
 SA=1.
 use_elreac=True
@@ -273,7 +273,7 @@ comsol_args['global_variables']={}
 
 comsol_args['parameter']['phiM_ref_she']=['-7*log(10.)*RT/F_const','Reference potential vs. SHE']
 
-comsol_args['boundary_variables']['cOH_at_0']=['[[OH-]]','OH- concentration at the electrode']
+comsol_args['boundary_variables']['cOH_at_0']=['cp[[OH-]]','OH- concentration at the electrode']
 #comp1.at0(0,cp[[OH-]])','OH- concentration at the electrode']
 comsol_args['boundary_variables']['pH_at_0']=['14+log10(max(cp[[OH-]],OH_min)*Lmol)','pH at the electrode']
 #14+log10(max(cOH_at_0,OH_min)*Lmol)','pH at the electrode']
@@ -284,11 +284,11 @@ boundary_thickness=7.93E-05 #in m
 system['boundary thickness']=boundary_thickness
 #'delta_phi_inf_min_iR
 comsol_args['boundary_variables']['delta_phi']=['0.0','Electrolyte potential drop']
-comsol_args['boundary_variables']['jH']=['SA*rho_act*A*'+\
+comsol_args['boundary_variables']['jH']=['rho_act*A*'+\
                          'exp('+\
                             '-(Ga_H+alpha_H*(phiM-phiM_ref_she)*F_const)/RT'+\
                          ')','rate of H']
-comsol_args['boundary_variables']['jH_back']=['SA*rho_act*A*('+\
+comsol_args['boundary_variables']['jH_back']=['rho_act*A*('+\
                          'exp('+\
                             '-(Ga_H+alpha_H*(phiM-phiM_ref_she)*F_const)/RT'+\
                          ')+'+\
@@ -298,7 +298,7 @@ comsol_args['boundary_variables']['jH_back']=['SA*rho_act*A*('+\
 
 method=0 #method2 with stationary solver only working one, so far...
 
-H2_rate='jH_back'
+H2_rate='jH'
 species['H2']['flux-equation']=H2_rate
 
 
@@ -308,14 +308,21 @@ if not nobuffer:
 
 comsol_args['bin_path']='/Applications/COMSOL53a/Multiphysics/bin/comsol'
 
+#descriptor method
+comsol_args['desc_method']='internal-cont'
+comsol_args['par_name']='phiM'
+comsol_args['model_type']='tp_dilute_species'
+comsol_args['solver']='parametric'
+
 ###########################################################################
 #BOUNDARY CONDITIONS FOR PBE
 ###########################################################################
 
+
 potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(0.0,-1.4,nphi))}
+    descriptors={'phiM':list(np.linspace(0.0,-1.5,nphi))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
@@ -352,7 +359,8 @@ for potential in potentials:
     
     tp.set_calculator('comsol') #odespy') #--bdf')
     
-    c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
+    c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary') #time-dependent')
+
     c.run() #1.0)
     tp.save() #saves all data to pickle files to enable restart or plotting later
     

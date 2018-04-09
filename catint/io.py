@@ -44,7 +44,7 @@ def insert_line(file_name,line_num,text):
 def save_all(tp,only=None):
     """saves all dictionaries and arrays into pickle files in the obj folder"""
     if only is None:
-        save_obj(tp.outputfoldername,tp.all_data,'all_data')
+        save_obj(tp.outputfoldername,tp.alldata,'alldata')
         save_obj(tp.outputfoldername,tp.species,'species')
         save_obj(tp.outputfoldername,tp.system,'system')
         save_obj(tp.outputfoldername,tp.descriptors,'descriptors')
@@ -53,9 +53,9 @@ def save_all(tp,only=None):
         save_obj(tp.outputfoldername,tp.electrode_reactions,'electrode_reactions')
         save_obj(tp.outputfoldername,tp.electrolyte_reactions,'electrolyte_reactions')
         save_obj(tp.outputfoldername,tp.comsol_args['outputs'],'comsol_outputs')
-        save_obj(tp.outputfoldername,tp.comsol_outputs_data,'comsol_outputs_data')
+#        save_obj(tp.outputfoldername,tp.comsol_outputs_data,'comsol_outputs_data')
     else:
-        save_obj(tp.outputfoldername,tp.all_data,only)
+        save_obj(tp.outputfoldername,tp.alldata,only)
 
 def add_to_dict(self,append,*expr):
     (filename,line_number,function_name,text)=traceback.extract_stack()[-2]

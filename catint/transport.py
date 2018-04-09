@@ -36,7 +36,13 @@ class Transport(object):
     def __init__(self, species=None,electrode_reactions=None,electrolyte_reactions=None,\
             system=None,pb_bound=None,nx=100,\
             descriptors=None,model_name=None,\
-            comsol_args={},catmap_args={}):
+            comsol_args={},catmap_args={},only_plot=False):
+        """
+        only_plot   only initialize transport without creating folders
+        """
+
+        if only_plot:
+            return
 
         #MPI setup
         if use_mpi:
@@ -62,7 +68,6 @@ class Transport(object):
         self.outputfoldername=self.model_name+'_results' #folder where all results will be saved with the self.save function
         self.inputfilename=sys.argv[0] #the input file
 
-        print 'currently rank=',rank
         if rank==0:
             if not os.path.exists(self.outputfoldername):
                 os.makedirs(self.outputfoldername)
@@ -92,17 +97,11 @@ class Transport(object):
         if use_mpi:
             comm.Barrier()
 
-#        logger = logging.getLogger("node[%i]"%comm.rank)
-        # set up logging to file - see previous section for more details
         logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                     datefmt='%m-%d %H:%M',
                     filename='.'.join(self.logfilename.split('.')[:-1])+'_id'+str(rank).zfill(3)+'.log',
                     filemode='w')
-#        mh = MPIFileHandler(self.logfilename)
-#        formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-#        mh.setFormatter(formatter)
-#        logger.addHandler(mh)
 
         if rank==0:
             # define a Handler which writes INFO messages or higher to the sys.stderr
@@ -136,7 +135,7 @@ class Transport(object):
         system_keys=[
                 'phiM',                     #V
                 'Stern capacitance',        #mF/cm^2
-                'pH',
+                'bulk_pH',
                 'phiPZC',                   #V
                 'temperature',              #K
                 'pressure',     
@@ -231,23 +230,23 @@ class Transport(object):
                 self.species[sp]['bulk concentration']=0.0
 
         #get pH
-        if 'pH' in self.system:
+        if 'bulk_pH' in self.system:
             self.logger.info('pH given in system list, updating H+ and OH- concentrations if species exist')
             if 'H+' in self.species:
-                self.species['H+']['bulk concentration']=10**(-self.system['pH'])*1000.
+                self.species['H+']['bulk concentration']=10**(-self.system['bulk_pH'])*1000.
             elif 'OH-' in self.species:
-                self.species['OH-']['bulk concentration']=10**(-(14-self.system['pH']))*1000.
+                self.species['OH-']['bulk concentration']=10**(-(14-self.system['bulk_pH']))*1000.
         else:
             if 'H+' in self.species:
-                self.system['pH']=-np.log10(self.species['H+']['bulk concentration']/1000.)
+                self.system['bulk_pH']=-np.log10(self.species['H+']['bulk concentration']/1000.)
             elif 'OH-' in self.species:
-                self.system['pH']=14+np.log10(self.species['OH-']['bulk concentration']/1000.)
+                self.system['bulk_pH']=14+np.log10(self.species['OH-']['bulk concentration']/1000.)
             else:
                 #setting the pH to an arbitrary value, it is not relevant here
-                self.system['pH']=7.0
+                self.system['bulk_pH']=7.0
 
 
-        self.system['surface pH']=self.system['pH']
+        self.system['surface_pH']=self.system['bulk_pH']
 
         #initialize concentrations at electrode
         for sp in self.species:
@@ -462,14 +461,61 @@ class Transport(object):
             self.logger.error('# of CPUs is different from # of tasks. This is currently not supported.')
             sys.exit()
 
+        #INITIALIZE PARAMETERS OF EXTERNAL SOFTWARE
+        #-- CATMAP
         self.catmap_args=catmap_args
-        #create empty lists
-        comsol_keys=['outputs','boundary_variables','global_variables','global_equations','parameter','bin_path','nflux','grid_factor']
+        #-- COMSOL
+        self.initialize_comsol(comsol_args)
+
+    def initialize_comsol(self,comsol_args):
+        """
+        Short description of keys:
+            solver:             parametric or simple
+            studies:            stat or time
+            grid_factor:        factor that determines fine-ness of grid
+            bin_path:           comsol executable
+            global_variables:   variables defined on the entire geometry
+            boundary_variables: variables defined on a boundary
+            global_equations:   differential equations defined on entire geometry
+            outputs:            outputs to be created
+            nflux:              number of steps in increasing flux in parametric sweep
+        """
+        comsol_keys=['outputs','boundary_variables','global_variables','global_equations','parameter','bin_path','nflux',\
+            'par_name','par_values','desc_method','model_type','solver','studies']
+
+        #tp_dilute_species or porous_electrode
+        if 'model_type' not in comsol_args:
+            comsol_args['model_type']='tp_dilute_species'
+
+        if 'studies' not in comsol_args:
+            comsol_args['studies']=['stat']
+
+        if 'solver' not in comsol_args:
+            #parametric or simple
+            comsol_args['solver']='parametric'
+
         for a in ['outputs','global_variables','boundary_variables','parameter']:
             if not a in comsol_args:
-                comsol_args[a]=[]
-        if 'grid_factor' not in comsol_args:
-            comsol_args['grid_factor']=200
+                comsol_args[a]={}
+        if 'grid_factor' not in comsol_args['parameter']:
+            comsol_args['parameter']['grid_factor']=['200','Fineness of Grid']
+
+        #COMSOL Treatment of descriptors
+        #if the descriptor is the potential, we can use it internally in COMSOL
+        #as a parametric sweep. this kills to birds with a single shot, since
+        #slowly turning on the potential is like turning on the flux, but at the 
+        #same time evaluates the potential dependence of the current density, so
+        #we do not need to recompile COMSOL for every potential value
+
+        ### "desc_method" defines if/how to treat descriptors as parameter sweeps
+        #internal: descriptor given here will be used for iterating internally in comsol
+        #  if this selected descriptor is not the potential this could lead to convergence problems!
+        #  internal-reinit: at each parameter set, the solutions are reinitialized (default)
+        #  internal-cont: the solution of the previous parameter set is used to initialize the next
+        #external: parameters are updated within this comsol.py routine and comsol 
+        #  is recompiled and relaunched for each new parameter set
+        ### "par_name" selects a parameter from self.descriptors to use as parameter sweep
+        ### "par_values" lists the value of this parameter 
 
         if 'roughness factor' not in self.system:
             comsol_args['parameter']['RF']=['1','Roughness Factor']
@@ -482,6 +528,38 @@ class Transport(object):
             if a not in comsol_keys:
                 self.logger.error('{} is not a standard key of COMSOL. Implement this first. Exiting here to be sure that this key is what you want'.format(a))
                 sys.exit()
+
+        if 'desc_method' not in comsol_args:
+            #default is using flux sweep and external looping over descriptors
+            comsol_args['desc_method']='external'
+            if 'par_name' not in comsol_args:
+                comsol_args['par_name']='flux_factor'
+                comsol_args['par_values']=np.linspace(0,1,comsol_args['nflux'])
+        if comsol_args['desc_method'].startswith('internal'):
+            if self.use_catmap:
+                self.logger.warning('CatMAP does not work together with passing descriptors as COMSOL'+
+                    ' parameter sweep, changing desc_method to external')
+                comsol_args['desc_method']='external'
+                if 'par_name' not in comsol_args:
+                    comsol_args['par_name']='flux_factor'
+                    comsol_args['par_values']=np.linspace(0,1,comsol_args['nflux'])
+        if comsol_args['desc_method'].startswith('internal'):
+            if 'par_name' not in comsol_args:
+                self.logger.error('Descriptor was requested to be used as parameter sweep inside COMSOL'+
+                    ', however no descriptor was selected. Select one by setting the par_name key in'+
+                    'the comsol_args dictionary')
+                sys.exit()
+            if comsol_args['par_name'] not in self.descriptors:
+                self.logger.error('Selected descriptor for internal COMSOL ramping {} was not found'+
+                    ' in global descriptor list.')
+                sys.exit()
+            if 'par_values' not in comsol_args:
+                comsol_args['par_values']=self.descriptors[comsol_args['par_name']]
+            if comsol_args['par_name']!='phiM':
+                self.logger.warning('Selected Descriptor for COMSOL parameter sweep'+
+                    'is not the potential phiM. This is not recommended, be sure that'+
+                    'you do not get convergence issues')
+
         self.comsol_args=comsol_args
 
 
@@ -712,9 +790,9 @@ class Transport(object):
         if len(desc_keys)==1:
             self.logger.debug('Adding a dummy descriptor for convenience in the code')
             if 'temperature' not in desc_keys:
-                self.descriptors['temperature']=[str(self.system['temperature'])]
+                self.descriptors['temperature']=[self.system['temperature']]
             else:
-                self.descriptors['phiM']=[str(self.system['phiM'])]
+                self.descriptors['phiM']=[self.system['phiM']]
 
 
         desc_keys=[key for key in self.descriptors]
@@ -727,12 +805,26 @@ class Transport(object):
                 self.logger.error(desc+' not found in system list, cannot evaluate other than system descriptors, yet')
                 self.logger.error('Here is the current system list:\n{}'.format(self.system))
 
-        #initialize an dictionary which will contain all descriptor organized results:
-        self.all_data={}
+        #self.alldata_names
+        #gives the values of the descriptors for the alldata array
+        #suppose we have:
+        #   self.descriptors['desc_1']=[1,2,3]
+        #   self.descriptors['desc_2']=[10,11,12,13]
+        #then
+        #   self.alldata_name=[[1,10],[1,11],[1,12],...,[3,12],[3,13]]
+        #self.alldata
+        #contains all data on the same grid
+        #each grid point contains
+        self.alldata=[]
+        self.alldata_names=[]
+        i=-1
         for value1 in self.descriptors[desc_keys[0]]:
             for value2 in self.descriptors[desc_keys[1]]:
-                self.all_data[str(value1)]={str(value2):{'species':self.species.copy()}}
-                self.all_data[str(value1)][str(value2)]['system']=self.system.copy()
+                i+=1
+                self.alldata_names.append([value1,value2])
+                self.alldata.append({'species':{},'system':{}})
+                for sp in self.species:
+                    self.alldata[i]['species'][sp]={}
 
 #    def evaluate_fluxes(self):
 #        self.logger.info('Evaluating fluxes of {} as sum of products/educts'.format([sp for sp in self.species if type(self.species[sp]['flux'])==dict]))
@@ -767,6 +859,13 @@ class Transport(object):
 #        if 'unknown' in self.species:
 #            #we needed this flux only to calculate the co2 and oh- fluxes
 #            self.species['unknown']['flux']=0.0
+
+    def update_alldata(self,desc_value1,desc_value2):
+        """updates the alldata array with current system and species dictionaries for the descriptors [desc_value1,desc_value2]"""
+        #get index
+        index=self.alldata_names.index([desc_values[0],desc_values[1]])
+        self.alldata[index]['system']=self.tp.system.copy()
+        self.alldata[index]['species']=self.tp.species.copy()
 
     def symbol_reader(self,species):
     #determine charges and create arrays of charges and D's
