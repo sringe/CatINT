@@ -13,7 +13,7 @@ nobuffer=True
 nx=200
 nphi=20 #520 #1040 #260 #130
 
-SA=1.
+SA=1
 use_elreac=True
 if nobuffer:
     use_elreac=False
@@ -123,7 +123,7 @@ data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
 CO2_i = 0.03419*system['pressure']*1000. #initial CO2(aq) bulk concentrations at t=0 and Pressure P in [mol/m3] units
 #                        #from Henry constant (29.41 atm/M
 CO_i = 9.5e-4*system['pressure']*1000.
-H_i = 0.00078*system['pressure']*1000.
+H_i = 0.0 #0.00078*system['pressure']*1000.
 #CO32m_i = ((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)-\
 #            (np.sqrt((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)**2\
 #            -4.0*(bic_i)**2)))/2  #initial (CO3)2- bulk concentrations at t=0 [mol/m3]
@@ -203,10 +203,10 @@ species=\
                             'name':                 'hydroxyl',
                             'diffusion':            5.273e-9,
                             'bulk concentration':   OHm_i},
-    'H+':               {   'symbol':               'H^+',
-                            'name':                 'hydronium',
-                            'diffusion':            9.311e-9,   #CRC handbook, IONIC CONDUCTIVITY AND DIFFUSION AT INFINITE DILUTION
-                            'bulk concentration':   Hm_i},
+#    'H+':               {   'symbol':               'H^+',
+#                            'name':                 'hydronium',
+#                            'diffusion':            9.311e-9,   #CRC handbook, IONIC CONDUCTIVITY AND DIFFUSION AT INFINITE DILUTION
+#                            'bulk concentration':   Hm_i},
     'H2':               {   'symbol':               'H_2',
                             'name':                 'hydrogen',
                             'diffusion':            4.50e-009,
