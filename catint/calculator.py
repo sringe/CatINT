@@ -217,13 +217,10 @@ class Calculator():
                     self.tp.logger.info('Starting calculation for {} = {} and {} = {} on CPU {} of {}'.format(desc_keys[0],value1,desc_keys[1],value2,self.tp.mpi_rank,self.tp.mpi_size))
                     label=str(i1).zfill(4)+'_'+str(i2).zfill(4)
 
-                    #update descriptor based data collection
-                    self.tp.update_alldata(value1,value2)
-
                     if not self.tp.use_catmap:
                         self.run_single_step(label=label)
                     else:
-                        self.run_scf_cycle()
+                        self.run_scf_cycle(label=label)
             #synchronize all_data over CPUs
 #            self.tp.all_data=reduce_dict_mpi(self.tp.all_data)
         else:
@@ -270,7 +267,7 @@ class Calculator():
 #        else:
         self.comsol.run(label=label)
 
-    def run_scf_cycle(self):
+    def run_scf_cycle(self,label=''):
         """run scf cycle to converge catmap-comsol iterations"""
         istep=0
         step_to_check=0
