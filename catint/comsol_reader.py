@@ -98,26 +98,32 @@ class Reader():
                         ind_sp=int(re.findall('[a-zA-Z]+(\d+)',var_name)[0])
                         sp=[sp2 for j,sp2 in enumerate(self.tp.species) if j+1==ind_sp][0]
                         var_name=self.cs_to_ci(var)
+                        update_pH=None
+                        if var=='cp':
+                            if 'H+' in self.tp.species:
+                                if sp=='H+':
+                                    update_pH='H+'
+                            elif 'OH-' in self.tp.species:
+                                if sp=='OH-':
+                                    update_pH='OH-'
                         if jj==0 and geo=='domain':
                             self.tp.species[sp][var_name]=[]
 #                            if sp not in self.tp.alldata[alldata_inx]['species']:
 #                                self.tp.alldata[alldata_inx]['species'][sp]={}
                             self.tp.alldata[alldata_inx]['species'][sp][var_name]=[]
-                            if var=='cp':
+                            if update_pH is not None:
                                 self.tp.system['pH']=[]
                                 self.tp.alldata[alldata_inx]['system']['pH']=[]
                         #variables derived from concentrations:
                         if var=='cp':
-                            if 'H+' in self.tp.species:
-                                if sp=='H+':
-                                    if update_last:
-                                        self.tp.system['pH'].append(-np.log10(float(lss)/1000.))
-                                    self.tp.alldata[alldata_inx]['system']['pH'].append(-np.log10(float(lss)/1000.))
-                            elif 'OH-' in self.tp.species:
-                                if sp=='OH-':
-                                    if update_last:
-                                        self.tp.system['pH'].append(14+np.log10(float(lss)/1000.))
-                                    self.tp.alldata[alldata_inx]['system']['pH'].append(14+np.log10(float(lss)/1000.))
+                            if update_pH=='H+':
+                                if update_last:
+                                    self.tp.system['pH'].append(-np.log10(float(lss)/1000.))
+                                self.tp.alldata[alldata_inx]['system']['pH'].append(-np.log10(float(lss)/1000.))
+                            elif update_pH=='OH-':
+                                if update_last:
+                                    self.tp.system['pH'].append(14+np.log10(float(lss)/1000.))
+                                self.tp.alldata[alldata_inx]['system']['pH'].append(14+np.log10(float(lss)/1000.))
 
                         if x==0.0 and var=='cp':
                             if update_last:

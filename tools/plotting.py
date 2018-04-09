@@ -133,19 +133,34 @@ if n_col==0:
 n_row=l/2 #int(np.ceil(np.sqrt(l)))
 if n_row==0:
     n_row=1
-fig=plt.figure(figsize=(5*n_row,4*n_col))
+fig=plt.figure(figsize=(5*n_row,3.5*n_col))
 prop_inx={}
 ax_list=[]
 for i,p in enumerate(args.prop):
     ax_list.append(fig.add_subplot(str(n_col)+str(n_row)+str(i+1)))
-    ax_list[i].set_title(p.replace('_',' '))
     prop_inx[p]=i
 
-def settings(prop):
+def settings(ax,prop):
+    label=p.replace('_',' ')
     if prop=='concentration':
-        func=semilogx
-        
-    return func
+        ylabel=r'$c_i$ (M)'
+        xlabel=r'x ($\AA$)'
+        label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
+    elif prop=='electrode_current_density':
+        xlabel='Voltage vs. RHE (V)'
+        ylabel=r'i (mA/cm$^2$)'
+    elif prop=='pH':
+        ylabel='pH'
+        xlabel=r'x ($\AA$)'
+        label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
+    elif prop=='surface_pH':
+        xlabel='Voltage vs. RHE (V)'
+        ylabel='Surface pH'
+    else:
+        xlabel=''
+        ylabel=''
+    ax.set_title(label)
+    return xlabel,ylabel
 
 def plot(prop,d_sel_inx,ls):
     """create a plot of the property of interest"""
@@ -155,6 +170,9 @@ def plot(prop,d_sel_inx,ls):
         a=next(colors)
     inx=prop_inx[prop]
     ax=ax_list[inx]
+    xlabel,ylabel=settings(ax,prop)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
     xmesh=tp.xmesh
     if prop in ['concentration']:
         #x: xmesh
@@ -163,20 +181,22 @@ def plot(prop,d_sel_inx,ls):
         for sp in tp.species:
             color=next(colors)
             y=tp.alldata[d_sel_inx]['species'][sp][prop]
+            y=[yy/1000. for yy in y]
             ax.semilogx(x,y,ls,color=color,label=sp)
     elif prop in ['electrode_current_density','electrode_flux']:
         #x: descriptors
         #species 
         color=next(colors)
         x=tp.descriptors['phiM']
+        #plot vs. RHE
+        x=[xx+0.0592*tp.system['bulk_pH'] for xx in x]
         for sp in tp.species:
             if sp not in tp.electrode_reactions:
                 continue
             color=next(colors)
             y=[tp.alldata[i]['species'][sp][prop] for i in range(len(x))]
-            if prop=='electrode_current_density':
-                #plot vs. RHE
-                x=[xx+0.0592*tp.system['bulk_pH'] for xx in x]
+            print 'checking electrode_current density'
+            print y
             ax.semilogy(x,y,ls,color=color,label=sp)
             if prop=='electrode_current_density':
                 ax=plot_leis_new_data(ax)
@@ -190,6 +210,8 @@ def plot(prop,d_sel_inx,ls):
         #x: descriptors
         #system
         x=tp.descriptors['phiM']
+        #plot vs. RHE
+        x=[xx+0.0592*tp.system['bulk_pH'] for xx in x]
         y=[tp.alldata[i]['system'][prop] for i in range(len(x))]
         ax.plot(x,y,ls,color='k')
 
@@ -201,8 +223,11 @@ for iif,f in enumerate(args.folder):
         if abs(d-args.desc)<min_d:
             min_d=abs(d-args.desc)
             d_sel_inx=i
+            d_sel=d
     for p in args.prop:
+        print('Plotting {}'.format(p))
         plot(p,d_sel_inx,ls)
 for ax in ax_list:
-    ax.legend()
+    ax.legend(prop={'size': 6})
+plt.tight_layout()
 plt.show()
