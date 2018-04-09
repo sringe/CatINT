@@ -67,8 +67,9 @@ class CatMAP():
         else:
             self.n_inter_max=150
 
-    def run(self,desc_val):
+    def run(self):
         desc_keys=[key for key in self.tp.descriptors]
+        desc_val=[self.tp.system[key] for key in self.tp.descriptors]
         self.tp.logger.info(' | CM | Starting CatMAP for {} = {}'.format(desc_keys[0],desc_val[0]))
 
         self.input_folder=self.input_base_folder+'/desc_'+str(desc_val[0])

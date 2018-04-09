@@ -535,6 +535,11 @@ class Transport(object):
             if 'par_name' not in comsol_args:
                 comsol_args['par_name']='flux_factor'
                 comsol_args['par_values']=np.linspace(0,1,comsol_args['nflux'])
+        if comsol_args['desc_method']=='external':
+            if 'par_name' not in comsol_args:
+                comsol_args['par_name']='flux_factor'
+                comsol_args['par_values']=np.linspace(0,1,comsol_args['nflux'])
+
         if comsol_args['desc_method'].startswith('internal'):
             if self.use_catmap:
                 self.logger.warning('CatMAP does not work together with passing descriptors as COMSOL'+
@@ -781,6 +786,11 @@ class Transport(object):
                 sys.exit()
             self.descriptors=descriptors
         else:
+            #no descriptors given at input, add some here for convenience:
+            self.descriptors={}
+            self.logger.warning('No descriptor list given at input, performing single point calculation')
+            self.descriptors['phiM']=[self.system['phiM']]
+            self.descriptors['temperature']=[self.system['temperature']]
             return
 #            self.descriptors
             #no descriptors specified. put one here just that the following routine work fine

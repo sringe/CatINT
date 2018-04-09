@@ -715,7 +715,7 @@ class Model():
                         for match in matches:
                             string=string.replace('[['+match+']]','cp'+str([ii+1 for ii,spp in enumerate(self.tp.species) if spp==match][0]))
                         self.tp.species[sp]['flux']=string
-                        self.set("j{}".format(i+1), 'SA*flux_factor*('+self.tp.species[sp]['flux']+')', "{} flux".format(self.tp.species[sp]['name']))
+                        self.set("j{}".format(i+1), 'RF*flux_factor*('+self.tp.species[sp]['flux']+')', "{} flux".format(self.tp.species[sp]['name']))
             else:
                 # - conductivity
                 cond_str='F_const^2*('
@@ -796,7 +796,7 @@ class Model():
                 for i,sp in enumerate(self.tp.species):
                     if type(self.tp.species[sp]['flux'])!=str:
                         #define fluxes here as parameters
-                        self.set("j{}".format(i+1), "SA*flux_factor*{}[mol/m^2/s]".format(self.tp.species[sp]['flux']),"{} flux".format(self.tp.species[sp]['name']))
+                        self.set("j{}".format(i+1), "RF*flux_factor*{}[mol/m^2/s]".format(self.tp.species[sp]['flux']),"{} flux".format(self.tp.species[sp]['name']))
     
             if 'init_conc' in param_set:
                 for i,sp in enumerate(self.tp.species):
