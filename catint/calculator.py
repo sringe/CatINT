@@ -320,7 +320,7 @@ class Calculator():
             self.run_single_step(label=label)
 
             was_nan=False
-            grid_factor=self.tp.comsol_args['grid_factor']
+            grid_factor=float(self.tp.comsol_args['parameter']['grid_factor'][0])
             nflux=self.tp.comsol_args['nflux']
             nflux_step=0
             while any([math.isnan(self.tp.species[sp]['surface concentration']) for sp in self.tp.species]):
@@ -335,9 +335,8 @@ class Calculator():
                 if self.tp.comsol_args['nflux']/1000 != nflux_step:
                     nflux_step=self.tp.comsol_args['nflux']/1000
                     self.tp.logger.info(' | CS | Ramping increase of 1000 did not help, trying to decrease also minimal grid discretization')
-                    self.tp.comsol_args['grid_factor']*=1.1
-                    self.tp.comsol_args['grid_factor']=int(self.tp.comsol_args['grid_factor'])
-                    self.tp.logger.info(' | CS | Maximal discretization of x-axis and boundary condition raised to {}'.format(self.tp.comsol_args['grid_factor']))
+                    self.tp.comsol_args['parameter']['grid_factor'][0]=str(int(float(self.tp.comsol_args['parameter']['grid_factor'][0])*1.1))
+                    self.tp.logger.info(' | CS | Maximal discretization of x-axis and boundary condition raised to {}'.format(self.tp.comsol_args['parameter']['grid_factor']))
 
                 if self.tp.comsol_args['nflux']>20000:
                     self.tp.logger.error(' | CS | ramping # nflux is larger than 20000, stopping here, we will probably not get any convergence')
@@ -357,12 +356,13 @@ class Calculator():
             if was_nan:
                 #reset the grid_factor to original value:
                 self.tp.comsol_args['nflux']=nflux
-                self.tp.comsol_args['grid_factor']=grid_factor
+                self.tp.comsol_args['parameter']['grid_factor'][0]=str(grid_factor)
 
             #3) Check Convergence
             current_density=[]
             for sp in self.tp.electrode_reactions:
-                current_density.append(self.tp.electrode_reactions[sp]['electrode_current_density'][(str(1.0),str(value2))])
+#                current_density.append(self.tp.electrode_reactions[sp]['electrode_current_density'][(str(1.0),str(value2))])
+                current_density.append(self.tp.species[sp]['electrode_current_density'])
             if istep>1:
                 scf_accuracy=self.evaluate_accuracy(current_density,old_current_density)
             old_current_density=deepcopy(current_density)
