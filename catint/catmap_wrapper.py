@@ -439,10 +439,11 @@ class CatMAP():
             else:
                 nprod=1
                 nel=1
-            rates=data_ref[np.argsort(data_ref[:, 0])][:,1]*self.tp.system['active site density']*nel*unit_F/nprod/10.
+            rates=data_ref[np.argsort(data_ref[:, 0])][:,1]*self.tp.system['active site density']
+            current_densities=rates*nel*unit_F/nprod/10.
 #            currents=self.convert_TOF(data_ref[np.argsort(data_ref[:, 0])][:,1])
             pol_file=self.output_folder+'/j_'+name.split('_')[0]+'.tsv'
-            np.savetxt(pol_file, np.array([voltages,rates]).T)
+            np.savetxt(pol_file, np.array([voltages,current_densities]).T)
             iv=-1
             for v in voltages:
                 iv+=1
