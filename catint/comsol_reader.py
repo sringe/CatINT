@@ -84,12 +84,19 @@ class Reader():
                     par_name=par_names[i]
                     par_value=float(par_values[i])
                     update_last=False
-                    if self.comsol_args['par_values'][-1]==par_value:
-                        update_last=True
-                    if self.comsol_args['par_name']=='flux':
-                        alldata_inx=0
+                    if self.comsol_args['par_name']=='flux_factor':
+                        #get the current values of the two descriptors
+                        desc_keys=self.tp.descriptors.keys()
+                        desc1_val=self.tp.system[desc_keys[0]]
+                        desc2_val=self.tp.system[desc_keys[1]]
+                        #get the index:
+                        alldata_inx=self.tp.alldata_names.index([desc1_val,desc2_val])
+                        print 'current vals',desc1_val,desc2_val,alldata_inx
                     else:
                         alldata_inx=(i)/len(set(variable_names))
+                    if (i)/len(set(variable_names))+1==len(self.comsol_args['par_values']):
+                        update_last=True
+                    print var_name,par_name,par_value,update_last,alldata_inx
                     if self.comsol_args['par_name']=='flux' and not update_last:
                         #if the par name is the flux, this means we run comsol with a single descriptor set and we are only interested in the last value
                         continue
