@@ -149,7 +149,7 @@ class Transport(object):
                 'exclude species',
                 'active site density',       #mol/m^2
                 'current density',
-                'roughness factor',                       #roughness factor
+                'RF',                       #roughness factor
                 ]
 
         #go over input data and put in some defaults if none
@@ -517,10 +517,15 @@ class Transport(object):
         ### "par_name" selects a parameter from self.descriptors to use as parameter sweep
         ### "par_values" lists the value of this parameter 
 
-        if 'roughness factor' not in self.system:
-            comsol_args['parameter']['RF']=['1','Roughness Factor']
+        if 'RF' not in self.system:
+            if 'RF' in comsol_args['parameter']:
+                print 'in RF'
+                self.system['RF']=float(comsol_args['parameter']['RF'][0])
+            else:
+                comsol_args['parameter']['RF']=['1','Roughness Factor']
+                self.system['RF']=1.0
         else:
-            comsol_args['parameter']['RF']=[str(self.system['roughness factor']),'Roughness Factor']
+            comsol_args['parameter']['RF']=[str(self.system['RF']),'Roughness Factor']
 
         if not 'nflux' in comsol_args:
             comsol_args['nflux']=32 #default to 32 steps for flux ramping
