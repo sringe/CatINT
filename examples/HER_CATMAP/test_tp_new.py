@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0,'/scratch/users/sringe/transport/CatINT')
+sys.path.insert(0,'/scratch/users/sringe/transport/catint2')
 sys.path.insert(0,'/scratch/users/sringe/transport/catmap')
 from shutil import copyfile as copy
 from catint.transport import Transport
@@ -21,9 +21,10 @@ nobuffer=True
 
 educt='CO' #CO2 or CO
 
-nx=100 #200
-nflux_comsol=100
-nphi=3 #520 #260 #130
+nx=400 #200
+nflux_comsol=10
+grid_factor=200
+nphi=50
 
 RF=1
 
@@ -164,7 +165,7 @@ CO_i = 9.5e-4*system['pressure']*1000.
 
 ##1) option: initialize with CO2_i and OHm_i
 OHm_i=10**(pH_i-14.)*1000.0
-H2_i = 0.00078*system['pressure']*1000.
+H2_i = 0.0 #0.00078*system['pressure']*1000.
 HCO3m_i=electrolyte_reactions['buffer-base']['constant']*CO2_i*OHm_i
 CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
 #print 'HCO3m_i OHm_i CO2_i CO32m_i'
@@ -264,6 +265,7 @@ if not nobuffer:
 
 comsol_args={}
 comsol_args['parameter']={}
+comsol_args['parameter']['grid_factor']=[str(grid_factor),'Grid factor']
 comsol_args['parameter']['e0']=['1[C]','electronic charge']
 
 system['active site density']=4.1612542339231805e-07 #(mol/m^2) from Heine, 
@@ -297,7 +299,7 @@ potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-0.0,-1.5,nphi))}
+    descriptors={'phiM':list(np.linspace(-0.8,-1.5,nphi))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
