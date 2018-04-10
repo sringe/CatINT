@@ -16,10 +16,10 @@ import argparse
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--folder', help='folder to be evaluated',nargs='+')
 parser.add_argument('--prop',help='property to be plotted',nargs='+')
-parser.add_argument('--desc',help='value of descriptor at which to plot property, nearest point is taken')
+parser.add_argument('--desc',help='value of descriptor at which to plot property, nearest point is taken',nargs='+')
 args = parser.parse_args()
 
-args.desc=float(args.desc)
+#args.desc=float(args.desc)
 
 exp=EXPDATA()
 
@@ -118,8 +118,13 @@ def plot_xinyans_equation():
     plt.semilogy(voltage, [C1_rate(v, CO_cvg) for v in voltage], '-', color='b', label = 'C1_rate')
     plt.semilogy(voltage, [C2_rate(v, CO_cvg) for v in voltage], '-', color='orange', label = 'C2_rate')
 
-colors=cycle(['C'+str(i) for i in range(10)])
-linestyles=cycle(['-',':','--'])
+c_list=['C'+str(i) for i in range(10)]
+colors=cycle(c_list)
+ls_list=['-',':','--']
+linestyles=cycle(ls_list)
+#m_list=['x','o','1','d','D','2']
+m_list=['']
+markerstyles=cycle(m_list)
 
 folders=sys.argv[1:]
 tp=Transport(only_plot=True)
@@ -140,7 +145,7 @@ for i,p in enumerate(args.prop):
     ax_list.append(fig.add_subplot(str(n_col)+str(n_row)+str(i+1)))
     prop_inx[p]=i
 
-def settings(ax,prop):
+def settings(ax,prop,d_sel):
     label=p.replace('_',' ')
     if prop=='concentration':
         ylabel=r'$c_i$ (M)'
@@ -162,71 +167,80 @@ def settings(ax,prop):
     ax.set_title(label)
     return xlabel,ylabel
 
-def plot(prop,d_sel_inx,ls):
+def plot(prop):
     """create a plot of the property of interest"""
-    #reset colors
-    a=''
-    while a!='C9':
-        a=next(colors)
     inx=prop_inx[prop]
     ax=ax_list[inx]
-    xlabel,ylabel=settings(ax,prop)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
     xmesh=tp.xmesh
-    if prop in ['concentration']:
-        #x: xmesh
-        #species
-        x=xmesh
-        for sp in tp.species:
-            color=next(colors)
-            y=tp.alldata[d_sel_inx]['species'][sp][prop]
-            y=[yy/1000. for yy in y]
-            ax.semilogx(x,y,ls,color=color,label=sp)
-    elif prop in ['electrode_current_density','electrode_flux']:
-        #x: descriptors
-        #species 
-        color=next(colors)
-        x=tp.descriptors['phiM']
-        #plot vs. RHE
-        x=[xx+0.0592*tp.system['bulk_pH'] for xx in x]
-        for sp in tp.species:
-            if sp not in tp.electrode_reactions:
-                continue
-            color=next(colors)
-            y=[tp.alldata[i]['species'][sp][prop] for i in range(len(x))]
-            print 'checking electrode_current density'
-            print y
-            ax.semilogy(x,y,ls,color=color,label=sp)
-            if prop=='electrode_current_density':
-                ax=plot_leis_new_data(ax)
-    elif prop in ['pH']:
-        #x: xmesh
-        #system
-        x=xmesh
-        y=tp.alldata[d_sel_inx]['system'][prop]
-        ax.semilogx(x,y,ls,color='k')
+    if prop not in ['electrode_current_density','electrode_flux','surface_pH']:
+        desc_iter=args.desc
     else:
-        #x: descriptors
-        #system
-        x=tp.descriptors['phiM']
-        #plot vs. RHE
-        x=[xx+0.0592*tp.system['bulk_pH'] for xx in x]
-        y=[tp.alldata[i]['system'][prop] for i in range(len(x))]
-        ax.plot(x,y,ls,color='k')
+        desc_iter=[args.desc[0]]
+    for desc in desc_iter:
+        #reset colors
+        a=''
+        while a!=c_list[-1]:
+            a=next(colors)
+        m=next(markerstyles)
+        d_sel=None
+        if prop not in ['electrode_current_density','electrode_flux','surface_pH']:
+            min_d=np.inf
+            for i,d in enumerate(tp.descriptors['phiM']):
+                if abs(d-float(desc))<min_d:
+                    min_d=abs(d-float(desc))
+                    d_sel_inx=i
+                    d_sel=d
+        xlabel,ylabel=settings(ax,prop,d_sel)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        if prop in ['concentration']:
+            #x: xmesh
+            #species
+            x=xmesh
+            for sp in tp.species:
+                color=next(colors)
+                y=tp.alldata[d_sel_inx]['species'][sp][prop]
+                y=[yy/1000. for yy in y]
+                ax.semilogx(x,y,ls+m,color=color,label=sp)
+        elif prop in ['electrode_current_density','electrode_flux']:
+            #x: descriptors
+            #species 
+            color=next(colors)
+            x=tp.descriptors['phiM']
+            #plot vs. RHE
+            x=[xx+0.0592*tp.system['bulk_pH'] for xx in x]
+            for sp in tp.species:
+                if sp not in tp.electrode_reactions:
+                    continue
+                color=next(colors)
+                y=[tp.alldata[i]['species'][sp][prop] for i in range(len(x))]
+                ax.semilogy(x,y,ls+m,color=color,label=sp)
+                if prop=='electrode_current_density':
+                    ax=plot_leis_new_data(ax)
+        elif prop in ['pH']:
+            #x: xmesh
+            #system
+            x=xmesh
+            y=tp.alldata[d_sel_inx]['system'][prop]
+            ax.semilogx(x,y,ls+m,color='k')
+        else:
+            #x: descriptors
+            #system
+            x=tp.descriptors['phiM']
+            #plot vs. RHE
+            x=[xx+0.0592*tp.system['bulk_pH'] for xx in x]
+            y=[tp.alldata[i]['system'][prop] for i in range(len(x))]
+            ax.plot(x,y,ls+m,color='k')
 
 for iif,f in enumerate(args.folder):
-    ls=next(linestyles)
     read_all(tp,f,only=['alldata','species','system','xmesh','descriptors','electrode_reactions'])
-    min_d=np.inf
-    for i,d in enumerate(tp.descriptors['phiM']):
-        if abs(d-args.desc)<min_d:
-            min_d=abs(d-args.desc)
-            d_sel_inx=i
-            d_sel=d
+    ls=next(linestyles)
+    a=''
+    while a!=m_list[-1]:
+        a=next(markerstyles)
     for p in args.prop:
         print('Plotting {}'.format(p))
-        plot(p,d_sel_inx,ls)
+        plot(p)
 for ax in ax_list:
     ax.legend(prop={'size': 6})
 plt.tight_layout()
