@@ -40,7 +40,6 @@ class Transport(object):
         """
         only_plot   only initialize transport without creating folders
         """
-
         if only_plot:
             return
 
@@ -78,7 +77,6 @@ class Transport(object):
                 else:
                     number=2
                 self.outputfoldername='_'.join(sum([[self.outputfoldername],[str(number).zfill(4)]],[]))
-                print 'making folder',rank,self.outputfoldername
                 os.makedirs(self.outputfoldername)
             self.logfilename=self.outputfoldername+'/transport.log' # the log file
         else:
@@ -322,7 +320,6 @@ class Transport(object):
         if self.use_electrode_reactions:
             for el in self.electrode_reactions:
                 for sp in sum(self.electrode_reactions[el]['reaction'],[]):
-                    print 'TEST',sp
                     if sp not in self.species and sp not in self.system['exclude species'] and not sp.startswith('*'):
                         self.logger.error('Species {} has not been defined, but is used in the electrode reactions, define it first!'.format(sp))
                         self.logger.error('  This is the current species list:')
@@ -519,7 +516,6 @@ class Transport(object):
 
         if 'RF' not in self.system:
             if 'RF' in comsol_args['parameter']:
-                print 'in RF'
                 self.system['RF']=float(comsol_args['parameter']['RF'][0])
             else:
                 comsol_args['parameter']['RF']=['1','Roughness Factor']

@@ -120,11 +120,13 @@ class Model():
                 self.export_data(['phi','es.Ex'],['V','V/m'],'Potential, Field'+label_append, self.results_folder+'/electrostatics.txt',2)
             if 'electrode_flux' in outputs:
                 self.export_data('j','mol/m^2/s','Electrode flux'+label_append, self.results_folder+'/electrode_flux.txt',3,geo='b1')
+            if 'rho_charge' in outputs:
+                self.export_data(['rho_charge'],['e*mol/m^3'],'Local Charge Density'+label_append, self.results_folder+'/rho_charge.txt',4)
             i=0
             for out in outputs:
                 if out in self.comsol_args['outputs']:
                     i+=1
-                    self.export_data([out[0]],[out[1]],out[0]+label_append, self.results_folder+'/'+out[1]+'.txt',i+3)
+                    self.export_data([out[0]],[out[1]],out[0]+label_append, self.results_folder+'/'+out[0]+'.txt',i+4)
 
         def export_data(self,var_name='cp',unit_name='mol/m^3',label='Concentrations',file_name='results/concentrations.txt',export_count=1,geo='d1'):
             """exports a quantity of interest. var_name/unit_name/label can be either a single string, in which case
@@ -717,6 +719,14 @@ class Model():
                         self.tp.species[sp]['flux']=string
                         self.set("j{}".format(i+1), 'RF*flux_factor*('+self.tp.species[sp]['flux']+')', "{} flux".format(self.tp.species[sp]['name']))
             else:
+                # - local charge density
+                ldc_str='F_const*('
+                for i in range(len(self.tp.species)):
+                    if i!=0:
+                        ldc_str+='+'
+                    ldc_str+='cp'+str(i+1)+'*tds.z_cp'+str(i+1)
+                ldc_str+=')'
+                self.set("rho_charge",ldc_str,"Local Charge Density")
                 # - conductivity
                 cond_str='F_const^2*('
                 for i in range(len(self.tp.species)):
@@ -747,6 +757,27 @@ class Model():
                 self.set("delta_phi_iR_inf","comp1.at0("+str(self.tp.system['boundary thickness'])+",delta_phi_iR)","Total iR drop over the whole cell")
                 self.set("delta_phi_inf","comp1.at0("+str(self.tp.system['boundary thickness'])+",phi)-comp1.at0(0,phi)","Total potential drop over the whole cell")
                 self.set("delta_phi_inf_min_iR","delta_phi_inf-delta_phi_iR_inf","Total potential drop over the whole cell minux iR drop")
+                ##REACTION RATES
+                i=0
+                if self.tp.use_electrolyte_reactions: 
+                    for reaction in self.tp.electrolyte_reactions:
+                        if 'rates' in self.tp.electrolyte_reactions[reaction]:
+                            i+=1
+                            educts=''
+                            products=''
+                            unit='1/s'
+                            unit_f=unit+'*m^3/mol'*(len(self.tp.electrolyte_reactions[reaction]['reaction'][0])-1)
+                            unit_r=unit+'*m^3/mol'*(len(self.tp.electrolyte_reactions[reaction]['reaction'][1])-1)
+                            for reactant in self.tp.electrolyte_reactions[reaction]['reaction'][0]:
+                                educts+=reactant
+                                if reactant!=self.tp.electrolyte_reactions[reaction]['reaction'][0][-1]:
+                                    educts+=' + '
+                            for reactant in self.tp.electrolyte_reactions[reaction]['reaction'][1]:
+                                products+=reactant
+                                if reactant!=self.tp.electrolyte_reactions[reaction]['reaction'][1][-1]:
+                                    products+=' + '
+                            self.set('k'+str(i)+'f', "{} [{}]".format(self.tp.electrolyte_reactions[reaction]['rates'][0],unit_f), "rate constant: {}".format(educts+' -> '+products))
+                            self.set('k'+str(i)+'r', "{} [{}]".format(self.tp.electrolyte_reactions[reaction]['rates'][1],unit_r), "rate constant: {}".format(products+' -> '+educts))
 
         def set(self,par_name,par_exp,par_desc):
             self.s+='    model.component("comp1").variable("var'+str(self.index)+'").set(\"{}\",\"{}\",\"{}\");\n'.format(par_name,\
@@ -817,27 +848,6 @@ class Model():
             self.set("lambdaS", "epsS/CS", "Stern layer thickness")
             self.set("conc_std", "1 [mol/m^3]", "Standard concentration (1mol/l)")
     
-            ##REACTION RATES
-            i=0
-            if self.tp.use_electrolyte_reactions: 
-                for reaction in self.tp.electrolyte_reactions:
-                    if 'rates' in self.tp.electrolyte_reactions[reaction]:
-                        i+=1
-                        educts=''
-                        products=''
-                        unit='1/s'
-                        unit_f=unit+'*m^3/mol'*(len(self.tp.electrolyte_reactions[reaction]['reaction'][0])-1)
-                        unit_r=unit+'*m^3/mol'*(len(self.tp.electrolyte_reactions[reaction]['reaction'][1])-1)
-                        for reactant in self.tp.electrolyte_reactions[reaction]['reaction'][0]:
-                            educts+=reactant
-                            if reactant!=self.tp.electrolyte_reactions[reaction]['reaction'][0][-1]:
-                                educts+=' + '
-                        for reactant in self.tp.electrolyte_reactions[reaction]['reaction'][1]:
-                            products+=reactant
-                            if reactant!=self.tp.electrolyte_reactions[reaction]['reaction'][1][-1]:
-                                products+=' + '
-                        self.set('k'+str(i)+'f', "{} [{}]".format(self.tp.electrolyte_reactions[reaction]['rates'][0],unit_f), "rate constant: {}".format(educts+' -> '+products))
-                        self.set('k'+str(i)+'r', "{} [{}]".format(self.tp.electrolyte_reactions[reaction]['rates'][1],unit_r), "rate constant: {}".format(products+' -> '+educts))
             self.set("flux_factor", "1", "factor scaling the flux")
     
         def set(self,par_name,par_exp,par_desc):

@@ -8,7 +8,8 @@ from read_data import read_data
 
 pH_i=13.0
 nobuffer=True 
-supporting_elec=False #True #add chloride anions
+supporting_elec=False #add chloride anions
+k_buffer=True
 #False #True #False #True #False #True #False #True #False #True #False #True #False #True #False #True 
 
 Cl_i=1.*1000.
@@ -72,9 +73,17 @@ electrolyte_reactions=\
     ##############################################################################################################
     }
 
+electrolyte_reactions_k={
+    'k-buffer':  {'reaction':        'KH2O+ + OH- <-> KOH + H2O'},
+                'constant':         '10^(-pKa)',
+                'rates':            ['1e13*exp(np.log(10)*pKa)','10^(-pKa)/(1e13*exp(np.log(10)*pKa))']}
+
+        #KD is dehydrated K+
 electrode_reactions={
-    'H2':   {   'reaction':            '2 H2O + 2 e- -> H2 + 2 OH-'}}
-    #'H2':           {   'reaction':             '2 HCO3- + 2 e- -> H2 + 2 CO32-'},
+#    'H2':   {   'reaction':            '2 H2O + 2 e--> H2 + 2 OH-'}}
+        'H2':   {   'reaction':         '2 KH2O+ + 2 e- -> H2 + 2 KOH'}}
+#        'KOH':  {   'reaction':         'KH2O+ + OH- -> KOH + H2O'}}
+#'H2':           {   'reaction':             '2 HCO3- + 2 e- -> H2 + 2 CO32-'},
 #reactions=\
 #    {
 #    'buffe':           {   'reactants':            cp[['CO2','H2O'],['H2CO3']],
@@ -184,6 +193,9 @@ if nobuffer:
 else:
     K_i = HCO3m_i+CO32m_i*2+OHm_i-Hm_i
 
+KH2O_i=K_i
+KOH_i=10**(-14.5)*KH2O_i*OHm_i
+
 #print 'new bic_i=',bic_i
 #sys.exit()
 
@@ -201,10 +213,18 @@ else:
 #Henry              [atm/M] (from http://butane.chem.uiuc.edu/pshapley/GenChem1/L23/web-L23.pdf)
 species=\
     {
-    'K':                {   'symbol':               'K^+',
+    'KH2O+':                {'symbol':               'KH_2O^+',
                             'name':                 'potassium',
                             'diffusion':            1.957e-9,
-                            'bulk concentration':   K_i},
+                            'bulk concentration':   KH2O_i},
+    'KOH':                  {'symbol':              'KOH',
+                            'name':                 'dyhydrated potassium',
+                            'diffusion':            1.957e-9,
+                            'bulk concentration':   KOH_i},
+#    'K':                {   'symbol':               'K^+',
+#                            'name':                 'potassium',
+#                            'diffusion':            1.957e-9,
+#                            'bulk concentration':   K_i},
     'OH-':              {   'symbol':               'OH^-',
                             'name':                 'hydroxyl',
                             'diffusion':            5.273e-9,
@@ -309,21 +329,26 @@ comsol_args['boundary_variables']['jH_back']=['rho_act*A*('+\
                          'exp('+\
                             '(Ga_H_back+(1-alpha_H)*(phiM-phiM_ref_she)*F_const)/RT+log(10)*(14-pH_at_0)'+\
                          '))','rate of H back reaction']
+#parameters for ion hydration, all from Singh paper:
+#comsol_args['parameter']['A']=['620.32[pm]','A parameter']
+#comsol_args['parameter']['B']=['17.154','B parameter']
+#comsol_args['parameter']['zeff']=['0.919','Effective charge']
+#comsol_args['parameter']['rMO']=['138[pm]','Radius of hydrated ion']
+#comsol_args['parameter']['rHEl']=['155[pm]','Distance of Hydrogen to surface']
 
+#comsol_args['boundary_variables']['pKa']=['-A*(zeff**2/rMO+2*np.pi*rho_charge*z_eff*rHEl*(np.sqrt(1+rMO**2/rHEL**2)-1))+B','pKa of KH2O']
+comsol_args['global_variables']['pKa']=['-(14.5-8.49)/comp1.at0(0,rho_charge)*rho_charge+14.5','pKa']
+comsol_args['outputs']=[['pKa','','']]
+#comsol_args['boundary_variables']['DG_KOH']=['RT*pKa*log(10)','free energy barrier for KH2O deprotonation']
+#comsol_args['boundary_variables']['jKOH']=['A*('+\
+#                        'exp('+\
+#                            '-(DG_KOH*(
 method=0 #method2 with stationary solver only working one, so far...
 
 H2_rate='jH'
+#KOH_rate='jKOH'
 species['H2']['flux-equation']=H2_rate
-
-#parameters for ion hydration, all from Singh paper:
-comsol_args['parameter']['Aconst']=['620.32[pm]','A parameter']
-comsol_args['parameter']['Bconst']=['17.154','B parameter']
-comsol_args['parameter']['zeff']=['0.919[e]','Effective charge']
-comsol_args['parameter']['rMO']=['138[pm]','Radius of hydrated ion']
-comsol_args['parameter']['rHEl']=['155[pm]','Distance of Hydrogen to surface']
-#pKa of K+
-comsol_args['global_variables']['pKa']=['-Aconst*(zeff^2/rMO+2*pi*abs(rho_charge)/F_const*zeff*rHEl*(sqrt(1+rMO^2/rHEl^2)-1))+Bconst','pKa of KH2O']
-comsol_args['outputs']=[['pKa','','']]
+#species['KOH']['flux-equation']=KOH_rate
 
 if not nobuffer:
     visc=viscosity(species['HCO3-']['bulk concentration']/10**3), #Pa*s at 25C of KHCO3 solution
@@ -341,11 +366,10 @@ comsol_args['solver']='parametric'
 #BOUNDARY CONDITIONS FOR PBE
 ###########################################################################
 
-
 potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(0.0,-2.3,nphi))}
+    descriptors={'phiM':list(np.linspace(0.0,-2.4,nphi))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
@@ -359,7 +383,17 @@ for potential in potentials:
     ###########################################################################
     #SETUP AND RUN
     ###########################################################################
-    if nobuffer:
+    if k_buffer:
+        tp=Transport(
+            species=species,
+            electrode_reactions=electrode_reactions,
+            electrolyte_reactions=electrolyte_reactions_k,
+            system=system,
+            pb_bound=pb_bound,
+            comsol_args=comsol_args,
+            descriptors=descriptors,
+            nx=nx)
+    elif nobuffer:
         tp=Transport(
             species=species,
             electrode_reactions=electrode_reactions,
