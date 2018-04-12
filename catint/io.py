@@ -4,6 +4,9 @@ import pickle
 from shutil import copyfile as copy
 import logging
 import imp
+import re
+from glob import glob
+
 #import mpi if available
 use_mpi=False
 try:
@@ -40,6 +43,35 @@ def insert_line(file_name,line_num,text):
     contents = "".join(contents)
     f.write(contents)
     f.close() 
+
+def reglob(path, exp, invert=False):
+    """glob.glob() style searching which uses regex
+
+    :param exp: Regex expression for filename
+    :param invert: Invert match to non matching files
+    """
+
+    m = re.compile(exp)
+    res=[]
+    if invert is False:
+        for f in glob(path):
+            sol=re.findall(exp,f)
+            if len(sol)>0:
+                res.append(f)
+    else:
+        for f in glob(path):
+            sol=re.findall(exp,f)
+            if len(sol)==0:
+                res.append(f)
+    print 'checking res',res
+#    if invert is False:
+#        res = [f for f in os.listdir(path) if m.search(f)]
+#    else:
+#        res = [f for f in os.listdir(path) if not m.search(f)]
+
+
+#    res = map(lambda x: "%s/%s" % ( path, x, ), res)
+    return res
 
 def save_all(tp,only=None):
     """saves all dictionaries and arrays into pickle files in the obj folder"""

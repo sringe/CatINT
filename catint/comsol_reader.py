@@ -21,12 +21,17 @@ class Reader():
 
     def read_all(self):
         for output in self.outputs:
-            self.tp.logger.info(' | CS | Reading output {}.txt'.format(output))
+            desc_keys=[key for key in self.tp.descriptors]
+            if output in self.comsol_args['outputs']:
+                toutput=output[0]
+            else:
+                toutput=output
+            self.tp.logger.info(' | CS | Reading output {}.txt'.format(toutput))
             if output in ['concentrations','electrode_flux']:
                 species_var=True
             else:
                 species_var=False
-            self.read_single_file(results_folder=self.results_folder,output=output,species_var=species_var)
+            self.read_single_file(results_folder=self.results_folder,output=toutput,species_var=species_var)
 
     def cs_to_ci(self,var_name):
         """maps COMSOL argument names to CATINT argument names"""
@@ -36,8 +41,10 @@ class Reader():
             return 'electrode_flux'
         elif var_name=='phi':
             return 'potential'
-        elif var_name=='Ex':
+        elif var_name=='es.Ex':
             return 'efield'
+        elif var_name=='rho_charge':
+            return 'charge_density'
         else:
             return var_name
 
@@ -50,13 +57,8 @@ class Reader():
         """
         start_reading=False
         initialized=False
+        toutput=output
         jj=-1
-        desc_keys=[key for key in self.tp.descriptors]
-        if output in self.comsol_args['outputs']:
-            toutput=output[1]
-        else:
-            toutput=output
-
         #first read of file to determine if this is a variable tabulated on domain or boundary
         for line in open(results_folder+'/'+toutput+'.txt', 'r'):
             if line.startswith('% Nodes'):
@@ -178,10 +180,18 @@ class Reader():
             if start_reading:
 #                variable_names=re.findall('([a-zA-Z0-9]+)\s+\(.*\)\s+@\s+[a-zA-Z]+\s?=\s?-?\d+\.?\d?',line)
 #                variable_names=re.findall('([a-zA-Z]+\d+)',line)
-                if species_var:
-                    variable_names=re.findall('([a-zA-Z]+[0-9]+)',line)
-                else:
-                    variable_names=re.findall('([a-zA-Z]+)\s*\(',line)
+#                if '(' not in line:
+#                    variable_names=re.findall('([a-zA-Z_]+[0-9]*)\s+\@',line)
+#                else:
+#                    variable_names=re.findall('([a-zA-Z_]+[0-9]*)\s*\(',line)
+#                variable_names=re.findall('\s+([a-zA-Z]+\d{0,4})(?:\s)(\(.*?\))?',line)
+#                a=re.findall('\s+([a-zA-Z.]+\d{0,4})(?:\s)(\(.*?\))?\s@',line)
+                a=re.findall('\s+([a-zA-Z.\_-]{1,50}\d{0,4})(?:\s)(\(.*?\))?\s*@',line)
+                variable_names,variable_units=map(list, zip(*a))
+#                if species_var:
+#                    variable_names=re.findall('([a-zA-Z]+[0-9]+)',line)
+#                else:
+#                    variable_names=re.findall('([a-zA-Z]+)\s*\(',line)
 #                par_names=re.findall('[a-zA-Z0-9]+\s+\(.*\)\s+@\s+([a-zA-Z]+)\s?=\s?-?\d+\.?\d?',line)
                 par_names=re.findall('@\s?([a-zA-Z0-9]+)',line)
                 #par_values=re.findall('[a-zA-Z0-9]+\s+\(.*\)\s+@\s+[a-zA-Z]+\s?=\s?(-?\d+\.?\d?)',line)

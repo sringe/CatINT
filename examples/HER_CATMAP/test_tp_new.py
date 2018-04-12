@@ -11,7 +11,7 @@ from units import *
 from read_data import read_data
 
 
-only_catmap=False
+only_catmap=True
 #if only_catmap, run only catmap calculation without transport!
 
 #n_inter=100
@@ -26,7 +26,7 @@ nflux_comsol=10
 grid_factor=200
 nphi=50
 
-RF=1
+RF=309
 
 use_elreac=True
 if nobuffer:
@@ -231,10 +231,10 @@ species=\
                             'name':                 'hydroxyl',
                             'diffusion':            5.273e-9,
                             'bulk concentration':   OHm_i},
-    'H+':               {   'symbol':               'H^+',
-                            'name':                 'hydronium',
-                            'diffusion':            9.311e-9,   #CRC handbook, IONIC CONDUCTIVITY AND DIFFUSION AT INFINITE DILUTION
-                            'bulk concentration':   Hm_i},
+#    'H+':               {   'symbol':               'H^+',
+#                            'name':                 'hydronium',
+#                            'diffusion':            9.311e-9,   #CRC handbook, IONIC CONDUCTIVITY AND DIFFUSION AT INFINITE DILUTION
+#                            'bulk concentration':   Hm_i},
     'H2':               {   'symbol':               'H_2',
                             'name':                 'hydrogen',
                             'diffusion':            4.50e-009,
@@ -342,7 +342,8 @@ for potential in potentials:
     if only_catmap:
         cm=CatMAP(transport=tp,model_name='her')
         for p in np.linspace(-1.5,0.0,50):
-            cm.run([p,300])
+            tp.system['phiM']=p
+            cm.run()
     if not only_catmap:
         c=Calculator(transport=tp,tau_scf=1e-6,ntout=1,dt=1e-1,tmax=10)
     #scale_pb_grid

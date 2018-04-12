@@ -33,13 +33,13 @@ class Comsol():
         ##RESULTS FOLDER
         self.results_folder_base=root+'/'+self.tp.outputfoldername+'/comsol_results_id'+str(self.tp.mpi_rank).zfill(3)
         self.results_folder=self.results_folder_base
-        self.outputs=['concentrations','electrostatics','electrode_flux']
+        self.outputs=['concentrations','electrostatics','electrode_flux','rho_charge']
         for out in self.tp.comsol_args['outputs']:
             self.outputs.append(out)
         self.mode=mode
-        #additionally specified comsol output
-        if not hasattr(self.tp,'comsol_outputs_data'):
-            self.tp.comsol_outputs_data={}
+#        #additionally specified comsol output
+#        if not hasattr(self.tp,'comsol_outputs_data'):
+#            self.tp.comsol_outputs_data={}
 
     def run(self,label=''):
         #only_last: if True, update only the data in the global arrays and dictionaries

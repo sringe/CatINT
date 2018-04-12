@@ -415,6 +415,9 @@ class CatMAP():
         os.chdir(root)
         for sp in self.tp.species:
             self.tp.species[sp]['flux']=0.0
+        #get reaction mechanism
+        mechanisms = model.rxn_mechanisms.values()
+        mechanisms_names = model.rxn_mechanisms.keys()
         for sp in self.tp.species: #prod in self.tp.electrode_reactions:
             ###############
             #1) the TOF's save them as fluxes for the individual species
@@ -474,7 +477,35 @@ class CatMAP():
                 coverages=data_ref[np.argsort(data_ref[:, 0])][:,1]
                 cov_file=self.output_folder+'/cov_'+name.split('_')[0]+'.tsv'
                 np.savetxt(cov_file,np.array([voltages,coverages]).T)
-
+        ###############
+        #3) current densities associated with elementary steps
+        ###############
+        rate=None
+        idx=None
+        labels=model.rxn_expressions_names
+        for idx,name in enumerate(data.rate_names):
+            #"tof" is the signed rate of conversion/active site/s
+            rate=data.rate[:,idx]
+            data_ref=np.column_stack((data.voltage, rate))
+            voltages=data_ref[np.argsort(data_ref[:, 0])][:,0]
+            #count ele_g
+            #if sp in self.tp.electrode_reactions:
+            #    nprod=len([a for a in self.tp.electrode_reactions[sp]['reaction'][1] if a==sp])
+            #    nel=self.tp.electrode_reactions[sp]['nel']
+            #else:
+            #    nprod=1
+            #    nel=1
+            nel=2
+            rates=data_ref[np.argsort(data_ref[:, 0])][:,1]*self.tp.system['active site density']
+            current_densities=rates*nel*unit_F/10.
+            pol_file=self.output_folder+'/jelem_'+labels[idx]+'.tsv'
+            #first write the reaction in the first line
+            with open(pol_file,'w') as of:
+#                of.write('{} \n'.format(name))
+#                print zip(voltages,current_densities)
+                for v,c in zip(voltages,current_densities):
+                    of.write('{} {}\n'.format(v,c))
+#            np.savetxt(pol_file, np.array([voltages,current_densities]).T)
 
     def get_data(self,pickle_file,model):
         a = pickle.load(open(pickle_file))
