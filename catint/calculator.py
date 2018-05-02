@@ -335,8 +335,8 @@ class Calculator():
                 if self.tp.comsol_args['nflux']/1000 != nflux_step:
                     nflux_step=self.tp.comsol_args['nflux']/1000
                     self.tp.logger.info(' | CS | Ramping increase of 1000 did not help, trying to decrease also minimal grid discretization')
-                    self.tp.comsol_args['parameter']['grid_factor'][0]=str(int(float(self.tp.comsol_args['parameter']['grid_factor'][0])*1.1))
-                    self.tp.logger.info(' | CS | Maximal discretization of x-axis and boundary condition raised to {}'.format(self.tp.comsol_args['parameter']['grid_factor']))
+                    self.tp.comsol_args['parameter']['grid_factor_domain'][0]=str(int(float(self.tp.comsol_args['parameter']['grid_factor_domain'][0])*1.1))
+                    self.tp.logger.info(' | CS | Maximal discretization of domain raised by {}x'.format(self.tp.comsol_args['parameter']['grid_factor_domain']))
 
                 if self.tp.comsol_args['nflux']>20000:
                     self.tp.logger.error(' | CS | ramping # nflux is larger than 20000, stopping here, we will probably not get any convergence')
@@ -356,7 +356,7 @@ class Calculator():
             if was_nan:
                 #reset the grid_factor to original value:
                 self.tp.comsol_args['nflux']=nflux
-                self.tp.comsol_args['parameter']['grid_factor'][0]=str(grid_factor)
+                self.tp.comsol_args['parameter']['grid_factor_domain'][0]=str(grid_factor)
 
             #3) Check Convergence
             current_density=[]

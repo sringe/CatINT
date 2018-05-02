@@ -15,11 +15,12 @@ k_buffer=True
 Cl_i=1.*1000.
 
 nx=200
-nphi=40 #520 #1040 #260 #130
+nphi=100 #520 #1040 #260 #130
+grid_factor=400
 
-SA=1
+RF=1
 use_elreac=True
-if nobuffer:
+if nobuffer and not k_buffer:
     use_elreac=False
 ###########################################################################
 #REACTIONS
@@ -74,10 +75,13 @@ electrolyte_reactions=\
     }
 
 electrolyte_reactions_k={
-    'k-buffer':  {'reaction':        'KH2O+ + OH- <-> KOH + H2O'},
-                'constant':         '10^(-pKa)',
-                'rates':            ['1e13*exp(np.log(10)*pKa)','10^(-pKa)/(1e13*exp(np.log(10)*pKa))']}
-
+    'k-buffer':  {'reaction':        'KH2O+ + H2O <-> KOH + H+',
+                'constant':         'exp(-pKa*log(10))',
+                'rates':            ['A2*exp(-pKa*log(10))','A2']},
+    'self-dissociation of water':            {   'reaction':             'H2O <-> OH- + H+',
+                            'constant':             1e-8, #(mol/m^3)^2
+                            'rates':                [2.4e-5*1000.,2.4e-5/1e-14/1000.]} #Singh
+    }
         #KD is dehydrated K+
 electrode_reactions={
 #    'H2':   {   'reaction':            '2 H2O + 2 e--> H2 + 2 OH-'}}
@@ -187,9 +191,9 @@ Hm_i=10**(-pH_i)*1000.0
 
 if nobuffer:
     if supporting_elec:
-        K_i = OHm_i+Cl_i #+0.1/1000.
+        K_i = OHm_i+Cl_i-Hm_i #+0.1/1000.
     else:
-        K_i = OHm_i #+0.1/1000.
+        K_i = OHm_i-Hm_i #+0.1/1000.
 else:
     K_i = HCO3m_i+CO32m_i*2+OHm_i-Hm_i
 
@@ -229,10 +233,10 @@ species=\
                             'name':                 'hydroxyl',
                             'diffusion':            5.273e-9,
                             'bulk concentration':   OHm_i},
-#    'H+':               {   'symbol':               'H^+',
-#                            'name':                 'hydronium',
-#                            'diffusion':            9.311e-9,   #CRC handbook, IONIC CONDUCTIVITY AND DIFFUSION AT INFINITE DILUTION
-#                            'bulk concentration':   Hm_i},
+    'H+':               {   'symbol':               'H^+',
+                            'name':                 'hydronium',
+                            'diffusion':            9.311e-9,   #CRC handbook, IONIC CONDUCTIVITY AND DIFFUSION AT INFINITE DILUTION
+                            'bulk concentration':   Hm_i},
     'H2':               {   'symbol':               'H_2',
                             'name':                 'hydrogen',
                             'diffusion':            4.50e-009,
@@ -272,6 +276,7 @@ if not nobuffer:
 comsol_args={}
 comsol_args['parameter']={}
 comsol_args['parameter']['A']=['1.e13[1/s]','Exponential prefactor']
+comsol_args['parameter']['A2']=['1.e13[1/M*1/s]','Exponential prefactor']
 comsol_args['parameter']['Ga_H']=[str(1.13*unit_F)+'[J/mol]','H Activation Energy']
 comsol_args['parameter']['Ga_H_back']=[str(0.2*unit_F)+'[J/mol]','H Activation Energy']
 #comsol_args['parameter']['eVToJmol']=[str(eVTokcal*1000*calToJ)+'[J/eV/mol]','eV to J/mol Conversion factor']
@@ -290,7 +295,7 @@ comsol_args['parameter']['Kads_CO2']=['exp(-Ga_CO2_ads/RT)','Equilibrium constan
 comsol_args['parameter']['max_coverage']=['0.44','Maximal coverage with which the Langmuir isotherm will be scaled'] #0.44
 #comsol_args['parameter']['Kads_H']=['exp(-G_H_ads/RT)','Equilibrium constant for HCO3- -> *H']
 #comsol_args['parameter']['max_coverage_H']=['1.','Maximal coverage with which the Langmuir isotherm will be scaled'] #0.44
-comsol_args['parameter']['SA']=[SA,'Surface Area Enhancement Factor']
+comsol_args['parameter']['RF']=[RF,'Roughness Factor']
 ###########################################################################
 #RATE EQUATIONS/FLUXES
 ###########################################################################
@@ -318,7 +323,7 @@ boundary_thickness=7.93E-05 #in m
 system['boundary thickness']=boundary_thickness
 #'delta_phi_inf_min_iR
 comsol_args['boundary_variables']['delta_phi']=['0.0','Electrolyte potential drop']
-comsol_args['boundary_variables']['jH']=['rho_act*A*'+\
+comsol_args['boundary_variables']['jH']=['rho_act*A*cp[[KH2O+]]/conc_std*'+\
                          'exp('+\
                             '-(Ga_H+alpha_H*(phiM-phiM_ref_she)*F_const)/RT'+\
                          ')','rate of H']
@@ -335,9 +340,14 @@ comsol_args['boundary_variables']['jH_back']=['rho_act*A*('+\
 #comsol_args['parameter']['zeff']=['0.919','Effective charge']
 #comsol_args['parameter']['rMO']=['138[pm]','Radius of hydrated ion']
 #comsol_args['parameter']['rHEl']=['155[pm]','Distance of Hydrogen to surface']
+comsol_args['parameter']['grid_factor']=[str(grid_factor),'Grid factor']
 
 #comsol_args['boundary_variables']['pKa']=['-A*(zeff**2/rMO+2*np.pi*rho_charge*z_eff*rHEl*(np.sqrt(1+rMO**2/rHEL**2)-1))+B','pKa of KH2O']
-comsol_args['global_variables']['pKa']=['-(14.5-8.49)/comp1.at0(0,rho_charge)*rho_charge+14.5','pKa']
+#comsol_args['global_variables']['pKa']=['-(14.5-8.49)/comp1.at0(0,rho_charge)*rho_charge_gc+14.5','pKa']
+#comsol_args['global_variables']['rho_charge_gc']=['Z1*ci1*exp(-Z1*phi*F_const/RT)+Z2*ci2*exp(-Z2*phi*F_const/RT)+Z3*ci3*exp(-Z3*phi*F_const/RT)+Z4*ci4*exp(-Z4*phi*F_const/RT)+Z5*ci5*exp(-Z5*phi*F_const/RT)','charge density gouy-chapman']
+#comsol_args['global_variables']['pKa']=['(14.5-8.49)/L_cell*log(x)+8.49','pKa']
+comsol_args['global_variables']['pKa']=['1000*log10((10^(14.5)-10^(8.49))/L_cell*x+10^8.49)','pKa']
+#comsol_args['global_variables']['pKa']=['8.49','pKa']
 comsol_args['outputs']=[['pKa','','']]
 #comsol_args['boundary_variables']['DG_KOH']=['RT*pKa*log(10)','free energy barrier for KH2O deprotonation']
 #comsol_args['boundary_variables']['jKOH']=['A*('+\

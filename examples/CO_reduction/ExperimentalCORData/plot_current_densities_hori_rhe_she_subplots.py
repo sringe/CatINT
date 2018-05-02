@@ -38,6 +38,7 @@ def get_data(filename):
     o = open('CSV/'+filename,'rU')
     DATA = Object()
     DATA.data = np.array(list(csv.reader(o)))
+    print len(DATA.data[0,:])
     DATA.label=[str(d) for d in DATA.data[0,:]] #data[0,1:4]
     DATA.data = np.delete(DATA.data,0,0) # delete header
     return DATA
@@ -50,7 +51,11 @@ DATA_hr=get_data('COR_hori_ph_normalized_RHE.csv') #hori_data_RHE.csv')
 
 DATA_jr=get_data('CO2R_jaramillo_normalized_rhe.csv')
 
+DATA_jr_NF=get_data('CO2R_jaramillo_nfCu_normalized_RHE.csv') #nanoflowers
 #DATA_jr2=get_data('CO2R_jaramillo_normalized_rhe.csv')
+DATA_jr_NC=get_data('CO2R_CuCubes.csv') #nanocubes
+
+DATA_lr_HER=get_data('COR_lei_HER_data.csv')
 
 #DATA_h2s=get_data('hori_jpart_CO2R_SHE.csv')
 DATA_h2s=get_data('CO2R_hori_normalized_SHE.csv')
@@ -66,6 +71,10 @@ DATA_ss_01_FE=get_data('strasser_jpart_KHCO3_01_CO2R_NHE.csv')
 DATA_ss_02_FE=get_data('strasser_jpart_KHCO3_02_CO2R_NHE.csv')
 
 DATA_lr=get_data('COR_lei_normalized_rhe.csv')
+DATA_lr_NF=get_data('COR_lei_NF_Cu.csv')
+
+DATA_wr_NW=get_data('COR_Wang_NW.csv')
+DATA_wr_NW_all=get_data('COR_Wang_NW_all.csv')
 
 jaramillo_mass_transport_limit = [4,4,4,4,2,2,0,0,4,4,2,2,2,2]
 
@@ -168,6 +177,9 @@ def plot_stuff(list_of_data,DATA,fit,joinlines, skip={}, voltage_mode='previous'
         #if fit_tafel:
         #    tafel_fitting(voltage,current)
         print 'FIT',fit
+        if len(voltage)>30:
+            voltage=voltage[::30]
+            current=current[::30]
         if not fit>2:
             plt.plot(voltage, current, color=color[n], linestyle=linestyle_2, marker = cmarker, label=DATA.label[j])  #linestyle = ':',
         if fit>0:
@@ -206,10 +218,11 @@ def plot_stuff(list_of_data,DATA,fit,joinlines, skip={}, voltage_mode='previous'
     plt.ylabel('log$j$ [mA/cm$^2_{\mathrm{real}}$] ')
     plt.ylim((-3,1))
     plt.xlim((-1.4,-1.05))
-    leg = plt.legend(loc=1, 
-          ncol=1, fontsize=10, numpoints=1) #, fancybox=True, shadow=False, loc='upper center', bbox_to_anchor=(0.5, 1.05))
-    for line,text in zip(leg.get_lines(), leg.get_texts()):
-        text.set_color(line.get_color())
+    #plt.tight_layout()
+#    leg = plt.legend(loc=1, 
+#          ncol=1, fontsize=10, numpoints=1) #, fancybox=True, shadow=False, loc='upper center', bbox_to_anchor=(0.5, 1.05))
+#    for line,text in zip(leg.get_lines(), leg.get_texts()):
+#        text.set_color(line.get_color())
 
 
 def plot_eqm():
@@ -368,7 +381,8 @@ def plot_data(reference=['all'],species=['all'],pH=['all'],ci_bic=['all'],scale=
                         heads+=[i]
         return heads
 
-    linestyles=cycle(['-','-',':','-.'])
+    linestyles_list=['-','-',':','-.']
+    linestyles=cycle(linestyles_list)
     global symbols
     symbols=cycle(['d','D','o','x','p','*','v','h','1','2'])
 
@@ -379,7 +393,7 @@ def plot_data(reference=['all'],species=['all'],pH=['all'],ci_bic=['all'],scale=
     
     print DATA_ss_01.label
 
-    data_labels=[','.join(a.label[1].split(',')[1:]) for a in [DATA_ss_01,DATA_ss_005,DATA_ss_02,DATA_ss_005_FE,DATA_ss_01_FE,DATA_ss_02_FE,DATA_jr,DATA_kr,DATA_lr,DATA_h2s,DATA_hr,DATA_hs]]
+    data_labels=[','.join(a.label[1].split(',')[1:]) for a in [DATA_ss_01,DATA_ss_005,DATA_ss_02,DATA_ss_005_FE,DATA_ss_01_FE,DATA_ss_02_FE,DATA_jr,DATA_jr_NF,DATA_jr_NC,DATA_kr,DATA_lr,DATA_lr_NF,DATA_lr_HER,DATA_h2s,DATA_hr,DATA_hs,DATA_wr_NW,DATA_wr_NW_all]]
 
     print data_labels
 
@@ -392,12 +406,16 @@ def plot_data(reference=['all'],species=['all'],pH=['all'],ci_bic=['all'],scale=
                 skip_dict[label]={'HCOO':   5,\
                                   'CO':     9,\
                                   'H$_2$':  10}
+            elif 'Wang' in label:
+                skip_dict[label]={'C$_2$H$_4$': 0}
             elif 'Jaramillo' in label:
                 skip_dict[label]={'HCOO':   6,\
                                   'CH$_4$': 2,\
                                   'H$_2$':  5,\
                                   'C$_2$H$_4$':3,\
-                                  'EtOH':3}
+                                  'EtOH':3,\
+                                  'Acetate':0,\
+                                  'propol':0}
             elif 'Kanan' in label:
                 skip_dict[label]={'HCOO':   9,\
                                   'CO':     10,\
@@ -490,6 +508,9 @@ def plot_data(reference=['all'],species=['all'],pH=['all'],ci_bic=['all'],scale=
                             plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,take_log=True,voltage_mode='first',fit_tafel=fit_tafel)
             if bic in ['0.1','all']:
                 if isref('jaramillo'):
+                    ls=''
+                    while ls!=linestyles_list[0]:
+                        ls=next(linestyles)
                     DATA=DATA_jr
                     name=','.join(DATA.label[1].split(',')[1:])
                     skip=skip_dict[name]
@@ -512,7 +533,68 @@ def plot_data(reference=['all'],species=['all'],pH=['all'],ci_bic=['all'],scale=
                             plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=True,fit_tafel=fit_tafel)
                         else:
                             plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=True,convert='RHE_TO_SHE',fit_tafel=fit_tafel)
+#                    DATA=DATA_lr_HER
+#                    name=','.join(DATA.label[1].split(',')[1:])
+#                    skip=skip_dict[name]
+#                    spp=s2i(species,DATA,pH=cpH)
+#                    if len(spp)>0:
+#                        linestyle=next(linestyles)
+#                        symbol=next(symbols)
+#                        if scale=='RHE':
+#                            plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,voltage_mode='previous',take_log=True,fit_tafel=fit_tafel)
+#                        else:                                                                               ##
+#                            plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,voltage_mode='previous',take_log=True,convert='RHE_TO_SHE',fit_tafel=fit_tafel)
+                    DATA=DATA_lr_NF                                                                         ##
+                    name=','.join(DATA.label[1].split(',')[1:])
+                    skip=skip_dict[name]
+                    spp=s2i(species,DATA,pH=cpH)
+                    if len(spp)>0:
+                        linestyle=next(linestyles)
+                        symbol=next(symbols)
+                        if scale=='RHE':
+                            plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=True,fit_tafel=fit_tafel)
+                        else:
+                            plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=True,convert='RHE_TO_SHE',fit_tafel=fit_tafel)
+                    DATA=DATA_jr_NF
+                    name=','.join(DATA.label[1].split(',')[1:])
+                    skip=skip_dict[name]
+                    spp=s2i(species,DATA,pH=cpH)
+                    if len(spp)>0:
+                        linestyle=next(linestyles)
+                        symbol=next(symbols)
+                        if scale=='RHE':
+                            plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=True,fit_tafel=fit_tafel)
+                        elif scale=='SHE':
+                            plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=True,convert='RHE_TO_SHE',fit_tafel=fit_tafel)
+                    DATA=DATA_jr_NC
+                    name=','.join(DATA.label[1].split(',')[1:])
+                    skip=skip_dict[name]
+                    spp=s2i(species,DATA,pH=cpH)
+                    if len(spp)>0:
+                        linestyle=next(linestyles)
+                        symbol=next(symbols)
+                        if scale=='RHE':
+                            plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=True,fit_tafel=fit_tafel)
+                        elif scale=='SHE':
+                            plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=True,convert='RHE_TO_SHE',fit_tafel=fit_tafel)
+
+                if isref('wang'):
+                    DATA=DATA_wr_NW_all #DATA_wr_NW
+                    name=','.join(DATA.label[1].split(',')[1:])
+                    skip=skip_dict[name]
+                    spp=s2i(species,DATA,pH=cpH)
+                    if len(spp)>0:
+                        linestyle=next(linestyles)
+                        symbol=next(symbols)
+                        if scale=='RHE':
+                            plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,voltage_mode='previous',take_log=True,fit_tafel=fit_tafel)
+                        elif scale=='SHE':
+                            plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,voltage_mode='previous',take_log=True,convert='RHE_TO_SHE',fit_tafel=fit_tafel)
+
                 if isref('hori'):
+                    ls=''
+                    while ls!=linestyles_list[-1]:
+                        ls=next(linestyles)
                     DATA=DATA_h2s
                     name=','.join(DATA.label[1].split(',')[1:])
                     skip=skip_dict[name]
@@ -540,6 +622,7 @@ def plot_data(reference=['all'],species=['all'],pH=['all'],ci_bic=['all'],scale=
                         symbol=next(symbols)
                         plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,fit_tafel=fit_tafel) 
 
+
                 if isref('kanan'):
                     DATA=DATA_kr
                     name=','.join(DATA.label[1].split(',')[1:])
@@ -555,8 +638,9 @@ def plot_data(reference=['all'],species=['all'],pH=['all'],ci_bic=['all'],scale=
                             plot_stuff(spp,DATA,fit,0,skip,voltage_mode='first',take_log=True,linestyle=linestyle,symbol=symbol,convert='RHE_TO_SHE',fit_tafel=fit_tafel) #,convert='RHE_to_SHE')
 
 
-    plt.xlim([-2,1])
-    plt.ylim([-6,2])
+    plt.xlim([-1.3,0])
+    plt.ylim([-5,2])
+    plt.xlabel(r'Voltage vs. RHE (V)')
 #    data=np.loadtxt('H2_OD-Cu1_01M_KOH.csv',delimiter=',')
 #    plt.plot(data[:,0],np.log10(data[:,1]),'-o',label='H2_OD-Cu1_01M_KOH')
 #    data=np.loadtxt('H2_OD-Cu2_01M_KOH.csv',delimiter=',')
@@ -566,9 +650,14 @@ def plot_data(reference=['all'],species=['all'],pH=['all'],ci_bic=['all'],scale=
     plt.show()
 
 #plot_data(reference=['hori','jaramillo'],species=['C1-sum','C2-sum','H$_2$'],pH=['6.8','13'],scale='RHE',system=['all'],fit_tafel=True)
-#plot_data(reference=['hori','jaramillo','kanan'],species=['C1','HCOO','C2+-sum','HCOO','H$_2$','CO'],pH=['6.8','7.2'],scale='RHE',system=['all'])
-plot_data(reference=['kanan','hori','jaramillo'],species=['C1','HCOO','C2+-sum','H$_2$','CO'],pH=['13.0'],scale='RHE')
+#plot_data(reference=['hori','jaramillo'],species=['C1','HCOO','C2+-sum','HCOO','H$_2$','CO'],pH=['6.8','7.2'],scale='RHE',system=['all'])
+#plot_data(reference=['kanan'],species=['C1','HCOO','C2+-sum','HCOO','H$_2$','CO'],pH=['6.8','7.2'],scale='RHE',system=['all'])
+#plot_data(reference=['kanan'],species=['C1','HCOO','C2+-sum','HCOO','H$_2$','CO'],pH=['6.8','7.0','13.0'],scale='RHE',system=['all'])
 #plot_data(reference=['kanan'],pH=['7.2','13.0'])
+
+
+plot_data(reference=['hori','jaramillo'],species=['C1','HCOO','C2+-sum','HCOO','H$_2$','CO'],pH=['6.8','7.2'],scale='RHE',system=['pc-Cu','NC-Cu'])
+#plot_data(reference=['hori','jaramillo','wang'],species=['C1','HCOO','C2+-sum','HCOO','H$_2$','CO'],pH=['13.0'],scale='RHE',system=['all'])
 sys.exit()
 
 ################
