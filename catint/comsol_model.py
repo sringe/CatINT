@@ -378,12 +378,12 @@ class Model():
             self.s+='    model.component("comp1").mesh("mesh1").feature("edg1").feature("size2").selection().set(new int[]{1, 2});\n'
             self.s+='    model.component("comp1").mesh("mesh1").feature("edg1").feature("size1").set("hauto", 1);\n'
             self.s+='    model.component("comp1").mesh("mesh1").feature("edg1").feature("size1").set("custom", "on");\n'
-            self.s+='    model.component("comp1").mesh("mesh1").feature("edg1").feature("size1").set("hmax", "L_cell/grid_factor");\n'
+            self.s+='    model.component("comp1").mesh("mesh1").feature("edg1").feature("size1").set("hmax", "L_cell/grid_factor_domain");\n'
             self.s+='    model.component("comp1").mesh("mesh1").feature("edg1").feature("size1").set("hmaxactive", true);\n'
             self.s+='    model.component("comp1").mesh("mesh1").feature("edg1").feature("size1").set("hnarrow", 5000);\n'
             self.s+='    model.component("comp1").mesh("mesh1").feature("edg1").feature("size1").set("hnarrowactive", false);\n'
             self.s+='    model.component("comp1").mesh("mesh1").feature("edg1").feature("size2").set("custom", "on");\n'
-            self.s+='    model.component("comp1").mesh("mesh1").feature("edg1").feature("size2").set("hmax", "lambdaD/grid_factor");\n'
+            self.s+='    model.component("comp1").mesh("mesh1").feature("edg1").feature("size2").set("hmax", "lambdaD/grid_factor_bound");\n'
             self.s+='    model.component("comp1").mesh("mesh1").feature("edg1").feature("size2").set("hmaxactive", true);\n'
             self.s+='    model.component("comp1").mesh("mesh1").feature("edg1").feature("size2").set("hmin", 3.26E-12);\n'
             self.s+='    model.component("comp1").mesh("mesh1").feature("edg1").feature("size2").set("hminactive", false);\n'
@@ -488,7 +488,7 @@ class Model():
                 self.s+='    model.component("comp1").physics("tds").create("reac1", "Reactions", 1);\n'
                 self.s+='    model.component("comp1").physics("tds").feature("reac1").selection().all();\n'
             self.s+='    model.component("comp1").physics("tds").prop("ShapeProperty").set("order_concentration", 2);\n'
-            if self.tp.use_convection:
+            if self.tp.use_convection or self.tp.use_mpb:
                 self.s+='    model.component("comp1").physics("tds").prop("TransportMechanism").set("Convection", true);\n'
             else:
                 self.s+='    model.component("comp1").physics("tds").prop("TransportMechanism").set("Convection", false);\n'
@@ -628,15 +628,30 @@ class Model():
                     if len(rate)>0:
                         rates_new.append([i,rate])
                 return rates_new
-            self.s+='/*\n'
-            self.s+=' *REACTIONS\n'
-            self.s+=' */\n'
             if self.tp.use_electrolyte_reactions:
+                self.s+='/*\n'
+                self.s+=' *REACTIONS\n'
+                self.s+=' */\n'
                 rate_str=get_rates()
                 for index,rate in rate_str:
                     self.s+='    model.component("comp1").physics("tds").feature("reac1").set("R_cp'+str(index)+'", "'+rate+'");\n'
                         
                 self.s+='    model.component("comp1").physics("tds").feature("reac1").active(true);\n'
+            if self.tp.use_convection or self.tp.use_mpb:
+                self.s+='    model.component("comp1").physics("tds").prop("AdvancedSettings").set("ConvectiveTerm", "cons");\n'
+            u=''
+            if self.tp.use_convection:
+                u+=str(self.tp.system['flow rate'])
+            if self.tp.use_mpb:
+                if len(u)>0:
+                    u+='+'
+                #get index of positive and negative ion:
+                inx_cat=str([i for i,sp in enumerate(self.tp.species) if self.tp.species[sp]['charge']>0][0])
+                inx_an=str([i for i,sp in enumerate(self.tp.species) if self.tp.species[sp]['charge']<0][0])
+                #MPB model due to Kilic, https://www.ncbi.nlm.nih.gov/pubmed/17358343
+                u+="-N_A_const*a^3*(D"+inx_cat+"*cp"+inx_cat+"x+D"+inx_an+"*cp"+inx_an+"x)/(1-a^3*cp"+inx_cat+"*N_A_const-a^3*cp"+inx_an+"*N_A_const)"
+            if len(u)>0:
+                self.s+='    model.component("comp1").physics("tds").feature("cdm1").set("u", new String[][]{{"'+u+'"}, {"0"}, {"0"}});\n'
 
         def get(self):
             return self.s
@@ -698,7 +713,7 @@ class Model():
                     self.set(pa, pa_val, pa_des)
 
             ##SOME default variables
-            if geo.startswith('b'):
+            if geo.startswith('d'):
                 self.set("rho_s", "((phiM-phiPZC)-phi)*CS", "Surface charge density")
 
                 #### FLUXES
@@ -718,7 +733,7 @@ class Model():
                             string=string.replace('[['+match+']]','cp'+str([ii+1 for ii,spp in enumerate(self.tp.species) if spp==match][0]))
                         self.tp.species[sp]['flux']=string
                         self.set("j{}".format(i+1), 'RF*flux_factor*('+self.tp.species[sp]['flux']+')', "{} flux".format(self.tp.species[sp]['name']))
-            else:
+            if geo.startswith('d'):#else:
                 # - local charge density
                 ldc_str='F_const*('
                 for i in range(len(self.tp.species)):
@@ -754,6 +769,7 @@ class Model():
                 self.set("dflux_times_charge",dflux_charge_str,"Diffusion Flux times charge")
                 self.set("delta_phi_diffx","dflux_times_charge/rho_c","Diffusion Flux Derivative")
                 self.set("delta_phi_diff","intop2(delta_phi_diffx*(x<=dest(x)))","Spatially Dependent Diffusion Loss")
+                self.set("delta_phi_diff_inf","comp1.at0("+str(self.tp.system['boundary thickness'])+",delta_phi_diff)","Total Diffusion drop over the whole cell")
                 self.set("delta_phi_iR_inf","comp1.at0("+str(self.tp.system['boundary thickness'])+",delta_phi_iR)","Total iR drop over the whole cell")
                 self.set("delta_phi_inf","comp1.at0("+str(self.tp.system['boundary thickness'])+",phi)-comp1.at0(0,phi)","Total potential drop over the whole cell")
                 self.set("delta_phi_inf_min_iR","delta_phi_inf-delta_phi_iR_inf","Total potential drop over the whole cell minux iR drop")
@@ -849,6 +865,9 @@ class Model():
             self.set("conc_std", "1 [mol/m^3]", "Standard concentration (1mol/l)")
     
             self.set("flux_factor", "1", "factor scaling the flux")
+
+            if self.tp.use_mpb:
+                self.set("a",str(self.tp.system['ion radius'])+"[m]","Ion size in MPB Model")
     
         def set(self,par_name,par_exp,par_desc):
             self.s+='    model.param().set(\"{}\",\"{}\",\"{}\");\n'.format(par_name,\

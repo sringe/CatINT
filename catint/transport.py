@@ -147,7 +147,9 @@ class Transport(object):
                 'exclude species',
                 'active site density',       #mol/m^2
                 'current density',
+                'flow rate',            #flow rate or convection velocity (COMSOL equation or number)
                 'RF',                       #roughness factor
+                'ion radius'            #Ionic "Radius" due to MPB model, measure for size of hydrated ion
                 ]
 
         #go over input data and put in some defaults if none
@@ -264,6 +266,18 @@ class Transport(object):
                 self.use_migration=False
 
         self.use_convection=False
+        if 'flow rate' in self.system:
+            self.use_convection=True
+
+        self.use_mpb=False
+        if 'ion radius' in self.system:
+            #check if only a single positive and negative ion exist, otherwise this method does not work!
+            count_cat=len([sp for sp in self.species if self.species[sp]['charge']>0])
+            count_an=len([sp for sp in self.species if self.species[sp]['charge']<0])
+            if count_cat!=1 or count_an!=1:
+                self.logger.error('MPB Model does only work if there is a single cationic and single anionic species')
+                sys.exit()
+            self.use_mpb=True
 
         ######################
         #REACTIONS
@@ -469,7 +483,7 @@ class Transport(object):
         Short description of keys:
             solver:             parametric or simple
             studies:            stat or time
-            grid_factor:        factor that determines fine-ness of grid
+            grid_factor_{domain/bound}      factor that determines fine-ness of grid
             bin_path:           comsol executable
             global_variables:   variables defined on the entire geometry
             boundary_variables: variables defined on a boundary
@@ -494,8 +508,10 @@ class Transport(object):
         for a in ['outputs','global_variables','boundary_variables','parameter']:
             if not a in comsol_args:
                 comsol_args[a]={}
-        if 'grid_factor' not in comsol_args['parameter']:
-            comsol_args['parameter']['grid_factor']=['200','Fineness of Grid']
+        if 'grid_factor_bound' not in comsol_args['parameter']:
+            comsol_args['parameter']['grid_factor_bound']=['100','Fineness of Grid']
+        if 'grid_factor_domain' not in comsol_args['parameter']:
+            comsol_args['parameter']['grid_factor_domain']=['100','Fineness of Grid']
 
         #COMSOL Treatment of descriptors
         #if the descriptor is the potential, we can use it internally in COMSOL

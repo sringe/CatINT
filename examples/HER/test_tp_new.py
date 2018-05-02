@@ -13,13 +13,18 @@ supporting_elec=False #True #add chloride anions
 
 Cl_i=1.*1000.
 
-nx=200
-nphi=40 #520 #1040 #260 #130
 
-SA=1
+nx=400
+nphi=100 #520 #1040 #260 #130
+grid_factor_bound=100
+grid_factor_domain=100
+
+RF=390
 use_elreac=True
 if nobuffer:
     use_elreac=False
+
+pzc=-0.75
 ###########################################################################
 #REACTIONS
 ###########################################################################
@@ -108,8 +113,9 @@ system=\
     'migration': True,
     'electrode reactions': True,
     'electrolyte reactions': use_elreac, #False,
-    'phiPZC': -0.75, #+unit_R*298.14/unit_F*pH_i*np.log(10.), #value at SHE: https://www.sciencedirect.com/science/article/pii/S002207280300799X
-    'Stern capacitance': 20 #std: 20
+    'phiPZC': pzc, #+unit_R*298.14/unit_F*pH_i*np.log(10.), #value at SHE: https://www.sciencedirect.com/science/article/pii/S002207280300799X
+    'Stern capacitance': 20, #std: 20 [mikroF/cm^2]
+#    'ion radius': 3e-10
     }
 ###########################################################################
 
@@ -270,7 +276,7 @@ comsol_args['parameter']['Kads_CO2']=['exp(-Ga_CO2_ads/RT)','Equilibrium constan
 comsol_args['parameter']['max_coverage']=['0.44','Maximal coverage with which the Langmuir isotherm will be scaled'] #0.44
 #comsol_args['parameter']['Kads_H']=['exp(-G_H_ads/RT)','Equilibrium constant for HCO3- -> *H']
 #comsol_args['parameter']['max_coverage_H']=['1.','Maximal coverage with which the Langmuir isotherm will be scaled'] #0.44
-comsol_args['parameter']['SA']=[SA,'Surface Area Enhancement Factor']
+comsol_args['parameter']['RF']=[RF,'Surface Area Enhancement Factor']
 ###########################################################################
 #RATE EQUATIONS/FLUXES
 ###########################################################################
@@ -297,10 +303,19 @@ comsol_args['boundary_variables']['pH_at_0']=['14+log10(max(cp[[OH-]],OH_min)*Lm
 boundary_thickness=7.93E-05 #in m
 system['boundary thickness']=boundary_thickness
 #'delta_phi_inf_min_iR
+comsol_args['global_variables']['current_density']=['j1*F_const','Current Density']
+comsol_args['global_variables']['delta_phi_iRx_2']=['current_density/rho_c','iR drop']
+comsol_args['global_variables']['delta_phi_iR_2']=['intop2(delta_phi_iRx_2*(x<=dest(x)))','Spatial dependent iR drop']
+comsol_args['global_variables']['delta_phi_iR_inf_2']=['comp1.at0('+str(system['boundary thickness'])+',delta_phi_iR_2)','Total iR drop over the whole cell']
+comsol_args['global_variables']['delta_phi_iRx_3']=['comp1.at0('+str(system['boundary thickness'])+',i_el)/rho_c','iR drop 3']
+comsol_args['global_variables']['delta_phi_iR_3']=['intop2(delta_phi_iRx_3*(x<=dest(x)))','Spatial dependent iR drop']
+comsol_args['global_variables']['delta_phi_iR_inf_3']=['comp1.at0('+str(system['boundary thickness'])+',delta_phi_iR_3)','Total iR drop over the whole cell']
 comsol_args['boundary_variables']['delta_phi']=['0.0','Electrolyte potential drop']
-comsol_args['boundary_variables']['jH']=['rho_act*A*'+\
+comsol_args['global_variables']['jH']=['rho_act*A*'+\
                          'exp('+\
-                            '-(Ga_H+alpha_H*(phiM-phiM_ref_she)*F_const)/RT'+\
+                            #'-(Ga_H+alpha_H*(phiM-delta_phi_iR_inf_2-phiM_ref_she)*F_const)/RT'+\
+                            '-(Ga_H+alpha_H*(phiM-phiM_ref_she-(phi+delta_phi_iR_inf_3))*F_const)/RT'+\
+                            #'-(Ga_H+alpha_H*(phiM-phi-phiM_ref_she)*F_const)/RT'+\
                          ')','rate of H']
 comsol_args['boundary_variables']['jH_back']=['rho_act*A*('+\
                          'exp('+\
@@ -316,14 +331,19 @@ H2_rate='jH'
 species['H2']['flux-equation']=H2_rate
 
 #parameters for ion hydration, all from Singh paper:
-comsol_args['parameter']['Aconst']=['620.32[pm]','A parameter']
-comsol_args['parameter']['Bconst']=['17.154','B parameter']
-comsol_args['parameter']['zeff']=['0.919[e]','Effective charge']
-comsol_args['parameter']['rMO']=['138[pm]','Radius of hydrated ion']
-comsol_args['parameter']['rHEl']=['155[pm]','Distance of Hydrogen to surface']
+#comsol_args['parameter']['Aconst']=['620.32[pm]','A parameter']
+#comsol_args['parameter']['Bconst']=['17.154','B parameter']
+#comsol_args['parameter']['zeff']=['0.919[e]','Effective charge']
+#comsol_args['parameter']['rMO']=['138[pm]','Radius of hydrated ion']
+#comsol_args['parameter']['rHEl']=['155[pm]','Distance of Hydrogen to surface']
+
+comsol_args['parameter']['grid_factor_bound']=[str(grid_factor_bound),'Grid factor']
+comsol_args['parameter']['grid_factor_domain']=[str(grid_factor_domain),'Grid factor']
+#comsol_args['initialization']['Gouy-Chapman']
+
 #pKa of K+
-comsol_args['global_variables']['pKa']=['-Aconst*(zeff^2/rMO+2*pi*abs(rho_charge)/F_const*zeff*rHEl*(sqrt(1+rMO^2/rHEl^2)-1))+Bconst','pKa of KH2O']
-comsol_args['outputs']=[['pKa','','']]
+#comsol_args['global_variables']['pKa']=['-Aconst*(zeff^2/rMO+2*pi*abs(rho_charge)/F_const*zeff*rHEl*(sqrt(1+rMO^2/rHEl^2)-1))+Bconst','pKa of KH2O']
+#comsol_args['outputs']=[['pKa','','']]
 
 if not nobuffer:
     visc=viscosity(species['HCO3-']['bulk concentration']/10**3), #Pa*s at 25C of KHCO3 solution
