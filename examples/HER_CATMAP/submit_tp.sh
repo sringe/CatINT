@@ -6,7 +6,7 @@
 #SBATCH --error=err_work.log
 #SBATCH --ntasks-per-node=16
 #SBATCH --nodes=1
-#SBATCH --time=02:00:00
+#SBATCH --time=00:30:00
 #SBATCH --qos=normal
 #SBATCH --mem-per-cpu=4000
 

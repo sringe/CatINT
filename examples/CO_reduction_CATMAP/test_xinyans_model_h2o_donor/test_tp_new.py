@@ -24,11 +24,11 @@ nobuffer=True
 
 educt='CO' #CO2 or CO
 
-nx=300 #200
-nx_comsol=100
-nphi=32 #520 #260 #130
+nflux_comsol=300 #200
+nx=100
+nphi=1 #520 #260 #130
 
-SA=1
+RF=1
 
 use_elreac=True
 if nobuffer:
@@ -141,7 +141,7 @@ system=\
     'electrolyte reactions': use_elreac, #False,
     'phiPZC': -0.07, #+unit_R*298.14/unit_F*pH_i*np.log(10.), #value at SHE: https://www.sciencedirect.com/science/article/pii/S002207280300799X
     'Stern capacitance': 20, #std: 20
-    'pH':pH_i
+    'bulk_pH':pH_i
     }
 ###########################################################################
 
@@ -290,8 +290,8 @@ comsol_args['parameter']['e0']=['1[C]','electronic charge']
 system['active site density']=4.1612542339231805e-07 #(mol/m^2) from Heine, 
 #corresponds to 80.3e-6*100**2*0.05/unit_F. 1.004495558139274e-05
 
-comsol_args['parameter']['SA']=[SA,'Surface Area Enhancement Factor']
-comsol_args['nx']=nx_comsol
+comsol_args['parameter']['RF']=[RF,'Surface Area Enhancement Factor']
+comsol_args['nflux']=nflux_comsol
 
 ###########################################################################
 #RATE EQUATIONS/FLUXES
@@ -315,7 +315,7 @@ potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-0.4,-1.7,nphi))}
+    descriptors={'phiM':list(np.linspace(-0.414,-0.414,nphi))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
@@ -330,7 +330,7 @@ for potential in potentials:
     #SETUP AND RUN
     ###########################################################################
     catmap_args={'n_inter':'automatic',\
-                 'n_inter_min':10}
+                 'n_inter_min':100}
     if nobuffer:
         tp=Transport(
             species=species,
@@ -377,8 +377,9 @@ for potential in potentials:
             cm=CatMAP(transport=tp,n_inter=n_inter,model_name='hdonor')
     
     if only_catmap:
-        for p in np.linspace(-1.7,0.0,30):
-            cm.run([p,300])
+        for p in np.linspace(-0.4144,-0.4144,1):
+            tp.system['phiM']=-0.4144
+            cm.run()
     #c=Calculator(transport=tp,tau_jacobi=1e-5,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')
     if not only_catmap:
         c=Calculator(transport=tp,tau_jacobi=1e-5,tau_scf=1e-7,ntout=1,dt=1e-1,tmax=10,mode='stationary',desc_method='internal-cont') #time-dependent')

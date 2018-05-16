@@ -230,7 +230,7 @@ class CatMAP():
                 self.tp.logger.info(tabulate(zip(model.output_labels['interacting_energy'],model.interaction_function(cvg,energies,eps_vector,model.thermodynamics.adsorbate_interactions.interaction_response_function,False,False)[1]),headers=['species','energy']))
                 self.tp.logger.info('--- END OUTPUT ---')
             except:
-                self.tp.logger.info('error in reading interaciton energies')
+                self.tp.logger.info('error in reading interaction energies')
                 pass
         plot_fed(False,method=2)
         plot_fed(True,method=2)
