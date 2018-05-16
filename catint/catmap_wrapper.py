@@ -372,7 +372,7 @@ class CatMAP():
                     if self.tp.species[sp]['surface concentration']<-1.:
                         self.tp.logger.warning('Surface concentration of {} is more negative than 1e-3 mol/L, stopping to be safe.'.format(sp))
 #                        sys.exit()
-                    print 'checking',sp,self.tp.species[sp]['surface concentration']/1000.
+                    self.tp.logger.debug('checking concentration of species {}, found c = {} mol/L'.format(sp,self.tp.species[sp]['surface concentration']/1000.))
                     replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':"+str(max(0.,self.tp.species[sp]['surface concentration']/1000.))+"}")
                     replaced_species.append(sp)
             sp_cm='H2O'
@@ -495,7 +495,11 @@ class CatMAP():
             #else:
             #    nprod=1
             #    nel=1
-            nel=2
+            sol=re.findall('(\d+) ele_g',model.rxn_expressions[idx])
+            if len(sol)>0:
+                nel=int(sol[0])
+            else:
+                nel=0
             rates=data_ref[np.argsort(data_ref[:, 0])][:,1]*self.tp.system['active site density']
             current_densities=rates*nel*unit_F/10.
             pol_file=self.output_folder+'/jelem_'+labels[idx]+'.tsv'
