@@ -80,7 +80,7 @@ data_file = 'catmap_ohdonor.pkl'
 input_file = 'catmap_ohdonor_energies.txt'
 
 
-potential_reference_scale = 'RHE'
+potential_reference_scale = 'SHE'
 extrapolated_potential = -0.416985308915 #the potential at which the energies were calculated vs. SHE
 pH = 7.0
 
@@ -130,129 +130,129 @@ rxn_mechanisms = {
         'CH2O_CO':[5, 5, 16, 15, 37, 38]
 }
 
-#adsorbate_interaction_model = 'first_order' #use "single site" interaction model
-#
-#interaction_response_function = 'smooth_piecewise_linear' #use "smooth piecewise linear" interactions
-#
-#interaction_fitting_mode = None
-#cross_interaction_mode = 'geometric_mean' #use geometric mean for cross parameters
-#
-#interaction_scaling_constraint_dict = {
-#				'CO_t':[0,0,None],
-#				'H_t':[0,0,None],
-#				'OH_t':[0,0,None],
-#				'COH_t':[0,0,None],
-#				'CHO_t':[0,0,None],
-#				'CH_t':[0,0,None],
-#				'CH2_t':[0,0,None],
-#				'CH3_t':[0,0,None],
-#                          }
-#
-#interaction_strength = 1.0
-#
-#if 1 == len(surface_names):
-#	numBeforePt = 0
-#	numAfterPt = 0
-#else:
-#	numBeforePt = len(surface_names)-surface_names.index('Pt')
-#	numAfterPt = len(surface_names)-numBeforePt-1
-#	transition_state_cross_interaction_mode = 'transition_state_scaling' #use TS scaling for TS interaction
-#
-#species_definitions['t']['interaction_response_parameters'] = {'cutoff':0.25,'smoothing':0.05}
-#
-#eHCO=0.7274
-#eCO=2.4670
-#eH=0.0
-#
-#species_definitions['CO_t'] = {
-#		'self_interaction_parameter':[None]*numBeforePt+[eCO]+[None]*numAfterPt,
-#		'cross_interaction_parameters':{
-#		'H_t': [None]*numBeforePt+[eHCO]+[None]*numAfterPt,
-#		'H-ele_t': [None]*numBeforePt+[eHCO*1.08]+[None]*numAfterPt,
-#		'H2-ele_t': [None]*numBeforePt+[eHCO*0.7]+[None]*numAfterPt,
-#		'H-H_t': [None]*numBeforePt+[eHCO*1.59]+[None]*numAfterPt,
-#		'H-CO-ele_t': [None]*numBeforePt+[eCO*0.79]+[None]*numAfterPt,
-#		'CO-H-ele_t': [None]*numBeforePt+[eCO*3.1889]+[None]*numAfterPt,
-#		'COH-H-ele_t': [None]*numBeforePt+[eCO*0.56]+[None]*numAfterPt,
-#		'CHOH-H-ele_t': [None]*numBeforePt+[eCO*1.89]+[None]*numAfterPt,
-#		'H-CO_t': [None]*numBeforePt+[eCO*1]+[None]*numAfterPt,
-#		
-#		'OC-CO_t': [None]*numBeforePt+[1.*eCO]+[None]*numAfterPt,
-#		'OCCO_t': [None]*numBeforePt+[1.*eCO]+[None]*numAfterPt,
-#		'OCC-HO-ele_t': [None]*numBeforePt+[1.0238*eCO]+[None]*numAfterPt,
-#		'OC-CHO_t': [None]*numBeforePt+[1.194*eCO]+[None]*numAfterPt,
-#		'OCCHO_t': [None]*numBeforePt+[1.4839*eCO]+[None]*numAfterPt,
-#
-#		'OCCO-H-ele_t': [None]*numBeforePt+[1.*eCO]+[None]*numAfterPt,
-#		'OCCOH_t': [None]*numBeforePt+[0.44*eCO]+[None]*numAfterPt,
-#		'OCCOH-H-ele_t': [None]*numBeforePt+[1.*eCO]+[None]*numAfterPt,
-#		
-#		'OCC_t': [None]*numBeforePt+[1*eCO]+[None]*numAfterPt,
-#		'OCC-H_t': [None]*numBeforePt+[1*eCO]+[None]*numAfterPt,
-#		'OCC-H-ele_t': [None]*numBeforePt+[1*eCO]+[None]*numAfterPt,
-#		'OCCH_t': [None]*numBeforePt+[1*eCO]+[None]*numAfterPt,
-#		'CO-_t': [None]*numBeforePt+[eCO]+[None]*numAfterPt,
-#
-#		'OC-CHOH_t': [None]*numBeforePt+[1.*eCO]+[None]*numAfterPt,
-#		'OCCHOH_t': [None]*numBeforePt+[1.2745*eCO]+[None]*numAfterPt,
-#
-#		'CH2O-ele_t': [None]*numBeforePt+[0.77*eCO]+[None]*numAfterPt,
-#		'CH2O_t': [None]*numBeforePt+[0.3*eCO]+[None]*numAfterPt,
-#		'CH2O-H-ele_t': [None]*numBeforePt+[0.3*eCO]+[None]*numAfterPt,
-#		'CH2OH_t': [None]*numBeforePt+[0.68*eCO]+[None]*numAfterPt,
-#		'CH2OH-H-ele_t': [None]*numBeforePt+[0.68*eCO]+[None]*numAfterPt,
-#
-#		#'CH2O-_t': [None]*numBeforePt+[0.3*eCO]+[None]*numAfterPt,
-#			}
-#		}
-#
-#species_definitions['OH_t'] = {
-#		'self_interaction_parameter':[None]*numBeforePt+[1.0330]+[None]*numAfterPt,
-#		}
-#
-#species_definitions['H_t'] = {
-#		'cross_interaction_parameters':{
-#		'H-ele_t': [None]*numBeforePt+[eH*1.08]+[None]*numAfterPt,
-#		'H2-ele_t': [None]*numBeforePt+[eH*0.7]+[None]*numAfterPt,
-#		'H-H_t': [None]*numBeforePt+[eH*1.59]+[None]*numAfterPt,
-#		'H-CO-ele_t': [None]*numBeforePt+[eHCO*0.79]+[None]*numAfterPt,
-#		'CO-H-ele_t': [None]*numBeforePt+[eHCO*3.1889]+[None]*numAfterPt,
-#		'COH-H-ele_t': [None]*numBeforePt+[eHCO*0.56]+[None]*numAfterPt,
-#		'H-CO_t': [None]*numBeforePt+[eHCO*1]+[None]*numAfterPt,
-#			}
-#		}
-#
-#for species in ['CH2O_t', 'CH_t', 'CH2_t', 'CH3_t', 'CHOH_t', 'CHO_t', 'CH2OH_t']:
-#	species_definitions[species] = species_definitions['CO_t']
-#
-#species_definitions['COH_t'] = {
-#		'self_interaction_parameter':[None]*numBeforePt+[1.75*eCO]+[None]*numAfterPt,
-#		}
-#
-#species_definitions['OCCO_t'] = {
-#		'self_interaction_parameter':[None]*numBeforePt+[1*eCO]+[None]*numAfterPt,
-#		'cross_interaction_parameters':{
-#		'H_t': [None]*numBeforePt+[1*eHCO]+[None]*numAfterPt,
-#		'H-ele_t': [None]*numBeforePt+[1*eHCO*1.08]+[None]*numAfterPt,
-#		'H2-ele_t': [None]*numBeforePt+[1*eHCO*0.39]+[None]*numAfterPt,
-#		'H-H_t': [None]*numBeforePt+[1*eHCO*1.59]+[None]*numAfterPt,
-#		'H-CO-ele_t': [None]*numBeforePt+[1*eCO*0.79]+[None]*numAfterPt,
-#		'CO-H-ele_t': [None]*numBeforePt+[1*eCO*3.1889]+[None]*numAfterPt,
-#		'COH-H-ele_t': [None]*numBeforePt+[1*eCO*0.56]+[None]*numAfterPt,
-#		'H-CO_t': [None]*numBeforePt+[1*eCO*1]+[None]*numAfterPt,
-#                        },
-#                'n_sites':2
-#                }
-#
-#for sp in ['OCCHO_t', 'OCCOH_t', 'OCC_t', 'OCCH_t', 'OCCHOH_t', 'OCCH2O_t']:
-#	species_definitions[sp] = species_definitions['OCCO_t']
-#
-#for sp in ['OC-CO_t', 'OC-CHO_t', 'OCC-HO-ele_t', 'OCCO-H-ele_t', 'OCCOH-H-ele_t', 'OCC-H-ele_t', 'OCC-H_t', 'OCC-HO_t', 'OC-CHOH_t', 'OC-CH2O_t']:
-#       species_definitions[sp] = {'n_sites':2}
+adsorbate_interaction_model = 'first_order' #use "single site" interaction model
 
-#without interactions:
-for sp in ['OC-CO_t', 'OC-CHO_t', 'OCC-HO-ele_t', 'OCCO-H-ele_t', 'OCCOH-H-ele_t', 'OCC-H-ele_t', 'OCC-H_t', 'OCC-HO_t', 'OC-CHOH_t', 'OC-CH2O_t','OCCO_t','OCCHO_t','OCCOH_t','OCC_t','OCCH_t','OCCHOH_t','OCCH2O_t']:
+interaction_response_function = 'smooth_piecewise_linear' #use "smooth piecewise linear" interactions
+
+interaction_fitting_mode = None
+cross_interaction_mode = 'geometric_mean' #use geometric mean for cross parameters
+
+interaction_scaling_constraint_dict = {
+				'CO_t':[0,0,None],
+				'H_t':[0,0,None],
+				'OH_t':[0,0,None],
+				'COH_t':[0,0,None],
+				'CHO_t':[0,0,None],
+				'CH_t':[0,0,None],
+				'CH2_t':[0,0,None],
+				'CH3_t':[0,0,None],
+                          }
+
+interaction_strength = 1.0
+
+if 1 == len(surface_names):
+	numBeforePt = 0
+	numAfterPt = 0
+else:
+	numBeforePt = len(surface_names)-surface_names.index('Pt')
+	numAfterPt = len(surface_names)-numBeforePt-1
+	transition_state_cross_interaction_mode = 'transition_state_scaling' #use TS scaling for TS interaction
+
+species_definitions['t']['interaction_response_parameters'] = {'cutoff':0.25,'smoothing':0.05}
+
+eHCO=0.7274
+eCO=2.4670
+eH=0.0
+
+species_definitions['CO_t'] = {
+		'self_interaction_parameter':[None]*numBeforePt+[eCO]+[None]*numAfterPt,
+		'cross_interaction_parameters':{
+		'H_t': [None]*numBeforePt+[eHCO]+[None]*numAfterPt,
+		'H-ele_t': [None]*numBeforePt+[eHCO*1.08]+[None]*numAfterPt,
+		'H2-ele_t': [None]*numBeforePt+[eHCO*0.7]+[None]*numAfterPt,
+		'H-H_t': [None]*numBeforePt+[eHCO*1.59]+[None]*numAfterPt,
+		'H-CO-ele_t': [None]*numBeforePt+[eCO*0.79]+[None]*numAfterPt,
+		'CO-H-ele_t': [None]*numBeforePt+[eCO*3.1889]+[None]*numAfterPt,
+		'COH-H-ele_t': [None]*numBeforePt+[eCO*0.56]+[None]*numAfterPt,
+		'CHOH-H-ele_t': [None]*numBeforePt+[eCO*1.89]+[None]*numAfterPt,
+		'H-CO_t': [None]*numBeforePt+[eCO*1]+[None]*numAfterPt,
+		
+		'OC-CO_t': [None]*numBeforePt+[1.*eCO]+[None]*numAfterPt,
+		'OCCO_t': [None]*numBeforePt+[1.*eCO]+[None]*numAfterPt,
+		'OCC-HO-ele_t': [None]*numBeforePt+[1.0238*eCO]+[None]*numAfterPt,
+		'OC-CHO_t': [None]*numBeforePt+[1.194*eCO]+[None]*numAfterPt,
+		'OCCHO_t': [None]*numBeforePt+[1.4839*eCO]+[None]*numAfterPt,
+
+		'OCCO-H-ele_t': [None]*numBeforePt+[1.*eCO]+[None]*numAfterPt,
+		'OCCOH_t': [None]*numBeforePt+[0.44*eCO]+[None]*numAfterPt,
+		'OCCOH-H-ele_t': [None]*numBeforePt+[1.*eCO]+[None]*numAfterPt,
+		
+		'OCC_t': [None]*numBeforePt+[1*eCO]+[None]*numAfterPt,
+		'OCC-H_t': [None]*numBeforePt+[1*eCO]+[None]*numAfterPt,
+		'OCC-H-ele_t': [None]*numBeforePt+[1*eCO]+[None]*numAfterPt,
+		'OCCH_t': [None]*numBeforePt+[1*eCO]+[None]*numAfterPt,
+		'CO-_t': [None]*numBeforePt+[eCO]+[None]*numAfterPt,
+
+		'OC-CHOH_t': [None]*numBeforePt+[1.*eCO]+[None]*numAfterPt,
+		'OCCHOH_t': [None]*numBeforePt+[1.2745*eCO]+[None]*numAfterPt,
+
+		'CH2O-ele_t': [None]*numBeforePt+[0.77*eCO]+[None]*numAfterPt,
+		'CH2O_t': [None]*numBeforePt+[0.3*eCO]+[None]*numAfterPt,
+		'CH2O-H-ele_t': [None]*numBeforePt+[0.3*eCO]+[None]*numAfterPt,
+		'CH2OH_t': [None]*numBeforePt+[0.68*eCO]+[None]*numAfterPt,
+		'CH2OH-H-ele_t': [None]*numBeforePt+[0.68*eCO]+[None]*numAfterPt,
+
+		#'CH2O-_t': [None]*numBeforePt+[0.3*eCO]+[None]*numAfterPt,
+			}
+		}
+
+species_definitions['OH_t'] = {
+		'self_interaction_parameter':[None]*numBeforePt+[1.0330]+[None]*numAfterPt,
+		}
+
+species_definitions['H_t'] = {
+		'cross_interaction_parameters':{
+		'H-ele_t': [None]*numBeforePt+[eH*1.08]+[None]*numAfterPt,
+		'H2-ele_t': [None]*numBeforePt+[eH*0.7]+[None]*numAfterPt,
+		'H-H_t': [None]*numBeforePt+[eH*1.59]+[None]*numAfterPt,
+		'H-CO-ele_t': [None]*numBeforePt+[eHCO*0.79]+[None]*numAfterPt,
+		'CO-H-ele_t': [None]*numBeforePt+[eHCO*3.1889]+[None]*numAfterPt,
+		'COH-H-ele_t': [None]*numBeforePt+[eHCO*0.56]+[None]*numAfterPt,
+		'H-CO_t': [None]*numBeforePt+[eHCO*1]+[None]*numAfterPt,
+			}
+		}
+
+for species in ['CH2O_t', 'CH_t', 'CH2_t', 'CH3_t', 'CHOH_t', 'CHO_t', 'CH2OH_t']:
+	species_definitions[species] = species_definitions['CO_t']
+
+species_definitions['COH_t'] = {
+		'self_interaction_parameter':[None]*numBeforePt+[1.75*eCO]+[None]*numAfterPt,
+		}
+
+species_definitions['OCCO_t'] = {
+		'self_interaction_parameter':[None]*numBeforePt+[1*eCO]+[None]*numAfterPt,
+		'cross_interaction_parameters':{
+		'H_t': [None]*numBeforePt+[1*eHCO]+[None]*numAfterPt,
+		'H-ele_t': [None]*numBeforePt+[1*eHCO*1.08]+[None]*numAfterPt,
+		'H2-ele_t': [None]*numBeforePt+[1*eHCO*0.39]+[None]*numAfterPt,
+		'H-H_t': [None]*numBeforePt+[1*eHCO*1.59]+[None]*numAfterPt,
+		'H-CO-ele_t': [None]*numBeforePt+[1*eCO*0.79]+[None]*numAfterPt,
+		'CO-H-ele_t': [None]*numBeforePt+[1*eCO*3.1889]+[None]*numAfterPt,
+		'COH-H-ele_t': [None]*numBeforePt+[1*eCO*0.56]+[None]*numAfterPt,
+		'H-CO_t': [None]*numBeforePt+[1*eCO*1]+[None]*numAfterPt,
+                        },
+                'n_sites':2
+                }
+
+for sp in ['OCCHO_t', 'OCCOH_t', 'OCC_t', 'OCCH_t', 'OCCHOH_t', 'OCCH2O_t']:
+	species_definitions[sp] = species_definitions['OCCO_t']
+
+for sp in ['OC-CO_t', 'OC-CHO_t', 'OCC-HO-ele_t', 'OCCO-H-ele_t', 'OCCOH-H-ele_t', 'OCC-H-ele_t', 'OCC-H_t', 'OCC-HO_t', 'OC-CHOH_t', 'OC-CH2O_t']:
        species_definitions[sp] = {'n_sites':2}
+
+##without interactions:
+#for sp in ['OC-CO_t', 'OC-CHO_t', 'OCC-HO-ele_t', 'OCCO-H-ele_t', 'OCCOH-H-ele_t', 'OCC-H-ele_t', 'OCC-H_t', 'OCC-HO_t', 'OC-CHOH_t', 'OC-CH2O_t','OCCO_t','OCCHO_t','OCCOH_t','OCC_t','OCCH_t','OCCHOH_t','OCCH2O_t']:
+#       species_definitions[sp] = {'n_sites':2}
 
 
 

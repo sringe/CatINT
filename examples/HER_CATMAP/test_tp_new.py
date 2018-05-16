@@ -24,9 +24,9 @@ educt='CO' #CO2 or CO
 nx=400 #200
 nflux_comsol=10
 grid_factor=200
-nphi=50
+nphi=10
 
-RF=309
+RF=390
 
 use_elreac=True
 if nobuffer:
@@ -42,40 +42,40 @@ if nobuffer:
 #Millero1997: http://www-naweb.iaea.org/napc/ih/documents/global_cycle/vol%20I/cht_i_09.pdf
 electrolyte_reactions=\
     {
-    ##############################################################################################################
-    'buffer-acid':      {   'reaction':            'CO2 + H2O <-> HCO3- + H+', 
-                            #PURE WATER, Emerson
-                            'constant':             0.000445,                               #Gupta:  0.000444 
-                             'rates':               [3.7e-2,8.3333]},                       #
-                            #salinity S=35, Schulz2006
-#                             'constant':             0.00138951310,
-#                             'rates':               [3.71e-2,26.7]},
-    ##############################################################################################################
-    'buffer-acid2':     {   'reaction':             'HCO3- <-> CO32- + H+',
-                            #PURE WATER, Millero1997
-                            #'constant':              4.79e-8,
-                            'constant':             3.5317025629468759e-07,              #https://www.iaea.org/ocean-acidification/act7/Guide%20best%20practices%20low%20res.pdf
-                            'rates':                [59.44,1.68304093e8]},                  #assuming Schulz2006 for hin-reactio !!!!!!!NOT SALINITY CORRECTED!!!!!!!
-##                            'rates':                [59.44,12.409e8]},                  #assuming Schulz2006 for hin-reaction !!!!!!!NOT SALINITY CORRECTED!!!!!!!
-                            #salinity S=35, Schulz2006
-#                            'constant':             1.1888e-06,                            #Emerson: 1.0715e-6
-#                            'rates':                [59.44,5e7]},                          
-    ##############################################################################################################
-    'buffer-base':      {   'reaction':            'CO2 + OH- <-> HCO3-',
-                            #PURE WATER, Emerson
-                            'constant':             43750.0,                                #Gupta:  44400.0 
-                            'rates':                [7.0,16e-5]},                           #Gupta:  [5.93,13.4e-5]
-                            #salinity S=35, Schulz2006
-#                             'constant':             22966.014418, #Schulz2006, m^3/mol
-#                             'rates':                [2.23,9.71e-5]}, #Schulz2006
-    ##############################################################################################################
-    'buffer-base2':     {   'reaction':            'HCO3- + OH- <-> CO32- + H2O', 
-                            #PURE WATER ???? Gupta
-                            'constant':              4.66,
-                            'rates':                [1.0e5,21459.2274]},
-                            #salinity S=35, Schulz2006
-#                             'constant':             19.60784, #Schulz2006, m^3/mol
-#                             'rates':                [6e6,306000]}, #Schulz2006
+#    ##############################################################################################################
+#    'buffer-acid':      {   'reaction':            'CO2 + H2O <-> HCO3- + H+', 
+#                            #PURE WATER, Emerson
+#                            'constant':             0.000445,                               #Gupta:  0.000444 
+#                             'rates':               [3.7e-2,8.3333]},                       #
+#                            #salinity S=35, Schulz2006
+##                             'constant':             0.00138951310,
+##                             'rates':               [3.71e-2,26.7]},
+#    ##############################################################################################################
+#    'buffer-acid2':     {   'reaction':             'HCO3- <-> CO32- + H+',
+#                            #PURE WATER, Millero1997
+#                            #'constant':              4.79e-8,
+#                            'constant':             3.5317025629468759e-07,              #https://www.iaea.org/ocean-acidification/act7/Guide%20best%20practices%20low%20res.pdf
+#                            'rates':                [59.44,1.68304093e8]},                  #assuming Schulz2006 for hin-reactio !!!!!!!NOT SALINITY CORRECTED!!!!!!!
+###                            'rates':                [59.44,12.409e8]},                  #assuming Schulz2006 for hin-reaction !!!!!!!NOT SALINITY CORRECTED!!!!!!!
+#                            #salinity S=35, Schulz2006
+##                            'constant':             1.1888e-06,                            #Emerson: 1.0715e-6
+##                            'rates':                [59.44,5e7]},                          
+#    ##############################################################################################################
+#    'buffer-base':      {   'reaction':            'CO2 + OH- <-> HCO3-',
+#                            #PURE WATER, Emerson
+#                            'constant':             43750.0,                                #Gupta:  44400.0 
+#                            'rates':                [7.0,16e-5]},                           #Gupta:  [5.93,13.4e-5]
+#                            #salinity S=35, Schulz2006
+##                             'constant':             22966.014418, #Schulz2006, m^3/mol
+##                             'rates':                [2.23,9.71e-5]}, #Schulz2006
+#    ##############################################################################################################
+#    'buffer-base2':     {   'reaction':            'HCO3- + OH- <-> CO32- + H2O', 
+#                            #PURE WATER ???? Gupta
+#                            'constant':              4.66,
+#                            'rates':                [1.0e5,21459.2274]},
+#                            #salinity S=35, Schulz2006
+##                             'constant':             19.60784, #Schulz2006, m^3/mol
+##                             'rates':                [6e6,306000]}, #Schulz2006
     ##############################################################################################################
     'self-dissociation of water':            {   'reaction':             'H2O <-> OH- + H+',
                             'constant':             1e-8, #(mol/m^3)^2
@@ -135,7 +135,7 @@ system=\
     'electrode reactions': True,
     'electrolyte reactions': use_elreac, #False,
     'phiPZC': -0.75, #+unit_R*298.14/unit_F*pH_i*np.log(10.), #value at SHE: https://www.sciencedirect.com/science/article/pii/S002207280300799X
-    'Stern capacitance': 20, #std: 20
+    'Stern capacitance': 40, #std: 20
     'bulk_pH':pH_i
     }
 ###########################################################################
@@ -166,8 +166,8 @@ CO_i = 9.5e-4*system['pressure']*1000.
 ##1) option: initialize with CO2_i and OHm_i
 OHm_i=10**(pH_i-14.)*1000.0
 H2_i = 0.0 #0.00078*system['pressure']*1000.
-HCO3m_i=electrolyte_reactions['buffer-base']['constant']*CO2_i*OHm_i
-CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
+#HCO3m_i=electrolyte_reactions['buffer-base']['constant']*CO2_i*OHm_i
+#O32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
 #print 'HCO3m_i OHm_i CO2_i CO32m_i'
 #print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
 ##2) option: initialize with HCO3m_i and OHm_i #!currently used!!
@@ -176,7 +176,7 @@ CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
 #HCO3m_i=0.1*1000.
 #CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
 #CO2_i=HCO3m_i/OHm_i/electrolyte_reactions['buffer-base']['constant']
-print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
+#print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
 #3) option: initialize with CO2_i and HCO3m_i
 #HCO3m_i=0.5*1000
 #OHm_i=HCO3m_i/CO2_i/electrolyte_reactions['buffer-base']['constant']
@@ -317,6 +317,7 @@ for potential in potentials:
         tp=Transport(
             species=species,
             electrode_reactions=electrode_reactions,
+            electrolyte_reactions=electrolyte_reactions,
             system=system,
             pb_bound=pb_bound,
             comsol_args=comsol_args,
