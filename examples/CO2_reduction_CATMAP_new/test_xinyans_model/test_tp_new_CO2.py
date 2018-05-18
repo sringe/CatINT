@@ -324,6 +324,8 @@ for potential in potentials:
         'potential':{'bulk':0.0},
         'wall':system['phiM']}
 
+    catmap_args={}
+    catmap_args['n_inter']='automatic'
 
     ###########################################################################
     #SETUP AND RUN
@@ -335,6 +337,7 @@ for potential in potentials:
             system=system,
             pb_bound=pb_bound,
             comsol_args=comsol_args,
+            catmap_args=catmap_args,
             model_name='CO2R',
             descriptors=descriptors,
             nx=nx)
@@ -345,6 +348,7 @@ for potential in potentials:
             electrolyte_reactions=electrolyte_reactions,
             system=system,
             pb_bound=pb_bound,
+            catmap_args=catmap_args,
             comsol_args=comsol_args,
             model_name='CO2R',
             descriptors=descriptors,

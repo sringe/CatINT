@@ -25,7 +25,7 @@ class Object(object):
 class CatMAP():
     """This class modifies the concentrations in the catmap input file (defined by user) and runs catmap. The output is the read in and the boundary conditions adjusted properly"""
 
-    def __init__(self,path=os.getcwd(),transport=None,model_name=None,delta_desc=0.05,min_desc=-1.5,max_desc=0.2,n_inter='1'):
+    def __init__(self,path=os.getcwd(),transport=None,model_name=None,delta_desc=0.05,min_desc=-1.5,max_desc=0.2,n_inter=1):
         #delta_desc is the descriptor delta with which the descriptor axes is resolved
         #in case of potential 0.05 is fine
         #max and min_desc are the  bounds of the descriptor region (here default for potential being the descriptor)
@@ -136,9 +136,12 @@ class CatMAP():
 #            pass
         #sys.exit()
         #slowly ramp up the interactions if desired
-        if self.n_inter.isdigit():
+        if type(self.n_inter)==int:
             if self.use_interactions:
-                inter=np.linspace(0,self.interaction_strength,self.n_inter)
+                if self.n_inter==1:
+                    inter=[self.interaction_strength]
+                else:
+                    inter=np.linspace(0,self.interaction_strength,self.n_inter)
             else:
                 inter=[0]
         elif 'n_inter_min' in self.tp.catmap_args:
@@ -157,7 +160,6 @@ class CatMAP():
 #        os.close(1)
 #        print os.getcwd()
 #        os.open(self.input_folder+"/catmap_run.err", os.O_CREAT)
-        print "INTER",inter
         jj=0
         while True:
             #for ii in inter:
@@ -210,13 +212,11 @@ class CatMAP():
             self.tp.logger.info(desc_val)
             self.tp.logger.info(float(desc_val[0]))
             try:
-                self.tp.logger.info('checking1',[model.interacting_energy_map[i][0][0] for i in range(len(model.interacting_energy_map))])
-                self.tp.logger.info('checking2',float(desc_val[0]))
                 idx = [i for i in range(len(model.interacting_energy_map)) if abs(model.interacting_energy_map[i][0][0]-float(desc_val[0]))<1e-5][0]
                 descrip, coverages = model.coverage_map[idx]
                 rxn_parameters = model.scaler.get_rxn_parameters(descrip)
                 self.tp.logger.info('--- Interaction energies ---')
-                self.tp.logger.info(' - desc = ',desc_val[0])
+                self.tp.logger.info(' - desc = {}'.format(desc_val[0]))
 #                self.tp.logger.info(model.output_labels['interacting_energy'])
 #                self.tp.logger.info(model.solver.get_interacting_energies(rxn_parameters))
                 all_ads = model.adsorbate_names + model.transition_state_names

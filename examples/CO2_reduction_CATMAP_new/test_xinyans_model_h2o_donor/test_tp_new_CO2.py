@@ -14,7 +14,7 @@ from read_data import read_data
 only_catmap=True
 
 pH_i=7.0 #6.8
-nobuffer=True #False #True #False #True #False #True 
+nobuffer=False #True #False #True #False #True 
 
 educt='CO2' #CO2 or CO
 
@@ -145,7 +145,7 @@ data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
 #set up the initial concentrationss from this constants:
 CO2_i = 0.03419*system['pressure']*1000. #initial CO2(aq) bulk concentrations at t=0 and Pressure P in [mol/m3] units
 #                        #from Henry constant (29.41 atm/M
-CO_i = 9.5e-4*system['pressure']*1000.
+#CO_i = 9.5e-4*system['pressure']*1000.
 #CO32m_i = ((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)-\
 #            (np.sqrt((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)**2\
 #            -4.0*(bic_i)**2)))/2  #initial (CO3)2- bulk concentrations at t=0 [mol/m3]
@@ -158,23 +158,23 @@ CO_i = 9.5e-4*system['pressure']*1000.
 
 ##1) option: initialize with CO2_i and OHm_i
 OHm_i=10**(pH_i-14.)*1000.0
-#HCO3m_i=electrolyte_reactions['buffer-base']['constant']*CO2_i*OHm_i
-#CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
+HCO3m_i=electrolyte_reactions['buffer-base']['constant']*CO2_i*OHm_i
+CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
 #print 'HCO3m_i OHm_i CO2_i CO32m_i'
 #print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
 ##2) option: initialize with HCO3m_i and OHm_i #!currently used!!
 #print 'CO2 before',CO2_i
-OHm_i=10**(pH_i-14.)*1000.0
-HCO3m_i=0.1*1000.
-CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
-CO2_i=HCO3m_i/OHm_i/electrolyte_reactions['buffer-base']['constant']
-print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
+#OHm_i=10**(pH_i-14.)*1000.0
+#HCO3m_i=0.1*1000.
+#CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
+#CO2_i=HCO3m_i/OHm_i/electrolyte_reactions['buffer-base']['constant']
+#print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
 #3) option: initialize with CO2_i and HCO3m_i
 #HCO3m_i=0.5*1000
 #OHm_i=HCO3m_i/CO2_i/electrolyte_reactions['buffer-base']['constant']
 #pH_i=14+np.log10(OHm_i/1000.)
 #print 'pH',pH_i
-CO2_i = 1000.
+#CO2_i = 1000.
 CO_i = 0.0
 
 Hm_i=10**(-pH_i)*1000.0
@@ -327,6 +327,8 @@ for potential in potentials:
         'potential':{'bulk':0.0},
         'wall':system['phiM']}
 
+    catmap_args={}
+    catmap_args['n_inter']='automatic'
 
     ###########################################################################
     #SETUP AND RUN
@@ -338,6 +340,7 @@ for potential in potentials:
             system=system,
             pb_bound=pb_bound,
             comsol_args=comsol_args,
+            catmap_args=catmap_args,
             model_name='CO2R',
             descriptors=descriptors,
             nx=nx)
@@ -348,6 +351,7 @@ for potential in potentials:
             electrolyte_reactions=electrolyte_reactions,
             system=system,
             pb_bound=pb_bound,
+            catmap_args=catmap_args,
             comsol_args=comsol_args,
             model_name='CO2R',
             descriptors=descriptors,

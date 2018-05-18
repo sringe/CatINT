@@ -14,7 +14,7 @@ from read_data import read_data
 only_catmap=True
 #if only_catmap, run only catmap calculation without transport!
 
-#n_inter=100
+n_inter_min=1
 
 pH_i=13.0
 nobuffer=True
@@ -309,6 +309,8 @@ for potential in potentials:
         'potential':{'bulk':0.0},
         'wall':system['phiM']}
 
+    catmap_args={}
+    catmap_args['n_inter_min']=n_inter_min
 
     ###########################################################################
     #SETUP AND RUN
@@ -321,6 +323,7 @@ for potential in potentials:
             system=system,
             pb_bound=pb_bound,
             comsol_args=comsol_args,
+            catmap_args=catmap_args,
             model_name='her',
             descriptors=descriptors,
             nx=nx)
@@ -332,6 +335,7 @@ for potential in potentials:
             system=system,
             pb_bound=pb_bound,
             comsol_args=comsol_args,
+            catmap_args=catmap_args,
             model_name='her',
             descriptors=descriptors,
             nx=nx)
