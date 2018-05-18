@@ -2,7 +2,9 @@ import os
 import matplotlib.pyplot as plt
 from itertools import cycle
 import sys
-sys.path.insert(0,'/scratch/users/sringe/transport/CatINT')
+#sys.path.insert(0,'/scratch/users/sringe/transport/CatINT')
+sys.path.insert(0,'/scratch/users/sringe/transport/catmap')
+sys.path.insert(0,'/scratch/users/sringe/transport/catint2')
 import numpy as np
 from glob import glob
 from catint.experimental import EXPDATA

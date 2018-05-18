@@ -1,5 +1,7 @@
-from catmap.model import ReactionModel
 import sys
+sys.path.insert(0,'/scratch/users/sringe/transport/catmap')
+from catmap.model import ReactionModel
+#import sys
 from string import Template
 import os
 import numpy as np
@@ -22,6 +24,7 @@ mkm_text = mkm_template.substitute(pH_new = j)
 mkm_file = 'catmap_'+sys.argv[1]+'.mkm'
 with open(mkm_file,'w') as f:
     f.write(mkm_text)
+print 'Reading',mkm_file
 model = ReactionModel(setup_file = mkm_file)
 model.output_variables+=['production_rate', 'free_energy', 'selectivity', 'interacting_energy']
 model.run()
