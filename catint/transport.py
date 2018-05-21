@@ -250,7 +250,7 @@ class Transport(object):
 
         #initialize concentrations at electrode
         for sp in self.species:
-            self.species[sp]['surface concentration']=self.species[sp]['bulk concentration']
+            self.species[sp]['surface_concentration']=self.species[sp]['bulk concentration']
 
 
 

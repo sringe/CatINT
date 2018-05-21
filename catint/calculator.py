@@ -221,6 +221,8 @@ class Calculator():
                         self.run_single_step(label=label)
                     else:
                         self.run_scf_cycle(label=label)
+                    
+                    self.tp.save()
             #synchronize all_data over CPUs
 #            self.tp.all_data=reduce_dict_mpi(self.tp.all_data)
         else:
@@ -230,6 +232,8 @@ class Calculator():
             else:
                 self.tp.logger.error('Catmap has been selected but current descriptor method is Comsol internal which does not work. Stopping here.')
                 sys.exit()
+
+            self.tp.save()
 
         if use_mpi:
             self.tp.comm.Barrier()
@@ -278,7 +282,7 @@ class Calculator():
         while scf_accuracy>self.tau_scf:
             istep+=1
             #evaluate how the accuracy during the last 50 steps, if it does not significantly decrease, reduce the mixing factor
-            if istep-step_to_check>80 and abs(accuracy[-2]-accuracy[-1])>1e-1:
+            if istep-step_to_check>40: # and abs(accuracies[-2]-accuracies[-1])>1e-1:
                 #still no convergence, try to decrease mixing factor
                 self.scf_mix*=0.9
                 self.tp.logger.info(' | Accuracy is still < 1e-1, decreasing mixing factor in order to speed up the convergence')
@@ -290,13 +294,13 @@ class Calculator():
                 #mix fluxes
                 for sp in self.tp.species:
 #                    self.tp.species[sp]['flux']=self.mix_scf*self.tp.species[sp]['flux']+(1.-self.mix_scf)*fl_old[sp]
-                    self.tp.species[sp]['surface concentration']=self.mix_scf*self.tp.species[sp]['surface concentration']+\
+                    self.tp.species[sp]['surface_concentration']=self.mix_scf*self.tp.species[sp]['surface_concentration']+\
                             (1.-self.mix_scf)*sc_old[sp]
 
-            #for linear mixing, safe all surface concentrations
+            #for linear mixing, safe all surface_concentrations
             sc_old={}
             for sp in self.tp.species:
-                sc_old[sp]=self.tp.species[sp]['surface concentration']
+                sc_old[sp]=self.tp.species[sp]['surface_concentration']
 
             #1) Microkinetic Model: CatMAP
             if istep==1:
@@ -314,7 +318,7 @@ class Calculator():
 
             self.tp.logger.debug('Surface Concentrations:')
             for sp in self.tp.species:
-                self.tp.logger.debug('  {}: {} mol/L'.format(sp,self.tp.species[sp]['surface concentration']/1000.))
+                self.tp.logger.debug('  {}: {} mol/L'.format(sp,self.tp.species[sp]['surface_concentration']/1000.))
 
             #only_last updates the descriptor based dictionaries only for the last entry in self.tp.descriptors
             self.run_single_step(label=label)
@@ -323,10 +327,10 @@ class Calculator():
             grid_factor=float(self.tp.comsol_args['parameter']['grid_factor'][0])
             nflux=self.tp.comsol_args['nflux']
             nflux_step=0
-            while any([math.isnan(self.tp.species[sp]['surface concentration']) for sp in self.tp.species]):
+            while any([math.isnan(self.tp.species[sp]['surface_concentration']) for sp in self.tp.species]):
                 was_nan=True
                 #rerun comsol with finer mesh
-                self.tp.logger.warning(' | CS | NaN appeared in surface concentrations, rerunning COMSOL with slower ramping'+\
+                self.tp.logger.warning(' | CS | NaN appeared in surface_concentrations, rerunning COMSOL with slower ramping'+\
                         ' and finer resolution of grid')
                 self.tp.comsol_args['nflux']*=1.25
                 self.tp.comsol_args['nflux']=int(self.tp.comsol_args['nflux'])
@@ -351,7 +355,7 @@ class Calculator():
 
                 self.tp.logger.debug('Surface Concentrations:')
                 for sp in self.tp.species:
-                    self.tp.logger.debug('  {}: {} mol/L'.format(sp,self.tp.species[sp]['surface concentration']/1000.))
+                    self.tp.logger.debug('  {}: {} mol/L'.format(sp,self.tp.species[sp]['surface_concentration']/1000.))
 
             if was_nan:
                 #reset the grid_factor to original value:

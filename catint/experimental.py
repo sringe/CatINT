@@ -87,10 +87,10 @@ class EXPDATA():
             func=bf.plot
         symbols=self.symbols
         for j in list_of_data: #[1,3,5,7,9,11,13]:
-            if symbol is not None and j==0:
+            if symbol is not None: #and j==0:
                 cmarker=symbol
-            elif symbol is not None:
-                cmarker=next(symbols)
+            #elif symbol is not None:
+            #    cmarker=next(symbols)
             voltage=[]
             current=[]
             for k in range(0,len(DATA.data[:,j-1])):
@@ -207,7 +207,7 @@ class EXPDATA():
         plt.text(V[0],line_tafel[0],str(int(tafel_slope))+'mV/dec', color=linecol, fontsize=13)  #
     
     def plot_data(self,ax=None,reference=['all'],species=['all'],pH=['all'],ci_bic=['all'],scale='RHE',reaction='all',system=['all'],coloring='species',fit_tafel=False,only_points=False,\
-            take_log=True):
+            take_log=True,marker=None):
         """
         ----------------------------------------------------------------------
         Wrapper to plot any data set of interest
@@ -384,7 +384,10 @@ class EXPDATA():
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
                             linestyle=next(linestyles)
-                            symbol=next(symbols)
+                            if marker is None:
+                                symbol=next(symbols)
+                            else:
+                                symbol=marker
                             if scale=='RHE':
                                 self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,linestyle=linestyle,symbol=symbol,take_log=take_log,convert='SHE_TO_RHE',fit_tafel=fit_tafel)
                             elif scale=='SHE':
@@ -396,7 +399,10 @@ class EXPDATA():
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
                             linestyle=next(linestyles)
-                            symbol=next(symbols)
+                            if marker is None:
+                                symbol=next(symbols)
+                            else:
+                                symbol=marker
                             if scale=='RHE':
                                 self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=take_log,convert='SHE_TO_RHE',fit_tafel=fit_tafel)
                             else:
@@ -408,7 +414,10 @@ class EXPDATA():
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
                             linestyle=next(linestyles)
-                            symbol=next(symbols)
+                            if marker is None:
+                                symbol=next(symbols)
+                            else:
+                                symbol=marker
                             if scale=='RHE':
                                 self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,linestyle=linestyle,symbol=symbol,take_log=take_log,convert='SHE_TO_RHE',fit_tafel=fit_tafel)
                             elif scale=='SHE':
@@ -420,7 +429,10 @@ class EXPDATA():
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
                             linestyle=next(linestyles)
-                            symbol=next(symbols)
+                            if marker is None:
+                                symbol=next(symbols)
+                            else:
+                                symbol=marker
                             if scale=='RHE':
                                 self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,linestyle=linestyle,symbol=symbol,take_log=take_log,voltage_mode='first',convert='SHE_TO_RHE',fit_tafel=fit_tafel)
                             else:
@@ -433,7 +445,10 @@ class EXPDATA():
                         if len(spp)>0:
                            # sys.exit()
                             linestyle=next(linestyles)
-                            symbol=next(symbols)
+                            if marker is None:
+                                symbol=next(symbols)
+                            else:
+                                symbol=marker
                             if scale=='RHE':
                                 self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,linestyle=linestyle,symbol=symbol,take_log=take_log,convert='SHE_TO_RHE',fit_tafel=fit_tafel)
                             elif scale=='SHE':
@@ -445,7 +460,10 @@ class EXPDATA():
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
                             linestyle=next(linestyles)
-                            symbol=next(symbols)
+                            if marker is None:
+                                symbol=next(symbols)
+                            else:
+                                symbol=marker
                             if scale=='RHE':
                                 self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,linestyle=linestyle,symbol=symbol,take_log=take_log,voltage_mode='first',convert='SHE_TO_RHE',fit_tafel=fit_tafel)
                             else:
@@ -458,7 +476,10 @@ class EXPDATA():
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
                             linestyle=next(linestyles)
-                            symbol=next(symbols)
+                            if marker is None:
+                                symbol=next(symbols)
+                            else:
+                                symbol=marker
                             if scale=='RHE':
                                 self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=take_log,fit_tafel=fit_tafel)
                             elif scale=='SHE':
@@ -469,7 +490,10 @@ class EXPDATA():
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
                             linestyle=next(linestyles)
-                            symbol=next(symbols)
+                            if marker is None:
+                                symbol=next(symbols)
+                            else:
+                                symbol=marker
                             if scale=='RHE':
                                 self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=take_log,fit_tafel=fit_tafel)
                             else:
@@ -492,7 +516,10 @@ class EXPDATA():
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
                             linestyle=next(linestyles)
-                            symbol=next(symbols)
+                            if marker is None:
+                                symbol=next(symbols)
+                            else:
+                                symbol=marker
                             if scale=='RHE':
                                 self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='first',take_log=take_log,linestyle=linestyle,symbol=symbol,convert='SHE_TO_RHE',fit_tafel=fit_tafel) #,skip=4) #
                             elif scale=='SHE':
@@ -510,7 +537,10 @@ class EXPDATA():
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
                             linestyle=next(linestyles)
-                            symbol=next(symbols)
+                            if marker is None:
+                                symbol=next(symbols)
+                            else:
+                                symbol=marker
                             self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,linestyle=linestyle,symbol=symbol,fit_tafel=fit_tafel) 
     
                     if isref('kanan'):
@@ -520,7 +550,10 @@ class EXPDATA():
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
                             linestyle=next(linestyles)
-                            symbol=next(symbols)
+                            if marker is None:
+                                symbol=next(symbols)
+                            else:
+                                symbol=marker
                             if scale=='RHE':
                                 self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='first',take_log=take_log,linestyle=linestyle,symbol=symbol,fit_tafel=fit_tafel) #,convert='RHE_to_SHE')
                             elif scale=='SHE':
