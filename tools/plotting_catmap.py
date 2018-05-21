@@ -18,6 +18,7 @@ parser = argparse.ArgumentParser(description='Process some arguments.')
 parser.add_argument('--file',help='file names to be evaluated',nargs='+')
 parser.add_argument('--elemrates',help='If true show the full rate decomposition',action="store_true")
 parser.add_argument('--products',help='Plot only data of selected product',nargs='+')
+parser.add_argument('--coverages',help='Plot only data of selected product',nargs='+')
 parser.add_argument('--pH',help='System pH. If not given, this will be tried to be read from the catmap input file, otherwise set to 7')
 parser.add_argument('--expdata',help='plot also experimental data',action="store_true")
 
@@ -33,7 +34,7 @@ exp=EXPDATA()
 
 j_log_plot=True
 
-fig=plt.figure(figsize=(6, 7))
+fig=plt.figure(figsize=(6, 8))
 
 colorlist={}
 colorlist['CO']='r'
@@ -79,9 +80,9 @@ def read_data(files,header=False,dtype='species'):
         iarg+=1
         header_txt=None
         #product selection
-        if dtype=='species' and args.products is not None:
+        if (dtype == 'species' and args.products is not None) or (dtype=='cov' and args.coverages is not None):
             ads=arg2.split('/')[-1].split('_')[1].split('.')[0]
-            if ads not in args.products:
+            if (dtype=='species' and ads not in args.products) or (dtype=='cov' and ads not in args.coverages):
                 continue
         if dtype=='elem' and args.products is not None:
             #elementary reaction index of current datafile
@@ -154,20 +155,27 @@ def read_data(files,header=False,dtype='species'):
 
 colors=cycle(['C'+str(i) for i in range(10)])
 linestyles=cycle(['-','--',':','-.'])
-symbols=cycle(['o','x','1','2'])
+symbols=cycle(['o','d','1','2','x'])
 k=-1
+all_pH=[]
+symbol_pH={}
 for arg in args.file: #sys.argv[1:]:
     k+=1
     results_folder=arg+'/catmap_output'
     linestyle=next(linestyles)
+    symbol=next(symbols)
     
     ax1=plt.subplot('211')
     ax2=plt.subplot('212')
     
     ax1.set_title('Polarization')
     searchedfile=glob(arg+'/catmap_input/*/*.mkm')
-    mkm_file = sorted( searchedfile, key = lambda file: os.path.getctime(file))[-1]
-    model = ReactionModel(setup_file = mkm_file)
+    try:
+        mkm_file = sorted( searchedfile, key = lambda file: os.path.getctime(file))[-1]
+        model = ReactionModel(setup_file = mkm_file)
+    except NameError:
+        mkm_file = sorted( searchedfile, key = lambda file: os.path.getctime(file))[-3]
+        model = ReactionModel(setup_file = mkm_file)
     
     #try to read pH from catmap input file:
     if args.pH is None:
@@ -182,10 +190,12 @@ for arg in args.file: #sys.argv[1:]:
     #        pH = 7
     else:
         pH=args.pH
+    all_pH.append(pH)
+    symbol_pH[pH]=symbol
     pdata,dummy=read_data(glob(results_folder+'/*/j_*'))
     if args.elemrates:
         pdata_elem,label_elem=read_data(glob(results_folder+'/*/jelem*'),header=True,dtype='elem')
-    cdata,dummy=read_data(glob(results_folder+'/*/cov*'))
+    cdata,dummy=read_data(glob(results_folder+'/*/cov*'),dtype='cov')
     for isp,sp in enumerate(pdata):
         if sp not in products:
             continue
@@ -249,11 +259,10 @@ for arg in args.file: #sys.argv[1:]:
         #else:
         #    symbol='o'
         symbol=''
-        if isp==len(cdata)-1:
-            symbol='o'
+        #if isp==len(cdata)-1:
+        #    symbol='o'
         print 'the color',k,sp,color
         #linestyle=next(linestyles)
-        symbol=next(symbols)
         if k==0:
             ax2.plot(x+0.059*pH,y,linestyle+symbol,color=color,label=sp)
         else:
@@ -272,14 +281,31 @@ for arg in args.file: #sys.argv[1:]:
 #            ax2.semilogy(x,y,'o',color=colorlist[species],label=arg2.split('/')[-1])
 #        else:
 #            ax2.semilogy(x,y,'-',color=colorlist[species])
-    ax2.legend(fontsize=10)
-if args.expdata:
-    if pH == 13:
-        exp.plot_data(reference=['hori','jaramillo'],ax=ax1,species=['H$_2$','CO','CH$_4$','C2-sum','HCOOH'],pH=['13.0'],system=['pc-Cu'],scale='RHE',only_points=True,take_log=j_log_plot)
-    elif pH == 6.8 or pH == 7.0:
-        exp.plot_data(reference=['hori','jaramillo'],ax=ax1,species=['H$_2$','CO','CH$_4$','C2-sum','HCOOH'],pH=['6.8','7.0','7.2'],system=['pc-Cu'],scale='RHE',only_points=True,take_log=j_log_plot)
+    ax2.legend(fontsize=8,ncol=2)
+all_prods=['H$_2$','CO','CH$_4$','EtOH'] #'C2-sum','HCOOH']
+def name_to_cm(name):
+    if name=='H2':
+        return 'H$_2$'
+    elif name=='CH4':
+        return 'CH$_4$'
+    elif name=='CH3CH2OH':
+        return 'C2-sum'
+    else:
+        return name
+if args.products is not None:
+    all_prods=[name_to_cm(a) for a in args.products]
+for pH in set(all_pH):
+    if args.expdata:
+        symbol=symbol_pH[pH]
+        if pH == 13:
+            exp.plot_data(reference=['hori','jaramillo'],ax=ax1,species=all_prods,pH=['13.0'],system=['pc-Cu'],scale='RHE',only_points=True,take_log=j_log_plot,marker=symbol)
+        elif pH == 6.8 or pH == 7.0:
+            exp.plot_data(reference=['hori','jaramillo'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],system=['pc-Cu'],scale='RHE',only_points=True,take_log=j_log_plot,marker=symbol)
 #ax1=plot_leis_new_data(ax1)
-ax1.set_ylim([1e-8,1e1])
+ax1.set_ylim([1e-5,1e2])
 ax1.set_xlim([-1.6,0.1])
 ax2.set_xlim([-1.6,0.1])
+ax1.set_xlabel(r'Voltage vs. RHE (V)')
+ax2.set_xlabel(r'Voltage vs. RHE (V)')
+plt.tight_layout()
 plt.show()

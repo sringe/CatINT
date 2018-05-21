@@ -225,6 +225,7 @@ def plot(prop):
             else:
                 for sp in tp.species:
                     color=next(colors)
+                    print d_sel_inx,'species',sp,prop
                     y=tp.alldata[d_sel_inx]['species'][sp][prop]
                     y=[yy/1000. for yy in y]
                     ax.semilogx(x,y,ls+m,color=color,label=sp)
@@ -244,8 +245,8 @@ def plot(prop):
                     RF=tp.system['RF']
                     y=[yy/RF for yy in y]
                 ax.semilogy(x,y,ls+m,color=color,label=sp)
-                if prop=='electrode_current_density':
-                    ax=plot_leis_new_data(ax)
+                #if prop=='electrode_current_density':
+                #    ax=plot_leis_new_data(ax)
         elif prop in ['pH','potential','efield','charge_density','pKa']:
             #x: xmesh
             #system
@@ -269,6 +270,15 @@ def plot(prop):
 for iif,f in enumerate(args.folder):
     print 'Working on folder ',f
     read_all(tp,f,only=['alldata','species','system','xmesh','descriptors','electrode_reactions'])
+    #check how many real datapoints we actually have:
+    n_conv=0
+    for i in range(len(tp.alldata)):
+        key0=[key for key in tp.alldata[i]['species']][0]
+        if len(tp.alldata[i]['species'][key0])>0:
+            n_conv+=1
+    tp.descriptors['phiM']=tp.descriptors['phiM'][:n_conv]
+    tp.alldata=tp.alldata[:n_conv]
+#    sys.exit()
 #    print tp.alldata[0]['system']['potential']
     ls=next(linestyles)
     a=''
@@ -277,7 +287,7 @@ for iif,f in enumerate(args.folder):
     for p in args.prop:
         print('Plotting {}'.format(p))
         plot(p)
-#for ax in ax_list:
-#    ax.legend(prop={'size': 6})
+for ax in ax_list:
+    ax.legend(prop={'size': 6})
 plt.tight_layout()
 plt.show()

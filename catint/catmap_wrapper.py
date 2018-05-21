@@ -25,13 +25,10 @@ class Object(object):
 class CatMAP():
     """This class modifies the concentrations in the catmap input file (defined by user) and runs catmap. The output is the read in and the boundary conditions adjusted properly"""
 
-    def __init__(self,path=os.getcwd(),transport=None,model_name=None,delta_desc=0.05,min_desc=-1.5,max_desc=0.2,n_inter=1):
+    def __init__(self,path=os.getcwd(),transport=None,model_name=None):
         #delta_desc is the descriptor delta with which the descriptor axes is resolved
         #in case of potential 0.05 is fine
         #max and min_desc are the  bounds of the descriptor region (here default for potential being the descriptor)
-        self.delta_desc=delta_desc
-        self.max_desc=max_desc
-        self.min_desc=min_desc
 
 
 
@@ -66,6 +63,36 @@ class CatMAP():
             self.n_inter_max=self.tp.catmap_args['n_inter_max']
         else:
             self.n_inter_max=150
+
+        #AUXILIARY DESCRIPTOR SWEEP
+
+        #minimum descriptor value in auxiliary descriptor sweep
+        if 'min_desc' in self.tp.catmap_args:
+            self.min_desc=self.tp.catmap_args['min_desc']
+        else:
+            self.min_desc=-1.5
+        #maximum descriptor value in auxiliary descriptor sweep
+        if 'max_desc' in self.tp.catmap_args:
+            self.max_desc=self.tp.catmap_args['max_desc']
+        else:
+            self.max_desc=0.2
+        #maximum descriptor value in auxiliary descriptor sweep
+        #relative to current descriptor
+        if 'max_desc_delta' in self.tp.catmap_args:
+            self.max_desc_delta=self.tp.catmap_args['max_desc_delta']
+        else:
+            self.max_desc_delta=None
+        #minimum descriptor value in auxiliary descriptor sweep
+        #relative to current descriptor
+        if 'min_desc_delta' in self.tp.catmap_args:
+            self.min_desc_delta=self.tp.catmap_args['min_desc_delta']
+        else:
+            self.min_desc_delta=None
+        #discretization of auxiliary descriptor sweep
+        if 'delta_desc' in self.tp.catmap_args:
+            self.delta_desc=self.tp.catmap_args['delta_desc']
+        else:
+            self.delta_desc=0.05
 
     def run(self):
         desc_keys=[key for key in self.tp.descriptors]
@@ -269,13 +296,14 @@ class CatMAP():
         self.read_output(desc_val)
         #species_definitions['CO2_g'] = {'concentration':0.2}
 
-    def update_input(self,desc_val,method='single_point'):
+    def update_input(self,desc_val,method=None):
 
         #go over input file and check if single point or full descriptor range is used as method:
         found_resolution=False
         found_descriptor_range=False
         found_descriptors=False
-        self.method=method
+
+        self.method=None
 
         i=0
         for line in open(self.catmap_model):
@@ -290,10 +318,18 @@ class CatMAP():
                 self.method='single_point'
                 found_descriptors=True
                 idesc=i
+
+        if self.method is None:
+            self.method='descriptor_range'
+        
+        #overwrite method by input parameter (preference)
+        if method is not None:
+            self.method=method
+
+        if not found_resolution:
+            insert_line(self.catmap_model,idesc,'resolution = [1,1]\n')
+            found_resolution=True
         if self.method=='single_point':
-            if not found_resolution:
-                insert_line(self.catmap_model,idesc,'resolution = [1,1]\n')
-                found_resolution=True
             if not found_descriptor_range:
                 insert_line(self.catmap_model,idesc,'descriptor_range = [[0,0],[0,0]]')
                 found_descriptor_range=True
@@ -318,18 +354,29 @@ class CatMAP():
             desc_list=self.tp.descriptors[desc_keys[0]]
             if len(desc_list)<5 and desc_1 != 'voltage':
                 self.tp.logger.warning('It could be that no pkl files are written out because the given descriptor axis is too coarse, consider a denser axis')
+
             if desc_1=='voltage':
                 #use manual range here that contains current descriptor value
+                #and starts
                 val=desc_val[0]
                 desc_list=[val]
-                while val<max(self.max_desc,max(self.tp.descriptors['phiM'])):
+                if self.max_desc_delta is not None:
+                    max_desc=desc_val[0]+self.max_desc_delta
+                else:
+                    max_desc=max(self.max_desc,max(self.tp.descriptors['phiM']))
+                while val<max_desc:
                     val+=self.delta_desc
                     desc_list.append(val)
                 val=desc_val[0]
-                while val>min(self.min_desc,min(self.tp.descriptors['phiM'])):
+                if self.min_desc_delta is not None:
+                    min_desc=desc_val[0]-self.min_desc_delta
+                else:
+                    min_desc=min(self.min_desc,min(self.tp.descriptors['phiM']))
+                while val>min_desc:
                     val-=self.delta_desc
                     desc_list.append(val)
             desc_list=sorted(desc_list,key=float)
+
             min_desc=min(desc_list)
             max_desc=max(desc_list)
             n_desc=len(desc_list)
@@ -369,11 +416,11 @@ class CatMAP():
                 sol=re.findall('species_definitions\[\''+sp_cm+'_g\'\].*{\'pressure\':.*}',line)
                 if len(sol)>0:
                     #shortly check if concentrations are very negative, stop if they are:
-                    if self.tp.species[sp]['surface concentration']<-1.:
+                    if self.tp.species[sp]['surface_concentration']<-1.:
                         self.tp.logger.warning('Surface concentration of {} is more negative than 1e-3 mol/L, stopping to be safe.'.format(sp))
 #                        sys.exit()
-                    self.tp.logger.debug('checking concentration of species {}, found c = {} mol/L'.format(sp,self.tp.species[sp]['surface concentration']/1000.))
-                    replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':"+str(max(0.,self.tp.species[sp]['surface concentration']/1000.))+"}")
+                    self.tp.logger.debug('checking concentration of species {}, found c = {} mol/L'.format(sp,self.tp.species[sp]['surface_concentration']/1000.))
+                    replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':"+str(max(0.,self.tp.species[sp]['surface_concentration']/1000.))+"}")
                     replaced_species.append(sp)
             sp_cm='H2O'
             sol=re.findall('species_definitions\[\''+sp_cm+'_g\'\].*{\'pressure\':.*}',line)
