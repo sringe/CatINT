@@ -30,6 +30,7 @@ class Model():
         self.file_name=file_name
         self.par_name=comsol_args['par_name']
         self.par_values=comsol_args['par_values']
+        self.par_method=comsol_args['par_method']
         self.studies=comsol_args['studies']
         self.results_folder=results_folder
 
@@ -66,7 +67,7 @@ class Model():
             classes.append(self.probe())
             classes.append(self.mesh())
             classes.append(self.std(self.tp,studies=self.studies,par_name=self.par_name,\
-                par_values=self.par_values,comsol_args=self.comsol_args))
+                par_values=self.par_values,par_method=self.par_method,comsol_args=self.comsol_args))
             classes.append(self.output(self.tp,self.outputs,self.results_folder,self.comsol_args))
             #now get all the strings from the different classes
             for c in classes:
@@ -172,7 +173,7 @@ class Model():
 
     class std():
         """Studies"""
-        def __init__(self,tp=None,studies=[],par_name='',par_values=[],comsol_args={}):
+        def __init__(self,tp=None,studies=[],par_name='',par_values=[],par_method='internal',comsol_args={}):
             self.comsol_args=comsol_args
             self.s=''
             if tp is None:
@@ -185,6 +186,7 @@ class Model():
             self.std_index=0
             self.sol_index=0
             std_sol_index={}
+
 
             #1st define all studies
             for i,study in enumerate(studies):
@@ -200,7 +202,7 @@ class Model():
                 if self.comsol_args['solver']=='parametric':
                     self.add_feature(study,'param',\
                         par_name=par_name,par_values=par_values,\
-                        par_unit='')
+                        par_unit='',par_method=par_method)
 
             #run all solver's with assigned studies
             for i,study in enumerate(studies):
@@ -212,6 +214,12 @@ class Model():
             j=self.std_index
             self.s+='    model.study().create("std'+str(j)+'");\n'
             self.s+='    model.study("std'+str(j)+'").create("stat", "Stationary");\n'
+            #now we can activate here certain physics that we are interested in
+            if self.comsol_args['model_type']=='tp_dilute_species':
+                self.s+='    model.study("std'+str(j)+'").feature("stat").activate("es", true);\n'
+                self.s+='    model.study("std'+str(j)+'").feature("stat").activate("tds", true);\n'
+                self.s+='    model.study("std'+str(j)+'").feature("stat").activate("pc1", true);\n'
+                self.s+='    model.study("std'+str(j)+'").feature("stat").activate("scdc1", true);\n'
 
         def time(self,sol_index):
             self.std_index+=1
@@ -228,11 +236,10 @@ class Model():
                 par_name=kwargs['par_name']
                 par_values=kwargs['par_values']
                 par_unit=kwargs['par_unit']
+                par_method=kwargs['par_method'] #either internal (auxiliary) or external parameter sweep can be used in comsol
 
             j=self.std_index
             i=self.sol_index
-            self.s+='    model.study("std'+str(j)+'").create("param", "Parametric");\n'
-            self.s+='    model.study("std'+str(j)+'").feature("param").set("pname", new String[]{\"'+par_name+'\"});\n'
             par_values_str=''
             count=0
             for p in par_values:
@@ -241,27 +248,50 @@ class Model():
                 if count%5==0:
                     par_values_str+='\"\n      +\"'
             par_values_str=par_values_str[:-1]+'\"'
-            self.s+='    model.study("std'+str(j)+'").feature("param").set("plistarr", new String[]{\"'+par_values_str+'\"});\n'
-            self.s+='    model.study("std'+str(j)+'").feature("param").set("punit", new String[]{\"'+par_unit+'\"});\n'
+
+            self.s+='    model.sol("sol'+str(i)+'").feature("s1").create("p1", "Parametric");\n'
+            self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("pname", new String[]{\"'+par_name+'\"});\n'
+            self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("plistarr", new String[]{\"'+par_values_str+'\"});\n'
+            self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("punit", new String[]{\"'+par_unit+'\"});\n'
+
+            if par_method == 'external':
+                j=self.std_index
+                i=self.sol_index
+                self.s+='    model.study("std'+str(j)+'").create("param", "Parametric");\n'
+                self.s+='    model.study("std'+str(j)+'").feature("param").set("pname", new String[]{\"'+par_name+'\"});\n'
+                par_values_str=''
+                count=0
+                for p in par_values:
+                    count+=1
+                    par_values_str+=str(p)+' '
+                    if count%5==0:
+                        par_values_str+='\"\n      +\"'
+                par_values_str=par_values_str[:-1]+'\"'
+                self.s+='    model.study("std'+str(j)+'").feature("param").set("plistarr", new String[]{\"'+par_values_str+'\"});\n'
+                self.s+='    model.study("std'+str(j)+'").feature("param").set("punit", new String[]{\"'+par_unit+'\"});\n'
+                #if needed enable solver continuation (usage of old solution)
+                self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("control", "param");\n'
+                self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("ponerror", "empty");\n'
+                if 'internal' in self.comsol_args['desc_method']:
+                    if self.tp.comsol_args['desc_method'].split('-')[1]=='reinit':
+                        self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("pcontinuationmode", "no");\n'
+                    else:
+                        self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("preusesol", "yes");\n'
+                else:
+                    self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("pcontinuationmode", "no");\n'
+            elif par_method == 'internal':
+                self.s+='    model.study("std'+str(j)+'").feature("'+study+'").set("useparam", true);\n'
+                self.s+='    model.study("std'+str(j)+'").feature("'+study+'").set("pname", new String[]{\"'+par_name+'\"});\n'
+                self.s+='    model.study("std'+str(j)+'").feature("'+study+'").set("plistarr", new String[]{\"'+par_values_str+'\"});\n'
+                self.s+='    model.study("std'+str(j)+'").feature("'+study+'").set("punit", new String[]{\"'+par_unit+'\"});\n'
+
+            #general settings
             #variables needed for parametric solver
             self.s+='    model.sol("sol'+str(i)+'").feature("v1").set("clistctrl", new String[]{"p1"});\n'
             self.s+='    model.sol("sol'+str(i)+'").feature("v1").set("cname", new String[]{\"'+par_name+'\"});\n'
             self.s+='    model.sol("sol'+str(i)+'").feature("v1").set("clist", new String[]{\"'+par_values_str+'\"});\n'
             #if needed enable solver continuation (usage of old solution)
-            self.s+='    model.sol("sol'+str(i)+'").feature("s1").create("p1", "Parametric");\n'
             self.s+='    model.sol("sol'+str(i)+'").feature("s1").set("probesel", "none");\n'
-            self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("control", "param");\n'
-            self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("pname", new String[]{\"'+par_name+'\"});\n'
-            self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("plistarr", new String[]{\"'+par_values_str+'\"});\n'
-            self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("punit", new String[]{\"'+par_unit+'\"});\n'
-            self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("ponerror", "empty");\n'
-            if 'internal' in self.comsol_args['desc_method']:
-                if self.tp.comsol_args['desc_method'].split('-')[1]=='reinit':
-                    self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("pcontinuationmode", "no");\n'
-                else:
-                    self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("preusesol", "yes");\n'
-            else:
-                self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("pcontinuationmode", "no");\n'
 
         def run(self,sol_index):
             self.s+='    model.sol("sol'+str(sol_index)+'").runAll();\n'
@@ -280,6 +310,8 @@ class Model():
                         maxiter=8
                 if 'damp' not in kwargs:
                     damp=0.9
+                if 'stol' not in kwargs:
+                    stol=1e-3
             else:
                 initstep=0.01
                 minstep=1e-6
@@ -288,9 +320,14 @@ class Model():
                 elif study=='time':
                     maxiter=8
                 damp=0.9
+                stol=1e-4
             self.sol_index+=1
             j=self.sol_index
             i=self.std_index
+            def ffc(number):
+                number=str(number)
+                number.replace('e','E')
+                return number
             #create solver
             self.s+='    model.sol().create("sol'+str(j)+'");\n'
             self.s+='    model.sol("sol'+str(j)+'").study("std'+str(i)+'");\n'
@@ -304,22 +341,23 @@ class Model():
                 ##fc1
                 self.s+='    model.sol("sol'+str(j)+'").feature("s1").create("fc1", "FullyCoupled");\n'
                 self.s+='    model.sol("sol'+str(j)+'").feature("s1").feature().remove("fcDef");\n'
-                self.s+='    model.sol("sol'+str(j)+'").feature("s1").feature("fc1").set("initstep", '+str(initstep)+');\n'
-                self.s+='    model.sol("sol'+str(j)+'").feature("s1").feature("fc1").set("minstep", '+str(minstep)+');\n'
-                self.s+='    model.sol("sol'+str(j)+'").feature("s1").feature("fc1").set("maxiter", '+str(maxiter)+');\n'
+                self.s+='    model.sol("sol'+str(j)+'").feature("s1").feature("fc1").set("initstep", '+ffc(initstep)+');\n'
+                self.s+='    model.sol("sol'+str(j)+'").feature("s1").feature("fc1").set("minstep", '+ffc(minstep)+');\n'
+                self.s+='    model.sol("sol'+str(j)+'").feature("s1").feature("fc1").set("maxiter", '+ffc(maxiter)+');\n'
+                self.s+='    model.sol("sol'+str(j)+'").feature("s1").set("stol", "'+ffc(stol)+'");\n' #relative tolerance (default 1e-3)
                 ##end fc1
             elif study=='time':
-                self.s+='    model.sol("sol'+str(j)+'").feature("v1").set("clist", new String[]{"'+str(min(self.tp.tmesh_init))+','+str(self.tp.dt_init)+', '+str(self.tp.tmax_init)+'"});\n'
+                self.s+='    model.sol("sol'+str(j)+'").feature("v1").set("clist", new String[]{"'+ffc(min(self.tp.tmesh_init))+','+ffc(self.tp.dt_init)+', '+ffc(self.tp.tmax_init)+'"});\n'
                 ##t1 -- Time
                 self.s+='    model.sol("sol'+str(j)+'").create("t1", "Time");\n'
                 self.s+='    model.sol("sol'+str(j)+'").feature("t1").create("fc1", "FullyCoupled");\n'
                 self.s+='    model.sol("sol'+str(j)+'").feature("t1").create("d1", "Direct");\n'
                 self.s+='    model.sol("sol'+str(j)+'").feature("t1").feature().remove("fcDef");\n'
-                self.s+='    model.sol("sol'+str(j)+'").feature("t1").set("tlist", "range('+str(min(self.tp.tmesh_init))+','+str(self.tp.dt_init)+','+str(self.tp.tmax_init)+')");\n'
+                self.s+='    model.sol("sol'+str(j)+'").feature("t1").set("tlist", "range('+ffc(min(self.tp.tmesh_init))+','+ffc(self.tp.dt_init)+','+ffc(self.tp.tmax_init)+')");\n'
                 self.s+='    model.sol("sol'+str(j)+'").feature("t1").set("maxorder", 2);\n'
                   ##fc1
-                self.s+='    model.sol("sol'+str(j)+'").feature("t1").feature("fc1").set("maxiter", '+str(maxiter)+');\n'
-                self.s+='    model.sol("sol'+str(j)+'").feature("t1").feature("fc1").set("damp", '+str(damp)+');\n'
+                self.s+='    model.sol("sol'+str(j)+'").feature("t1").feature("fc1").set("maxiter", '+ffc(maxiter)+');\n'
+                self.s+='    model.sol("sol'+str(j)+'").feature("t1").feature("fc1").set("damp", '+ffc(damp)+');\n'
                 self.s+='    model.sol("sol'+str(j)+'").feature("t1").feature("fc1").set("jtech", "once");\n'
                   ##end fc1
                 ##end t1 -- Time
