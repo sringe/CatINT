@@ -492,7 +492,7 @@ class Transport(object):
             nflux:              number of steps in increasing flux in parametric sweep
         """
         comsol_keys=['outputs','boundary_variables','global_variables','global_equations','parameter','bin_path','nflux',\
-            'par_name','par_values','desc_method','model_type','solver','studies']
+            'par_name','par_values','par_method','desc_method','model_type','solver','studies']
 
         #tp_dilute_species or porous_electrode
         if 'model_type' not in comsol_args:
@@ -581,6 +581,11 @@ class Transport(object):
                 self.logger.warning('Selected Descriptor for COMSOL parameter sweep'+
                     'is not the potential phiM. This is not recommended, be sure that'+
                     'you do not get convergence issues')
+        if 'par_method' not in comsol_args:
+            if self.use_catmap:
+                comsol_args['par_method']='internal'
+            else:
+                comsol_args['par_method']='external'
 
         self.comsol_args=comsol_args
 
