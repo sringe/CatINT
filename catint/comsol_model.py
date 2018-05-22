@@ -204,6 +204,8 @@ class Model():
                         par_name=par_name,par_values=par_values,\
                         par_unit='',par_method=par_method)
 
+                self.sol_rm_feature('fcDef')
+
             #run all solver's with assigned studies
             for i,study in enumerate(studies):
                 #run solver
@@ -215,11 +217,11 @@ class Model():
             self.s+='    model.study().create("std'+str(j)+'");\n'
             self.s+='    model.study("std'+str(j)+'").create("stat", "Stationary");\n'
             #now we can activate here certain physics that we are interested in
-            if self.comsol_args['model_type']=='tp_dilute_species':
-                self.s+='    model.study("std'+str(j)+'").feature("stat").activate("es", true);\n'
-                self.s+='    model.study("std'+str(j)+'").feature("stat").activate("tds", true);\n'
-                self.s+='    model.study("std'+str(j)+'").feature("stat").activate("pc1", true);\n'
-                self.s+='    model.study("std'+str(j)+'").feature("stat").activate("scdc1", true);\n'
+#            if self.comsol_args['model_type']=='tp_dilute_species':
+#                self.s+='    model.study("std'+str(j)+'").feature("stat").activate("es", true);\n'
+#                self.s+='    model.study("std'+str(j)+'").feature("stat").activate("tds", true);\n'
+#                self.s+='    model.study("std'+str(j)+'").feature("stat").activate("pc1", true);\n'
+#                self.s+='    model.study("std'+str(j)+'").feature("stat").activate("scdc1", true);\n'
 
         def time(self,sol_index):
             self.std_index+=1
@@ -250,27 +252,20 @@ class Model():
             par_values_str=par_values_str[:-1]+'\"'
 
             self.s+='    model.sol("sol'+str(i)+'").feature("s1").create("p1", "Parametric");\n'
+            self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").active(true);\n'
             self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("pname", new String[]{\"'+par_name+'\"});\n'
             self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("plistarr", new String[]{\"'+par_values_str+'\"});\n'
             self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("punit", new String[]{\"'+par_unit+'\"});\n'
-
+            self.s+='    model.sol("sol'+str(i)+'").feature("s1").set("probesel", "none");\n'
             if par_method == 'external':
-                j=self.std_index
-                i=self.sol_index
+
                 self.s+='    model.study("std'+str(j)+'").create("param", "Parametric");\n'
                 self.s+='    model.study("std'+str(j)+'").feature("param").set("pname", new String[]{\"'+par_name+'\"});\n'
-                par_values_str=''
-                count=0
-                for p in par_values:
-                    count+=1
-                    par_values_str+=str(p)+' '
-                    if count%5==0:
-                        par_values_str+='\"\n      +\"'
-                par_values_str=par_values_str[:-1]+'\"'
                 self.s+='    model.study("std'+str(j)+'").feature("param").set("plistarr", new String[]{\"'+par_values_str+'\"});\n'
                 self.s+='    model.study("std'+str(j)+'").feature("param").set("punit", new String[]{\"'+par_unit+'\"});\n'
-                #if needed enable solver continuation (usage of old solution)
+                #set "param" parametric sweep instance as controling element for sweep
                 self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("control", "param");\n'
+                #if comsol crashes during sweep, store empty solutions or stop
                 self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("ponerror", "empty");\n'
                 if 'internal' in self.comsol_args['desc_method']:
                     if self.tp.comsol_args['desc_method'].split('-')[1]=='reinit':
@@ -280,6 +275,14 @@ class Model():
                 else:
                     self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("pcontinuationmode", "no");\n'
             elif par_method == 'internal':
+                #let parameter sweep to be controlled by study
+                self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("control", "'+study+'");\n'
+                #pDef is the parametric sweep inside the solver (control = user) in the above line
+#                self.s+='    model.sol("sol'+str(i)+'").feature("s1").create("pDef", "Parametric");\n'
+#                self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("pDef").set("pname", new String[]{\"'+par_name+'\"});\n'
+#                self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("pDef").set("plistarr", new String[]{\"'+par_values_str+'\"});\n'
+#                self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("pDef").set("punit", new String[]{\"'+par_unit+'\"});\n'
+#                self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("pDef").set("uselsqdata", false);\n'
                 self.s+='    model.study("std'+str(j)+'").feature("'+study+'").set("useparam", true);\n'
                 self.s+='    model.study("std'+str(j)+'").feature("'+study+'").set("pname", new String[]{\"'+par_name+'\"});\n'
                 self.s+='    model.study("std'+str(j)+'").feature("'+study+'").set("plistarr", new String[]{\"'+par_values_str+'\"});\n'
@@ -290,11 +293,12 @@ class Model():
             self.s+='    model.sol("sol'+str(i)+'").feature("v1").set("clistctrl", new String[]{"p1"});\n'
             self.s+='    model.sol("sol'+str(i)+'").feature("v1").set("cname", new String[]{\"'+par_name+'\"});\n'
             self.s+='    model.sol("sol'+str(i)+'").feature("v1").set("clist", new String[]{\"'+par_values_str+'\"});\n'
-            #if needed enable solver continuation (usage of old solution)
-            self.s+='    model.sol("sol'+str(i)+'").feature("s1").set("probesel", "none");\n'
 
         def run(self,sol_index):
             self.s+='    model.sol("sol'+str(sol_index)+'").runAll();\n'
+
+        def sol_rm_feature(self,feature):
+            self.s+='    model.sol("sol'+str(self.sol_index)+'").feature("s1").feature().remove("'+feature+'");\n'
 
         def sol(self,study,**kwargs):
             if kwargs is not None:
@@ -340,7 +344,6 @@ class Model():
                 self.s+='    model.sol("sol'+str(j)+'").feature("s1").create("d1", "Direct");\n'
                 ##fc1
                 self.s+='    model.sol("sol'+str(j)+'").feature("s1").create("fc1", "FullyCoupled");\n'
-                self.s+='    model.sol("sol'+str(j)+'").feature("s1").feature().remove("fcDef");\n'
                 self.s+='    model.sol("sol'+str(j)+'").feature("s1").feature("fc1").set("initstep", '+ffc(initstep)+');\n'
                 self.s+='    model.sol("sol'+str(j)+'").feature("s1").feature("fc1").set("minstep", '+ffc(minstep)+');\n'
                 self.s+='    model.sol("sol'+str(j)+'").feature("s1").feature("fc1").set("maxiter", '+ffc(maxiter)+');\n'
