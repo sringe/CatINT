@@ -238,18 +238,30 @@ class Calculator():
         if use_mpi:
             self.tp.comm.Barrier()
 
-    def evaluate_accuracy(self,par,par_old):
+    def evaluate_accuracy(self,par,par_old,kind='relative'):
+        #evaluate accuracy relative or absolute
+        #automatic takes first the relative error, but if absolute error
+        #is below treshhold also stops
         rmsd=0
         n=0
         par_sum=sum(par)
-        self.tp.logger.debug(' | Current current density = {} mV/cm^2'.format(par_sum))
+        #self.tp.logger.debug(' | Current current density = {} mA/cm^2'.format(par_sum))
+        self.tp.logger.debug(' | Flux = {} mol/m^2/s'.format(par_sum))
         par_old_sum=sum(par_old)
-        rmsd=np.sqrt((par_sum-par_old_sum)**2)
+        errors=[]
+        for p1,p2 in zip(par,par_old):
+            if kind=='relative':
+                if p1!=0:
+                    errors.append(abs(p1-p2)/p1)
+            else:
+                errors.append(abs(p1-p2))
+        error=max(errors)
+#        rmsd=np.sqrt((par_sum-par_old_sum)**2)
 #        for val1,val2 in zip(par,par_old):
 #            n+=1
 #            rmsd+=(val1-val2)**2
 #        rmsd=np.sqrt(rmsd/(n*1.))
-        return rmsd
+        return error
 
     def converged(self,old,new):
         cmrsd=0.0
@@ -284,7 +296,7 @@ class Calculator():
             #evaluate how the accuracy during the last 50 steps, if it does not significantly decrease, reduce the mixing factor
             if istep-step_to_check>40: # and abs(accuracies[-2]-accuracies[-1])>1e-1:
                 #still no convergence, try to decrease mixing factor
-                self.scf_mix*=0.9
+                self.mix_scf*=0.9
                 self.tp.logger.info(' | Accuracy is still < 1e-1, decreasing mixing factor in order to speed up the convergence')
                 step_to_check=istep
             self.tp.logger.info(' | Solving transport step {}. Current accuracy in current density = {} mV/cm^2'.format(istep,scf_accuracy))
@@ -332,13 +344,13 @@ class Calculator():
                 #rerun comsol with finer mesh
                 self.tp.logger.warning(' | CS | NaN appeared in surface_concentrations, rerunning COMSOL with slower ramping'+\
                         ' and finer resolution of grid')
-                self.tp.comsol_args['nflux']*=1.25
+                self.tp.comsol_args['nflux']*=2.
                 self.tp.comsol_args['nflux']=int(self.tp.comsol_args['nflux'])
                 self.tp.logger.info(' | CS | Number of flux ramping steps increased to {}'.format(self.tp.comsol_args['nflux']))
 
-                if self.tp.comsol_args['nflux']/1000 != nflux_step:
-                    nflux_step=self.tp.comsol_args['nflux']/1000
-                    self.tp.logger.info(' | CS | Ramping increase of 1000 did not help, trying to decrease also minimal grid discretization')
+                if self.tp.comsol_args['nflux']/200 != nflux_step:
+                    nflux_step=self.tp.comsol_args['nflux']/200
+                    self.tp.logger.info(' | CS | Ramping increase of 200 did not help, trying to decrease also minimal grid discretization')
                     self.tp.comsol_args['parameter']['grid_factor_domain'][0]=str(int(float(self.tp.comsol_args['parameter']['grid_factor_domain'][0])*1.1))
                     self.tp.logger.info(' | CS | Maximal discretization of domain raised by {}x'.format(self.tp.comsol_args['parameter']['grid_factor_domain']))
 
@@ -364,10 +376,19 @@ class Calculator():
 
             #3) Check Convergence
             current_density=[]
-            for sp in self.tp.electrode_reactions:
+            for sp in self.tp.species: #self.tp.electrode_reactions:
 #                current_density.append(self.tp.electrode_reactions[sp]['electrode_current_density'][(str(1.0),str(value2))])
-                current_density.append(self.tp.species[sp]['electrode_current_density'])
+#                current_density.append(self.tp.species[sp]['electrode_current_density'])
+                if sp in self.tp.electrode_reactions:
+                    nprod=len([a for a in self.tp.electrode_reactions[sp]['reaction'][1] if a==sp])
+                    nel=self.tp.electrode_reactions[sp]['nel']
+                else:
+                    nprod=1
+                    nel=1
+                current_density.append(self.tp.species[sp]['flux']*nel*unit_F/nprod/10.)
             if istep>1:
                 scf_accuracy=self.evaluate_accuracy(current_density,old_current_density)
             old_current_density=deepcopy(current_density)
             accuracies.append(scf_accuracy)
+        if scf_accuracy<=self.tau_scf:
+            self.tp.logger.info(' | Iterative Solver converged in {} steps. Final accuracy in current density = {} mV/cm^2'.format(istep,scf_accuracy))
