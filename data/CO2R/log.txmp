@@ -1,0 +1,1842 @@
+28
+28
+17
+11
+19
+17
+9
+12
+8
+8
+8
+5
+5
+5
+10
+9
+9
+12
+Plotting species = ['HCOO', 'C$_{2+}$', 'HCOO', 'H$_2$', 'CO', 'CH$_4$', 'MeOH', 'CH$_3$OH']
+['U vs NHE (V)', 'CH$_4$, pc-Cu, (CO$_2$R), [Strasser], pH = 6.8, BC = 0.1', '', 'H$_2$, pc-Cu, (CO$_2$R), [Strasser], pH = 6.8, BC = 0.1', '', 'C$_2$H$_4$, pc-Cu, (CO$_2$R), [Strasser], pH = 6.8, BC = 0.1', '', 'CO, pc-Cu, (CO$_2$R), [Strasser], pH = 6.8, BC = 0.1']
+[' pc-Cu, (CO$_2$R), [Strasser], pH = 6.8, BC = 0.1', ' pc-Cu, (CO$_2$R), [Strasser], pH = 6.5, BC = 0.05', ' pc-Cu, (CO$_2$R), [Strasser], pH = 7.15, BC = 0.2', ' pc-Cu, (CO$_2$R), [Strasser], pH = 6.5, BC = 0.05, from FE', ' pc-Cu, (CO$_2$R), [Strasser], pH = 6.80, BC = 0.1, from FE', ' pc-Cu, (CO$_2$R), [Strasser], pH = 7.15, BC = 0.2, from FE', ' pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8', ' NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8', ' NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8', ' OD-Cu, (CO$_2$R), (Kanan), pH = 7.2', ' pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0', ' NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0', ' pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0, pCO = 1', ' pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0', ' pc-Cu, (COR), (Hori), pH = 6.0', ' pc-Cu, (COR), (Hori), pH = 6.0', ' nw-Cu, (COR), (Wang), pH = 13, BC = 0', ' nw-Cu-150, (COR), (Wang), pH = 13, BC = 0']
+HCOO ﻿"Voltage vs. RHE (V)"
+HCOO CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking pc-Cu HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_1$, pc-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+HCOO H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_2$H$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO EtOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO GlycAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AcetAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_3$COO, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO EtGlyc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO n-PrOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AllylAlc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO Acetone, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ ﻿"Voltage vs. RHE (V)"
+C$_{2+}$ CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ C$_1$, pc-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+C$_{2+}$ H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+checking pc-Cu C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ C$_2$H$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ EtOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ GlycAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ AcetAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ CH$_3$COO, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ EtGlyc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ n-PrOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ AllylAlc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ Acetone, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO ﻿"Voltage vs. RHE (V)"
+HCOO CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking pc-Cu HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_1$, pc-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+HCOO H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_2$H$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO EtOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO GlycAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AcetAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_3$COO, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO EtGlyc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO n-PrOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AllylAlc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO Acetone, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ ﻿"Voltage vs. RHE (V)"
+H$_2$ CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ C$_1$, pc-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+H$_2$ H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking pc-Cu H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ C$_2$H$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ EtOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ GlycAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ AcetAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ CH$_3$COO, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ EtGlyc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ n-PrOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ AllylAlc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ Acetone, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO ﻿"Voltage vs. RHE (V)"
+CO CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking pc-Cu CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO C$_1$, pc-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+CO H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO C$_2$H$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO EtOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO GlycAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO AcetAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO CH$_3$COO, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO EtGlyc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO n-PrOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO AllylAlc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO Acetone, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ ﻿"Voltage vs. RHE (V)"
+CH$_4$ CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ C$_1$, pc-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+CH$_4$ H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+checking pc-Cu CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ C$_2$H$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ EtOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ GlycAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ AcetAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ CH$_3$COO, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ EtGlyc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ n-PrOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ AllylAlc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ Acetone, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH ﻿"Voltage vs. RHE (V)"
+MeOH CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH C$_1$, pc-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+MeOH H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+checking pc-Cu MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH C$_2$H$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH EtOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH GlycAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH AcetAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH CH$_3$COO, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH EtGlyc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH n-PrOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH AllylAlc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH Acetone, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH ﻿"Voltage vs. RHE (V)"
+CH$_3$OH CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH C$_1$, pc-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+CH$_3$OH H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH C$_2$H$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH EtOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH GlycAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH AcetAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH CH$_3$COO, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH EtGlyc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH n-PrOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH AllylAlc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH Acetone, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+FIT 2
+%%%%%%%%%%%%%%%%%%%%
+HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+[-1.16953, -1.13811, -1.09361, -1.05439, -1.01297, -0.95526, -0.88722, -0.81724, -0.74561]
+[-1.0953699158418553, -1.0028944642305655, -0.8836402365630226, -0.9173130462207764, -0.41704558257355206, -0.47992032613217106, -0.5188950384108177, -0.7103355295889003, -0.974097160867182]
+%%%%%%%%%%%%%%%%%%%%
+plotting fit HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8 -
+data [(-1.16953, -1.0953699158418553, -1.17457716052491), (-1.13811, -1.0028944642305655, -1.0097416842018347), (-1.09361, -0.8836402365630226, -0.8170641194320609), (-1.05439, -0.9173130462207764, -0.686880270969624), (-1.01297, -0.41704558257355206, -0.5897094043503248), (-0.95526, -0.47992032613217106, -0.5233729886636578), (-0.88722, -0.5188950384108177, -0.5484347116090493), (-0.81724, -0.7103355295889003, -0.6907918870828578), (-0.74561, -0.974097160867182, -0.9589390735945091)]
+FIT 2
+%%%%%%%%%%%%%%%%%%%%
+C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+[-1.16953, -1.13811, -1.09361, -1.05439, -1.01297, -0.95526, -0.88722, -0.81724, -0.74561]
+[0.28637548087126835, 0.44796908253870066, 0.4986901330273537, 0.3796464774904604, 0.03348320512599633, -0.5064740524050968, -1.3494628764305967, -1.800931709959631, -2.6234184810506207]
+%%%%%%%%%%%%%%%%%%%%
+plotting fit C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8 -
+data [(-1.16953, 0.28637548087126835, 0.49469348784153766), (-1.13811, 0.44796908253870066, 0.44733535836473237), (-1.09361, 0.4986901330273537, 0.32745684240913064), (-1.05439, 0.3796464774904604, 0.17048064562638032), (-1.01297, 0.03348320512599633, -0.047507243245213715), (-0.95526, -0.5064740524050968, -0.4406438720995922), (-0.88722, -1.3494628764305967, -1.0378831064246263), (-0.81724, -1.800931709959631, -1.8031168884248707), (-0.74561, -2.6234184810506207, -2.744937964839554)]
+FIT 2
+%%%%%%%%%%%%%%%%%%%%
+H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+[-1.16953, -1.13811, -1.09361, -1.05439, -1.01297, -0.95526, -0.88722, -0.81724, -0.74561, -0.67218]
+[0.9522371208132779, 0.599700699941423, 0.311382011506846, 0.1257736208545667, -0.04315697046782033, -0.23977006028154327, -0.33399054830052677, -0.4253499515948004, -0.4668018587474626, -0.5212732793020484]
+%%%%%%%%%%%%%%%%%%%%
+plotting fit H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8 -
+data [(-1.16953, 0.9522371208132779, 0.9158061812564782), (-1.13811, 0.599700699941423, 0.6446376603873567), (-1.09361, 0.311382011506846, 0.3301491692997498), (-1.05439, 0.1257736208545667, 0.11313933764487416), (-1.01297, -0.04315697046782033, -0.06307558800169133), (-0.95526, -0.23977006028154327, -0.23346348365919312), (-0.88722, -0.33399054830052677, -0.3501602619166011), (-0.81724, -0.4253499515948004, -0.4123839573314765), (-0.74561, -0.4668018587474626, -0.45726292463076845), (-0.67218, -0.5212732793020484, -0.5286353486268442)]
+FIT 2
+%%%%%%%%%%%%%%%%%%%%
+CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+[-1.16953, -1.13811, -1.09361, -1.05439, -1.01297, -0.95526, -0.88722, -0.81724, -0.74561]
+[-1.2985529089608525, -1.2754274201800297, -1.2349807275663487, -1.197831165287935, -0.8422598633157377, -0.8986998195323153, -0.9685351740419502, -1.1835911145676248, -1.1983323150626095]
+%%%%%%%%%%%%%%%%%%%%
+plotting fit CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8 -
+data [(-1.16953, -1.2985529089608525, -1.3648479684041455), (-1.13811, -1.2754274201800297, -1.2625389278418755), (-1.09361, -1.2349807275663487, -1.1432006183069099), (-1.05439, -1.197831165287935, -1.0628651748718374), (-1.01297, -0.8422598633157377, -1.0032949014738985), (-0.95526, -0.8986998195323153, -0.9635802461977647), (-0.88722, -0.9685351740419502, -0.981492240526948), (-0.81724, -1.1835911145676248, -1.0729928840659282), (-0.74561, -1.1983323150626095, -1.2433975468260572)]
+FIT 2
+%%%%%%%%%%%%%%%%%%%%
+CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+[-1.16953, -1.13811, -1.09361, -1.05439, -1.01297, -0.95526, -0.88722, -0.81724, -0.74561]
+[0.851928272333139, 0.6890684595405498, 0.43644298748690424, 0.15911909686247355, -0.20669037578752694, -1.2405328230547497, -2.0441517394865416, -2.9234422002758254, -3.423257947491228]
+%%%%%%%%%%%%%%%%%%%%
+plotting fit CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8 -
+data [(-1.16953, 0.851928272333139, 1.0184979531717886), (-1.13811, 0.6890684595405498, 0.7433751469764331), (-1.09361, 0.43644298748690424, 0.3344754937030565), (-1.05439, 0.15911909686247355, -0.04461121498739473), (-1.01297, -0.20669037578752694, -0.46398850542034964), (-0.95526, -1.2405328230547497, -1.0808891322828025), (-0.88722, -2.0441517394865416, -1.8569514532726359), (-0.81724, -2.9234422002758254, -2.710159563843785), (-0.74561, -3.423257947491228, -3.641264993917087)]
+FIT 2
+%%%%%%%%%%%%%%%%%%%%
+MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+[-1.16953, -1.13811, -1.09361, -1.05439, -1.01297, -0.95526]
+[-2.7081606967305847, -1.7720362342264782, -2.4270502550476287, -2.9423810549690317, -2.986143590910902, -2.682393540860907]
+%%%%%%%%%%%%%%%%%%%%
+plotting fit MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8 -
+data [(-1.16953, -2.7081606967305847, -2.267107589140677), (-1.13811, -1.7720362342264782, -2.400919095503646), (-1.09361, -2.4270502550476287, -2.5616690284504857), (-1.05439, -2.9423810549690317, -2.675387436268686), (-1.01297, -2.986143590910902, -2.767044445186489), (-0.95526, -2.682393540860907, -2.8460377781955506)]
+HCOO ﻿"Voltage vs. RHE"
+HCOO H$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO CH$_4$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO CH$_2$CH$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO CH$_3$COO$^-$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO EtOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO n-PrOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_{2+}$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_1$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ ﻿"Voltage vs. RHE"
+C$_{2+}$ H$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ CH$_4$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ CH$_2$CH$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ CH$_3$COO$^-$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ EtOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ n-PrOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ C$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ C$_{2+}$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ C$_1$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO ﻿"Voltage vs. RHE"
+HCOO H$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO CH$_4$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO CH$_2$CH$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO CH$_3$COO$^-$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO EtOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO n-PrOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_{2+}$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_1$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ ﻿"Voltage vs. RHE"
+H$_2$ H$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ CH$_4$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ CH$_2$CH$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ CH$_3$COO$^-$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ EtOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ n-PrOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ C$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ C$_{2+}$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ C$_1$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO ﻿"Voltage vs. RHE"
+CO H$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO CH$_4$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO CH$_2$CH$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO CH$_3$COO$^-$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO EtOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO n-PrOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO C$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO C$_{2+}$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO C$_1$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ ﻿"Voltage vs. RHE"
+CH$_4$ H$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ CH$_4$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ CH$_2$CH$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ CH$_3$COO$^-$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ EtOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ n-PrOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ C$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ C$_{2+}$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ C$_1$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH ﻿"Voltage vs. RHE"
+MeOH H$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH CH$_4$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH CH$_2$CH$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH CH$_3$COO$^-$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH EtOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH n-PrOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH C$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH C$_{2+}$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH C$_1$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH ﻿"Voltage vs. RHE"
+CH$_3$OH H$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH CH$_4$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH CH$_2$CH$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH CH$_3$COO$^-$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH EtOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH n-PrOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH C$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH C$_{2+}$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH C$_1$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO ﻿"Voltage vs. RHE"
+HCOO H$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO etol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO Acetate, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO CH$_3$CHO, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO propol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_2$H$_4$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_{2+}$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ ﻿"Voltage vs. RHE"
+C$_{2+}$ H$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ etol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ Acetate, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ CH$_3$CHO, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ propol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ C$_2$H$_4$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ C$_{2+}$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ C$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO ﻿"Voltage vs. RHE"
+HCOO H$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO etol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO Acetate, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO CH$_3$CHO, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO propol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_2$H$_4$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_{2+}$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ ﻿"Voltage vs. RHE"
+H$_2$ H$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ etol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ Acetate, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ CH$_3$CHO, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ propol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ C$_2$H$_4$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ C$_{2+}$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ C$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO ﻿"Voltage vs. RHE"
+CO H$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO etol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO Acetate, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO CH$_3$CHO, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO propol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO C$_2$H$_4$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO C$_{2+}$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO C$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ ﻿"Voltage vs. RHE"
+CH$_4$ H$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ etol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ Acetate, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ CH$_3$CHO, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ propol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ C$_2$H$_4$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ C$_{2+}$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ C$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH ﻿"Voltage vs. RHE"
+MeOH H$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH etol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH Acetate, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH CH$_3$CHO, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH propol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH C$_2$H$_4$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH C$_{2+}$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH C$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH ﻿"Voltage vs. RHE"
+CH$_3$OH H$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH etol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH Acetate, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH CH$_3$CHO, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH propol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH C$_2$H$_4$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH C$_{2+}$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH C$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO ﻿"Voltage vs. RHE (V)"
+HCOO CO, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO dummy, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_{2+}$, NF-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+HCOO H$_2$, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+checking pc-Cu HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+checking NC-Cu HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO Oxygenates, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO Hydrocarbons, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO etol, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO propol,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_2$,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ ﻿"Voltage vs. RHE (V)"
+C$_{2+}$ CO, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ dummy, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ C$_{2+}$, NF-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+checking pc-Cu C$_{2+}$, NF-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+checking NC-Cu C$_{2+}$, NF-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+C$_{2+}$ H$_2$, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ Oxygenates, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ Hydrocarbons, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ etol, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ propol,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ C$_2$,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO ﻿"Voltage vs. RHE (V)"
+HCOO CO, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO dummy, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_{2+}$, NF-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+HCOO H$_2$, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+checking pc-Cu HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+checking NC-Cu HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO Oxygenates, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO Hydrocarbons, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO etol, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO propol,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_2$,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ ﻿"Voltage vs. RHE (V)"
+H$_2$ CO, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ dummy, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ C$_{2+}$, NF-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+H$_2$ H$_2$, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking pc-Cu H$_2$, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking NC-Cu H$_2$, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ Oxygenates, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ Hydrocarbons, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ etol, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ propol,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ C$_2$,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO ﻿"Voltage vs. RHE (V)"
+CO CO, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking pc-Cu CO, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking NC-Cu CO, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO dummy, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO C$_{2+}$, NF-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+CO H$_2$, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO Oxygenates, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO Hydrocarbons, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO etol, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO propol,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO C$_2$,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ ﻿"Voltage vs. RHE (V)"
+CH$_4$ CO, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ dummy, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ C$_{2+}$, NF-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+CH$_4$ H$_2$, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ Oxygenates, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ Hydrocarbons, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ etol, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ propol,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ C$_2$,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH ﻿"Voltage vs. RHE (V)"
+MeOH CO, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH dummy, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH C$_{2+}$, NF-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+MeOH H$_2$, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH Oxygenates, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH Hydrocarbons, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH etol, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH propol,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH C$_2$,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH ﻿"Voltage vs. RHE (V)"
+CH$_3$OH CO, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH dummy, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH C$_{2+}$, NF-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+CH$_3$OH H$_2$, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH Oxygenates, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH Hydrocarbons, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH etol, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH propol,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH C$_2$,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO ﻿"Voltage vs. RHE (V)"
+HCOO H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_2$CH$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_3$CH$_3$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking pc-Cu HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking NC-Cu HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO etol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO propol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AceticAcid, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AcAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO GlyAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO EthGlyc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AllylAlc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO Acetone, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_1$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ ﻿"Voltage vs. RHE (V)"
+C$_{2+}$ H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ CH$_2$CH$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ CH$_3$CH$_3$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ etol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ propol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ AceticAcid, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ AcAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ GlyAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ EthGlyc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ AllylAlc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ Acetone, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ C$_1$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ C$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking pc-Cu C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking NC-Cu C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO ﻿"Voltage vs. RHE (V)"
+HCOO H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_2$CH$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_3$CH$_3$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking pc-Cu HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking NC-Cu HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO etol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO propol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AceticAcid, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AcAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO GlyAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO EthGlyc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AllylAlc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO Acetone, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_1$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ ﻿"Voltage vs. RHE (V)"
+H$_2$ H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking pc-Cu H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking NC-Cu H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ CH$_2$CH$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ CH$_3$CH$_3$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ etol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ propol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ AceticAcid, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ AcAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ GlyAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ EthGlyc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ AllylAlc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ Acetone, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ C$_1$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ C$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO ﻿"Voltage vs. RHE (V)"
+CO H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking pc-Cu CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking NC-Cu CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO CH$_2$CH$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO CH$_3$CH$_3$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO etol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO propol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO AceticAcid, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO AcAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO GlyAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO EthGlyc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO AllylAlc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO Acetone, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO C$_1$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO C$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ ﻿"Voltage vs. RHE (V)"
+CH$_4$ H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking pc-Cu CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking NC-Cu CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ CH$_2$CH$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ CH$_3$CH$_3$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ etol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ propol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ AceticAcid, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ AcAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ GlyAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ EthGlyc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ AllylAlc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ Acetone, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ C$_1$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ C$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH ﻿"Voltage vs. RHE (V)"
+MeOH H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH CH$_2$CH$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH CH$_3$CH$_3$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking pc-Cu MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+checking NC-Cu MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH etol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH propol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH AceticAcid, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH AcAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH GlyAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH EthGlyc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH AllylAlc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH Acetone, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH C$_1$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH C$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH ﻿"Voltage vs. RHE (V)"
+CH$_3$OH H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH CH$_2$CH$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH CH$_3$CH$_3$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH etol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH propol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH AceticAcid, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH AcAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH GlyAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH EthGlyc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH AllylAlc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH Acetone, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH C$_1$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH C$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+FIT 2
+%%%%%%%%%%%%%%%%%%%%
+HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+[-1.00104, -0.94063, -0.87525, -0.78119, -0.69169]
+[-2.0623356460558613, -1.5561395527814708, -1.497864528820833, -1.782486472127195, -1.9845178126044802]
+%%%%%%%%%%%%%%%%%%%%
+plotting fit HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8 :
+data [(-1.00104, -2.0623356460558613, -1.9749534252519894), (-0.94063, -1.5561395527814708, -1.6871455859022024), (-0.87525, -1.497864528820833, -1.5409070595472603), (-0.78119, -1.782486472127195, -1.6318514015176628), (-0.69169, -1.9845178126044802, -2.048486540170657)]
+FIT 2
+%%%%%%%%%%%%%%%%%%%%
+C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+[-1.00104, -0.94063, -0.87525, -0.78119, -0.69169]
+[-0.6822135826283946, -0.9342587786706193, -1.5165729865557986, -2.254930441854203, -2.8610594365661868]
+%%%%%%%%%%%%%%%%%%%%
+plotting fit C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8 :
+data [(-1.00104, -0.6822135826283946, -0.6260123459599622), (-0.94063, -0.9342587786706193, -1.037768802420512), (-0.87525, -1.5165729865557986, -1.5000004309628538), (-0.78119, -2.254930441854203, -2.195267040242115), (-0.69169, -2.8610594365661868, -2.889986606689739)]
+FIT 2
+%%%%%%%%%%%%%%%%%%%%
+H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+[-1.00104, -0.94063, -0.87525, -0.78119, -0.69169]
+[-0.43250508991329506, -0.8021234419898177, -1.146397477367006, -1.1003177991735482, -1.47630467632533]
+%%%%%%%%%%%%%%%%%%%%
+plotting fit H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8 :
+data [(-1.00104, -0.43250508991329506, -0.41005118842035415), (-0.94063, -0.8021234419898177, -0.8761483085712314), (-0.87525, -1.146397477367006, -1.0646735367804183), (-0.78119, -1.1003177991735482, -1.1396430581016546), (-0.69169, -1.47630467632533, -1.4671323928949818)]
+FIT 2
+%%%%%%%%%%%%%%%%%%%%
+CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+[-1.00104, -0.94063, -0.87525, -0.78119, -0.69169]
+[-2.3504900955203945, -2.2081990022828775, -2.0138575529744975, -1.9898001462022958, -2.056878009292653]
+%%%%%%%%%%%%%%%%%%%%
+plotting fit CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8 :
+data [(-1.00104, -2.3504900955203945, -2.361966661242242), (-0.94063, -2.2081990022828775, -2.1756547927174896), (-0.87525, -2.0138575529744975, -2.0434645364938433), (-0.78119, -1.9898001462022958, -1.9799300012675776), (-0.69169, -2.056878009292653, -2.0582088145515662)]
+FIT 2
+%%%%%%%%%%%%%%%%%%%%
+CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+[-1.00104, -0.94063, -0.87525, -0.78119]
+[-1.7496759678556906, -2.1194112132870524, -3.3059373498993843, -5.762431129801802]
+%%%%%%%%%%%%%%%%%%%%
+plotting fit CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8 :
+data [(-1.00104, -1.7496759678556906, -1.722912295903967), (-0.94063, -2.1194112132870524, -2.1904141126322685), (-0.87525, -3.3059373498993843, -3.248136914082096), (-0.78119, -5.762431129801802, -5.775992338225876)]
+FIT 2
+%%%%%%%%%%%%%%%%%%%%
+MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+[-1.00104, -0.94063, -0.87525, -0.78119]
+[-3.62203115400814, -3.8905834579401306, -4.670636702841041, -4.970279470271853]
+%%%%%%%%%%%%%%%%%%%%
+plotting fit MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8 :
+data [(-1.00104, -3.62203115400814, -3.554972816751045), (-0.94063, -3.8905834579401306, -4.0684864145704855), (-0.87525, -4.670636702841041, -4.525813484053278), (-0.78119, -4.970279470271853, -5.004258069686318)]
+HCOO U vs SHE (V)
+HCOO C$_2$H$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+checking pc-Cu HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO C$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO C$_1$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+C$_{2+}$ U vs SHE (V)
+C$_{2+}$ C$_2$H$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+C$_{2+}$ CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+C$_{2+}$ HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+C$_{2+}$ H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+C$_{2+}$ CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+C$_{2+}$ C$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+C$_{2+}$ C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+checking pc-Cu C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+C$_{2+}$ C$_1$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO U vs SHE (V)
+HCOO C$_2$H$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+checking pc-Cu HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO C$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO C$_1$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+H$_2$ U vs SHE (V)
+H$_2$ C$_2$H$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+H$_2$ CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+H$_2$ HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+H$_2$ H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+checking pc-Cu H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+H$_2$ CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+H$_2$ C$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+H$_2$ C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+H$_2$ C$_1$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CO U vs SHE (V)
+CO C$_2$H$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CO CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+checking pc-Cu CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CO HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CO H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CO CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CO C$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CO C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CO C$_1$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_4$ U vs SHE (V)
+CH$_4$ C$_2$H$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_4$ CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_4$ HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_4$ H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_4$ CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+checking pc-Cu CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_4$ C$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_4$ C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_4$ C$_1$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+MeOH U vs SHE (V)
+MeOH C$_2$H$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+MeOH CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+MeOH HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+MeOH H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+MeOH CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+MeOH C$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+MeOH C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+MeOH C$_1$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_3$OH U vs SHE (V)
+CH$_3$OH C$_2$H$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_3$OH CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_3$OH HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_3$OH H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_3$OH CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_3$OH C$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_3$OH C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_3$OH C$_1$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+FIT 2
+%%%%%%%%%%%%%%%%%%%%
+HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+[-1.0938400000000001, -1.0415100000000002, -1.0028899999999998, -0.97114, -0.9015700000000001, -0.8580500000000001, -0.8231799999999999, -0.8034500000000001, -0.75578, -0.70281, -0.6690900000000001, -0.62447, -0.54964]
+[-0.11286166083285994, -0.15340823831122416, -0.26059766804413137, -0.4251030045127133, -0.5578173146928534, -0.6853489407577479, -0.6226850667723581, -0.7505883401886183, -0.9268328386095052, -1.0021403396686641, -1.0179100548804354, -1.4727340279667671, -1.7884437803038806]
+%%%%%%%%%%%%%%%%%%%%
+plotting fit HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0 -
+data [(-1.0938400000000001, -0.11286166083285994, -0.14401675487925836), (-1.0415100000000002, -0.15340823831122416, -0.2128968975073624), (-1.0028899999999998, -0.26059766804413137, -0.27498282595670176), (-0.97114, -0.4251030045127133, -0.33318157435858087), (-0.9015700000000001, -0.5578173146928534, -0.4832855417589048), (-0.8580500000000001, -0.6853489407577479, -0.5929500461667008), (-0.8231799999999999, -0.6226850667723581, -0.6895739850783302), (-0.8034500000000001, -0.7505883401886183, -0.7476961933789372), (-0.75578, -0.9268328386095052, -0.8984185542247678), (-0.70281, -1.0021403396686641, -1.0829751943394408), (-0.6690900000000001, -1.0179100548804354, -1.2098255343233317), (-0.62447, -1.4727340279667671, -1.3888777387612885), (-0.54964, -1.7884437803038806, -1.7177904348081698)]
+FIT 2
+%%%%%%%%%%%%%%%%%%%%
+C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+[-1.0938400000000001, -1.0415100000000002, -1.0028899999999998, -0.97114, -0.9015700000000001, -0.8580500000000001, -0.8231799999999999, -0.8034500000000001, -0.75578]
+[0.1676332001114172, 0.21807072430066374, -0.21545861355733711, -0.5284068450226626, -1.103792703696138, -1.3345666379146057, -1.6870874840885286, -1.7282695359777103, -2.4616148029800877]
+%%%%%%%%%%%%%%%%%%%%
+plotting fit C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0 -
+data [(-1.0938400000000001, 0.1676332001114172, 0.2721757175178112), (-1.0415100000000002, 0.21807072430066374, 0.0036224080962803384), (-1.0028899999999998, -0.21545861355733711, -0.22827759704503947), (-0.97114, -0.5284068450226626, -0.44036507562861793), (-0.9015700000000001, -1.103792703696138, -0.972726658098999), (-0.8580500000000001, -1.3345666379146057, -1.352976819446603), (-0.8231799999999999, -1.6870874840885286, -1.6838786196688549), (-0.8034500000000001, -1.7282695359777103, -1.8814453169005017), (-0.75578, -2.4616148029800877, -2.3896207376504464)]
+FIT 2
+%%%%%%%%%%%%%%%%%%%%
+H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+[-1.0938400000000001, -1.0415100000000002, -1.0028899999999998, -0.97114, -0.9015700000000001, -0.8580500000000001, -0.8231799999999999, -0.8034500000000001, -0.75578, -0.70281, -0.6690900000000001, -0.62447, -0.54964, -0.44673000000000007]
+[-0.0699953303064121, -0.11698813044464614, -0.20154348061730018, -0.3677441092217292, -0.4600692829169452, -0.46766370262289364, -0.4125526430634129, -0.44011076862673404, -0.3368123823077599, -0.11674461557582844, -0.08923190689116342, -0.20848918472003952, -0.386917392137455, -0.9521693655275454]
+%%%%%%%%%%%%%%%%%%%%
+plotting fit H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0 -
+data [(-1.0938400000000001, -0.0699953303064121, 0.05718733939508169), (-1.0415100000000002, -0.11698813044464614, -0.21274165768773123), (-1.0028899999999998, -0.20154348061730018, -0.3365551964729221), (-0.97114, -0.3677441092217292, -0.39796746670612215), (-0.9015700000000001, -0.4600692829169452, -0.43243141727237777), (-0.8580500000000001, -0.46766370262289364, -0.4038133426809498), (-0.8231799999999999, -0.4125526430634129, -0.36420142750125706), (-0.8034500000000001, -0.44011076862673404, -0.33813748012727096), (-0.75578, -0.3368123823077599, -0.27336312713516797), (-0.70281, -0.11674461557582844, -0.21614686066026145), (-0.6690900000000001, -0.08923190689116342, -0.19868017588232334), (-0.62447, -0.20848918472003952, -0.21093036119962427), (-0.54964, -0.386917392137455, -0.3597680839140551), (-0.44673000000000007, -0.9521693655275454, -0.939483037134794)]
+FIT 2
+%%%%%%%%%%%%%%%%%%%%
+CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+[-1.0938400000000001, -1.0415100000000002, -1.0028899999999998, -0.97114, -0.9015700000000001, -0.8580500000000001, -0.8231799999999999, -0.8034500000000001, -0.75578, -0.70281, -0.6690900000000001, -0.62447, -0.54964, -0.44673000000000007]
+[-0.8187438495901905, -0.7331163630592777, -0.8126042188390171, -0.779501013599739, -0.7323243012781664, -0.8377516502221969, -0.8993471277261132, -0.941107537969649, -1.0846497711216803, -1.2508296172460154, -1.2867427533338653, -1.5236759726413032, -1.9471968250170901, -3.1643855159575143]
+%%%%%%%%%%%%%%%%%%%%
+plotting fit CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0 -
+data [(-1.0938400000000001, -0.8187438495901905, -0.9149315813982541), (-1.0415100000000002, -0.7331163630592777, -0.7956573094686519), (-1.0028899999999998, -0.8126042188390171, -0.7398857228809206), (-0.97114, -0.779501013599739, -0.7145514426735478), (-0.9015700000000001, -0.7323243012781664, -0.7237662418090185), (-0.8580500000000001, -0.8377516502221969, -0.7747245436393193), (-0.8231799999999999, -0.8993471277261132, -0.8406547504102395), (-0.8034500000000001, -0.941107537969649, -0.887851166727522), (-0.75578, -1.0846497711216803, -1.0313866515193313), (-0.70281, -1.2508296172460154, -1.2398322311927972), (-0.6690900000000001, -1.2867427533338653, -1.3993684572933658), (-0.62447, -1.5236759726413032, -1.6425729695374898), (-0.54964, -1.9471968250170901, -2.1325176429864197), (-0.44673000000000007, -3.1643855159575143, -2.9742758060650356)]
+FIT 2
+%%%%%%%%%%%%%%%%%%%%
+CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+[-1.0938400000000001, -1.0415100000000002, -1.0028899999999998, -0.97114, -0.9015700000000001, -0.8580500000000001]
+[0.43289335962562736, 0.4693275752266386, -0.18452109944971615, -1.0369381689284813, -1.980295420967003, -2.1599486351170594]
+%%%%%%%%%%%%%%%%%%%%
+plotting fit CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0 -
+data [(-1.0938400000000001, 0.43289335962562736, 0.657848067542492), (-1.0415100000000002, 0.4693275752266386, 0.0914616420996488), (-1.0028899999999998, -0.18452109944971615, -0.3647174226354224), (-0.97114, -1.0369381689284813, -0.7640344789617437), (-0.9015700000000001, -1.980295420967003, -1.7156315729973137), (-0.8580500000000001, -2.1599486351170594, -2.36440862465766)]
+HCOO U vs RHE (V)
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 6.0
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 7.1
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 8.0
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 8.7
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 9.0
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 10.5
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 12.2
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 6.0
+HCOO 
+HCOO C$_1$, pH = 7.1
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 8.0
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 8.7
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 9.0
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 10.5
+HCOO 
+HCOO C$_1$, pH = 12.2
+C$_{2+}$ U vs RHE (V)
+C$_{2+}$ C$_2$, pc-Cu, (COR), (Hori), pH = 6.0
+C$_{2+}$ 
+C$_{2+}$ C$_2$, pc-Cu, (COR), (Hori), pH = 7.1
+C$_{2+}$ 
+C$_{2+}$ C$_2$, pc-Cu, (COR), (Hori), pH = 8.0
+C$_{2+}$ 
+C$_{2+}$ C$_2$, pc-Cu, (COR), (Hori), pH = 8.7
+C$_{2+}$ 
+C$_{2+}$ C$_2$, pc-Cu, (COR), (Hori), pH = 9.0
+C$_{2+}$ 
+C$_{2+}$ C$_2$, pc-Cu, (COR), (Hori), pH = 10.5
+C$_{2+}$ 
+C$_{2+}$ C$_2$, pc-Cu, (COR), (Hori), pH = 12.2
+C$_{2+}$ 
+C$_{2+}$ C$_1$, pc-Cu, (COR), (Hori), pH = 6.0
+C$_{2+}$ 
+C$_{2+}$ C$_1$, pH = 7.1
+C$_{2+}$ 
+C$_{2+}$ C$_1$, pc-Cu, (COR), (Hori), pH = 8.0
+C$_{2+}$ 
+C$_{2+}$ C$_1$, pc-Cu, (COR), (Hori), pH = 8.7
+C$_{2+}$ 
+C$_{2+}$ C$_1$, pc-Cu, (COR), (Hori), pH = 9.0
+C$_{2+}$ 
+C$_{2+}$ C$_1$, pc-Cu, (COR), (Hori), pH = 10.5
+C$_{2+}$ 
+C$_{2+}$ C$_1$, pH = 12.2
+HCOO U vs RHE (V)
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 6.0
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 7.1
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 8.0
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 8.7
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 9.0
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 10.5
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 12.2
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 6.0
+HCOO 
+HCOO C$_1$, pH = 7.1
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 8.0
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 8.7
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 9.0
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 10.5
+HCOO 
+HCOO C$_1$, pH = 12.2
+H$_2$ U vs RHE (V)
+H$_2$ C$_2$, pc-Cu, (COR), (Hori), pH = 6.0
+H$_2$ 
+H$_2$ C$_2$, pc-Cu, (COR), (Hori), pH = 7.1
+H$_2$ 
+H$_2$ C$_2$, pc-Cu, (COR), (Hori), pH = 8.0
+H$_2$ 
+H$_2$ C$_2$, pc-Cu, (COR), (Hori), pH = 8.7
+H$_2$ 
+H$_2$ C$_2$, pc-Cu, (COR), (Hori), pH = 9.0
+H$_2$ 
+H$_2$ C$_2$, pc-Cu, (COR), (Hori), pH = 10.5
+H$_2$ 
+H$_2$ C$_2$, pc-Cu, (COR), (Hori), pH = 12.2
+H$_2$ 
+H$_2$ C$_1$, pc-Cu, (COR), (Hori), pH = 6.0
+H$_2$ 
+H$_2$ C$_1$, pH = 7.1
+H$_2$ 
+H$_2$ C$_1$, pc-Cu, (COR), (Hori), pH = 8.0
+H$_2$ 
+H$_2$ C$_1$, pc-Cu, (COR), (Hori), pH = 8.7
+H$_2$ 
+H$_2$ C$_1$, pc-Cu, (COR), (Hori), pH = 9.0
+H$_2$ 
+H$_2$ C$_1$, pc-Cu, (COR), (Hori), pH = 10.5
+H$_2$ 
+H$_2$ C$_1$, pH = 12.2
+CO U vs RHE (V)
+CO C$_2$, pc-Cu, (COR), (Hori), pH = 6.0
+CO 
+CO C$_2$, pc-Cu, (COR), (Hori), pH = 7.1
+CO 
+CO C$_2$, pc-Cu, (COR), (Hori), pH = 8.0
+CO 
+CO C$_2$, pc-Cu, (COR), (Hori), pH = 8.7
+CO 
+CO C$_2$, pc-Cu, (COR), (Hori), pH = 9.0
+CO 
+CO C$_2$, pc-Cu, (COR), (Hori), pH = 10.5
+CO 
+CO C$_2$, pc-Cu, (COR), (Hori), pH = 12.2
+CO 
+CO C$_1$, pc-Cu, (COR), (Hori), pH = 6.0
+CO 
+CO C$_1$, pH = 7.1
+CO 
+CO C$_1$, pc-Cu, (COR), (Hori), pH = 8.0
+CO 
+CO C$_1$, pc-Cu, (COR), (Hori), pH = 8.7
+CO 
+CO C$_1$, pc-Cu, (COR), (Hori), pH = 9.0
+CO 
+CO C$_1$, pc-Cu, (COR), (Hori), pH = 10.5
+CO 
+CO C$_1$, pH = 12.2
+CH$_4$ U vs RHE (V)
+CH$_4$ C$_2$, pc-Cu, (COR), (Hori), pH = 6.0
+CH$_4$ 
+CH$_4$ C$_2$, pc-Cu, (COR), (Hori), pH = 7.1
+CH$_4$ 
+CH$_4$ C$_2$, pc-Cu, (COR), (Hori), pH = 8.0
+CH$_4$ 
+CH$_4$ C$_2$, pc-Cu, (COR), (Hori), pH = 8.7
+CH$_4$ 
+CH$_4$ C$_2$, pc-Cu, (COR), (Hori), pH = 9.0
+CH$_4$ 
+CH$_4$ C$_2$, pc-Cu, (COR), (Hori), pH = 10.5
+CH$_4$ 
+CH$_4$ C$_2$, pc-Cu, (COR), (Hori), pH = 12.2
+CH$_4$ 
+CH$_4$ C$_1$, pc-Cu, (COR), (Hori), pH = 6.0
+CH$_4$ 
+CH$_4$ C$_1$, pH = 7.1
+CH$_4$ 
+CH$_4$ C$_1$, pc-Cu, (COR), (Hori), pH = 8.0
+CH$_4$ 
+CH$_4$ C$_1$, pc-Cu, (COR), (Hori), pH = 8.7
+CH$_4$ 
+CH$_4$ C$_1$, pc-Cu, (COR), (Hori), pH = 9.0
+CH$_4$ 
+CH$_4$ C$_1$, pc-Cu, (COR), (Hori), pH = 10.5
+CH$_4$ 
+CH$_4$ C$_1$, pH = 12.2
+MeOH U vs RHE (V)
+MeOH C$_2$, pc-Cu, (COR), (Hori), pH = 6.0
+MeOH 
+MeOH C$_2$, pc-Cu, (COR), (Hori), pH = 7.1
+MeOH 
+MeOH C$_2$, pc-Cu, (COR), (Hori), pH = 8.0
+MeOH 
+MeOH C$_2$, pc-Cu, (COR), (Hori), pH = 8.7
+MeOH 
+MeOH C$_2$, pc-Cu, (COR), (Hori), pH = 9.0
+MeOH 
+MeOH C$_2$, pc-Cu, (COR), (Hori), pH = 10.5
+MeOH 
+MeOH C$_2$, pc-Cu, (COR), (Hori), pH = 12.2
+MeOH 
+MeOH C$_1$, pc-Cu, (COR), (Hori), pH = 6.0
+MeOH 
+MeOH C$_1$, pH = 7.1
+MeOH 
+MeOH C$_1$, pc-Cu, (COR), (Hori), pH = 8.0
+MeOH 
+MeOH C$_1$, pc-Cu, (COR), (Hori), pH = 8.7
+MeOH 
+MeOH C$_1$, pc-Cu, (COR), (Hori), pH = 9.0
+MeOH 
+MeOH C$_1$, pc-Cu, (COR), (Hori), pH = 10.5
+MeOH 
+MeOH C$_1$, pH = 12.2
+CH$_3$OH U vs RHE (V)
+CH$_3$OH C$_2$, pc-Cu, (COR), (Hori), pH = 6.0
+CH$_3$OH 
+CH$_3$OH C$_2$, pc-Cu, (COR), (Hori), pH = 7.1
+CH$_3$OH 
+CH$_3$OH C$_2$, pc-Cu, (COR), (Hori), pH = 8.0
+CH$_3$OH 
+CH$_3$OH C$_2$, pc-Cu, (COR), (Hori), pH = 8.7
+CH$_3$OH 
+CH$_3$OH C$_2$, pc-Cu, (COR), (Hori), pH = 9.0
+CH$_3$OH 
+CH$_3$OH C$_2$, pc-Cu, (COR), (Hori), pH = 10.5
+CH$_3$OH 
+CH$_3$OH C$_2$, pc-Cu, (COR), (Hori), pH = 12.2
+CH$_3$OH 
+CH$_3$OH C$_1$, pc-Cu, (COR), (Hori), pH = 6.0
+CH$_3$OH 
+CH$_3$OH C$_1$, pH = 7.1
+CH$_3$OH 
+CH$_3$OH C$_1$, pc-Cu, (COR), (Hori), pH = 8.0
+CH$_3$OH 
+CH$_3$OH C$_1$, pc-Cu, (COR), (Hori), pH = 8.7
+CH$_3$OH 
+CH$_3$OH C$_1$, pc-Cu, (COR), (Hori), pH = 9.0
+CH$_3$OH 
+CH$_3$OH C$_1$, pc-Cu, (COR), (Hori), pH = 10.5
+CH$_3$OH 
+CH$_3$OH C$_1$, pH = 12.2
+HCOO ﻿"Voltage vs. RHE (V)"
+HCOO CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_1$, pc-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+HCOO H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_2$H$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO EtOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO GlycAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AcetAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_3$COO, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO EtGlyc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO n-PrOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AllylAlc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO Acetone, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ ﻿"Voltage vs. RHE (V)"
+C$_{2+}$ CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ C$_1$, pc-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+C$_{2+}$ H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ C$_2$H$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ EtOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ GlycAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ AcetAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ CH$_3$COO, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ EtGlyc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ n-PrOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ AllylAlc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ Acetone, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO ﻿"Voltage vs. RHE (V)"
+HCOO CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_1$, pc-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+HCOO H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_2$H$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO EtOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO GlycAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AcetAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_3$COO, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO EtGlyc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO n-PrOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AllylAlc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO Acetone, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ ﻿"Voltage vs. RHE (V)"
+H$_2$ CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ C$_1$, pc-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+H$_2$ H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ C$_2$H$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ EtOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ GlycAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ AcetAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ CH$_3$COO, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ EtGlyc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ n-PrOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ AllylAlc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ Acetone, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO ﻿"Voltage vs. RHE (V)"
+CO CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO C$_1$, pc-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+CO H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO C$_2$H$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO EtOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO GlycAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO AcetAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO CH$_3$COO, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO EtGlyc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO n-PrOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO AllylAlc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO Acetone, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ ﻿"Voltage vs. RHE (V)"
+CH$_4$ CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ C$_1$, pc-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+CH$_4$ H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ C$_2$H$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ EtOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ GlycAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ AcetAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ CH$_3$COO, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ EtGlyc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ n-PrOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ AllylAlc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ Acetone, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH ﻿"Voltage vs. RHE (V)"
+MeOH CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH C$_1$, pc-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+MeOH H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH C$_2$H$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH EtOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH GlycAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH AcetAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH CH$_3$COO, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH EtGlyc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH n-PrOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH AllylAlc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH Acetone, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH ﻿"Voltage vs. RHE (V)"
+CH$_3$OH CO, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH HCOOH, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH C$_1$, pc-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+CH$_3$OH H$_2$, pc-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH C$_{2+}$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH CH$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH MeOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH C$_2$H$_4$, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH EtOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH GlycAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH AcetAld, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH CH$_3$COO, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH EtGlyc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH n-PrOH, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH AllylAlc, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH Acetone, pc-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO ﻿"Voltage vs. RHE"
+HCOO H$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO CH$_4$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO CH$_2$CH$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO CH$_3$COO$^-$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO EtOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO n-PrOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_{2+}$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_1$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ ﻿"Voltage vs. RHE"
+C$_{2+}$ H$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ CH$_4$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ CH$_2$CH$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ CH$_3$COO$^-$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ EtOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ n-PrOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ C$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ C$_{2+}$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ C$_1$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO ﻿"Voltage vs. RHE"
+HCOO H$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO CH$_4$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO CH$_2$CH$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO CH$_3$COO$^-$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO EtOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO n-PrOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_{2+}$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_1$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ ﻿"Voltage vs. RHE"
+H$_2$ H$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ CH$_4$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ CH$_2$CH$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ CH$_3$COO$^-$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ EtOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ n-PrOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ C$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ C$_{2+}$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ C$_1$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO ﻿"Voltage vs. RHE"
+CO H$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO CH$_4$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO CH$_2$CH$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO CH$_3$COO$^-$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO EtOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO n-PrOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO C$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO C$_{2+}$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO C$_1$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ ﻿"Voltage vs. RHE"
+CH$_4$ H$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ CH$_4$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ CH$_2$CH$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ CH$_3$COO$^-$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ EtOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ n-PrOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ C$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ C$_{2+}$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ C$_1$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH ﻿"Voltage vs. RHE"
+MeOH H$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH CH$_4$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH CH$_2$CH$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH CH$_3$COO$^-$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH EtOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH n-PrOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH C$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH C$_{2+}$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH C$_1$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH ﻿"Voltage vs. RHE"
+CH$_3$OH H$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH CH$_4$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH CH$_2$CH$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH CH$_3$COO$^-$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH EtOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH n-PrOH, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH C$_2$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH C$_{2+}$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH C$_1$, pc-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO ﻿"Voltage vs. RHE"
+HCOO H$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO etol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO Acetate, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO CH$_3$CHO, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO propol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_2$H$_4$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_{2+}$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ ﻿"Voltage vs. RHE"
+C$_{2+}$ H$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ etol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ Acetate, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ CH$_3$CHO, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ propol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ C$_2$H$_4$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ C$_{2+}$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+C$_{2+}$ C$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO ﻿"Voltage vs. RHE"
+HCOO H$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO etol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO Acetate, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO CH$_3$CHO, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO propol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_2$H$_4$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_{2+}$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO C$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ ﻿"Voltage vs. RHE"
+H$_2$ H$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ etol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ Acetate, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ CH$_3$CHO, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ propol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ C$_2$H$_4$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ C$_{2+}$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+H$_2$ C$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO ﻿"Voltage vs. RHE"
+CO H$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO etol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO Acetate, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO CH$_3$CHO, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO propol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO C$_2$H$_4$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO C$_{2+}$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CO C$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ ﻿"Voltage vs. RHE"
+CH$_4$ H$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ etol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ Acetate, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ CH$_3$CHO, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ propol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ C$_2$H$_4$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ C$_{2+}$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_4$ C$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH ﻿"Voltage vs. RHE"
+MeOH H$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH etol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH Acetate, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH CH$_3$CHO, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH propol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH C$_2$H$_4$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH C$_{2+}$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+MeOH C$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH ﻿"Voltage vs. RHE"
+CH$_3$OH H$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH etol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH Acetate, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH CH$_3$CHO, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH propol, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH C$_2$H$_4$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH C$_{2+}$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+CH$_3$OH C$_2$, NF-Cu, (COR), (Jaramillo), pH = 13, BC = 0
+HCOO ﻿"Voltage vs. RHE (V)"
+HCOO CO, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO dummy, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_{2+}$, NF-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+HCOO H$_2$, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO Oxygenates, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO Hydrocarbons, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO etol, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO propol,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_2$,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ ﻿"Voltage vs. RHE (V)"
+C$_{2+}$ CO, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ dummy, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ C$_{2+}$, NF-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+C$_{2+}$ H$_2$, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ Oxygenates, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ Hydrocarbons, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ etol, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ propol,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ C$_2$,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO ﻿"Voltage vs. RHE (V)"
+HCOO CO, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO dummy, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_{2+}$, NF-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+HCOO H$_2$, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO Oxygenates, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO Hydrocarbons, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO etol, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO propol,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_2$,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ ﻿"Voltage vs. RHE (V)"
+H$_2$ CO, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ dummy, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ C$_{2+}$, NF-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+H$_2$ H$_2$, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ Oxygenates, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ Hydrocarbons, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ etol, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ propol,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ C$_2$,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO ﻿"Voltage vs. RHE (V)"
+CO CO, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO dummy, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO C$_{2+}$, NF-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+CO H$_2$, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO Oxygenates, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO Hydrocarbons, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO etol, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO propol,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CO C$_2$,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ ﻿"Voltage vs. RHE (V)"
+CH$_4$ CO, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ dummy, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ C$_{2+}$, NF-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+CH$_4$ H$_2$, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ Oxygenates, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ Hydrocarbons, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ etol, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ propol,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ C$_2$,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH ﻿"Voltage vs. RHE (V)"
+MeOH CO, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH dummy, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH C$_{2+}$, NF-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+MeOH H$_2$, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH Oxygenates, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH Hydrocarbons, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH etol, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH propol,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH C$_2$,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH ﻿"Voltage vs. RHE (V)"
+CH$_3$OH CO, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH dummy, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH C$_{2+}$, NF-Cu (CO$_2$R), (Jaramillo),  pH = 6.8
+CH$_3$OH H$_2$, NF-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH HCOO$^-$, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH Oxygenates, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH Hydrocarbons, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH etol, NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH propol,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH C$_2$,NF-Cu, (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO ﻿"Voltage vs. RHE (V)"
+HCOO H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_2$CH$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_3$CH$_3$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO etol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO propol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AceticAcid, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AcAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO GlyAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO EthGlyc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AllylAlc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO Acetone, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_1$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ ﻿"Voltage vs. RHE (V)"
+C$_{2+}$ H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ CH$_2$CH$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ CH$_3$CH$_3$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ etol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ propol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ AceticAcid, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ AcAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ GlyAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ EthGlyc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ AllylAlc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ Acetone, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ C$_1$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ C$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+C$_{2+}$ C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO ﻿"Voltage vs. RHE (V)"
+HCOO H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_2$CH$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO CH$_3$CH$_3$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO etol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO propol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AceticAcid, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AcAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO GlyAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO EthGlyc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO AllylAlc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO Acetone, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_1$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ ﻿"Voltage vs. RHE (V)"
+H$_2$ H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ CH$_2$CH$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ CH$_3$CH$_3$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ etol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ propol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ AceticAcid, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ AcAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ GlyAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ EthGlyc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ AllylAlc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ Acetone, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ C$_1$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ C$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+H$_2$ C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO ﻿"Voltage vs. RHE (V)"
+CO H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO CH$_2$CH$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO CH$_3$CH$_3$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO etol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO propol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO AceticAcid, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO AcAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO GlyAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO EthGlyc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO AllylAlc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO Acetone, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO C$_1$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO C$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CO C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ ﻿"Voltage vs. RHE (V)"
+CH$_4$ H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ CH$_2$CH$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ CH$_3$CH$_3$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ etol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ propol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ AceticAcid, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ AcAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ GlyAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ EthGlyc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ AllylAlc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ Acetone, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ C$_1$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ C$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_4$ C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH ﻿"Voltage vs. RHE (V)"
+MeOH H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH CH$_2$CH$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH CH$_3$CH$_3$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH etol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH propol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH AceticAcid, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH AcAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH GlyAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH EthGlyc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH AllylAlc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH Acetone, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH C$_1$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH C$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+MeOH C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH ﻿"Voltage vs. RHE (V)"
+CH$_3$OH H$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH CH$_4$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH CO, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH CH$_2$CH$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH CH$_3$CH$_3$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH HCOO$^-$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH MeOH, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH etol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH propol, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH AceticAcid, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH AcAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH GlyAld, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH EthGlyc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH AllylAlc, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH Acetone, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH C$_1$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH C$_2$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+CH$_3$OH C$_{2+}$, NC-Cu (CO$_2$R), (Jaramillo), pH = 6.8
+HCOO U vs SHE (V)
+HCOO C$_2$H$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO C$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO C$_1$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+C$_{2+}$ U vs SHE (V)
+C$_{2+}$ C$_2$H$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+C$_{2+}$ CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+C$_{2+}$ HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+C$_{2+}$ H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+C$_{2+}$ CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+C$_{2+}$ C$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+C$_{2+}$ C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+C$_{2+}$ C$_1$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO U vs SHE (V)
+HCOO C$_2$H$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO C$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO C$_1$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+H$_2$ U vs SHE (V)
+H$_2$ C$_2$H$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+H$_2$ CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+H$_2$ HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+H$_2$ H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+H$_2$ CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+H$_2$ C$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+H$_2$ C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+H$_2$ C$_1$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CO U vs SHE (V)
+CO C$_2$H$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CO CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CO HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CO H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CO CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CO C$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CO C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CO C$_1$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_4$ U vs SHE (V)
+CH$_4$ C$_2$H$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_4$ CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_4$ HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_4$ H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_4$ CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_4$ C$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_4$ C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_4$ C$_1$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+MeOH U vs SHE (V)
+MeOH C$_2$H$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+MeOH CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+MeOH HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+MeOH H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+MeOH CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+MeOH C$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+MeOH C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+MeOH C$_1$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_3$OH U vs SHE (V)
+CH$_3$OH C$_2$H$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_3$OH CO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_3$OH HCOO, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_3$OH H$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_3$OH CH$_4$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_3$OH C$_2$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_3$OH C$_{2+}$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+CH$_3$OH C$_1$, pc-Cu, (CO$_2$R), (Hori), pH = 6.8, BC = 0
+HCOO U vs RHE (V)
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 6.0
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 7.1
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 8.0
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 8.7
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 9.0
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 10.5
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 12.2
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 6.0
+HCOO 
+HCOO C$_1$, pH = 7.1
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 8.0
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 8.7
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 9.0
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 10.5
+HCOO 
+HCOO C$_1$, pH = 12.2
+C$_{2+}$ U vs RHE (V)
+C$_{2+}$ C$_2$, pc-Cu, (COR), (Hori), pH = 6.0
+C$_{2+}$ 
+C$_{2+}$ C$_2$, pc-Cu, (COR), (Hori), pH = 7.1
+C$_{2+}$ 
+C$_{2+}$ C$_2$, pc-Cu, (COR), (Hori), pH = 8.0
+C$_{2+}$ 
+C$_{2+}$ C$_2$, pc-Cu, (COR), (Hori), pH = 8.7
+C$_{2+}$ 
+C$_{2+}$ C$_2$, pc-Cu, (COR), (Hori), pH = 9.0
+C$_{2+}$ 
+C$_{2+}$ C$_2$, pc-Cu, (COR), (Hori), pH = 10.5
+C$_{2+}$ 
+C$_{2+}$ C$_2$, pc-Cu, (COR), (Hori), pH = 12.2
+C$_{2+}$ 
+C$_{2+}$ C$_1$, pc-Cu, (COR), (Hori), pH = 6.0
+C$_{2+}$ 
+C$_{2+}$ C$_1$, pH = 7.1
+C$_{2+}$ 
+C$_{2+}$ C$_1$, pc-Cu, (COR), (Hori), pH = 8.0
+C$_{2+}$ 
+C$_{2+}$ C$_1$, pc-Cu, (COR), (Hori), pH = 8.7
+C$_{2+}$ 
+C$_{2+}$ C$_1$, pc-Cu, (COR), (Hori), pH = 9.0
+C$_{2+}$ 
+C$_{2+}$ C$_1$, pc-Cu, (COR), (Hori), pH = 10.5
+C$_{2+}$ 
+C$_{2+}$ C$_1$, pH = 12.2
+HCOO U vs RHE (V)
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 6.0
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 7.1
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 8.0
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 8.7
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 9.0
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 10.5
+HCOO 
+HCOO C$_2$, pc-Cu, (COR), (Hori), pH = 12.2
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 6.0
+HCOO 
+HCOO C$_1$, pH = 7.1
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 8.0
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 8.7
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 9.0
+HCOO 
+HCOO C$_1$, pc-Cu, (COR), (Hori), pH = 10.5
+HCOO 
+HCOO C$_1$, pH = 12.2
+H$_2$ U vs RHE (V)
+H$_2$ C$_2$, pc-Cu, (COR), (Hori), pH = 6.0
+H$_2$ 
+H$_2$ C$_2$, pc-Cu, (COR), (Hori), pH = 7.1
+H$_2$ 
+H$_2$ C$_2$, pc-Cu, (COR), (Hori), pH = 8.0
+H$_2$ 
+H$_2$ C$_2$, pc-Cu, (COR), (Hori), pH = 8.7
+H$_2$ 
+H$_2$ C$_2$, pc-Cu, (COR), (Hori), pH = 9.0
+H$_2$ 
+H$_2$ C$_2$, pc-Cu, (COR), (Hori), pH = 10.5
+H$_2$ 
+H$_2$ C$_2$, pc-Cu, (COR), (Hori), pH = 12.2
+H$_2$ 
+H$_2$ C$_1$, pc-Cu, (COR), (Hori), pH = 6.0
+H$_2$ 
+H$_2$ C$_1$, pH = 7.1
+H$_2$ 
+H$_2$ C$_1$, pc-Cu, (COR), (Hori), pH = 8.0
+H$_2$ 
+H$_2$ C$_1$, pc-Cu, (COR), (Hori), pH = 8.7
+H$_2$ 
+H$_2$ C$_1$, pc-Cu, (COR), (Hori), pH = 9.0
+H$_2$ 
+H$_2$ C$_1$, pc-Cu, (COR), (Hori), pH = 10.5
+H$_2$ 
+H$_2$ C$_1$, pH = 12.2
+CO U vs RHE (V)
+CO C$_2$, pc-Cu, (COR), (Hori), pH = 6.0
+CO 
+CO C$_2$, pc-Cu, (COR), (Hori), pH = 7.1
+CO 
+CO C$_2$, pc-Cu, (COR), (Hori), pH = 8.0
+CO 
+CO C$_2$, pc-Cu, (COR), (Hori), pH = 8.7
+CO 
+CO C$_2$, pc-Cu, (COR), (Hori), pH = 9.0
+CO 
+CO C$_2$, pc-Cu, (COR), (Hori), pH = 10.5
+CO 
+CO C$_2$, pc-Cu, (COR), (Hori), pH = 12.2
+CO 
+CO C$_1$, pc-Cu, (COR), (Hori), pH = 6.0
+CO 
+CO C$_1$, pH = 7.1
+CO 
+CO C$_1$, pc-Cu, (COR), (Hori), pH = 8.0
+CO 
+CO C$_1$, pc-Cu, (COR), (Hori), pH = 8.7
+CO 
+CO C$_1$, pc-Cu, (COR), (Hori), pH = 9.0
+CO 
+CO C$_1$, pc-Cu, (COR), (Hori), pH = 10.5
+CO 
+CO C$_1$, pH = 12.2
+CH$_4$ U vs RHE (V)
+CH$_4$ C$_2$, pc-Cu, (COR), (Hori), pH = 6.0
+CH$_4$ 
+CH$_4$ C$_2$, pc-Cu, (COR), (Hori), pH = 7.1
+CH$_4$ 
+CH$_4$ C$_2$, pc-Cu, (COR), (Hori), pH = 8.0
+CH$_4$ 
+CH$_4$ C$_2$, pc-Cu, (COR), (Hori), pH = 8.7
+CH$_4$ 
+CH$_4$ C$_2$, pc-Cu, (COR), (Hori), pH = 9.0
+CH$_4$ 
+CH$_4$ C$_2$, pc-Cu, (COR), (Hori), pH = 10.5
+CH$_4$ 
+CH$_4$ C$_2$, pc-Cu, (COR), (Hori), pH = 12.2
+CH$_4$ 
+CH$_4$ C$_1$, pc-Cu, (COR), (Hori), pH = 6.0
+CH$_4$ 
+CH$_4$ C$_1$, pH = 7.1
+CH$_4$ 
+CH$_4$ C$_1$, pc-Cu, (COR), (Hori), pH = 8.0
+CH$_4$ 
+CH$_4$ C$_1$, pc-Cu, (COR), (Hori), pH = 8.7
+CH$_4$ 
+CH$_4$ C$_1$, pc-Cu, (COR), (Hori), pH = 9.0
+CH$_4$ 
+CH$_4$ C$_1$, pc-Cu, (COR), (Hori), pH = 10.5
+CH$_4$ 
+CH$_4$ C$_1$, pH = 12.2
+MeOH U vs RHE (V)
+MeOH C$_2$, pc-Cu, (COR), (Hori), pH = 6.0
+MeOH 
+MeOH C$_2$, pc-Cu, (COR), (Hori), pH = 7.1
+MeOH 
+MeOH C$_2$, pc-Cu, (COR), (Hori), pH = 8.0
+MeOH 
+MeOH C$_2$, pc-Cu, (COR), (Hori), pH = 8.7
+MeOH 
+MeOH C$_2$, pc-Cu, (COR), (Hori), pH = 9.0
+MeOH 
+MeOH C$_2$, pc-Cu, (COR), (Hori), pH = 10.5
+MeOH 
+MeOH C$_2$, pc-Cu, (COR), (Hori), pH = 12.2
+MeOH 
+MeOH C$_1$, pc-Cu, (COR), (Hori), pH = 6.0
+MeOH 
+MeOH C$_1$, pH = 7.1
+MeOH 
+MeOH C$_1$, pc-Cu, (COR), (Hori), pH = 8.0
+MeOH 
+MeOH C$_1$, pc-Cu, (COR), (Hori), pH = 8.7
+MeOH 
+MeOH C$_1$, pc-Cu, (COR), (Hori), pH = 9.0
+MeOH 
+MeOH C$_1$, pc-Cu, (COR), (Hori), pH = 10.5
+MeOH 
+MeOH C$_1$, pH = 12.2
+CH$_3$OH U vs RHE (V)
+CH$_3$OH C$_2$, pc-Cu, (COR), (Hori), pH = 6.0
+CH$_3$OH 
+CH$_3$OH C$_2$, pc-Cu, (COR), (Hori), pH = 7.1
+CH$_3$OH 
+CH$_3$OH C$_2$, pc-Cu, (COR), (Hori), pH = 8.0
+CH$_3$OH 
+CH$_3$OH C$_2$, pc-Cu, (COR), (Hori), pH = 8.7
+CH$_3$OH 
+CH$_3$OH C$_2$, pc-Cu, (COR), (Hori), pH = 9.0
+CH$_3$OH 
+CH$_3$OH C$_2$, pc-Cu, (COR), (Hori), pH = 10.5
+CH$_3$OH 
+CH$_3$OH C$_2$, pc-Cu, (COR), (Hori), pH = 12.2
+CH$_3$OH 
+CH$_3$OH C$_1$, pc-Cu, (COR), (Hori), pH = 6.0
+CH$_3$OH 
+CH$_3$OH C$_1$, pH = 7.1
+CH$_3$OH 
+CH$_3$OH C$_1$, pc-Cu, (COR), (Hori), pH = 8.0
+CH$_3$OH 
+CH$_3$OH C$_1$, pc-Cu, (COR), (Hori), pH = 8.7
+CH$_3$OH 
+CH$_3$OH C$_1$, pc-Cu, (COR), (Hori), pH = 9.0
+CH$_3$OH 
+CH$_3$OH C$_1$, pc-Cu, (COR), (Hori), pH = 10.5
+CH$_3$OH 
+CH$_3$OH C$_1$, pH = 12.2
