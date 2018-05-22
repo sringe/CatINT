@@ -105,6 +105,9 @@ class Reader():
                         ind_sp=int(re.findall('[a-zA-Z]+(\d+)',var_name)[0])
                         sp=[sp2 for j,sp2 in enumerate(self.tp.species) if j+1==ind_sp][0]
                         var_name=self.cs_to_ci(var)
+                        if var=='j' and self.tp.use_catmap:
+                            #corresponding variables will be updated by catmap instead
+                            continue
                         update_pH=None
                         if var=='cp':
                             if 'H+' in self.tp.species:
@@ -156,11 +159,14 @@ class Reader():
                         else:
                             self.tp.alldata[alldata_inx]['species'][sp][var_name]=float(lss)
                         #calculate electrode current density from electrode flux
-                        if var=='j' and sp in self.tp.electrode_reactions:
+                        if var=='j' and sp in self.tp.electrode_reactions and not self.tp.use_catmap:
+                            #(in case we use catmap, this will be responsible for evaluating the current densities and rates)
                             nprod=len([a for a in self.tp.electrode_reactions[sp]['reaction'][1] if a==sp])
                             if update_last:
                                 self.tp.species[sp]['electrode_current_density']=float(lss)*self.tp.electrode_reactions[sp]['nel']*unit_F/nprod/10.
                             self.tp.alldata[alldata_inx]['species'][sp]['electrode_current_density']=float(lss)*self.tp.electrode_reactions[sp]['nel']*unit_F/nprod/10.
+                        elif var=='j' and sp in self.tp.electrode_reactions:
+                            self.tp.alldata[alldata_inx]['species'][sp]['electrode_current_density']=self.tp.species[sp]['electrode_current_density']
                     else:
                         var_name=self.cs_to_ci(var_name)
                         if jj==0 and geo=='domain':

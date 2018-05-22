@@ -58,11 +58,18 @@ class CatMAP():
         #create input/running folder (only rank==0 can do this, others have to wait)
         mpi_make_dir(self.input_base_folder)
 
-        self.method=None
         if 'n_inter_max' in self.tp.catmap_args:
             self.n_inter_max=self.tp.catmap_args['n_inter_max']
         else:
             self.n_inter_max=150
+
+        if 'desc_method' not in self.tp.catmap_args:
+            self.tp.catmap_args='automatic'
+            #possible settings:
+            # - automatic
+            # - single_point
+            # - descriptor_range
+            # - from_input
 
         #AUXILIARY DESCRIPTOR SWEEP
 
@@ -187,6 +194,7 @@ class CatMAP():
 #        os.close(1)
 #        print os.getcwd()
 #        os.open(self.input_folder+"/catmap_run.err", os.O_CREAT)
+        desc_method=None
         jj=0
         while True:
             #for ii in inter:
@@ -213,20 +221,60 @@ class CatMAP():
                     model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency']
                     model.run()
             except:
-                if not self.use_interactions:
-                    self.tp.logger.error('Unexpected end of CatMAP, check error files for hints.')
-                    sys.exit()
-                self.tp.logger.warning('CatMAP did not converge with interaction strength = {}'.format(ii))
-                if self.n_inter=='automatic':
-                    jj+=1
-                    if 10*jj>self.n_inter_max:
-                        self.tp.logger.error('Adjusted interaction ramping range is larger than n_inter_max. Adjust n_inter_max in order to run finer range')
-                        sys.exit()
-                    self.tp.logger.warning('Adjusting interaction ramping to range 0 to 1 with {} steps'.format(10*jj))
-                    inter=np.linspace(0,self.interaction_strength,10*jj)
-                    pass
+                #SOME CRASH OF CATMAP
+                # - check if due to high interaction strength or missing data points
+                self.tp.logger.warning(' | CM | CatMAP did not converge with interaction strength = {}'.format(ii))
+
+                if desc_method is not None:
+                    self.tp.logger.error(' | CM | Running on discrete descriptor space did not help, CatMAP did not converge. Try to increase descriptor space manually.')
+
+                desc_method=None
+
+                if not self.use_interactions or (self.use_interactions and ii==0):
+                    self.tp.logger.error(' | CM | Unexpected end of CatMAP even though interactions_strength = 0, check error files for hints.')
+
+                    if self.tp.catmap_args['desc_method']=='automatic':
+                        self.tp.logger.info(' | CM | Since desc_method = automatic, CatINT tries to solve this problem by')
+                        self.tp.logger.info(' | CM | running CatMAP on discrete descriptor space instead of single point.')
+                        self.tp.logger.info(' | CM | This will usually take much more time.')
+                        desc_method='descriptor_range'
+
+                        ######UPDATE INPUT########
+                        #update the mkm file with current concentrations
+                        self.update_input(desc_val,desc_method=desc_method)
+
+                        #energies file
+                        energies_file=root+'/'+self.model_name+'_energies.txt'
+                        if not os.path.exists(energies_file):
+                            self.tp.logger.error(' | CM | energy data file {} required by CatMAP does not exist.'.format(energies_file))
+                            sys.exit()
+                        else:
+                            copy(energies_file,self.model_name+'_energies.txt')
+
+                        #setting up the model
+                        model = ReactionModel(setup_file = mkm_file, max_log_line_length=0) #we set the maximum line length to 0, because we work
+                        #with pickle files anyhow
+                        #output
+                        model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency']
+                        ##########################
+                    else:
+                        if self.tp.catmap_args['desc_method']=='descriptor_range':
+                            self.tp.logger.error(' | CM | Descriptor method was already descriptor_range, but no convergence was achieved, try to increase max_bisections')
+                            sys.exit()
+                        elif self.tp.catmap_args['desc_method']=='single_point':
+                            self.tp.logger.error(' | CM | Try to rerun using desc_method = automatic settings.')
+                            sys.exit()
                 else:
-                    break
+                    if self.n_inter=='automatic':
+                        jj+=1
+                        if 10*jj>self.n_inter_max:
+                            self.tp.logger.error(' | CM | Adjusted interaction ramping range is larger than n_inter_max. Adjust n_inter_max in order to run finer range')
+                            sys.exit()
+                        self.tp.logger.warning(' | CM | Adjusting interaction ramping to range 0 to 1 with {} steps'.format(10*jj))
+                        inter=np.linspace(0,self.interaction_strength,10*jj)
+                        pass
+                    else:
+                        break
             else:
                 break
 
@@ -296,15 +344,14 @@ class CatMAP():
         self.read_output(desc_val)
         #species_definitions['CO2_g'] = {'concentration':0.2}
 
-    def update_input(self,desc_val,method=None):
+    def update_input(self,desc_val,desc_method=None):
 
         #go over input file and check if single point or full descriptor range is used as method:
         found_resolution=False
         found_descriptor_range=False
         found_descriptors=False
 
-        self.method=None
-
+        desc_method_in=None
         i=0
         for line in open(self.catmap_model):
             i+=1
@@ -315,21 +362,36 @@ class CatMAP():
             if 'resolution' in line:
                 found_resolution=True
             if 'descriptors' in line:
-                self.method='single_point'
+                desc_method_in='single_point'
                 found_descriptors=True
                 idesc=i
 
-        if self.method is None:
-            self.method='descriptor_range'
-        
-        #overwrite method by input parameter (preference)
-        if method is not None:
-            self.method=method
+        if desc_method is None:
+            if self.tp.catmap_args['desc_method'] in ['single_point','descriptor_range']:
+                desc_method=self.tp.catmap_args['desc_method']
+            elif self.tp.catmap_args['desc_method'] == 'automatic':
+                desc_method='single_point'
+            elif self.tp.catmap_args['desc_method'] == 'from_input':
+                if desc_method_in is not None:
+                    desc_method=desc_method_in
+                else:
+                    desc_method='descriptor_range'
+                self.tp.catmap_args['desc_method']=desc_method
+                self.tp.logger.info(' | CM | Descriptor method was determined from CatMAP input file to be {}'.format(desc_method))
+
+        self.tp.logger.info(' | CM | Running CatMAP using descriptor method = {}'.format(desc_method))
+
+#        if self.method is None:
+#            self.method='descriptor_range'
+#        
+#        #overwrite method by input parameter (preference)
+#        if method is not None:
+#            self.method=method
 
         if not found_resolution:
             insert_line(self.catmap_model,idesc,'resolution = [1,1]\n')
             found_resolution=True
-        if self.method=='single_point':
+        if desc_method=='single_point':
             if not found_descriptor_range:
                 insert_line(self.catmap_model,idesc,'descriptor_range = [[0,0],[0,0]]')
                 found_descriptor_range=True
@@ -350,7 +412,7 @@ class CatMAP():
         desc_1=convert(desc_keys[0])
         desc_2=convert(desc_keys[1])
 
-        if self.method=='descriptor_range':
+        if desc_method=='descriptor_range':
             desc_list=self.tp.descriptors[desc_keys[0]]
             if len(desc_list)<5 and desc_1 != 'voltage':
                 self.tp.logger.warning('It could be that no pkl files are written out because the given descriptor axis is too coarse, consider a denser axis')
@@ -426,12 +488,12 @@ class CatMAP():
             sol=re.findall('species_definitions\[\''+sp_cm+'_g\'\].*{\'pressure\':.*}',line)
             if len(sol)>0:
                 replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':1.0}")
-            if self.method=='descriptor_range':
+            if desc_method=='descriptor_range':
                 if 'descriptor_range' in line:
                     replace_line(self.catmap_model,i-1,'descriptor_ranges = [['+str(min_desc)+','+str(max_desc)+'],['+str(desc_val[1])+','+str(desc_val[1])+']]')
                 if line.strip().startswith('resolution'):
                     replace_line(self.catmap_model,i-1,'resolution = ['+str(n_desc)+', 1]') #descriptor_names= [\''+desc_1+'\', \''+desc_2+'\']')
-            elif self.method=='single_point':
+            elif desc_method=='single_point':
                 if 'descriptor_range' in line:
                     replace_line(self.catmap_model,i-1,'descriptor_ranges = [['+str(desc_val[0])+','+str(desc_val[0])+'],['+str(desc_val[1])+','+str(desc_val[1])+']]')
                 if line.strip().startswith('resolution'):
@@ -501,6 +563,11 @@ class CatMAP():
                     index=iv
                     break
             self.tp.species[sp]['flux']=rates[index]
+            self.tp.species[sp]['electrode_current_density']=current_densities[index]
+            #update also alldata array:
+            alldata_inx=self.tp.alldata_names.index([desc_val[0],desc_val[1]])
+            self.tp.alldata[alldata_inx]['species'][sp]['electrode_current_density']=self.tp.species[sp]['electrode_current_density']
+            self.tp.alldata[alldata_inx]['species'][sp]['electrode_flux']=self.tp.species[sp]['flux']
             ##############
             #2) the Coverages
             ##############
