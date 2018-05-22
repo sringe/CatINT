@@ -21,10 +21,18 @@ parser.add_argument('--products',help='Plot only data of selected product',nargs
 parser.add_argument('--coverages',help='Plot only data of selected product',nargs='+')
 parser.add_argument('--pH',help='System pH. If not given, this will be tried to be read from the catmap input file, otherwise set to 7')
 parser.add_argument('--expdata',help='plot also experimental data',action="store_true")
+parser.add_argument('--systems',help='List of systems, for which exp. data is plotted: all, pc-Cu (default), nf-Cu, nc-Cu',nargs='+')
+
 
 args = parser.parse_args()
 
 print args.products
+
+if args.systems is None:
+    systems=['pc-Cu']
+else:
+    systems=args.systems
+    args.expdata=True
 
 #first read all variables from one of the mkm files
 
@@ -159,6 +167,7 @@ symbols=cycle(['o','d','1','2','x'])
 k=-1
 all_pH=[]
 symbol_pH={}
+
 for arg in args.file: #sys.argv[1:]:
     k+=1
     results_folder=arg+'/catmap_output'
@@ -296,11 +305,15 @@ if args.products is not None:
     all_prods=[name_to_cm(a) for a in args.products]
 for pH in set(all_pH):
     if args.expdata:
-        symbol=symbol_pH[pH]
+        symbol=None #symbol_pH[pH]
         if pH == 13:
-            exp.plot_data(reference=['hori','jaramillo'],ax=ax1,species=all_prods,pH=['13.0'],system=['pc-Cu'],scale='RHE',only_points=True,take_log=j_log_plot,marker=symbol)
+            exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['13.0'],\
+                system=systems,scale='RHE',only_points=True,\
+                take_log=j_log_plot,marker=symbol,legend=True)
         elif pH == 6.8 or pH == 7.0:
-            exp.plot_data(reference=['hori','jaramillo'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],system=['pc-Cu'],scale='RHE',only_points=True,take_log=j_log_plot,marker=symbol)
+            exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
+                system=systems,scale='RHE',only_points=True,\
+                take_log=j_log_plot,marker=symbol,legend=True)
 #ax1=plot_leis_new_data(ax1)
 ax1.set_ylim([1e-5,1e2])
 ax1.set_xlim([-1.6,0.1])
