@@ -145,11 +145,12 @@ class Transport(object):
                 'electrolyte reactions',
                 'boundary thickness',       #m
                 'exclude species',
-                'active site density',       #mol/m^2
+                'active site density',     #mol/m^2
                 'current density',
-                'flow rate',            #flow rate or convection velocity (COMSOL equation or number)
-                'RF',                       #roughness factor
-                'ion radius'            #Ionic "Radius" due to MPB model, measure for size of hydrated ion
+                'flow rate',               #flow rate or convection velocity (COMSOL equation or number)
+                'RF',                      #roughness factor
+                'ion radius',              #Ionic "Radius" due to MPB model, measure for size of hydrated ion
+                'potential drop'           #Potential drop, either Stern or full
                 ]
 
         #go over input data and put in some defaults if none
@@ -191,7 +192,8 @@ class Transport(object):
                 'electrode reactions': False,
                 'electrolyte reactions': False,
                 'exclude species': ['H2O','e-'],
-                'pressure':1}
+                'pressure':1,
+                'potential drop':'full'}
         if system is None:
             self.system=system_defaults
         else:
@@ -287,15 +289,15 @@ class Transport(object):
 
         #Working on electrolyte reactions if requested
         self.electrolyte_reactions=electrolyte_reactions
-        self.use_electrolyte_reactions=False
+        self.use_electrolyte_reactions=True
         if 'electrolyte reactions' in self.system:
             if not self.system['electrolyte reactions']:
                 self.use_electrolyte_reactions=False
             elif self.system['electrolyte reactions']:
                 self.use_electrolyte_reactions=True
-        if self.electrolyte_reactions is not None:
+        if self.electrolyte_reactions is not None and self.use_electrolyte_reactions:
             if any(['rates' in self.electrolyte_reactions[reaction] for reaction in self.electrolyte_reactions]):
-                self.use_electrolyte_reactions=True
+#                self.use_electrolyte_reactions=True
                 self.logger.info('Found electrolyte reactions with specified rates. Switching electrolyte reactions on. Preparing...')
                 self.electrolyte_reactions=self.initialize_reactions(self.electrolyte_reactions)
         if self.electrolyte_reactions is None and self.use_electrolyte_reactions:

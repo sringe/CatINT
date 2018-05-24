@@ -229,6 +229,7 @@ def plot(prop):
                     y=tp.alldata[d_sel_inx]['species'][sp][prop]
                     y=[yy/1000. for yy in y]
                     ax.semilogx(x,y,ls+m,color=color,label=sp)
+#                    ax.plot(x,y,ls+m,color=color,label=sp)
         elif prop in ['electrode_current_density','electrode_flux']:
             #x: descriptors
             #species 
