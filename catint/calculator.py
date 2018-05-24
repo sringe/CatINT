@@ -291,6 +291,10 @@ class Calculator():
         self.tp.logger.info('Starting iterative solution with CatMAP and COMSOL')
         self.tp.logger.info('  using a current density accuracy cutoff of {} mV/cm^2 and a linear mixing parameter of {}'.format(self.tau_scf,self.mix_scf))
         accuracies=[]
+        desc_keys=self.tp.descriptors.keys()
+        desc1_val=self.tp.system[desc_keys[0]]
+        desc2_val=self.tp.system[desc_keys[1]]
+        alldata_inx=self.tp.alldata_names.index([desc1_val,desc2_val])
         while scf_accuracy>self.tau_scf:
             istep+=1
             #evaluate how the accuracy during the last 50 steps, if it does not significantly decrease, reduce the mixing factor
@@ -308,6 +312,16 @@ class Calculator():
 #                    self.tp.species[sp]['flux']=self.mix_scf*self.tp.species[sp]['flux']+(1.-self.mix_scf)*fl_old[sp]
                     self.tp.species[sp]['surface_concentration']=self.mix_scf*self.tp.species[sp]['surface_concentration']+\
                             (1.-self.mix_scf)*sc_old[sp]
+                    self.tp.alldata[alldata_inx]['species'][sp]['surface_concentration']=self.tp.species[sp]['surface_concentration']
+            #update surface pH
+            if 'H+' in self.tp.species:
+                lss=self.tp.species['H+']['surface_concentration']
+                self.tp.system['surface_pH']=-np.log10(float(lss)/1000.)
+                self.tp.alldata[alldata_inx]['system']['surface_pH']=-np.log10(float(lss)/1000.)
+            elif 'OH-' in self.tp.species:
+                lss=self.tp.species['OH-']['surface_concentration']
+                self.tp.system['surface_pH']=14+np.log10(float(lss)/1000.)
+                self.tp.alldata[alldata_inx]['system']['surface_pH']=14+np.log10(float(lss)/1000.)
 
             #for linear mixing, safe all surface_concentrations
             sc_old={}
@@ -385,7 +399,9 @@ class Calculator():
                 else:
                     nprod=1
                     nel=1
-                current_density.append(self.tp.species[sp]['flux']*nel*unit_F/nprod/10.)
+                cd=self.tp.species[sp]['flux']*nel*unit_F/nprod/10.
+                current_density.append(cd)
+                self.tp.logger.debug('Current Density of {} = {} mA/cm^2'.format(sp,cd))
             if istep>1:
                 scf_accuracy=self.evaluate_accuracy(current_density,old_current_density)
             old_current_density=deepcopy(current_density)

@@ -141,14 +141,22 @@ class Reader():
                             self.tp.alldata[alldata_inx]['species'][sp]['surface_concentration']=float(lss)
                             if 'H+' in self.tp.species:
                                 if sp=='H+':
-                                    if update_last:
-                                        self.tp.system['surface_pH']=-np.log10(float(lss)/1000.)
-                                    self.tp.alldata[alldata_inx]['system']['surface_pH']=-np.log10(float(lss)/1000.)
+                                    if float(lss)<0:
+                                        self.tp.logger.warning(' | CS | COMSOL returned negative proton concentrations, pH cannot be evaluated.')
+                                        self.tp.logger.warning(' | CS | Do not update pH here to enable futher calculation.')
+                                    else:
+                                        if update_last:
+                                            self.tp.system['surface_pH']=-np.log10(float(lss)/1000.)
+                                        self.tp.alldata[alldata_inx]['system']['surface_pH']=-np.log10(float(lss)/1000.)
                             elif 'OH-' in self.tp.species:
                                 if sp=='OH-':
-                                    if update_last:
-                                        self.tp.system['surface_pH']=14+np.log10(float(lss)/1000.)
-                                    self.tp.alldata[alldata_inx]['system']['surface_pH']=14+np.log10(float(lss)/1000.)
+                                    if float(lss)<0:
+                                        self.tp.logger.warning(' | CS | COMSOL returned negative hydroxide concentrations, pH cannot be evaluated.')
+                                        self.tp.logger.warning(' | CS | Do not update pH here to enable futher calculation.')
+                                    else:
+                                        if update_last:
+                                            self.tp.system['surface_pH']=14+np.log10(float(lss)/1000.)
+                                        self.tp.alldata[alldata_inx]['system']['surface_pH']=14+np.log10(float(lss)/1000.)
                         if update_last:
                             if geo=='domain':
                                 self.tp.species[sp][var_name].append(float(lss))

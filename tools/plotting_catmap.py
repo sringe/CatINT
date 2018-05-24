@@ -28,6 +28,8 @@ args = parser.parse_args()
 
 print args.products
 
+show_legend=False
+
 if args.systems is None:
     systems=['pc-Cu']
 else:
@@ -42,7 +44,7 @@ exp=EXPDATA()
 
 j_log_plot=True
 
-fig=plt.figure(figsize=(6, 8))
+fig=plt.figure(figsize=(5, 7))
 
 colorlist={}
 colorlist['CO']='r'
@@ -198,7 +200,7 @@ for arg in args.file: #sys.argv[1:]:
     #        print 'Found no pH in catmap input file, assuming pH = 7'
     #        pH = 7
     else:
-        pH=args.pH
+        pH=float(args.pH)
     all_pH.append(pH)
     symbol_pH[pH]=symbol
     pdata,dummy=read_data(glob(results_folder+'/*/j_*'))
@@ -276,7 +278,8 @@ for arg in args.file: #sys.argv[1:]:
             ax2.plot(x+0.059*pH,y,linestyle+symbol,color=color,label=sp)
         else:
             ax2.plot(x+0.059*pH,y,linestyle+symbol,color=color)
-    ax1.legend(fontsize=10)
+    if show_legend:
+        ax1.legend(fontsize=10)
 #    data=np.loadtxt('data.txt')
 #    ax1.plot(data[:,0],data[:,1],'-')
     ax2.set_title('Coverages')
@@ -290,7 +293,8 @@ for arg in args.file: #sys.argv[1:]:
 #            ax2.semilogy(x,y,'o',color=colorlist[species],label=arg2.split('/')[-1])
 #        else:
 #            ax2.semilogy(x,y,'-',color=colorlist[species])
-    ax2.legend(fontsize=8,ncol=2)
+    if show_legend:
+        ax2.legend(fontsize=8,ncol=2)
 all_prods=['H$_2$','CO','CH$_4$','EtOH'] #'C2-sum','HCOOH']
 def name_to_cm(name):
     if name=='H2':
@@ -309,11 +313,11 @@ for pH in set(all_pH):
         if pH == 13:
             exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['13.0'],\
                 system=systems,scale='RHE',only_points=True,\
-                take_log=j_log_plot,marker=symbol,legend=True)
+                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3)
         elif pH == 6.8 or pH == 7.0:
             exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
                 system=systems,scale='RHE',only_points=True,\
-                take_log=j_log_plot,marker=symbol,legend=True)
+                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3)
 #ax1=plot_leis_new_data(ax1)
 ax1.set_ylim([1e-5,1e2])
 ax1.set_xlim([-1.6,0.1])

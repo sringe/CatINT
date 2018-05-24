@@ -8,6 +8,7 @@ from shutil import copyfile as copy
 from copy import deepcopy
 from comsol_model import Model
 from comsol_reader import Reader
+from shutil import rmtree
 
 class Comsol():
     """This class does all operations need to write input files for comsol and read output"""
@@ -26,7 +27,7 @@ class Comsol():
         else:
             exe_path='/Applications/COMSOL53a/Multiphysics/bin/comsol'
         if not os.path.exists(exe_path):
-            self.tp.logger.error('Binary path {} of COMSOL does not exist'.format(exe_path))
+            self.tp.logger.error(' | CS | Binary path {} of COMSOL does not exist'.format(exe_path))
         self.tp.path=path
         self.exe=exe_path
         root=os.getcwd()
@@ -45,29 +46,42 @@ class Comsol():
         #only_last: if True, update only the data in the global arrays and dictionaries
         #corresponding to the last parameter in the parameter list
 
-        file_name='pnp_transport.java'
-        model_name='pnp_transport.mph'
+        java_name='pnp_transport.java'
+        class_name=java_name.split('.')[0]+'.class'
+        model_name=java_name.split('.')[0]+'.mph'
 
         self.results_folder=self.results_folder_base+'_'+label
-        root=os.getcwd()
 
         #create results folder
         if not os.path.isdir(self.results_folder):
             os.makedirs(self.results_folder)
+        else:
+            self.tp.logger.info(' | CS | Removing old folder and creating new one')
+            rmtree(self.results_folder)
+            os.makedirs(self.results_folder)
+
+        root=os.getcwd()
 
         ##WRITE INPUT
-        self.write_input(file_name=file_name,\
+        self.write_input(file_name=java_name,\
             model_name=model_name)
+
+        os.chdir(self.results_folder)
 
         ##COMPILE
         self.tp.logger.info(' | CS | Compiling COMSOL.')
-        call(self.exe+" compile "+'/'.join([root,file_name])+' | tee '+self.results_folder+'/comsol_compile.out',shell=True)
-        self.tp.logger.info('Compiling {}'.format('/'.join([root,file_name])))
+        call(self.exe+" compile "+os.getcwd()+'/'+java_name+' | tee comsol_compile.out',shell=True)
+        #call(self.exe+" compile "+'/'.join([root,file_name])+' | tee '+self.results_folder+'/comsol_compile.out',shell=True)
+        self.tp.logger.info(' | CS | Compiling {}'.format(os.getcwd()+'/'+java_name))
 
         ##RUN
         self.tp.logger.info(' | CS | Starting COMSOL.')
-        call(self.exe+" batch -inputfile "+'/'.join([root,'.'.join(file_name.split('.')[:-1])+".class"])+' | tee '+self.results_folder+'/comsol_run.out',shell=True)
-        self.tp.logger.info('Running {}'.format('/'.join([root,'.'.join(file_name.split('.')[:-1])+".class"])))
+        #call(self.exe+" batch -inputfile "+'/'.join([root,'.'.join(file_name.split('.')[:-1])+".class"])+' | tee '+self.results_folder+'/comsol_run.out',shell=True)
+        call(self.exe+" batch -inputfile "+os.getcwd()+'/'+class_name+' | tee comsol_run.out',shell=True)
+        #self.tp.logger.info('Running {}'.format('/'.join([root,'.'.join(file_name.split('.')[:-1])+".class"])))
+        self.tp.logger.info(' | CS | Running {}'.format(os.getcwd()+'/'+class_name))
+
+        os.chdir(root)
 
         ##READING RESULTS
         self.tp.logger.info(' | CS | Reading COMSOL output.')
