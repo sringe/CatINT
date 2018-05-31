@@ -11,18 +11,18 @@ import sys
 from units import *
 from read_data import read_data
 
-only_catmap=False
+only_catmap=True
 
-pH_i=9. #6.8
-nobuffer=False #True #False #True #False #True #False #True 
+pH_i=13.0 #12.2 #6.8
+nobuffer=True #False #True #False #True #False #True 
 
 educt='CO2' #CO2 or CO
 
 nx=200
 nflux_comsol=100
 grid_factor=200
-mix_scf=0.1
-nphi=18
+mix_scf=0.5
+nphi=20
 
 tau_scf=0.01
 
@@ -102,9 +102,8 @@ electrode_reactions={
     #'H2':           {   'reaction':            '2 H2O + 2 e- -> H2 + 2 OH-'},
     #'H2':           {   'reaction':             '2 HCO3- + 2 e- -> H2 + 2 CO32-'},
     'H2':           {   'reaction':            '2 H2O + 2 e- -> H2 + 2 OH-'},
-    'CO':           {   'reaction':             'CO2 + H2O + 2 e- -> CO + 2 OH-'},
-    'CH4':          {   'reaction':            'CO2 + 6 H2O + 8 e- -> CH4 + 8 OH-'},
-    'CH3CH2OH':     {   'reaction':            '2 CO2 + 9 H2O + 12 e- -> CH3CH2OH + 12 OH-'},
+    'CH4':          {   'reaction':            'CO + 5 H2O + 6 e- -> CH4 + 6 OH-'},
+    'CH3CH2OH':     {   'reaction':            '2 CO + 7 H2O + 8 e- -> CH3CH2OH + 8 OH-'}
 #    'HCOOH':        {    'reaction':            'CO2 + 2 H2O + 2 e- ->  HCOOH + 2 OH-'}
 #    'CH2O':         {   'reaction':            'CO2 + 3 H2O + 4 e- -> CH2O + 4 OH-'}}
    # 'C2H4':         {   'reaction':            '2 CO2 + 8 H2O + 12 e- -> C2H4 + 12 OH-'}}
@@ -149,8 +148,12 @@ system=\
     'phiPZC': -0.75, #+unit_R*298.14/unit_F*pH_i*np.log(10.), #value at SHE: https://www.sciencedirect.com/science/article/pii/S002207280300799X
     'Stern capacitance': 20, #std: 20
     'bulk_pH':pH_i,
-    'potential drop':'Stern', #either Stern or full
+    'potential drop':'Stern', #Stern', #either Stern or full
     #'ion radius': 6.0
+#    'Henry constants':{
+#        'CO2': 0.03419,
+#        'CO':9.5e-4
+#        }
     }
 ###########################################################################
 
@@ -166,7 +169,7 @@ data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
 #set up the initial concentrationss from this constants:
 #CO2_i = 0.03419*system['pressure']*1000. #initial CO2(aq) bulk concentrations at t=0 and Pressure P in [mol/m3] units
 #                        #from Henry constant (29.41 atm/M
-#CO_i = 9.5e-4*system['pressure']*1000.
+CO_i = 1000. #9.5e-4*system['pressure']*1000.
 #CO32m_i = ((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)-\
 #            (np.sqrt((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)**2\
 #            -4.0*(bic_i)**2)))/2  #initial (CO3)2- bulk concentrations at t=0 [mol/m3]
@@ -185,18 +188,20 @@ OHm_i=10**(pH_i-14.)*1000.0
 #print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
 ##2) option: initialize with HCO3m_i and OHm_i #!currently used!!
 #print 'CO2 before',CO2_i
-OHm_i=10**(pH_i-14.)*1000.0
-HCO3m_i=0.1*1000.
-CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
-CO2_i=HCO3m_i/OHm_i/electrolyte_reactions['buffer-base']['constant']
-print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
+#OHm_i=10**(pH_i-14.)*1000.0
+#HCO3m_i=0.1*1000.
+#CO32m_i=electrolyte_reactions['buffer-base2']['constant']*HCO3m_i*OHm_i
+#CO2_i=HCO3m_i/OHm_i/electrolyte_reactions['buffer-base']['constant']
+#print 'HCO3m_i',HCO3m_i, OHm_i, CO2_i, CO32m_i
 #3) option: initialize with CO2_i and HCO3m_i
 #HCO3m_i=0.5*1000
 #OHm_i=HCO3m_i/CO2_i/electrolyte_reactions['buffer-base']['constant']
 #pH_i=14+np.log10(OHm_i/1000.)
 #print 'pH',pH_i
 #CO2_i = 1000.
-CO_i = 0.0
+#CO_i = 0.0
+
+Clm_i=0.0 #0.2*1000.-OHm_i
 
 Hm_i=10**(-pH_i)*1000.0
 if not include_protons:
@@ -218,7 +223,7 @@ if not include_protons:
 #bic_i = np.sqrt(electrolyte_reactions['buffer2']['constant']*CO2_i*CO32m_i)
 
 if nobuffer:
-    K_i = OHm_i-Hm_i #+0.1/1000.
+    K_i = Clm_i+OHm_i-Hm_i #+0.1/1000.
 else:
     K_i = HCO3m_i+CO32m_i*2+OHm_i-Hm_i
 
@@ -242,22 +247,22 @@ species=\
     'K':                {   'symbol':               'K^+',
                             'name':                 'potassium',
                             'diffusion':            1.957e-9,
-                            'bulk concentration':   K_i},
-    'CO2':              {   'symbol':               'CO_2',
-                            'name':                 'carbon dioxide',
-                            'diffusion':            1.91e-9,
-                            'bulk concentration':   CO2_i},
+                            'bulk_concentration':   K_i},
     'OH-':              {   'symbol':               'OH^-',
                             'name':                 'hydroxyl',
                             'diffusion':            5.273e-9,
-                            'bulk concentration':   OHm_i},
+                            'bulk_concentration':   OHm_i},
+#    'Cl-':              {   'symbol':               'Cl^-',
+#                            'name':                 'chloride',
+#                            'diffusion':            2.03e-9, #http://www.aqion.de/site/194
+#                            'bulk concentration':   Clm_i},
     'H2':               {   'symbol':               'H_2',
                             'name':                 'hydrogen',
                             'diffusion':            4.50e-009},
     'CO':               {   'symbol':               'CO',
                             'name':                 'carbon monoxide',
                             'diffusion':            2.03e-9,
-                            'bulk concentration':   CO_i},
+                            'bulk_concentration':   CO_i},
     'CH4':              {   'symbol':               'CH_4',
                             'name':                 'methane',
                             'diffusion':            1.49e-009},
@@ -326,7 +331,6 @@ species['H2']['flux']='catmap' #H2_rate
 species['CO']['flux']='catmap' #CO_rate
 species['CH3CH2OH']['flux']='catmap' #CO_rate
 species['CH4']['flux']='catmap' #CO_rate
-species['CO2']['flux']='catmap' #CO_rate
 
 boundary_thickness=7.93E-05 #in m
 
@@ -357,7 +361,7 @@ potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-1.2,-2.2,nphi))}
+    descriptors={'phiM':list(np.linspace(-0.8,-1.6,nphi))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
@@ -400,7 +404,7 @@ for potential in potentials:
     
     if only_catmap:
         cm=CatMAP(transport=tp,model_name='CO2R')
-        for p in np.linspace(-2.0,-0.5,40):
+        for p in descriptors['phiM']:
             print '!!! now running p = '+str(p)
             tp.system['phiM']=p
             cm.run()

@@ -1,0 +1,43 @@
+scaler = 'ThermodynamicScaler'
+rxn_expressions = [
+#    'H_g + ele_g + *_s <-> H-ele*_s <-> H*_s; beta=0.4',    # VA
+#    'H_g + ele_g + H*_s <-> H2-ele*_s <-> H2_g + *_s; beta=0.6',     # HA
+    'H*_s + H*_s -> H-H*_s + *_s <-> H2_g + 2*_s',     # T
+    'H2O_g + ele_g + *_s  <-> H2O-ele*_s  <-> H*_s + OH_g; beta=0.38', # VB
+    'H2O_g + ele_g + H*_s  <-> H2O-H-ele*_s  <-> H2_g + OH_g + *_s; beta=0.8', # HB
+    'OH_g + *_s <-> OH*_s + ele_g',     #OH_ads
+    'H2O_g + 2*_s <-> H2O-*_s+*_s <-> OH*_s + H*_s'
+]
+rxn_expressions_names=['Tafel','Volmer','Herovski','OH adsorption','Chemical H2O adsorption']
+prefactor_list = [1e13]*len(rxn_expressions)  #Heine: prefactor for CO is 1e8
+surface_names = ['Cu']
+descriptor_names= ['voltage', 'temperature'] #descriptor names
+descriptor_ranges = [[0,0],[300,300]]
+descriptors = [0,300]
+resolution = [1, 1]
+pH = 0
+beta = 0.5
+input_file = 'HER_input.txt'
+data_file = 'HER_pH'+ph_str+'.pkl'
+potential_reference_scale = 'SHE'
+extrapolated_potential = -0.416985308915 #the potential at which the energies were calculated vs. SHE
+
+species_definitions = {}
+#species_definitions['H_g'] = {'pressure':1.0*10**(-1*ph_var)}
+species_definitions['H2_g'] = {'pressure':1.0}
+species_definitions['H2O_g'] = {'pressure':1.0}
+species_definitions['OH_g'] = {'pressure':0.0}
+species_definitions['ele_g'] = {'pressure':1.0, 'composition':{}}
+species_definitions['s'] = {'site_names': ['211'], 'total':1.0}
+gas_thermo_mode = 'ideal_gas' 
+adsorbate_thermo_mode = 'harmonic_adsorbate'
+electrochemical_thermo_mode = 'simple_electrochemical'
+decimal_precision = 100
+tolerance = 1e-25
+max_rootfinding_iterations = 500
+max_bisections = 3
+rxn_mechanisms = {'VVT':[2,2,1],
+           'VH':[2,3]
+#           'VTB':[4,4,3],
+#           'VHB':[4,5]
+}
