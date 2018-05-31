@@ -139,6 +139,8 @@ class Reader():
                             if update_last:
                                 self.tp.species[sp]['surface_concentration']=float(lss)
                             self.tp.alldata[alldata_inx]['species'][sp]['surface_concentration']=float(lss)
+                            #our reference for the pH is the SHE at 1M concentrations, so the activity is defined as
+                            #local concentration of protons devided by 1M
                             if 'H+' in self.tp.species:
                                 if sp=='H+':
                                     if float(lss)<0:
@@ -146,7 +148,7 @@ class Reader():
                                         self.tp.logger.warning(' | CS | Do not update pH here to enable futher calculation.')
                                     else:
                                         if update_last:
-                                            self.tp.system['surface_pH']=-np.log10(float(lss)/1000.)
+                                            self.tp.system['surface_pH']=-np.log10(float(lss)/1000.) #+self.tp.system['bulk_pH']
                                         self.tp.alldata[alldata_inx]['system']['surface_pH']=-np.log10(float(lss)/1000.)
                             elif 'OH-' in self.tp.species:
                                 if sp=='OH-':

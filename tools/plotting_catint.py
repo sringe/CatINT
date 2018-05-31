@@ -14,15 +14,23 @@ from catint.experimental import EXPDATA
 import argparse
 
 parser = argparse.ArgumentParser(description='Process some integers.')
-parser.add_argument('--folder', help='folder to be evaluated',nargs='+')
+parser.add_argument('--file', help='folder to be evaluated',nargs='+')
 parser.add_argument('--prop',help='property to be plotted',nargs='+')
+#concentration
+#potential
+#field
+#surface_concentration
 parser.add_argument('--desc',help='value of descriptor at which to plot property, nearest point is taken',nargs='+')
 parser.add_argument('--norm',help='normalize electrode current density by RF',action='store_true')
+parser.add_argument('--scale',help='RHE or SHE')
 args = parser.parse_args()
 
 #args.desc=float(args.desc)
 
 exp=EXPDATA()
+
+if args.scale is None:
+    args.scale='RHE'
 
 cut=-2 #-0.78
 
@@ -136,12 +144,12 @@ tp=Transport(only_plot=True)
 l=len(args.prop)
 #round to divisible of 2
 l=int( 2 * round( l / 2. ))
-n_col=l/2 #int(np.ceil(np.sqrt(l)))
-if n_col==0:
-    n_col=1
 n_row=l/2 #int(np.ceil(np.sqrt(l)))
 if n_row==0:
     n_row=1
+n_col=l/n_row
+if n_col==0:
+    n_col=1
 fig=plt.figure(figsize=(4.6*n_row,3.2*n_col))
 prop_inx={}
 ax_list=[]
@@ -154,33 +162,54 @@ def settings(ax,prop,d_sel):
     if prop=='concentration':
         ylabel=r'$c_i$ (M)'
         xlabel=r'x ($\AA$)'
-        label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
+        if args.scale=='RHE':
+            label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
+        else:
+            label+=r' at $\phi_M$ = {} V'.format(round(d_sel,3))
     elif prop=='electrode_current_density':
-        xlabel='Voltage vs. RHE (V)'
+        xlabel='Voltage vs. '+args.scale+' (V)'
         ylabel=r'i (mA/cm$^2$)'
+    elif prop=='surface concentration':
+        xlabel='Voltage vs. '+args.scale+' (V)'
+        ylabel=r'$c_i$ (x=0) (M)'
     elif prop=='pH':
         ylabel='pH'
         xlabel=r'x ($\AA$)'
-        label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
+        if args.scale=='RHE':
+            label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
+        else:
+            label+=r' at $\phi_M$ = {} V'.format(round(d_sel,3))
     elif prop=='surface_pH':
-        xlabel='Voltage vs. RHE (V)'
+        xlabel='Voltage vs. '+args.scale+' (V)'
         ylabel='Surface pH'
     elif prop=='pKw':
         xlabel=r'x ($\AA$)'
         ylabel=r'pKw'
-        label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
+        if args.scale=='RHE':
+            label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
+        else:
+            label+=r' at $\phi_M$ = {} V'.format(round(d_sel,3))
     elif prop=='efield':
         xlabel=r'x ($\AA$)'
         ylabel=r'E (V/m)'
-        label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
+        if args.scale=='RHE':
+            label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
+        else:
+            label+=r' at $\phi_M$ = {} V'.format(round(d_sel,3))
     elif prop=='potential':
         xlabel=r'x ($\AA$)'
         ylabel=r'$\phi$ (V)'
-        label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
+        if args.scale=='RHE':
+            label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
+        else:
+            label+=r' at $\phi_M$ = {} V'.format(round(d_sel,3))
     elif prop=='charge_density':
         xlabel=r'x ($\AA$)'
         ylabel=r'$\rho_{charge}$ (e/L)'
-        label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
+        if args.scale=='RHE':
+            label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
+        else:
+            label+=r' at $\phi_M$ = {} V'.format(round(d_sel,3))
     else:
         xlabel=''
         ylabel=''
@@ -203,7 +232,7 @@ def plot(prop):
             a=next(colors)
         m=next(markerstyles)
         d_sel=None
-        if prop not in ['electrode_current_density','electrode_flux','surface_pH']:
+        if prop not in ['electrode_current_density','electrode_flux','surface_pH','surface_concentration']:
             min_d=np.inf
             for i,d in enumerate(tp.descriptors['phiM']):
                 if abs(d-float(desc))<min_d:
@@ -230,22 +259,29 @@ def plot(prop):
                     y=[yy/1000. for yy in y]
                     ax.semilogx(x,y,ls+m,color=color,label=sp)
 #                    ax.plot(x,y,ls+m,color=color,label=sp)
-        elif prop in ['electrode_current_density','electrode_flux']:
+        elif prop in ['electrode_current_density','electrode_flux','surface_concentration']:
             #x: descriptors
             #species 
             color=next(colors)
             x=tp.descriptors['phiM']
             #plot vs. RHE
-            x=[xx+0.0592*tp.system['bulk_pH'] for xx in x]
+            if args.scale=='RHE':
+                x=[xx+0.0592*tp.system['bulk_pH'] for xx in x]
+            else:
+                x=[xx for xx in x]
             for sp in tp.species:
-                if sp not in tp.electrode_reactions:
+                if sp not in tp.electrode_reactions and prop!='surface_concentration':
                     continue
                 color=next(colors)
                 y=[tp.alldata[i]['species'][sp][prop] for i in range(len(x))]
                 if args.norm and prop=='electrode_current_density':
                     RF=tp.system['RF']
                     y=[yy/RF for yy in y]
-                ax.semilogy(x,y,ls+m,color=color,label=sp)
+                    func=ax.semilogy
+                elif prop=='surface_concentration':
+                    y=[yy/1000. for yy in y]
+                    func=ax.plot
+                func(x,y,ls+m,color=color,label=sp)
                 #if prop=='electrode_current_density':
                 #    ax=plot_leis_new_data(ax)
         elif prop in ['pH','potential','efield','charge_density','pKa']:
@@ -264,11 +300,14 @@ def plot(prop):
             #system
             x=tp.descriptors['phiM']
             #plot vs. RHE
-            x=[xx+0.0592*tp.system['bulk_pH'] for xx in x]
+            if args.scale=='RHE':
+                x=[xx+0.0592*tp.system['bulk_pH'] for xx in x]
+            else:
+                x=[xx for xx in x]
             y=[tp.alldata[i]['system'][prop] for i in range(len(x))]
             ax.plot(x,y,ls+m,color='k')
 
-for iif,f in enumerate(args.folder):
+for iif,f in enumerate(args.file):
     print 'Working on folder ',f
     read_all(tp,f,only=['alldata','species','system','xmesh','descriptors','electrode_reactions'])
     #check how many real datapoints we actually have:

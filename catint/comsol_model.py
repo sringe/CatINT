@@ -276,6 +276,7 @@ class Model():
                     self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("pcontinuationmode", "no");\n'
             elif par_method == 'internal':
                 #let parameter sweep to be controlled by study
+                self.s+='    model.sol("sol'+str(i)+'").feature("s1").set("control", "'+study+'");\n'
                 self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").set("control", "'+study+'");\n'
                 #pDef is the parametric sweep inside the solver (control = user) in the above line
 #                self.s+='    model.sol("sol'+str(i)+'").feature("s1").create("pDef", "Parametric");\n'

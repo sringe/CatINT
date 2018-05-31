@@ -219,10 +219,10 @@ def plot_stuff(list_of_data,DATA,fit,joinlines, skip={}, voltage_mode='previous'
     plt.ylim((-3,1))
     plt.xlim((-1.4,-1.05))
     #plt.tight_layout()
-#    leg = plt.legend(loc=1, 
-#          ncol=1, fontsize=10, numpoints=1) #, fancybox=True, shadow=False, loc='upper center', bbox_to_anchor=(0.5, 1.05))
-#    for line,text in zip(leg.get_lines(), leg.get_texts()):
-#        text.set_color(line.get_color())
+    leg = plt.legend(loc=1, 
+          ncol=1, fontsize=10, numpoints=1) #, fancybox=True, shadow=False, loc='upper center', bbox_to_anchor=(0.5, 1.05))
+    for line,text in zip(leg.get_lines(), leg.get_texts()):
+        text.set_color(line.get_color())
 
 
 def plot_eqm():
@@ -445,17 +445,17 @@ def plot_data(reference=['all'],species=['all'],pH=['all'],ci_bic=['all'],scale=
                         elif scale=='SHE':
                             plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,take_log=True,fit_tafel=fit_tafel)
                     #alternatively from FE's
-                    DATA=DATA_ss_01_FE
-                    name=','.join(DATA.label[1].split(',')[1:])
-                    skip=skip_dict[name]
-                    spp=s2i(species,DATA,pH=cpH)
-                    if len(spp)>0:
-                        linestyle=next(linestyles)
-                        symbol=next(symbols)
-                        if scale=='RHE':
-                            plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=True,convert='SHE_TO_RHE',fit_tafel=fit_tafel)
-                        else:
-                            plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=True,fit_tafel=fit_tafel)
+                    #DATA=DATA_ss_01_FE
+                    #name=','.join(DATA.label[1].split(',')[1:])
+                    #skip=skip_dict[name]
+                    #spp=s2i(species,DATA,pH=cpH)
+                    #if len(spp)>0:
+                    #    linestyle=next(linestyles)
+                    #    symbol=next(symbols)
+                    #    if scale=='RHE':
+                    #        plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=True,convert='SHE_TO_RHE',fit_tafel=fit_tafel)
+                    #    else:
+                    #        plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=True,fit_tafel=fit_tafel)
                 if bic in ['0.05','all']:
                     DATA=DATA_ss_005
                     name=','.join(DATA.label[1].split(',')[1:])
@@ -469,17 +469,17 @@ def plot_data(reference=['all'],species=['all'],pH=['all'],ci_bic=['all'],scale=
                         elif scale=='SHE':
                             plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,take_log=True,fit_tafel=fit_tafel)
                     #alternatively from FE's
-                    DATA=DATA_ss_005_FE
-                    name=','.join(DATA.label[1].split(',')[1:])
-                    skip=skip_dict[name]
-                    spp=s2i(species,DATA,pH=cpH)
-                    if len(spp)>0:
-                        linestyle=next(linestyles)
-                        symbol=next(symbols)
-                        if scale=='RHE':
-                            plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,take_log=True,voltage_mode='first',convert='SHE_TO_RHE',fit_tafel=fit_tafel)
-                        else:
-                            plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=True,fit_tafel=fit_tafel)
+                    #DATA=DATA_ss_005_FE
+                    #name=','.join(DATA.label[1].split(',')[1:])
+                    #skip=skip_dict[name]
+                    #spp=s2i(species,DATA,pH=cpH)
+                    #if len(spp)>0:
+                    #    linestyle=next(linestyles)
+                    #    symbol=next(symbols)
+                    #    if scale=='RHE':
+                    #        plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,take_log=True,voltage_mode='first',convert='SHE_TO_RHE',fit_tafel=fit_tafel)
+                    #    else:
+                    #        plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,voltage_mode='first',take_log=True,fit_tafel=fit_tafel)
                 if bic in ['0.2','all']:
                     DATA=DATA_ss_02
                     name=','.join(DATA.label[1].split(',')[1:])
@@ -495,17 +495,17 @@ def plot_data(reference=['all'],species=['all'],pH=['all'],ci_bic=['all'],scale=
                         elif scale=='SHE':
                             plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,take_log=True,fit_tafel=fit_tafel)
                     #alternatively from FE's
-                    DATA=DATA_ss_02_FE
-                    name=','.join(DATA.label[1].split(',')[1:])
-                    skip=skip_dict[name]
-                    spp=s2i(species,DATA,pH=cpH)
-                    if len(spp)>0:
-                        linestyle=next(linestyles)
-                        symbol=next(symbols)
-                        if scale=='RHE':
-                            plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,take_log=True,voltage_mode='first',convert='SHE_TO_RHE',fit_tafel=fit_tafel)
-                        else:
-                            plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,take_log=True,voltage_mode='first',fit_tafel=fit_tafel)
+                    #DATA=DATA_ss_02_FE
+                    #name=','.join(DATA.label[1].split(',')[1:])
+                    #skip=skip_dict[name]
+                    #spp=s2i(species,DATA,pH=cpH)
+                    #if len(spp)>0:
+                    #    linestyle=next(linestyles)
+                    #    symbol=next(symbols)
+                    #    if scale=='RHE':
+                    #        plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,take_log=True,voltage_mode='first',convert='SHE_TO_RHE',fit_tafel=fit_tafel)
+                    #    else:
+                    #        plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,take_log=True,voltage_mode='first',fit_tafel=fit_tafel)
             if bic in ['0.1','all']:
                 if isref('jaramillo'):
                     ls=''
@@ -652,11 +652,10 @@ def plot_data(reference=['all'],species=['all'],pH=['all'],ci_bic=['all'],scale=
 #plot_data(reference=['hori','jaramillo'],species=['C1-sum','C2-sum','H$_2$'],pH=['6.8','13'],scale='RHE',system=['all'],fit_tafel=True)
 #plot_data(reference=['hori','jaramillo'],species=['C1','HCOO','C2+-sum','HCOO','H$_2$','CO'],pH=['6.8','7.2'],scale='RHE',system=['all'])
 #plot_data(reference=['kanan'],species=['C1','HCOO','C2+-sum','HCOO','H$_2$','CO'],pH=['6.8','7.2'],scale='RHE',system=['all'])
-#plot_data(reference=['kanan'],species=['C1','HCOO','C2+-sum','HCOO','H$_2$','CO'],pH=['6.8','7.0','13.0'],scale='RHE',system=['all'])
+#/hplot_data(reference=['kanan'],species=['C1','HCOO','C2+-sum','HCOO','H$_2$','CO'],pH=['6.8','7.0','13.0'],scale='RHE',system=['all'])
 #plot_data(reference=['kanan'],pH=['7.2','13.0'])
-
-
-plot_data(reference=['hori','jaramillo'],species=['C1','HCOO','C2+-sum','HCOO','H$_2$','CO'],pH=['6.8','7.2'],scale='RHE',system=['pc-Cu','NC-Cu'])
+plot_data(reference=['jaramillo','hori'],species=['C1','C2-sum','CO','H$_2$'],pH=['6.0','6.5','6.8','7.0','7.15','9.0'],scale='SHE',system=['pc-Cu'])
+#plot_data(reference=['hori','jaramillo'],species=['C1','HCOO','C2+-sum','HCOO','H$_2$','CO'],pH=['all'],scale='RHE',system=['pc-Cu'])
 #plot_data(reference=['hori','jaramillo','wang'],species=['C1','HCOO','C2+-sum','HCOO','H$_2$','CO'],pH=['13.0'],scale='RHE',system=['all'])
 sys.exit()
 

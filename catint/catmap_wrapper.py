@@ -40,7 +40,7 @@ class CatMAP():
         else:
             self.tp=transport
         if 'n_inter' not in self.tp.catmap_args:
-            self.n_inter=n_inter #number of steps to converge interactions
+            self.n_inter=10 #number of steps to converge interactions
         else:
             self.n_inter=self.tp.catmap_args['n_inter']
         self.tp.path=path
@@ -148,20 +148,24 @@ class CatMAP():
         #with pickle files anyhow
         #output
         model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency']
-        def plot_fed(corr,method=0):
+        def plot_fed(pressure_corr=False,coverage_corr=False,method=0):
             ma = analyze.MechanismAnalysis(model)
             ma.surface_colors = ['k','b','r','yellow','green','orange','cyan']
             ma.label_args['size'] = 14
             ma.energy_type = 'free_energy' #can also be free_energy/potential_energy
             ma.include_labels = True #way too messy with labels
-            ma.pressure_correction = corr #assume all pressures are 1 bar (so that energies are the same as from DFT)
-            ma.coverage_correction = False
+            ma.pressure_correction = pressure_corr #assume all pressures are 1 bar (so that energies are the same as from DFT)
+            ma.coverage_correction = coverage_corr #False
             if self.use_interactions:
                 ma.energy_type = 'interacting_energy'
-            if not corr:
+            if not pressure_corr and not coverage_corr:
                 fig = ma.plot(save='FED.pdf',plot_variants=[float(desc_val[0])],method=method)
-            else:
+            elif pressure_corr and not coverage_corr:
                 fig = ma.plot(save='FED_pressure_corrected.pdf',plot_variants=[float(desc_val[0])],method=method)
+            elif pressure_corr and coverage_corr:
+                fig = ma.plot(save='FED_pressure_and_cov_corrected.pdf',plot_variants=[float(desc_val[0])],method=method)
+            elif not pressure_corr and coverage_corr:
+                fig = ma.plot(save='FED_cov_corrected.pdf',plot_variants=[float(desc_val[0])],method=method)
         #plot_fed(True)
 #        if not self.use_interactions:
 #            plot_fed(False)
@@ -299,16 +303,21 @@ class CatMAP():
                 energies = rxn_parameters[:N_ads]
                 eps_vector = rxn_parameters[N_ads:]
                 cvg = coverages + [0]*len(model.transition_state_names)
-#                self.tp.logger.info('-- checking --')
-#                self.tp.logger.info(model.interaction_function(cvg,energies,eps_vector,model.thermodynamics.adsorbate_interactions.interaction_response_function,False,False))
-#                self.tp.logger.info('-- end checking --')
-                self.tp.logger.info(tabulate(zip(model.output_labels['interacting_energy'],model.interaction_function(cvg,energies,eps_vector,model.thermodynamics.adsorbate_interactions.interaction_response_function,False,False)[1]),headers=['species','energy']))
+                #self.tp.logger.info('-- checking --')
+                #self.tp.logger.info(model.interaction_function(cvg,energies,eps_vector,model.thermodynamics.adsorbate_interactions.interaction_response_function,False,False))
+                #self.tp.logger.info('-- end checking --')
+                self.tp.logger.info(tabulate(zip(model.output_labels['interacting_energy'],\
+                        model.interaction_function(cvg,energies,eps_vector,\
+                        model.thermodynamics.adsorbate_interactions.interaction_response_function,False,False)[1]),\
+                        headers=['species','energy']))
                 self.tp.logger.info(' | CM | --- END OUTPUT ---')
             except:
                 self.tp.logger.info(' | CM | Error in reading interaction energies')
                 pass
-        plot_fed(False,method=2)
-        plot_fed(True,method=2)
+        plot_fed(False,False,method=2)
+        plot_fed(True,False,method=2)
+        plot_fed(True,True,method=2)
+        plot_fed(False,True,method=2)
 #        sys.stdout.flush()
 #        os.close(1)
 #        os.dup(old) # should dup to 1
@@ -473,6 +482,8 @@ class CatMAP():
             if line.strip().startswith('bulk_ph'):
                 replace_line(self.catmap_model,i-1,'bulk_ph = '+str(self.tp.system['bulk_pH']))
                 continue
+            if line.strip().startswith('voltage_diff_drop') and self.tp.system['potential drop']=='Stern':
+                replace_line(self.catmap_model,i-1,'voltage_diff_drop = '+str(self.tp.system['potential'][0])) #potential drop']))
             for sp in self.tp.species:
                 sp_cm=self.species_to_catmap(sp)
                 sol=re.findall('species_definitions\[\''+sp_cm+'_g\'\].*{\'pressure\':.*}',line)
@@ -481,8 +492,12 @@ class CatMAP():
                     if self.tp.species[sp]['surface_concentration']<-1.:
                         self.tp.logger.warning(' | CM | Surface concentration of {} is more negative than 1e-3 mol/L, stopping to be safe.'.format(sp))
 #                        sys.exit()
-                    self.tp.logger.debug(' | CM | checking concentration of species {}, found c = {} mol/L'.format(sp,self.tp.species[sp]['surface_concentration']/1000.))
-                    replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':"+str(max(0.,self.tp.species[sp]['surface_concentration']/1000.))+"}")
+                    if self.tp.species[sp]['bulk_concentration']==0:
+                        activity=0
+                    else:
+                        activity=self.tp.species[sp]['surface_concentration']/self.tp.species[sp]['bulk_concentration']
+                    self.tp.logger.debug(' | CM | checking concentration of species {}, found c = {} mol/L'.format(sp,activity))
+                    replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':"+str(max(0.,activity))+"}")
                     replaced_species.append(sp)
             sp_cm='H2O'
             sol=re.findall('species_definitions\[\''+sp_cm+'_g\'\].*{\'pressure\':.*}',line)
@@ -505,6 +520,7 @@ class CatMAP():
             sol=re.findall('pH[ ]*=[ ]*\d',line)
             if len(sol)>0:
                 replace_line(self.catmap_model,i-1,'pH = '+str(self.tp.system['surface_pH'])+'')
+#                replace_line(self.catmap_model,i-1,'pH = '+str(max(self.tp.system['pH']))+'')
         for sp in self.tp.species:
             if sp not in replaced_species and sp not in self.tp.system['exclude species'] and sp not in self.tp.electrolyte_list:
                 self.tp.logger.warning(' | CM | Pressure of species {} not in catmap mkm file, give an arbitrary pressure of all species needed which will then be replaced by CatINT'.format(sp))
@@ -564,6 +580,8 @@ class CatMAP():
                     break
             self.tp.species[sp]['flux']=rates[index]
             self.tp.species[sp]['electrode_current_density']=current_densities[index]
+
+            print self.tp.alldata_names
             #update also alldata array:
             alldata_inx=self.tp.alldata_names.index([desc_val[0],desc_val[1]])
             self.tp.alldata[alldata_inx]['species'][sp]['electrode_current_density']=self.tp.species[sp]['electrode_current_density']
@@ -742,5 +760,7 @@ class CatMAP():
             species='H'
         elif species=='OH-':
             species='OH'
+        elif species=='HCOO-':
+            species='HCOOH'
         return species
 

@@ -129,7 +129,7 @@ class Transport(object):
         ##############################################
         
         #all the possible keys:
-        species_keys=['bulk concentration', 'diffusion', 'name', 'symbol', 'flux','current density','flux-equation']
+        species_keys=['bulk_concentration', 'diffusion', 'name', 'symbol', 'flux','current density','flux-equation']
         system_keys=[
                 'phiM',                     #V
                 'Stern capacitance',        #mF/cm^2
@@ -150,7 +150,8 @@ class Transport(object):
                 'flow rate',               #flow rate or convection velocity (COMSOL equation or number)
                 'RF',                      #roughness factor
                 'ion radius',              #Ionic "Radius" due to MPB model, measure for size of hydrated ion
-                'potential drop'           #Potential drop, either Stern or full
+                'potential drop',           #Potential drop, either Stern or full
+                'Henry constants'          #Henry constants in M/bar
                 ]
 
         #go over input data and put in some defaults if none
@@ -159,12 +160,12 @@ class Transport(object):
                                             'name':'potassium',
                                             'diffusion':1.96e-9,
                                             'kind':'electrolyte',
-                                            'bulk concentration':0.001*1000.},
+                                            'bulk_concentration':0.001*1000.},
                           'species2':       {'symbol':r'HCO_3^-',
                                             'name':'bicarbonate',
                                             'diffusion':1.2e-9,
                                             'kind':'electrolyte',
-                                            'bulk concentration':0.001*1000.}}
+                                            'bulk_concentration':0.001*1000.}}
         else:
             for sp in species:
                 for key in species[sp]:
@@ -193,13 +194,14 @@ class Transport(object):
                 'electrolyte reactions': False,
                 'exclude species': ['H2O','e-'],
                 'pressure':1,
-                'potential drop':'full'}
+                'potential drop':'Stern'}
         if system is None:
             self.system=system_defaults
         else:
             for key in system:
                 if key not in system_keys:
                     self.logger.error('No such key "'+key+'" in system list. Quitting here.')
+                    self.logger.error('Current system list = {}'.format(system_keys))
                     sys.exit()
             self.system=system
 
@@ -228,31 +230,32 @@ class Transport(object):
 
         #add concentration = 0 for all species with no separately defined values
         for sp in self.species:
-            if 'bulk concentration' not in self.species[sp]:
-                self.species[sp]['bulk concentration']=0.0
+            if 'bulk_concentration' not in self.species[sp]:
+                self.species[sp]['bulk_concentration']=0.0
 
         #get pH
         if 'bulk_pH' in self.system:
             self.logger.info('pH given in system list, updating H+ and OH- concentrations if species exist')
             if 'H+' in self.species:
-                self.species['H+']['bulk concentration']=10**(-self.system['bulk_pH'])*1000.
+                self.species['H+']['bulk_concentration']=10**(-self.system['bulk_pH'])*1000.
             elif 'OH-' in self.species:
-                self.species['OH-']['bulk concentration']=10**(-(14-self.system['bulk_pH']))*1000.
+                self.species['OH-']['bulk_concentration']=10**(-(14-self.system['bulk_pH']))*1000.
         else:
             if 'H+' in self.species:
-                self.system['bulk_pH']=-np.log10(self.species['H+']['bulk concentration']/1000.)
+                self.system['bulk_pH']=-np.log10(self.species['H+']['bulk_concentration']/1000.)
             elif 'OH-' in self.species:
-                self.system['bulk_pH']=14+np.log10(self.species['OH-']['bulk concentration']/1000.)
+                self.system['bulk_pH']=14+np.log10(self.species['OH-']['bulk_concentration']/1000.)
             else:
                 #setting the pH to an arbitrary value, it is not relevant here
                 self.system['bulk_pH']=7.0
 
 
         self.system['surface_pH']=self.system['bulk_pH']
+        self.system['pH']=[self.system['bulk_pH']]
 
         #initialize concentrations at electrode
         for sp in self.species:
-            self.species[sp]['surface_concentration']=self.species[sp]['bulk concentration']
+            self.species[sp]['surface_concentration']=self.species[sp]['bulk_concentration']
 
 
 
@@ -388,7 +391,7 @@ class Transport(object):
         #Debye-Hueckel screening length
         self.ionic_strength=0.0
         for isp,sp in enumerate(self.species):
-            self.ionic_strength+=self.charges[isp]**2*self.species[sp]['bulk concentration']
+            self.ionic_strength+=self.charges[isp]**2*self.species[sp]['bulk_concentration']
         self.ionic_strength*=0.5
         self.debye_length = np.sqrt( self.eps/self.beta/2./self.ionic_strength ) #in m
 
@@ -460,9 +463,9 @@ class Transport(object):
 
 
         #INITIALIZE FIELD AND POTENTIAL
-        self.efield=np.zeros([self.nx])
-        self.potential=np.zeros([self.nx])
-        self.total_charge=np.zeros([self.nx])
+        self.system['efield']=np.zeros([self.nx])
+        self.system['potential']=np.zeros([self.nx])
+        self.system['charge_density']=np.zeros([self.nx])
 
         self.initialize_descriptors(descriptors)
 
@@ -943,7 +946,7 @@ class Transport(object):
 
         c_initial_general={}
         for isp,sp in enumerate(self.species):
-            c_initial_general[str(isp)]=self.species[sp]['bulk concentration']
+            c_initial_general[str(isp)]=self.species[sp]['bulk_concentration']
 
         self.set_initial_conditions(
                 c_initial_general=c_initial_general)
@@ -1004,7 +1007,7 @@ class Transport(object):
             c_initial_specific[str(k)]={}
             for i in range(self.nx):
                 c_initial_specific[str(k)][str(i)]=\
-                    self.species[sp]['bulk concentration']*\
+                    self.species[sp]['bulk_concentration']*\
                     np.exp(-self.beta*self.charges[k]*function(self.xmesh[i],phiM=phiM)[0])
         self.set_initial_conditions(c_initial_specific=c_initial_specific)
         return
