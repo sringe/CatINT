@@ -10,6 +10,7 @@ from comsol_model import Model
 from comsol_reader import Reader
 from shutil import rmtree
 
+
 class Comsol():
     """This class does all operations need to write input files for comsol and read output"""
     def __init__(self,path=os.getcwd(),transport=None,mode='time-dependent'):
@@ -20,6 +21,7 @@ class Comsol():
         else:
             self.tp=transport #transport object
         ##COMSOL EXE
+
         if 'bin_path' in self.tp.comsol_args:
             exe_path=self.tp.comsol_args['bin_path']
         elif os.path.exists('/share/PI/suncat/COMSOL/comsol53a/multiphysics/bin/comsol'):
@@ -81,7 +83,8 @@ class Comsol():
         self.tp.logger.info(' | CS | Starting COMSOL.')
         self.tp.logger.debug(self.exe+" batch -inputfile "+os.getcwd()+'/'+class_name+' | tee comsol_run.out')
         #call(self.exe+" batch -inputfile "+'/'.join([root,'.'.join(file_name.split('.')[:-1])+".class"])+' | tee '+self.results_folder+'/comsol_run.out',shell=True)
-        call(self.exe+" batch -inputfile "+os.getcwd()+'/'+class_name+' | tee comsol_run.out',shell=True)
+        #call(self.exe+" batch -inputfile "+os.getcwd()+'/'+class_name+' | tee comsol_run.out',shell=True)
+        call(self.exe+" batch -recoverydir $HOME/.comsol/v53a/recoveries -inputfile "+os.getcwd()+'/'+class_name+' | tee '+self.results_folder+'/comsol_run.out',shell=True)
         #self.tp.logger.info('Running {}'.format('/'.join([root,'.'.join(file_name.split('.')[:-1])+".class"])))
         self.tp.logger.info(' | CS | Running {}'.format(os.getcwd()+'/'+class_name))
 
