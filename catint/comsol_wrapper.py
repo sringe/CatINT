@@ -70,12 +70,16 @@ class Comsol():
 
         ##COMPILE
         self.tp.logger.info(' | CS | Compiling COMSOL.')
+        self.tp.logger.info(self.exe+" compile "+os.getcwd()+'/'+java_name+' | tee comsol_compile.out')
         call(self.exe+" compile "+os.getcwd()+'/'+java_name+' | tee comsol_compile.out',shell=True)
+        for line in open(os.getcwd()+'/'+java_name):
+            self.tp.logger.debug(line+'\n')
         #call(self.exe+" compile "+'/'.join([root,file_name])+' | tee '+self.results_folder+'/comsol_compile.out',shell=True)
         self.tp.logger.info(' | CS | Compiling {}'.format(os.getcwd()+'/'+java_name))
 
         ##RUN
         self.tp.logger.info(' | CS | Starting COMSOL.')
+        self.tp.logger.debug(self.exe+" batch -inputfile "+os.getcwd()+'/'+class_name+' | tee comsol_run.out')
         #call(self.exe+" batch -inputfile "+'/'.join([root,'.'.join(file_name.split('.')[:-1])+".class"])+' | tee '+self.results_folder+'/comsol_run.out',shell=True)
         call(self.exe+" batch -inputfile "+os.getcwd()+'/'+class_name+' | tee comsol_run.out',shell=True)
         #self.tp.logger.info('Running {}'.format('/'.join([root,'.'.join(file_name.split('.')[:-1])+".class"])))

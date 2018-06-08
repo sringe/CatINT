@@ -21,7 +21,7 @@ educt='CO2' #CO2 or CO
 nx=400 #200
 nflux_comsol=10
 grid_factor=200
-nphi=50
+nphi=1
 
 RF=1
 
@@ -143,17 +143,17 @@ data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
 #INITIAL CONCENTRATIONS
 ###########################################################################
 #set up the initial concentrationss from this constants:
-CO2_i = 0.03419*system['pressure']*1000. #initial CO2(aq) bulk concentrations at t=0 and Pressure P in [mol/m3] units
+CO2_i = 0.03419*system['pressure']*1000. #initial CO2(aq) bulk_concentrations at t=0 and Pressure P in [mol/m3] units
 #                        #from Henry constant (29.41 atm/M
 #CO_i = 9.5e-4*system['pressure']*1000.
 #CO32m_i = ((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)-\
 #            (np.sqrt((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)**2\
-#            -4.0*(bic_i)**2)))/2  #initial (CO3)2- bulk concentrations at t=0 [mol/m3]
+#            -4.0*(bic_i)**2)))/2  #initial (CO3)2- bulk_concentrations at t=0 [mol/m3]
 
 ## Initial composition of the bulk electrolyte at t=0
-#HCO3m_i = bic_i-CO32m_i #initial HCO3- bulk concentrations at t=0 [mol/m3]
-#K_i = bic_i #initial K+ bulk concentrations at t=0 [mol/m3]
-#OHm_i = HCO3m_i/electrolyte_reactions['buffer-base']['constant']/CO2_i #initial OH- bulk concentrations at t=0 [mol/m3]
+#HCO3m_i = bic_i-CO32m_i #initial HCO3- bulk_concentrations at t=0 [mol/m3]
+#K_i = bic_i #initial K+ bulk_concentrations at t=0 [mol/m3]
+#OHm_i = HCO3m_i/electrolyte_reactions['buffer-base']['constant']/CO2_i #initial OH- bulk_concentrations at t=0 [mol/m3]
 #pH_i = 14+np.log10(OHm_i/1000.0) #initial pH (in log. arg must be conc in M)
 
 ##1) option: initialize with CO2_i and OHm_i
@@ -210,7 +210,7 @@ else:
 ###########################################################################
 #(the charges are determined automatically from the species name)
 #diffusion          [m/s]       (infinite dilution in water at 25C)
-#bulk concentrations [mol/m^3]
+#bulk_concentrations [mol/m^3]
 #zeff number of electrons need to derive product from CO2
 #req number of educt molecules needed to derive product
 #Henry              [atm/M] (from http://butane.chem.uiuc.edu/pshapley/GenChem1/L23/web-L23.pdf)
@@ -219,26 +219,26 @@ species=\
     'K':                {   'symbol':               'K^+',
                             'name':                 'potassium',
                             'diffusion':            1.957e-9,
-                            'bulk concentration':   K_i},
+                            'bulk_concentration':   K_i},
     'CO2':              {   'symbol':               'CO_2',
                             'name':                 'carbon dioxide',
                             'diffusion':            1.91e-9,
-                            'bulk concentration':   CO2_i},
+                            'bulk_concentration':   CO2_i},
     'OH-':              {   'symbol':               'OH^-',
                             'name':                 'hydroxyl',
                             'diffusion':            5.273e-9,
-                            'bulk concentration':   OHm_i},
+                            'bulk_concentration':   OHm_i},
     'H+':               {   'symbol':               'H^+',
                             'name':                 'hydronium',
                             'diffusion':            9.311e-9,   #CRC handbook, IONIC CONDUCTIVITY AND DIFFUSION AT INFINITE DILUTION
-                            'bulk concentration':   Hm_i},
+                            'bulk_concentration':   Hm_i},
     'H2':               {   'symbol':               'H_2',
                             'name':                 'hydrogen',
                             'diffusion':            4.50e-009},
     'CO':               {   'symbol':               'CO',
                             'name':                 'carbon monoxide',
                             'diffusion':            2.03e-9,
-                            'bulk concentration':   CO_i},
+                            'bulk_concentration':   CO_i},
     'CH4':              {   'symbol':               'CH_4',
                             'name':                 'methane',
                             'diffusion':            1.49e-009},
@@ -260,17 +260,17 @@ if not nobuffer:
     species['CO32-']={   'symbol':               'CO_3^{2-}',
                             'name':                 'carboxylate',
                             'diffusion':            9.23e-010,
-                            'bulk concentration':   CO32m_i}
+                            'bulk_concentration':   CO32m_i}
     species['HCO3-']={   'symbol':               'HCO_3^-',
                             'name':                 'bicarbonate',
                             'diffusion':            1.185e-009,
-                            'bulk concentration':   HCO3m_i}
+                            'bulk_concentration':   HCO3m_i}
 
 #else:
 #    species['Cl-']={    'symbol':               'Cl^-',
 #                        'name':                 'chlorine',
 #                        'diffusion':            1.185e-009,
-#                        'bulk concentration':   0.1/1000.}
+#                        'bulk_concentration':   0.1/1000.}
     
 ###########################################################################
 
@@ -301,7 +301,7 @@ species['CO2']['flux']='catmap' #CO_rate
 boundary_thickness=7.93E-05 #in m
 
 if not nobuffer:
-    visc=viscosity(species['HCO3-']['bulk concentration']/10**3), #Pa*s at 25C of KHCO3 solution
+    visc=viscosity(species['HCO3-']['bulk_concentration']/10**3), #Pa*s at 25C of KHCO3 solution
 system['boundary thickness']=boundary_thickness
 #system['electrolyte viscosity']=visc[0]
 
@@ -317,7 +317,7 @@ potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(0.0,-1.2,nphi))}
+    descriptors={'phiM':list(np.linspace(-0.4144,-0.4144,nphi))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
@@ -362,7 +362,7 @@ for potential in potentials:
     
     if only_catmap:
         cm=CatMAP(transport=tp,model_name='CO2R')
-        for p in np.linspace(-2.0,0.0,50):
+        for p in descriptors['phiM']: #np.linspace(-0.9344,-0.9344,1):
             print '!!! now running p = '+str(p)
             tp.system['phiM']=p
             cm.run()

@@ -889,7 +889,7 @@ class Model():
     
             if 'init_conc' in param_set:
                 for i,sp in enumerate(self.tp.species):
-                    self.set("ci{}".format(i+1), "{}[mol/m^3]".format(self.tp.species[sp]['bulk concentration']), "{} bulk concentrations".format(self.tp.species[sp]['name']))
+                    self.set("ci{}".format(i+1), "{}[mol/m^3]".format(self.tp.species[sp]['bulk_concentration']), "{} bulk_concentrations".format(self.tp.species[sp]['name']))
     
             if 'geo_bl' in param_set:
                 self.set("L_cell", self.tp.xmax, "Cell length")

@@ -6,6 +6,7 @@ rxn_expressions = [
     'H*_t + H*_t -> H-H*_t + *_t -> H2_g + 2*_t',     # Tafel 3
     'OH*_t + H_g + ele_g <-> H2O_g + *_t',	#4
 
+
     'CO_g + *_t <-> CO-*_t <-> CO*_t',	#5
     'CO*_t + H2O_g + ele_g <-> H2O-CO-ele*_t <-> CHO*_t + OH_g; beta=0.5',	# Electro_CHO 6
     'CHO_t + H2O_g + ele_g <-> CHO-H2O-ele_t <-> CHOH_t + OH_g',	#7
@@ -23,46 +24,47 @@ rxn_expressions = [
 #    'CH2O*_dl + H2O_g <-> CH4O2*_dl',	#18
 #    'CH4O2*_dl <-> CH4O2_g + *_dl',	#19
 
-    'CO*_t + H2O_g + ele_g <-> CO-H2O-ele*_t <-> COH*_t + OH_g',	# Electro_COH 17
-    'COH_t + H2O_g + ele_g <-> COH-H2O-ele_t <-> CHOH_t + OH_g',	#18
+    'CO*_t + H2O_g + ele_g <-> CO-H2O-ele*_t <-> COH*_t + OH_g',	# Electro_COH 15
+    'COH_t + H2O_g + ele_g <-> COH-H2O-ele_t <-> CHOH_t + OH_g',	#16
 
-    'CO*_t + H_t <-> H-CO_t + *_t <-> CHO_t + *_t', # Thermo_CHO 19
-    'CO_t + H_t <-> CO-H_t + *_t <-> COH_t + *_t',  # Thermo_COH 20
-    'CH*_t + H*_t <-> CH-H*_t + *_t <-> CH2*_t + *_t',	#21
-    'CH2*_t + H*_t <-> CH2-H*_t + *_t <-> CH3*_t + *_t',	#22
-    'CH3*_t + H*_t <-> CH3-H*_t + *_t <-> CH4*_g + 2*_t',	#23
+    'CO*_t + H_t <-> H-CO_t + *_t <-> CHO_t + *_t', # Thermo_CHO 17
+    'CO_t + H_t <-> CO-H_t + *_t <-> COH_t + *_t',  # Thermo_COH 18
+    'CH*_t + H*_t <-> CH-H*_t + *_t <-> CH2*_t + *_t',	#19
+    'CH2*_t + H*_t <-> CH2-H*_t + *_t <-> CH3*_t + *_t',	#20
+    'CH3*_t + H*_t <-> CH3-H*_t + *_t <-> CH4*_g + 2*_t',	#21
 
-    'O2_g + *_t -> O2*_t',     #24 fake ads
+    'O2_g + *_t -> O2*_t',     #22 fake ads
 
-    '2CO_t <-> OC-CO_t <-> OCCO_t',     #25
-    'OCCO_t + H_t <-> OCC-HO_t + *_t <-> OCCHO_t + *_t',        #26
-    'OCCO_t + H2O_g + ele_g <-> OCCO-OH2-ele_t <-> OCCHO_t + OH_g',        #27
-    'CO_t + CHO_t <-> OC-CHO_t <-> OCCHO_t',    #28
-    'OCCHO_t + 6H2O_g + 7ele_g <-> CH3CH2OH_g + 2*_t + 7OH_g',    #29
+    '2CO_t <-> OC-CO_t <-> OCCO_t',     #23
+    'OCCO_t + H_t <-> OCC-HO_t + *_t <-> OCCHO_t + *_t',        #24
+    'OCCO_t + H2O_g + ele_g <-> OCCO-OH2-ele_t <-> OCCHO_t + OH_g',        #25
+    'CO_t + CHO_t <-> OC-CHO_t <-> OCCHO_t',    #26
+    'OCCHO_t + 6H2O_g + 7ele_g <-> CH3CH2OH_g + 2*_t + 7OH_g',    #27
 
-    'OCCO_t + H2O_g + ele_g <-> OCCO-H2O-ele_t <-> OCCOH_t + OH_g; beta=0.6',        #30
-    'OCCOH_t + ele_g <-> OCC-OH-ele_t <-> OCC_t + OH_g',        #31
-    'OCC_t + H2O_g + ele_g <-> OCC-H2O-ele_t <-> OCCH_t + OH_g',        #32
-    'OCC_t + H_t <-> OCC-H_t + *_t <-> OCCH_t + *_t',        #33
-    'OCCH_t + 5H2O_g + 5ele_g <-> CH3CH2OH_g + 2*_t + 5OH_g',        #34
+    'OCCO_t + H2O_g + ele_g <-> OCCO-H2O-ele_t <-> OCCOH_t + OH_g; beta=0.6',        #28
+    'OCCOH_t + ele_g <-> OCC-OH-ele_t <-> OCC_t + OH_g',        #29
+    'OCC_t + H2O_g + ele_g <-> OCC-H2O-ele_t <-> OCCH_t + OH_g',        #30
+    'OCC_t + H_t <-> OCC-H_t + *_t <-> OCCH_t + *_t',        #31
+    'OCCH_t + 5H2O_g + 5ele_g <-> CH3CH2OH_g + 2*_t + 5OH_g',        #32
 
-    'CO_t + CHOH_t <-> OC-CHOH_t <-> OCCHOH_t',    #35
-    'OCCHOH_t + 5H2O_g + 6ele_g <-> CH3CH2OH_g + 2*_t + 6OH_g',        #36
+    'CO_t + CHOH_t <-> OC-CHOH_t <-> OCCHOH_t',    #33
+    'OCCHOH_t + 5H2O_g + 6ele_g <-> CH3CH2OH_g + 2*_t + 6OH_g',        #34
 
     #4 CO2 adsorption
-    'CO2_g + 2*_t <-> CO2-*_t <-> CO2*_t',
+    'CO2_g + 2*_t <-> CO2-*_t <-> CO2*_t', #35
     #5 CO2 to COOH
-    'CO2*_t + H2O_g + ele_g -> COOH*_t + OH_g',
+    'CO2*_t + H2O_g + ele_g -> COOH*_t + OH_g', #36
     #6 *COOH to *CO
-    'COOH*_t + H2O_g + ele_g <-> COOH-H2O-ele*_t -> CO*_t + H2O_g + OH_g + *_t',
+    'COOH*_t + H2O_g + ele_g <-> COOH-H2O-ele*_t -> CO*_t + H2O_g + OH_g + *_t', #37
     #8 COOH to formate
-#    'COOH*_t + H2O_g + ele_g <-> COOH-H2O-ele*_t <->  HCOOH_g + *_t + OH_g',
+#    'COOH*_t + H2O_g + ele_g <-> COOH-H2O-ele*_t <->  HCOOH_g + *_t + OH_g', #38
 ]
 
 rxn_mechanisms = {
 	'CO': [35, 36, 37],
-	'CH4_via_CHOH': [35,36,37,15,16,8,9,10,11],
+	'CH4_via_CHOH': [5,6,7,8,9,10],
 #	'CH3CH2OH_via_OCCOH': [5, 5, 28, 33, 34, 35, 37],
+        'C2_via_OCCOH':[5,5,23,28,29,30],
 #	'CH3CH2OH_via_OCCHO': [5, 5, 28, 30, 32],
 #	'CH3CH2OH_via_OC-CHO': [5, 5, 6, 31, 32],
 #	'CH3CH2OH_via_OC-CHOH': [5, 5, 6, 7, 38, 39],

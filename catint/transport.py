@@ -20,6 +20,8 @@ import subprocess
 from glob import glob
 from shutil import copy
 import imp
+from data import tp_ref_data
+
 use_mpi=False
 try:
     imp.find_module('mpi4py')
@@ -291,7 +293,15 @@ class Transport(object):
         #use_electrolyte/electrode_reactions is not really needed 
 
         #Working on electrolyte reactions if requested
-        self.electrolyte_reactions=electrolyte_reactions
+        self.electrolyte_reactions={}
+        if electrolyte_reactions is not None:
+            for rxn in electrolyte_reactions:
+                self.electrolyte_reactions.update(tp_ref_data['electrolyte_reactions'][rxn])
+        else:
+            self.electrolyte_reactions=None
+        print self.electrolyte_reactions
+
+#        self.electrolyte_reactions=electrolyte_reactions
         self.use_electrolyte_reactions=True
         if 'electrolyte reactions' in self.system:
             if not self.system['electrolyte reactions']:

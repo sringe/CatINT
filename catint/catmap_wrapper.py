@@ -64,7 +64,7 @@ class CatMAP():
             self.n_inter_max=150
 
         if 'desc_method' not in self.tp.catmap_args:
-            self.tp.catmap_args='automatic'
+            self.tp.catmap_args['desc_method']='automatic'
             #possible settings:
             # - automatic
             # - single_point
@@ -307,17 +307,33 @@ class CatMAP():
                 #self.tp.logger.info(model.interaction_function(cvg,energies,eps_vector,model.thermodynamics.adsorbate_interactions.interaction_response_function,False,False))
                 #self.tp.logger.info('-- end checking --')
                 self.tp.logger.info(tabulate(zip(model.output_labels['interacting_energy'],\
-                        model.interaction_function(cvg,energies,eps_vector,\
-                        model.thermodynamics.adsorbate_interactions.interaction_response_function,False,False)[1]),\
+                        energies),\
                         headers=['species','energy']))
+                #self.tp.logger.info(tabulate(zip(model.output_labels['interacting_energy'],\
+                #        model.interaction_function(cvg,energies,eps_vector,\
+                #        model.thermodynamics.adsorbate_interactions.interaction_response_function,False,False)[1]),\
+                #        headers=['species','energy']))
                 self.tp.logger.info(' | CM | --- END OUTPUT ---')
+                sys.exit()
             except:
                 self.tp.logger.info(' | CM | Error in reading interaction energies')
                 pass
+        #try:
         plot_fed(False,False,method=2)
+        #except:
+        #    self.tp.logger.warning(' | CM | Error in writing FED')
+        #try:
         plot_fed(True,False,method=2)
+        #except:
+        #    self.tp.logger.warning(' | CM | Error in writing FED')
+        #try:
         plot_fed(True,True,method=2)
+        #except:
+        #    self.tp.logger.warning(' | CM | Error in writing FED')
+        #try:
         plot_fed(False,True,method=2)
+        #except:
+        #    self.tp.logger.warning(' | CM | Error in writing FED')
 #        sys.stdout.flush()
 #        os.close(1)
 #        os.dup(old) # should dup to 1
@@ -469,6 +485,7 @@ class CatMAP():
 
         i=0
         replaced_species=[]
+        self.tp.logger.debug('Diffusion drop passed to CatMAP is {} V'.format(self.tp.system['potential'][0]))
         for line in open(self.catmap_model):
             i+=1
             if line.lstrip().startswith('#'):
