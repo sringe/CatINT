@@ -41,6 +41,7 @@ color_pH={
     '7.0':'C4',
     '7.15':'C3',
     '9.0':'C2',
+    '10.0':'C2',
     '12.2':'C3',
     '13.0':'C3'}
 
@@ -344,12 +345,11 @@ def name_to_cm(name):
     if name=='H2':
         return 'H$_2$'
     elif name in ['CH4','CH$_4$']:
-        return 'C1-sum'
+        return 'CH$_4$'# 1-sum'
     elif name in ['EtOH','CH3CH2OH','CH2CH2']:
         return 'C2-sum'
     else:
         return name
-print all_prods
 if args.products is not None:
     all_prods=[name_to_cm(a) for a in args.products]
 else:
@@ -371,26 +371,27 @@ for pH in set(all_pH):
             exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['13.0'],\
                 system=systems,scale=args.scale,only_points=True,\
                 take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
-        #elif pH == 6.8 or pH == 7.0:
-        #    exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
-        #        system=systems,scale=args.scale,only_points=True,\
-        #        take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
+        elif pH == 6.8 or pH == 7.0:
+            exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
+                system=systems,scale=args.scale,only_points=True,\
+                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
         else:
+            print 'TEST',pH
 #            for i,p in enumerate(all_prods):
 #                if p=='CH$_4$':
 #                    all_prods[i]='C$_1$'
 #                elif p=='EtOH':
 #                    all_prods
-            #exp.plot_data(reference=['hori'],ax=ax1,species=all_prods,pH=[str(pH)],\
-            #    system=systems,scale=args.scale,only_points=True,\
-            #    take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
-            exp.plot_data(reference=['strasser'],ax=ax1,species=all_prods,pH=[str(pH)],\
+            exp.plot_data(reference=['hori'],ax=ax1,species=all_prods,pH=[str(pH)],\
                 system=systems,scale=args.scale,only_points=True,\
                 take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
+            #exp.plot_data(reference=['strasser'],ax=ax1,species=all_prods,pH=[str(pH)],\
+            #    system=systems,scale=args.scale,only_points=True,\
+            #    take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
 #ax1=plot_leis_new_data(ax1)
 ax1.set_ylim([1e-5,1e2])
-ax1.set_xlim([-1.,0.1])
-ax2.set_xlim([-1.,0.1])
+#ax1.set_xlim([-1.,0.1])
+#ax2.set_xlim([-1.,0.1])
 #ax1.set_ylim([1e-3,1e1])
 #ax1.set_xlim([-1.4,-1.0])
 #ax2.set_xlim([-1.4,-1.0])

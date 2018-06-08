@@ -144,11 +144,12 @@ class EXPDATA():
                 pH=7.0
             if symbol is None:
                 cmarker=self.marker[n]
+            print 'voltage before shift',voltage
             if convert is not None:
                 if convert.split('_')[0]=='RHE':
-                    shift=-0.059*pH
+                    shift=-0.0592*pH
                 else:
-                    shift=+0.059*pH
+                    shift=+0.0592*pH
             else:
                 shift=0.0
             voltage=[v+shift for v in voltage]
@@ -161,8 +162,8 @@ class EXPDATA():
             #    tafel_fitting(voltage,current)
             print 'FIT',fit
             if not fit>2:
-                print 'TEST HERE',voltage,current
-                print 'TEST2',DATA.label
+                print 'TESTING',DATA.label[j]
+                print 'TESTING',voltage,current
                 #plt.figure()
                 print func
 #                plt.figure()
@@ -673,10 +674,10 @@ class EXPDATA():
                             else:
                                 symbol=marker
                             if scale=='RHE':
-                                self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='previous',take_log=take_log,linestyle=linestyle,symbol=symbol,\
+                                self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='first',take_log=take_log,linestyle=linestyle,symbol=symbol,\
                                     convert='SHE_TO_RHE',fit_tafel=fit_tafel,legend=legend,msize=msize,color=color) #,skip=4) #
                             elif scale=='SHE':
-                                self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='previous',take_log=take_log,linestyle=linestyle,symbol=symbol,\
+                                self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='first',take_log=take_log,linestyle=linestyle,symbol=symbol,\
                                     fit_tafel=fit_tafel,legend=legend,msize=msize,color=color) #,skip=4) #
     
                         if scale=='RHE':

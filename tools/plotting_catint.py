@@ -280,7 +280,7 @@ def plot(prop):
                     func=ax.semilogy
                 elif prop=='surface_concentration':
                     y=[yy/1000. for yy in y]
-                    func=ax.plot
+                    func=ax.semilogy #ax.plot
                 func(x,y,ls+m,color=color,label=sp)
                 #if prop=='electrode_current_density':
                 #    ax=plot_leis_new_data(ax)
