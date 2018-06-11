@@ -64,12 +64,13 @@ for fname in args.file:
     mec=model.rxn_mechanisms
     
     folder=glob(fname+'/catmap_input/*')
-    min_pot=np.inf
-    for f in folder:
-        pot=float(f.split('/')[-1].split('_')[-1])
-        if abs(pot-args.pot)<min_pot:
-            min_pot=abs(pot-args.pot)
-            pot_sel=pot
+    if fname==args.file[0]:
+        min_pot=np.inf
+        for f in folder:
+            pot=float(f.split('/')[-1].split('_')[-1])
+            if abs(pot-args.pot)<min_pot:
+                min_pot=abs(pot-args.pot)
+                pot_sel=pot
     energies=read_output(fname+'/transport_id000.log')
     gas_energies=read_gas_output(glob(fname+'/catmap_input/*/FED_gas.txt')[0])
     try:
@@ -152,10 +153,10 @@ for fname in args.file:
                 a=(en_final_before+en_final-2*en_ts)/0.25**2/2.
                 b=(en_ts-en_final_before+a*0.25**2)/0.25
                 c=en_ts
-                plt.plot(x,a*(x-(pos_ts+0.25))**2+b*(x-(pos_ts+0.25))+c,'-',lw=1.5,c=color)
+                plt.plot(x,a*(x-(pos_ts+0.25))**2+b*(x-(pos_ts+0.25))+c,ls,lw=1.5,c=color)
             else:
                 pos_ts=pos-0.5
-                plt.plot([pos_ts,pos_ts+0.5],[en_final_before,en_final],'-',lw=1.5,c=color)
+                plt.plot([pos_ts,pos_ts+0.5],[en_final_before,en_final],ls,lw=1.5,c=color)
 plt.title('FED at {} V vs. SHE'.format(pot_sel))
 plt.ylim([-8,1])
 plt.show()

@@ -45,6 +45,8 @@ class Transport(object):
         if only_plot:
             return
 
+        catint_path='/'.join(__file__.split('/')[:-2])
+
         #MPI setup
         if use_mpi:
             self.mpi_comm = MPI.COMM_WORLD
@@ -153,7 +155,6 @@ class Transport(object):
                 'RF',                      #roughness factor
                 'ion radius',              #Ionic "Radius" due to MPB model, measure for size of hydrated ion
                 'potential drop',           #Potential drop, either Stern or full
-                'Henry constants'          #Henry constants in M/bar
                 ]
 
         #go over input data and put in some defaults if none
@@ -178,6 +179,7 @@ class Transport(object):
 
         #convert to ordered dictionary to have consistent indices of species
         self.species=collections.OrderedDict(self.species)
+
     
         if pb_bound is None:
             pb_bound={
@@ -266,6 +268,7 @@ class Transport(object):
 
         #GET CHARGES AND NCATOMS FROM CHEMICAL SYMBOLS
         self.charges=self.symbol_reader(self.species)
+
 
         self.use_migration=True
         if 'migration' in self.system:
@@ -381,6 +384,22 @@ class Transport(object):
             self.logger.info('Products: {}'.format(self.product_list))
         if self.use_electrolyte_reactions:
             self.logger.info('Electrolyte Components: {}'.format(self.electrolyte_list))
+
+        #read Henry's constants
+        for line in open(catint_path+'/data/henry_constants.txt','r'):
+            if not line.startswith('#'):
+                ls=line.split()
+                if ls[1] in self.species:
+                    self.species[ls[1]]['Henry constant']=float(ls[2])*1e5 #convert to mol/m^3/bar
+        #test if we are missing a Henry constant here:
+        for sp in self.species:
+            if not 'Henry constant' in self.species[sp] \
+                and sp in self.educt_list+self.product_list\
+                and sp not in self.system['exclude species']\
+                and sp not in ['OH-','H+']:
+                self.logger.error('No Henry constant found for {}. Add this to {}/data/henry_constants.txt'.format(sp,catint_path))
+                sys.exit()
+        #end henry
 
         #DIFFUSION CONSTANTS
         self.D=[]

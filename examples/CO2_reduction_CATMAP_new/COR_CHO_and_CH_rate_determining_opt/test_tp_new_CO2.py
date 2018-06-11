@@ -13,7 +13,7 @@ from read_data import read_data
 
 only_catmap=True
 
-pH_i=10.0 #12.2 #12.2 #6.8
+pH_i=7.0 #12.2 #12.2 #6.8
 nobuffer=True #False #True #False #True #False #True 
 
 educt='CO2' #CO2 or CO
@@ -22,7 +22,7 @@ nx=200
 nflux_comsol=100
 grid_factor=200
 mix_scf=0.5
-nphi=20
+nphi=15
 
 tau_scf=0.01
 
@@ -47,56 +47,10 @@ if nobuffer:
 #constant:              (dimensionless (mol/m^3))
 #rates:                 (forward and backward rates)
 
-#all constants & rates at room temperature
-#Millero1997: http://www-naweb.iaea.org/napc/ih/documents/global_cycle/vol%20I/cht_i_09.pdf
-electrolyte_reactions=\
-    {
-    'buffer-base':      {   'reaction':            'CO2 + OH- <-> HCO3-',
-                            #PURE WATER, Emerson
-                            'constant':             43750.0,                                #Gupta:  44400.0 
-                            'rates':                [7.0,16e-5]},                           #Gupta:  [5.93,13.4e-5]
-                            #salinity S=35, Schulz2006
-#                             'constant':             22966.014418, #Schulz2006, m^3/mol
-#                             'rates':                [2.23,9.71e-5]}, #Schulz2006
-    ##############################################################################################################
-    'buffer-base2':     {   'reaction':            'HCO3- + OH- <-> CO32- + H2O', 
-                            #PURE WATER ???? Gupta
-                            'constant':              4.66,
-                            'rates':                [1.0e5,21459.2274]},
-                            #salinity S=35, Schulz2006
-#                             'constant':             19.60784, #Schulz2006, m^3/mol
-#                             'rates':                [6e6,306000]}, #Schulz2006
-    }
-proton_el_reac=\
-    {
-    ##############################################################################################################
-    'buffer-acid':      {   'reaction':            'CO2 + H2O <-> HCO3- + H+', 
-                            #PURE WATER, Emerson
-                            'constant':             0.000445,                               #Gupta:  0.000444 
-                             'rates':               [3.7e-2,8.3333]},                       #
-                            #salinity S=35, Schulz2006
-#                             'constant':             0.00138951310,
-#                             'rates':               [3.71e-2,26.7]},
-    ##############################################################################################################
-    'buffer-acid2':     {   'reaction':             'HCO3- <-> CO32- + H+',
-                            #PURE WATER, Millero1997
-                            #'constant':              4.79e-8,
-                            'constant':             3.5317025629468759e-07,              #https://www.iaea.org/ocean-acidification/act7/Guide%20best%20practices%20low%20res.pdf
-                            'rates':                [59.44,1.68304093e8]},                  #assuming Schulz2006 for hin-reactio !!!!!!!NOT SALINITY CORRECTED!!!!!!!
-##                            'rates':                [59.44,12.409e8]},                  #assuming Schulz2006 for hin-reaction !!!!!!!NOT SALINITY CORRECTED!!!!!!!
-                            #salinity S=35, Schulz2006
-#                            'constant':             1.1888e-06,                            #Emerson: 1.0715e-6
-#                            'rates':                [59.44,5e7]},                          
-    ##############################################################################################################
-    ##############################################################################################################
-    'self-dissociation of water':            {   'reaction':             'H2O <-> OH- + H+',
-                            'constant':             1e-8, #(mol/m^3)^2
-                            'rates':                [2.4e-5*1000.,2.4e-5/1e-14/1000.]} #Singh
-    ##############################################################################################################
-    }
-
-if include_protons:
-    electrolyte_reactions.update(proton_el_reac)
+if use_elreac:
+    electrolyte_reactions=['phosphate-base']
+    if include_protons:
+        electrolyte_reactions+=['phosphate-acid']
 
 electrode_reactions={
     #'H2':           {   'reaction':            '2 H2O + 2 e- -> H2 + 2 OH-'},
@@ -169,7 +123,7 @@ data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
 #set up the initial concentrationss from this constants:
 #CO2_i = 0.03419*system['pressure']*1000. #initial CO2(aq) bulk concentrations at t=0 and Pressure P in [mol/m3] units
 #                        #from Henry constant (29.41 atm/M
-CO_i = 9.5e-4*system['pressure']*1000.
+CO_i = 9.7e-4*system['pressure']*1000.
 #CO32m_i = ((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)-\
 #            (np.sqrt((2*bic_i+electrolyte_reactions['buffer2']['constant']*CO2_i)**2\
 #            -4.0*(bic_i)**2)))/2  #initial (CO3)2- bulk concentrations at t=0 [mol/m3]
@@ -361,7 +315,7 @@ potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-1.2,-1.6,nphi))}
+    descriptors={'phiM':list(np.linspace(-1.0,-1.6,nphi))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
