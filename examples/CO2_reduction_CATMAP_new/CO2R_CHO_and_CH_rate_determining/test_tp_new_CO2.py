@@ -11,7 +11,7 @@ import sys
 from units import *
 from read_data import read_data
 
-only_catmap=True
+only_catmap=False
 
 pH_i=7. #6.8
 nobuffer=False #True #False #True #False #True #False #True 
@@ -105,7 +105,7 @@ system=\
     'phiPZC': -0.75, #+unit_R*298.14/unit_F*pH_i*np.log(10.), #value at SHE: https://www.sciencedirect.com/science/article/pii/S002207280300799X
     'Stern capacitance': 20, #std: 20
     'bulk_pH':pH_i,
-    'potential drop':'full', #either Stern or full
+    'potential drop':'Stern', #Stern', #either Stern or full
     #'ion radius': 6.0
     }
 ###########################################################################

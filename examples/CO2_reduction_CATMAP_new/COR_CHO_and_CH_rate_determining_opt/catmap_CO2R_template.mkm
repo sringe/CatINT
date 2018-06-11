@@ -14,13 +14,13 @@ rxn_expressions = [
     'CO_g + *_t <-> CO-*_t -> CO*_t',
 
     #5 CO to CHO (barrierless)
-    'CO*_t + H2O_g + ele_g <-> H2O-CO-ele*_t <-> CHO*_t + OH_g; beta=0.7',
+    'CO*_t + H2O_g + ele_g <-> H2O-CO-ele*_t <-> CHO*_t + OH_g; beta=0.3',
 #    'CO*_t + H2O_g + ele_g <-> CHO*_t + OH_g',
     #6 CHO to CHOH
-    'CHO*_t + H2O_g + ele_g <-> CHO-H2O-ele*_t <-> CHOH*_t + OH_g; beta=0.75',
+    'CHO*_t + H2O_g + ele_g <-> CHO-H2O-ele*_t <-> CHOH*_t + OH_g; beta=0.3',
     # 'CHO*_t + H2O_g + ele_g <-> CHOH*_t + OH_g',
     #7 rate-limiting for CH4: CHO to CHOH
-    'CHOH*_t + ele_g <-> CH-OH-ele*_t <-> CH*_t + OH_g; beta=0.5',
+    'CHOH*_t + ele_g <-> CH-OH-ele*_t <-> CH*_t + OH_g; beta=0.3',
     #'CHOH*_t + ele_g <-> CH*_t + OH_g',
     #8 CHOH to CH4 (barrierless)
     'CH*_t + 3H2O_g + 3ele_g <-> CH4_g + *_t + 3OH_g',

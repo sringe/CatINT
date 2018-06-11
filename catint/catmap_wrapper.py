@@ -509,10 +509,11 @@ class CatMAP():
                     if self.tp.species[sp]['surface_concentration']<-1.:
                         self.tp.logger.warning(' | CM | Surface concentration of {} is more negative than 1e-3 mol/L, stopping to be safe.'.format(sp))
 #                        sys.exit()
-                    if self.tp.species[sp]['bulk_concentration']==0:
-                        activity=0
+                    if sp in ['OH-','H+']:
+                        activity=1 #this is irrelevant, since it will be controlled by the pH
                     else:
-                        activity=self.tp.species[sp]['surface_concentration']/self.tp.species[sp]['bulk_concentration']
+                        print sp
+                        activity=self.tp.species[sp]['surface_concentration']/(self.tp.species[sp]['Henry constant']*self.tp.system['pressure']) #self.tp.species[sp]['bulk_concentration']
                     self.tp.logger.debug(' | CM | checking concentration of species {}, found c = {} mol/L'.format(sp,activity))
                     replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':"+str(max(0.,activity))+"}")
                     replaced_species.append(sp)
