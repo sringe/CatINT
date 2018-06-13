@@ -1,6 +1,6 @@
 from subprocess import call
 import os
-from shutil import copyfile
+from shutil import copyfile,copytree
 import itertools
 import sys
 
@@ -19,6 +19,12 @@ desc={
             },
     }
 
+
+#create results folder:
+if not os.path.exists('collected_results'):
+    os.makedirs('collected_results')
+
+
 newdict={}
 for d in desc:
     for c in desc[d]:
@@ -29,10 +35,24 @@ to_iter=[dict(zip(keys, v)) for v in itertools.product(*values)]
 copyfile('catmap_CO2R_template.mkm.bu','tmp_template.mkm')
 copyfile('catmap_CO2R_energies.txt.bu','tmp_energies.txt')
 
-with open('log.txt','w') as of:
+os.chdir('collected_results')
+root=os.getcwd()
+
+with open(root+'/log.txt','w') as of:
     for i,d in enumerate(to_iter):
-        if i<164:
-            continue
+        if i>0:
+            sys.exit()
+        os.chdir(root)
+        if not os.path.isdir('results_'+str(i)):
+            os.makedirs('results_'+str(i))
+        os.chdir('results_'+str(i))
+        print os.getcwd()
+        copytree(root+'/../data','data')
+        copyfile(root+'/../test_tp_new_CO2.py','test_tp_new_CO2.py')
+        copyfile(root+'/../read_data.py','read_data.py')
+        copyfile(root+'/../tmp_template.mkm','tmp_template.mkm')
+        copyfile(root+'/../tmp_energies.txt','tmp_energies.txt')
+#        copyfile(root+'/../slac.small','slac.small')
         for r in to_iter[i]:
             mol=r.split(';')[0]
             prop=r.split(';')[1]
@@ -60,5 +80,7 @@ with open('log.txt','w') as of:
                 copyfile('catmap_CO2R_energies.txt','tmp_energies.txt')
         of.write('ready to start\n')
         of.flush()
-        call("python" + " test_tp_new_CO2.py", shell=True)
-        os.rename('CO2R_results','results_'+str(i))
+        call("esp-ver-bsub 19 test_tp_new_CO2.py",shell=True)
+#        call(" " + " slac.small", shell=True)
+#        call("python" + " test_tp_new_CO2.py", shell=True)
+        #os.rename('CO2R_results','results_'+str(i))
