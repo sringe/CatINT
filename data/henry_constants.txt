@@ -1,0 +1,11 @@
+#Atmos. Chem. Phys., 15, 4399–4981, 2015
+#species        Henry constants in mol/m^3/Pa   dln(Hcp)/d(1/T)
+methane         CH4     1.4e-5          1900
+ethane          C2H6    1.9e-5          2400
+methanol        CH3OH   2.0             5600
+ethanol         CH3CH2OH  1.9             6400
+carbon_monoxide CO      9.7e-6          1300
+carbon_dioxide  CO2     3.3e-4          2400
+nitrogen        N2      6.4e-6          1600
+hydrogen        H2      7.8e-6          530
+ammonia         NH3     5.9e-1          4200
