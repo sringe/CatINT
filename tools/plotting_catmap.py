@@ -319,7 +319,7 @@ for arg in args.file: #sys.argv[1:]:
         #    symbol='o'
         print 'the color',k,sp,color
         #linestyle=next(linestyles)
-        if k==0:
+        if k==1:
             ax2.plot(x+0.059*pH,y,linestyle+symbol,color=color,label=sp)
         else:
             ax2.plot(x+0.059*pH,y,linestyle+symbol,color=color)

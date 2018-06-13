@@ -315,7 +315,7 @@ potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-1.0,-1.6,nphi))}
+    descriptors={'phiM':list(np.linspace(-0.4,-1.0,nphi))}
     system['phiM']=potential
 
     #'potential','gradient','robin'

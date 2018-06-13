@@ -31,6 +31,8 @@ copyfile('catmap_CO2R_energies.txt.bu','tmp_energies.txt')
 
 with open('log.txt','w') as of:
     for i,d in enumerate(to_iter):
+        if i<164:
+            continue
         for r in to_iter[i]:
             mol=r.split(';')[0]
             prop=r.split(';')[1]
