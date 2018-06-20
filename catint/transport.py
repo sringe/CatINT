@@ -137,6 +137,8 @@ class Transport(object):
         system_keys=[
                 'phiM',                     #V
                 'Stern capacitance',        #mF/cm^2
+                'Stern epsilon',       #in units of eps_0. only needed to calculate field inside Stern layer for 
+                #field-dependent microkinetics and for mesh generation
                 'bulk_pH',
                 'phiPZC',                   #V
                 'temperature',              #K
@@ -153,7 +155,10 @@ class Transport(object):
                 'current density',
                 'flow rate',               #flow rate or convection velocity (COMSOL equation or number)
                 'RF',                      #roughness factor
-                'ion radius',              #Ionic "Radius" due to MPB model, measure for size of hydrated ion
+                'MPB',                      #Size-Modified Poisson-Boltzmann dictionary. Includes 'ion radius' and 
+                    #'species' flags, selecting the size of the ion (lattice cells) and the species to which it should
+                    #be applied. species can be either a particular species name or 'all'. if all, only a single cationic
+                    #and anionic species with the same charge are implemented so far.
                 'potential drop',           #Potential drop, either Stern or full
                 ]
 
@@ -280,13 +285,25 @@ class Transport(object):
             self.use_convection=True
 
         self.use_mpb=False
-        if 'ion radius' in self.system:
-            #check if only a single positive and negative ion exist, otherwise this method does not work!
-            count_cat=len([sp for sp in self.species if self.species[sp]['charge']>0])
-            count_an=len([sp for sp in self.species if self.species[sp]['charge']<0])
-            if count_cat!=1 or count_an!=1:
-                self.logger.error('MPB Model does only work if there is a single cationic and single anionic species')
-                sys.exit()
+        if 'MPB' in self.system:
+            if 'species' not in self.system['MPB']:
+                self.logger.warning('Species to which MPB model should be applied was not specified, defaulting to given cations and anions')
+                self.system['MPB']['species']='all'
+            if 'ion radius' not in self.system['MPB']:
+                self.logger.warning('Ion radius for MPB model was not specified, defaulting to 5 Ang.')
+                self.system['MPB']['ion radius']=5.0
+            if self.system['MPB']['species']=='all':
+                #check if only a single positive and negative ion exist, otherwise this method does not work!
+                count_cat=len([sp for sp in self.species if self.species[sp]['charge']>0])
+                count_an=len([sp for sp in self.species if self.species[sp]['charge']<0])
+                if count_cat!=1 or count_an!=1:
+                    self.logger.error('MPB Model does only work if there is a single cationic and single anionic species')
+                    sys.exit()
+            else:
+                #check if this species is in the species list:
+                if self.system['MPB']['species'] not in self.species:
+                    self.logger.error('Species {} selected for size-modified PB treatment is not in species list'.format(self.system['MPB']['species']))
+                    sys.exit()
             self.use_mpb=True
 
         ######################

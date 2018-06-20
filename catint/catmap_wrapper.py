@@ -318,22 +318,22 @@ class CatMAP():
             except:
                 self.tp.logger.info(' | CM | Error in reading interaction energies')
                 pass
-        #try:
-        plot_fed(False,False,method=2)
-        #except:
-        #    self.tp.logger.warning(' | CM | Error in writing FED')
-        #try:
-        plot_fed(True,False,method=2)
-        #except:
-        #    self.tp.logger.warning(' | CM | Error in writing FED')
-        #try:
-        plot_fed(True,True,method=2)
-        #except:
-        #    self.tp.logger.warning(' | CM | Error in writing FED')
-        #try:
-        plot_fed(False,True,method=2)
-        #except:
-        #    self.tp.logger.warning(' | CM | Error in writing FED')
+        try:
+            plot_fed(False,False,method=2)
+        except UserWarning:
+            self.tp.logger.warning(' | CM | Error in writing FED with no corrections')
+        try:
+            plot_fed(True,False,method=2)
+        except UserWarning:
+            self.tp.logger.warning(' | CM | Error in writing FED with coverage correction')
+        try:
+            plot_fed(True,True,method=2)
+        except UserWarning:
+            self.tp.logger.warning(' | CM | Error in writing FED with pressure correction')
+        try:
+            plot_fed(False,True,method=2)
+        except UserWarning:
+            self.tp.logger.warning(' | CM | Error in writing FED with all corrections')
 #        sys.stdout.flush()
 #        os.close(1)
 #        os.dup(old) # should dup to 1
@@ -499,6 +499,8 @@ class CatMAP():
             if line.strip().startswith('bulk_ph'):
                 replace_line(self.catmap_model,i-1,'bulk_ph = '+str(self.tp.system['bulk_pH']))
                 continue
+            if line.strip().startswith('field'):
+                replace_line(self.catmap_model,i-1,'field = '+str(self.tp.system['efield'][0]*1e-10*self.tp.system['epsilon']/self.tp.system['Stern epsilon']))
             if line.strip().startswith('voltage_diff_drop') and self.tp.system['potential drop']=='Stern':
                 replace_line(self.catmap_model,i-1,'voltage_diff_drop = '+str(self.tp.system['potential'][0])) #potential drop']))
             for sp in self.tp.species:
