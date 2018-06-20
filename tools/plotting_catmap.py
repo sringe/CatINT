@@ -1,3 +1,4 @@
+from tabulate import tabulate
 import os
 import matplotlib.pyplot as plt
 from itertools import cycle
@@ -24,6 +25,8 @@ parser.add_argument('--expdata',help='plot also experimental data',action="store
 parser.add_argument('--systems',help='List of systems, for which exp. data is plotted: all, pc-Cu (default), nf-Cu, nc-Cu',nargs='+')
 parser.add_argument('--scale',help='RHE (default) or SHE')
 parser.add_argument('--color',help='pH or species (default)')
+parser.add_argument('--title',help='Title of figure')
+parser.add_argument('--name',help='File name of figure')
 
 args = parser.parse_args()
 
@@ -32,6 +35,12 @@ if args.scale is None:
 
 if args.color is None:
     args.color='species'
+
+if args.title is None:
+    args.title='catmap_fig'
+
+if args.name is None:
+    args.name='catmap_fig'
 
 print args.products
 color_pH={
@@ -61,7 +70,8 @@ exp=EXPDATA()
 
 j_log_plot=True
 
-fig=plt.figure(figsize=(5, 7))
+#fig=plt.figure(figsize=(5, 7))
+fig=plt.figure(figsize=(3, 5))
 
 colorlist={}
 colorlist['CO']='r'
@@ -198,18 +208,20 @@ for arg in args.file: #sys.argv[1:]:
     ax2=plt.subplot('212')
     
     ax1.set_title('Polarization')
-    searchedfile=glob(arg+'/catmap_input/*/*.mkm')
+    searchedfile=[s for s in glob(arg+'/catmap_input/*/*.mkm') if 'template' not in s]
     print arg,searchedfile
     try:
         mkm_file = sorted( searchedfile, key = lambda file: os.path.getctime(file))[-1]
+        print('Reading model = {}'.format(mkm_file))
         model = ReactionModel(setup_file = mkm_file)
     except NameError:
         mkm_file = sorted( searchedfile, key = lambda file: os.path.getctime(file))[-3]
+        print('Reading model = {}'.format(mkm_file))
         model = ReactionModel(setup_file = mkm_file)
-    
     #try to read pH from catmap input file:
     if args.pH is None:
         try:
+            print('Reading pH from bulk_ph = {}'.format(model.bulk_ph))
             pH=model.bulk_ph
         except:
             print('Could not find bulk pH, please specify at input')
@@ -224,12 +236,13 @@ for arg in args.file: #sys.argv[1:]:
     #        pH = 7
     else:
         pH=float(args.pH)
+    print('The pH is {}'.format(pH))
     all_pH.append(pH)
     symbol_pH[pH]=symbol
     if color_pH is not None:
         color=color_pH[str(pH)]
-    if args.scale=='SHE':
-        pH=0.
+#    if args.scale=='SHE':
+#        pH=0.
     pdata,dummy=read_data(glob(results_folder+'/*/j_*'))
     if args.elemrates:
         pdata_elem,label_elem=read_data(glob(results_folder+'/*/jelem*'),header=True,dtype='elem')
@@ -260,10 +273,15 @@ for arg in args.file: #sys.argv[1:]:
         else:
             func=ax1.plot
         symbol='' #next(symbols)
+        if args.scale=='SHE':
+            pHtmp=pH
+            pH=0
         if k==0:
             func(x+0.059*pH,y,linestyle+symbol,color=color,label=sp) #,label=arg.split('/')[-1])
         else:
             func(x+0.059*pH,y,linestyle+symbol,color=color)
+        if args.scale=='SHE':
+            pH=pHtmp
     if args.elemrates:
         #first read in the rxn mechanism:
         isp=-1
@@ -294,18 +312,20 @@ for arg in args.file: #sys.argv[1:]:
                 func=ax1.semilogy
             else:
                 func=ax1.plot
+            if args.scale=='SHE':
+                pHtmp=pH
+                pH=0
             func(x+0.059*pH,y,linestyle+symbol,color=color,label=label) #,label=arg.split('/')[-1])
+            if args.scale=='SHE':
+                pH=pHtmp
     for isp,sp in enumerate(cdata):
         x=cdata[sp][:,0]
         y=cdata[sp][:,1]
-        if args.color=='species':
-            color=exp.get_color(sp)
-            if color is None and sp in colorlist:
-                color=colorlist[sp]
-            elif color is None:
-                color='k'
-        elif args.color=='pH':
-            color=color_pH[str(pH)]
+        color=exp.get_color(sp)
+        if color is None and sp in colorlist:
+            color=colorlist[sp]
+        elif color is None:
+            color='k'
         #if sp in symbols:
         #    symbol=symbols[sp]
         #else:
@@ -319,10 +339,15 @@ for arg in args.file: #sys.argv[1:]:
         #    symbol='o'
         print 'the color',k,sp,color
         #linestyle=next(linestyles)
+        if args.scale=='SHE':
+            pHtmp=pH
+            pH=0
         if k==1:
             ax2.plot(x+0.059*pH,y,linestyle+symbol,color=color,label=sp)
         else:
             ax2.plot(x+0.059*pH,y,linestyle+symbol,color=color)
+        if args.scale=='SHE':
+            pH=pHtmp
     if show_legend:
         ax1.legend(fontsize=10)
 #    data=np.loadtxt('data.txt')
@@ -372,16 +397,19 @@ for pH in set(all_pH):
                 system=systems,scale=args.scale,only_points=True,\
                 take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
         elif pH == 6.8 or pH == 7.0:
-            exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
+            #exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
+            #    system=systems,scale=args.scale,only_points=True,\
+            #    take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
+            exp.plot_data(reference=['wuttig','dunwell'],ax=ax1,species=all_prods,pH=['6.8','7.2'],\
                 system=systems,scale=args.scale,only_points=True,\
                 take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
         else:
             print 'TEST',pH
-#            for i,p in enumerate(all_prods):
-#                if p=='CH$_4$':
-#                    all_prods[i]='C$_1$'
-#                elif p=='EtOH':
-#                    all_prods
+            for i,p in enumerate(all_prods):
+                if p=='CH$_4$':
+                    all_prods[i]='C$_1$'
+                elif p=='EtOH':
+                    all_prods
             exp.plot_data(reference=['hori'],ax=ax1,species=all_prods,pH=[str(pH)],\
                 system=systems,scale=args.scale,only_points=True,\
                 take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
@@ -390,9 +418,48 @@ for pH in set(all_pH):
             #    take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
 #ax1=plot_leis_new_data(ax1)
 ax1.set_ylim([1e-5,1e2])
-#ax1.set_xlim([-1.,0.1])
-#ax2.set_xlim([-1.,0.1])
-#ax1.set_ylim([1e-3,1e1])
+
+#def name_to_title(name):
+#    if name=='CHO-H2O-ele*_t':
+#        return 1, 'CHO to CHOH'
+#    elif name=='CH-OH-ele*_t':
+#        return 2, 'CHOH to CH'
+#    elif name=='H2O-CO-ele*_t':
+#        return 0, 'CO to CHO'
+#
+#rprint=[[0,0,0],[0,0,0]]
+#for a in args.title.split(';'):
+#    tmp=a.split() #[aa.strip for aa in a.split()]
+#    if len(tmp)<1:
+#        continue
+#    inx,name=name_to_title(tmp[0])
+#    if tmp[1]=='energy':
+#        inx2=0
+#    else:
+#        inx2=1
+#    rprint[inx2][inx]=tmp[2]
+#
+#print 'rprint = ',rprint
+#pp=''
+#pp+=args.name.replace('_','\_')+'\n'
+#for rr in rprint:
+#    if rr==rprint[0]:
+#        pp+='energy '
+#    else:
+#        pp+='beta '
+#    pp+=' '.join(rr)
+#    if rr !=rprint[-1]:
+#        pp+='\n'
+#print 'TESTING',pp
+#ax1.set_title(pp,fontsize=12)
+#ax1.set_title(args.title.replace('_','-').replace('*',''),fontsize=6) #[a+'\n' for a in args.title.split(';')],fontsize=6)
+ax1.set_xlim([-1.5,-0.8])
+ax2.set_xlim([-1.5,-0.8])
+ax1.set_ylim([1e-8,1e2])
+if 'pc-Au' in systems:
+    ax1.set_xlim([-0.95,-0.25])
+    ax2.set_xlim([-0.95,-0.25])
+    ax1.set_ylim([1e-3,1e1])
 #ax1.set_xlim([-1.4,-1.0])
 #ax2.set_xlim([-1.4,-1.0])
 if args.scale=='RHE':
@@ -402,4 +469,7 @@ else:
     ax1.set_xlabel(r'Voltage vs. SHE (V)')
     ax2.set_xlabel(r'Voltage vs. SHE (V)')
 plt.tight_layout()
+print('Saving to {}'.format(args.name+'.pdf'))
+plt.savefig(args.name+'.pdf')# ,dpi=500)
+    
 plt.show()

@@ -685,13 +685,17 @@ class Model():
             if self.tp.use_convection:
                 u+=str(self.tp.system['flow rate'])
             if self.tp.use_mpb:
-                if len(u)>0:
-                    u+='+'
-                #get index of positive and negative ion:
-                inx_cat=str([i for i,sp in enumerate(self.tp.species) if self.tp.species[sp]['charge']>0][0])
-                inx_an=str([i for i,sp in enumerate(self.tp.species) if self.tp.species[sp]['charge']<0][0])
-                #MPB model due to Kilic, https://www.ncbi.nlm.nih.gov/pubmed/17358343
-                u+="-N_A_const*a^3*(D"+inx_cat+"*cp"+inx_cat+"x+D"+inx_an+"*cp"+inx_an+"x)/(1-a^3*cp"+inx_cat+"*N_A_const-a^3*cp"+inx_an+"*N_A_const)"
+                if self.tp.system['MPB']['species']=='all':
+                    if len(u)>0:
+                        u+='+'
+                    #get index of positive and negative ion:
+                    inx_cat=str([i for i,sp in enumerate(self.tp.species) if self.tp.species[sp]['charge']>0][0])
+                    inx_an=str([i for i,sp in enumerate(self.tp.species) if self.tp.species[sp]['charge']<0][0])
+                    #MPB model due to Kilic, https://www.ncbi.nlm.nih.gov/pubmed/17358343
+                    u+="-N_A_const*a^3*(D"+inx_cat+"*cp"+inx_cat+"x+D"+inx_an+"*cp"+inx_an+"x)/(1-a^3*cp"+inx_cat+"*N_A_const-a^3*cp"+inx_an+"*N_A_const)"
+                else:
+                    inx=str([i for i,sp in enumerate(self.tp.species) if sp == self.tp.system['MPB']['species']][0])
+                    u+="-N_A_const*a^3*(D"+inx+"*cp"+inx+"x)/(1-a^3*cp"+inx+"*N_A_const)"
             if len(u)>0:
                 self.s+='    model.component("comp1").physics("tds").feature("cdm1").set("u", new String[][]{{"'+u+'"}, {"0"}, {"0"}});\n'
 
@@ -909,7 +913,7 @@ class Model():
             self.set("flux_factor", "1", "factor scaling the flux")
 
             if self.tp.use_mpb:
-                self.set("a",str(self.tp.system['ion radius'])+"[m]","Ion size in MPB Model")
+                self.set("a",str(self.tp.system['MPB']['ion radius'])+"[m]","Ion size in MPB Model")
     
         def set(self,par_name,par_exp,par_desc):
             self.s+='    model.param().set(\"{}\",\"{}\",\"{}\");\n'.format(par_name,\
