@@ -58,20 +58,38 @@ tp_ref_data={\
     ##############################################################################################################
     ##############################################################################################################
 
-    'phosphate-base':\
+    'phosphate-acid':\
+        #from Ryu et al. Angew. Chemie (10.1002/anie.201802756)
         {
-        'phosphate-1':  {   'reaction':     'H3PO4 + OH- <-> H2PO4- + H2O',
-                            'constant':     6.5e-3*1000,
-                            'rates':        [7.0,7/6.5e-3]
+        'phosphate-1':  {   'reaction':     'H3PO4 + H+ <-> H2PO4-',
+                            'constant':     0.00629*1000., #6.5e-3*1000,
+                            'rates':        [5.6e8,8.9e10/1000.]
                         },
-        'phosphate-2':  {   'reaction':     'H2PO4- + OH- <-> HPO42- + H2O',
-                            'constant':     6.2e-8*1000,
-                            'rates':        [7.0,7/6.2e-8]
+        'phosphate-2':  {   'reaction':     'H2PO4- + H+ <-> HPO42-',
+                            'constant':     6.32e-8*1000., #6.2e-8*1000,
+                            'rates':        [6.32e2, 1e10/1000.] #7.0,7/6.2e-8]
                         },
-        'phosphate-3':  {   'reaction':     'HPO42- + OH- <-> PO43- + H2O',
-                            'constant':     3.6e-13*1000,                     #https://www.chem.fsu.edu/chemlab/Mastering/PhosphateBuffers.htm
-                            'rates':        [7.0,7/3.6e-13]                       #guessed
+        'phosphate-3':  {   'reaction':     'HPO42- + H+ <-> PO43-',
+                            'constant':     4.47e-13*1000., #3.6e-13*1000,                     #https://www.chem.fsu.edu/chemlab/Mastering/PhosphateBuffers.htm
+                            'rates':        [4.47e-3, 1e10/1000.] #7.0,7/3.6e-13]                       #guessed
                         },
+        },
+    'citrate-acid':\
+        #from Ryu et al. Angew. Chemie (10.1002/anie.201802756)
+        #all estimated assuming diffusion limitations
+        {
+        'citrate-1':    {   'reaction':     'H3Cit + H+ <-> H2Cit-',
+                            'constant':     0.000745*1000,
+                            'rates':        [7.45e6,1e10/1000.]
+                        },
+        'citrate-2':    {   'reaction':     'H2Cit- + H+ <-> HCit2-',
+                            'constant':     1.73e-5*1000,
+                            'rates':        [1.73e5,1e10/1000.]
+                        },
+        'citrate-3':    {   'reaction':     'HCit2- + H+ <-> Cit3-',
+                            'constant':     4.02e-7*1000,
+                            'rates':        [4.02e3,1e10/1000.]
+                        }
         },
     'borate-base':\
         {
