@@ -9,7 +9,8 @@ from copy import deepcopy
 from comsol_model import Model
 from comsol_reader import Reader
 from shutil import rmtree
-
+import datetime
+import time
 
 class Comsol():
     """This class does all operations need to write input files for comsol and read output"""
@@ -59,6 +60,9 @@ class Comsol():
             os.makedirs(self.results_folder)
         else:
             self.tp.logger.info(' | CS | Removing old folder and creating new one')
+            ts= time.time()
+            st = datetime.datetime.fromtimestamp(ts).strftime('%Y%m%d_%H%M%S')
+            os.rename(self.results_folder+'/'+java_name,self.results_folder+'/../'+'comsol_backup_'+st+'_'+java_name)
             rmtree(self.results_folder)
             os.makedirs(self.results_folder)
 
@@ -74,25 +78,39 @@ class Comsol():
         self.tp.logger.info(' | CS | Compiling COMSOL.')
         self.tp.logger.info(self.exe+" compile "+os.getcwd()+'/'+java_name+' | tee comsol_compile.out')
         call(self.exe+" compile "+os.getcwd()+'/'+java_name+' | tee comsol_compile.out',shell=True)
-        for line in open(os.getcwd()+'/'+java_name):
-            self.tp.logger.debug(line+'\n')
+#        for line in open(os.getcwd()+'/'+java_name):
+#            self.tp.logger.debug(line+'\n')
         #call(self.exe+" compile "+'/'.join([root,file_name])+' | tee '+self.results_folder+'/comsol_compile.out',shell=True)
         self.tp.logger.info(' | CS | Compiling {}'.format(os.getcwd()+'/'+java_name))
 
         ##RUN
         self.tp.logger.info(' | CS | Starting COMSOL.')
+        self.tp.logger.info(' | CS | Running {}'.format(os.getcwd()+'/'+class_name))
+
         self.tp.logger.debug(self.exe+" batch -inputfile "+os.getcwd()+'/'+class_name+' | tee comsol_run.out')
         #call(self.exe+" batch -inputfile "+'/'.join([root,'.'.join(file_name.split('.')[:-1])+".class"])+' | tee '+self.results_folder+'/comsol_run.out',shell=True)
         #call(self.exe+" batch -inputfile "+os.getcwd()+'/'+class_name+' | tee comsol_run.out',shell=True)
         call(self.exe+" batch -recoverydir $HOME/.comsol/v53a/recoveries -inputfile "+os.getcwd()+'/'+class_name+' | tee '+self.results_folder+'/comsol_run.out',shell=True)
         #self.tp.logger.info('Running {}'.format('/'.join([root,'.'.join(file_name.split('.')[:-1])+".class"])))
-        self.tp.logger.info(' | CS | Running {}'.format(os.getcwd()+'/'+class_name))
 
         os.chdir(root)
 
-        ##READING RESULTS
-        self.tp.logger.info(' | CS | Reading COMSOL output.')
-        self.read_output()
+        error=self.check_error()
+        if error:
+            self.tp.logger.warning(' | CS | Error appeared in COMSOL calculation, skipping output reader and trying to converge by changing numeric settings')
+        else:
+            ##READING RESULTS
+            self.tp.logger.info(' | CS | Reading COMSOL output.')
+            self.read_output()
+
+    def check_error(self):
+        error=False
+        file_name=self.results_folder+'/comsol_run.out'
+        for line in open(file_name,'r'):
+#            if 'Not all parameter steps returned.' in line:
+            if 'Failed to find a solution for all parameters' in line:
+                error=True
+        return error
 
     def write_input(self,file_name='',model_name='',model_comments=''):
         model=Model(file_name,model_name,model_comments,outputs=self.outputs,\

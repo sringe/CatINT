@@ -242,14 +242,19 @@ class Model():
 
             j=self.std_index
             i=self.sol_index
-            par_values_str=''
-            count=0
-            for p in par_values:
-                count+=1
-                par_values_str+=str(p)+' '
-                if count%5==0:
-                    par_values_str+='\"\n      +\"'
-            par_values_str=par_values_str[:-1]+'\"'
+
+            #create a list of internal descriptors for which COMSOL will do the calculation
+            if self.comsol_args['desc_method'].startswith('internal'):
+                par_values_str=''
+                count=0
+                for p in par_values:
+                    count+=1
+                    par_values_str+=str(p)+' '
+                    if count%5==0:
+                        par_values_str+='\"\n      +\"'
+                par_values_str=par_values_str[:-1]+'\"'
+            else:
+                par_values_str=par_values
 
             self.s+='    model.sol("sol'+str(i)+'").feature("s1").create("p1", "Parametric");\n'
             self.s+='    model.sol("sol'+str(i)+'").feature("s1").feature("p1").active(true);\n'
@@ -676,7 +681,10 @@ class Model():
                 self.s+=' */\n'
                 rate_str=get_rates()
                 for index,rate in rate_str:
-                    self.s+='    model.component("comp1").physics("tds").feature("reac1").set("R_cp'+str(index)+'", "'+rate+'");\n'
+                    if 'ramp' in self.comsol_args and 'reactions' in self.comsol_args['ramp']:
+                        self.s+='    model.component("comp1").physics("tds").feature("reac1").set("R_cp'+str(index)+'", "flux_factor*('+rate+')");\n'
+                    else:
+                        self.s+='    model.component("comp1").physics("tds").feature("reac1").set("R_cp'+str(index)+'", "'+rate+'");\n'
                         
                 self.s+='    model.component("comp1").physics("tds").feature("reac1").active(true);\n'
             if self.tp.use_convection or self.tp.use_mpb:
@@ -902,9 +910,20 @@ class Model():
             self.set("T", "{}[K]".format(self.tp.system['temperature']), "Temperature")
             self.set("RT", "R_const*T", "Molar gas constant * Temperature")
             self.set("phiM", str(self.tp.system['phiM'])+'[V]', "Metal Potential")
-            self.set("phiPZC", str(self.tp.system['phiPZC'])+'[V]', "Metal PZC Potential")
+            if 'ramp' in self.comsol_args and 'PZC' in self.comsol_args['ramp']:
+                #metal potential should work just fine
+                PZC_init=self.tp.system['phiM']
+                self.set("phiPZC", '(-0.8+flux_factor)[V]', "Metal PZC Potential")
+#                self.set("phiPZC", '('+str(PZC_init)+'+flux_factor*('+str(self.tp.system['phiPZC'])+'-'+str(PZC_init)+'))[V]', "Metal PZC Potential")
+            else:
+                self.set("phiPZC", str(self.tp.system['phiPZC'])+'[V]', "Metal PZC Potential")
             self.set("lambdaD", str(self.tp.debye_length)+'[m]', "Debye length")
-            self.set("CS", str(self.tp.system['Stern capacitance']/1e6)+'[F/cm^2]', "Stern layer capacitance")
+            if 'ramp' in self.comsol_args and 'CS' in self.comsol_args['ramp']:
+                #2e-5 F/cm^2 (20 mikroF/cm^2) usually works fine, so ramp it up from there to the value that was requested
+                CS_init=2e-5
+                self.set("CS", '('+str(CS_init)+'+flux_factor*'+str(self.tp.system['Stern capacitance']/1e6-CS_init)+')[F/cm^2]', "Stern layer capacitance")
+            else:
+                self.set("CS", str(self.tp.system['Stern capacitance']/1e6)+'[F/cm^2]', "Stern layer capacitance")
             self.set("eps_r", self.tp.system['epsilon'], "relative permittivity")
             self.set("epsS", 'epsilon0_const*'+str(self.tp.system['Stern epsilon']), "Stern layer effective permittivity")
             self.set("lambdaS", "epsS/CS", "Stern layer thickness")

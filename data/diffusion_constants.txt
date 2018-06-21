@@ -1,0 +1,42 @@
+#this file contains diffusion constants in m^2/s at room temperature 25 degrees
+#references:
+#[1] Vanysek,In CRC Handbook of Chemistry and Physics (Internal Version); W. M.Haynes, Ed.; CRC Press/Taylor & Francis: Boca Raton, FL, 2017
+#[2] “Diffusion of Gases in Water”, In CRC Handbook of Chemistry and Physics (Internal Version); W. M.Haynes, Ed.; CRC Press/Taylor & Francis: Boca Raton, FL, 2017. (p. 6-180)
+#[3] CRC Hanbook, p. 6-181, DIFFUSION COEFFICIENTS IN LIQUIDS AT INFINITE DILUTION
+#[4] HUQ, Diffusion Coefficient of Ethylene Gas in Water.
+#[5] [20] E.L. Cussler, Diffusion-Mass Transfer in Fluid Systems, 3rd edition Cambridge University
+#Press, U.K., 2007 (middle from 20 and 30 degree value)
+#gases
+hydrogen        H2              H_2             5.11e-9         [2]
+carbon_dioxide  CO2             CO_2            1.91e-9         [2]
+carbon_monoxide CO              CO              2.23e-9         [5]
+oxygen          O2              O_2             2.42e-9         [2]
+#acids/buffers
+phosphoric_acid H3PO4           H_3PO_4         8.8e-10         [1]
+h2_phosphate    H2PO4-          H_2PO_4^-       9.59e-10        [1]
+h_phosphate     HPO42-          HPO_4^{2-}      7.59e-10        [1]
+phophate        PO43-           PO_4^{3-}       8.24e-10        [1]
+h3_citrate      H3Cit           H_3Cit          8.87e-10        [1]
+h2_citrate      H2Cit-          H_2Cit^-        7.99e-10        [1]
+h_citrate       HCit2-          HCit^{2-}       7.e-10          [1]
+citrate         Cit3-           Cit^{3-}        6.23e-10        [1]
+bicarbonate     HCO3-           HCO_3^-         1.185e-9        [1]
+carboxylate     CO32-           CO_3^{2-}       0.923e-9        [1]
+#cations
+hydronium       H+              H^+             9.311e-9        [1]
+potassium       K+              K^+             1.957e-9        [1]
+sodium          Na+             Na^+            1.334e-9        [1]
+ammonium        NH4+            NH_4^+          1.957e-9        [1]
+lithium         Li+             Li^+            1.029e-9        [1]
+calcium         Ca2+            Ca^{2+}         0.792e-9        [1]
+#anions
+hydroxide       OH-             OH^-            5.273e-9        [1]
+chloride        Cl-             Cl^-            2.032e-9        [1]
+iodide          I-              I^-             2.045e-9        [1]
+bromide         Br-             Br^-            2.080e-9        [1]
+perchlorate     ClO4-           ClO_4^-         1.792e-9        [1]
+#hydrocarbons
+methane         CH4             CH_4            1.49e-9         [3]
+ethylene        C2H4            C_2H_4          1.51e-9         [4]
+acetic_acid     CH3CO2H         CH_3CO_2H       1.29e-9         [3]
+ethanol         CH3CH2OH        CH_3CH_2OH      1.24e-9         [3]
