@@ -524,7 +524,9 @@ class Transport(object):
             not yet in the species list
         2) add all diffusion coefficients
         3) add all Henry constants
-        3) initialize bulk_concentrations based on Henry constant (if requested)
+        4) add all charges (convert from symbols)
+        5) initialize bulk_concentration based on electroneutrality
+        6) initialize bulk_concentrations based on Henry constant (if requested)
          and buffer equilibria
         """
         reacting_species=[]
