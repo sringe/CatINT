@@ -696,8 +696,6 @@ class Transport(object):
             if 'bulk_concentration' not in self.species[sp]:
                 self.logger.warning('No bulk_concentration provided for species {}, setting it to zero'.format(sp))
                 self.species[sp]['bulk_concentration']=0.0
-        print 'species after',self.species
-        sys.exit()
 
     def initialize_comsol(self,comsol_args):
         """
