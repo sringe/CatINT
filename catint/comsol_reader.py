@@ -26,7 +26,7 @@ class Reader():
                 toutput=output[0]
             else:
                 toutput=output
-            self.tp.logger.info(' | CS | Reading output {}.txt'.format(toutput))
+            self.tp.logger.info('|    | CS | Reading output {}.txt'.format(toutput))
             if output in ['concentrations','electrode_flux']:
                 species_var=True
             else:
@@ -95,7 +95,8 @@ class Reader():
                     update_last=False
                     if self.comsol_args['par_name']!='flux_factor':
                         alldata_inx=(i)/len(set(variable_names))
-                    if (i)/len(set(variable_names))+1==len(self.comsol_args['par_values']):
+
+                    if (i)/len(set(variable_names))+1==len(par_values_list): #self.comsol_args['par_values']):
                         update_last=True
                     if self.comsol_args['par_name']=='flux_factor' and not update_last:
                         #if the par name is the flux, this means we run comsol with a single descriptor set and we are only interested in the last value
@@ -144,8 +145,8 @@ class Reader():
                             if 'H+' in self.tp.species:
                                 if sp=='H+':
                                     if float(lss)<0:
-                                        self.tp.logger.warning(' | CS | COMSOL returned negative proton concentrations, pH cannot be evaluated.')
-                                        self.tp.logger.warning(' | CS | Do not update pH here to enable futher calculation.')
+                                        self.tp.logger.warning('|    | CS | COMSOL returned negative proton concentrations, pH cannot be evaluated.')
+                                        self.tp.logger.warning('|    | CS | Do not update pH here to enable futher calculation.')
                                     else:
                                         if update_last:
                                             self.tp.system['surface_pH']=-np.log10(float(lss)/1000.) #+self.tp.system['bulk_pH']
@@ -153,8 +154,8 @@ class Reader():
                             elif 'OH-' in self.tp.species:
                                 if sp=='OH-':
                                     if float(lss)<0:
-                                        self.tp.logger.warning(' | CS | COMSOL returned negative hydroxide concentrations, pH cannot be evaluated.')
-                                        self.tp.logger.warning(' | CS | Do not update pH here to enable futher calculation.')
+                                        self.tp.logger.warning('|    | CS | COMSOL returned negative hydroxide concentrations, pH cannot be evaluated.')
+                                        self.tp.logger.warning('|    | CS | Do not update pH here to enable futher calculation.')
                                     else:
                                         if update_last:
                                             self.tp.system['surface_pH']=14+np.log10(float(lss)/1000.)
@@ -185,33 +186,24 @@ class Reader():
                         if update_last:
                             if geo=='domain':
                                 self.tp.system[var_name].append(float(lss))
+                                if x==0.0 and var_name=='efield':
+                                    self.tp.system['Stern_efield']=self.tp.system['efield'][0]*1e-10*self.tp.system['epsilon']/self.tp.system['Stern epsilon']
                             else:
                                 self.tp.system[var_name]=float(lss)
                         if geo=='domain':
                             self.tp.alldata[alldata_inx]['system'][var_name].append(float(lss))
+                            if x==0.0 and var_name=='efield':
+                                self.tp.alldata[alldata_inx]['system']['Stern_efield']=float(lss)*1e-10*self.tp.system['epsilon']/self.tp.system['Stern epsilon']
                         else:
                             self.tp.alldata[alldata_inx]['system'][var_name]=float(lss)
                 continue
 
             if start_reading:
-#                variable_names=re.findall('([a-zA-Z0-9]+)\s+\(.*\)\s+@\s+[a-zA-Z]+\s?=\s?-?\d+\.?\d?',line)
-#                variable_names=re.findall('([a-zA-Z]+\d+)',line)
-#                if '(' not in line:
-#                    variable_names=re.findall('([a-zA-Z_]+[0-9]*)\s+\@',line)
-#                else:
-#                    variable_names=re.findall('([a-zA-Z_]+[0-9]*)\s*\(',line)
-#                variable_names=re.findall('\s+([a-zA-Z]+\d{0,4})(?:\s)(\(.*?\))?',line)
-#                a=re.findall('\s+([a-zA-Z.]+\d{0,4})(?:\s)(\(.*?\))?\s@',line)
                 a=re.findall('\s+([a-zA-Z.\_-]{1,50}\d{0,4})(?:\s)(\(.*?\))?\s*@',line)
                 variable_names,variable_units=map(list, zip(*a))
-#                if species_var:
-#                    variable_names=re.findall('([a-zA-Z]+[0-9]+)',line)
-#                else:
-#                    variable_names=re.findall('([a-zA-Z]+)\s*\(',line)
-#                par_names=re.findall('[a-zA-Z0-9]+\s+\(.*\)\s+@\s+([a-zA-Z]+)\s?=\s?-?\d+\.?\d?',line)
                 par_names=re.findall('@\s?([a-zA-Z0-9]+)',line)
-                #par_values=re.findall('[a-zA-Z0-9]+\s+\(.*\)\s+@\s+[a-zA-Z]+\s?=\s?(-?\d+\.?\d?)',line)
                 par_values=re.findall('[a-zA-Z0-9]+\s?=\s?(-?\d+.?\d*)',line)
+                par_values_list=sorted([float(v) for v in set(par_values)])
                 initialized=True
             if not line.startswith('% Description'):
                 continue
@@ -222,4 +214,3 @@ class Reader():
             self.tp.xmax=max(xmesh)
             self.tp.nx=len(xmesh)
             self.tp.dx=self.tp.xmax/self.tp.nx
-
