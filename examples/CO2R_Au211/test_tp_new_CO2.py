@@ -85,7 +85,7 @@ system=\
     'bulk_pH':pH_i,
     'potential drop':'Stern', #either Stern or full
     'Stern epsilon':4,
-#    'MPB': {'ion radius':5.0e-10,'species':'K+'} #ion size in angstrom, method can be 'z' or 'z:z'
+    'MPB': {'ion radius':4.0e-10,'species':'K+'} #ion size in angstrom, method can be 'z' or 'z:z'
     }
 ###########################################################################
 

@@ -697,8 +697,8 @@ class Model():
                     if len(u)>0:
                         u+='+'
                     #get index of positive and negative ion:
-                    inx_cat=str([i for i,sp in enumerate(self.tp.species) if self.tp.species[sp]['charge']>0][0])
-                    inx_an=str([i for i,sp in enumerate(self.tp.species) if self.tp.species[sp]['charge']<0][0])
+                    inx_cat=str([i+1 for i,sp in enumerate(self.tp.species) if self.tp.species[sp]['charge']>0][0])
+                    inx_an=str([i+1 for i,sp in enumerate(self.tp.species) if self.tp.species[sp]['charge']<0][0])
                     #MPB model due to Kilic, https://www.ncbi.nlm.nih.gov/pubmed/17358343
                     u+="-N_A_const*a^3*(D"+inx_cat+"*cp"+inx_cat+"x+D"+inx_an+"*cp"+inx_an+"x)/(1-a^3*cp"+inx_cat+"*N_A_const-a^3*cp"+inx_an+"*N_A_const)"
                 else:
