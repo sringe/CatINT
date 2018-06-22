@@ -30,7 +30,7 @@ class Comsol():
         else:
             exe_path='/Applications/COMSOL53a/Multiphysics/bin/comsol'
         if not os.path.exists(exe_path):
-            self.tp.logger.error(' | CS | Binary path {} of COMSOL does not exist'.format(exe_path))
+            self.tp.logger.error('|    | CS | Binary path {} of COMSOL does not exist'.format(exe_path))
         self.tp.path=path
         self.exe=exe_path
         root=os.getcwd()
@@ -45,7 +45,7 @@ class Comsol():
 #        if not hasattr(self.tp,'comsol_outputs_data'):
 #            self.tp.comsol_outputs_data={}
 
-    def run(self,label=''):
+    def run(self,label='',restart=False):
         #only_last: if True, update only the data in the global arrays and dictionaries
         #corresponding to the last parameter in the parameter list
 
@@ -55,52 +55,60 @@ class Comsol():
 
         self.results_folder=self.results_folder_base+'_'+label
 
+        if not restart:
         #create results folder
-        if not os.path.isdir(self.results_folder):
-            os.makedirs(self.results_folder)
-        else:
-            self.tp.logger.info(' | CS | Removing old folder and creating new one')
-            ts= time.time()
-            st = datetime.datetime.fromtimestamp(ts).strftime('%Y%m%d_%H%M%S')
-            os.rename(self.results_folder+'/'+java_name,self.results_folder+'/../'+'comsol_backup_'+st+'_'+java_name)
-            rmtree(self.results_folder)
-            os.makedirs(self.results_folder)
+            if not os.path.isdir(self.results_folder):
+                os.makedirs(self.results_folder)
+            else:
+                self.tp.logger.info('|    | CS | Removing old folder and creating new one')
+##                ts= time.time()
+##                st = datetime.datetime.fromtimestamp(ts).strftime('%Y%m%d_%H%M%S')
+#                os.rename(self.results_folder+'/'+java_name,self.results_folder+'/../'+'comsol_backup_'+st+'_'+java_name)
+                rmtree(self.results_folder)
+                os.makedirs(self.results_folder)
 
         root=os.getcwd()
 
         ##WRITE INPUT
-        self.write_input(file_name=java_name,\
-            model_name=model_name)
+        if not restart:
+            self.write_input(file_name=java_name,\
+                model_name=model_name)
+
+            #copy input file
+            ts= time.time()
+            st = datetime.datetime.fromtimestamp(ts).strftime('%Y%m%d_%H%M%S')
+            copy(java_name,self.results_folder+'/../'+'comsol_backup_'+st+'_'+java_name)
+
 
         os.chdir(self.results_folder)
 
-        ##COMPILE
-        self.tp.logger.info(' | CS | Compiling COMSOL.')
-        self.tp.logger.info(self.exe+" compile "+os.getcwd()+'/'+java_name+' | tee comsol_compile.out')
-        call(self.exe+" compile "+os.getcwd()+'/'+java_name+' | tee comsol_compile.out',shell=True)
+        if not restart:
+            ##COMPILE
+            self.tp.logger.info('|    | CS | Compiling COMSOL.')
+            self.tp.logger.info('|    | CS | Compiling {}'.format(os.getcwd()+'/'+java_name))
+            self.tp.logger.info(self.exe+" compile "+os.getcwd()+'/'+java_name+' | tee comsol_compile.out')
+            call(self.exe+" compile "+os.getcwd()+'/'+java_name+' | tee comsol_compile.out',shell=True)
 #        for line in open(os.getcwd()+'/'+java_name):
 #            self.tp.logger.debug(line+'\n')
         #call(self.exe+" compile "+'/'.join([root,file_name])+' | tee '+self.results_folder+'/comsol_compile.out',shell=True)
-        self.tp.logger.info(' | CS | Compiling {}'.format(os.getcwd()+'/'+java_name))
 
         ##RUN
-        self.tp.logger.info(' | CS | Starting COMSOL.')
-        self.tp.logger.info(' | CS | Running {}'.format(os.getcwd()+'/'+class_name))
+        if restart:
+            self.tp.logger.info('|    | CS | Restarting COMSOL (starting from previous calculation)')
+        else:
+            self.tp.logger.info('|    | CS | Starting COMSOL.')
 
-        self.tp.logger.debug(self.exe+" batch -inputfile "+os.getcwd()+'/'+class_name+' | tee comsol_run.out')
-        #call(self.exe+" batch -inputfile "+'/'.join([root,'.'.join(file_name.split('.')[:-1])+".class"])+' | tee '+self.results_folder+'/comsol_run.out',shell=True)
-        #call(self.exe+" batch -inputfile "+os.getcwd()+'/'+class_name+' | tee comsol_run.out',shell=True)
+        #recover and continue restart the run, if it failed before starting from the current result
         call(self.exe+" batch -recoverydir $HOME/.comsol/v53a/recoveries -inputfile "+os.getcwd()+'/'+class_name+' | tee '+self.results_folder+'/comsol_run.out',shell=True)
-        #self.tp.logger.info('Running {}'.format('/'.join([root,'.'.join(file_name.split('.')[:-1])+".class"])))
 
         os.chdir(root)
 
         error=self.check_error()
         if error:
-            self.tp.logger.warning(' | CS | Error appeared in COMSOL calculation, skipping output reader and trying to converge by changing numeric settings')
+            self.tp.logger.warning('|    | CS | Error appeared in COMSOL calculation.')
         else:
             ##READING RESULTS
-            self.tp.logger.info(' | CS | Reading COMSOL output.')
+            self.tp.logger.info('|    | CS | Reading COMSOL output.')
             self.read_output()
 
     def check_error(self):

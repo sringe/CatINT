@@ -20,11 +20,11 @@ educt='CO2' #CO2 or CO
 
 nx=200
 dflux_comsol=0.01
-grid_factor=200
+grid_factor=100
 mix_scf=0.1
 nphi=20
 
-include_ramp_comsol=['PZC','CS','reactions']
+include_ramp_comsol=['PZC','CS'] #,'reactions']
 
 tau_scf=0.01
 
@@ -53,7 +53,7 @@ if use_elreac:
 electrode_reactions={
     #'H2':           {   'reaction':            '2 H2O + 2 e- -> H2 + 2 OH-'},
     #'H2':           {   'reaction':             '2 HCO3- + 2 e- -> H2 + 2 CO32-'},
-    'H2':           {   'reaction':            '2 H2O + 2 e- -> H2 + 2 OH-'},
+#    'H2':           {   'reaction':            '2 H2O + 2 e- -> H2 + 2 OH-'},
     'CO':           {   'reaction':             'CO2 + H2O + 2 e- -> CO + 2 OH-'},
 #    'CH4':          {   'reaction':            'CO2 + 6 H2O + 8 e- -> CH4 + 8 OH-'},
 #    'CH3CH2OH':     {   'reaction':            '2 CO2 + 9 H2O + 12 e- -> CH3CH2OH + 12 OH-'},
@@ -85,7 +85,7 @@ system=\
     'bulk_pH':pH_i,
     'potential drop':'Stern', #either Stern or full
     'Stern epsilon':4,
-    'MPB': {'ion radius':5.0e-10,'species':'K+'} #ion size in angstrom, method can be 'z' or 'z:z'
+#    'MPB': {'ion radius':5.0e-10,'species':'K+'} #ion size in angstrom, method can be 'z' or 'z:z'
     }
 ###########################################################################
 
@@ -113,7 +113,6 @@ species=\
 #    'CO2':              {'bulk_concentration':   'Henry'},
     'OH-':              {'bulk_concentration':   OHm_i},
     'HCO3-':            {'bulk_concentration':  0.5*1000.},
-    'H2':               {},
     'CO':               {},
     'CO2':              {}
     }
@@ -147,7 +146,6 @@ comsol_args['ramp']=include_ramp_comsol
 #RATE EQUATIONS/FLUXES
 ###########################################################################
 
-species['H2']['flux']='catmap' #H2_rate
 species['CO']['flux']='catmap' #CO_rate
 species['CO2']['flux']='catmap' #CO2_rate
 

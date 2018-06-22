@@ -191,7 +191,7 @@ def settings(ax,prop,d_sel):
             label+=r' at $\phi_M$ = {} V'.format(round(d_sel,3))
     elif prop=='efield':
         xlabel=r'x ($\AA$)'
-        ylabel=r'E (V/m)'
+        ylabel=r'$E_x$ (V/\AA)'
         if args.scale=='RHE':
             label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
         else:
@@ -210,6 +210,9 @@ def settings(ax,prop,d_sel):
             label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
         else:
             label+=r' at $\phi_M$ = {} V'.format(round(d_sel,3))
+    elif prop=='Stern_efield':
+        xlabel='Voltage vs. '+args.scale+' (V)'
+        ylabel=r'$E_{\mathrm{Stern},x}$ (V/\AA)'
     else:
         xlabel=''
         ylabel=''
@@ -291,6 +294,8 @@ def plot(prop):
             y=tp.alldata[d_sel_inx]['system'][prop]
             if prop=='charge_density':
                 y=[yy/1000/unit_F for yy in y]
+            elif prop=='efield':
+                y=[yy*1e-10 for yy in y]
             #if prop=='pKa':
                 #y=[-(14.5-8.49)/19.8*rho_c/unit_F/1000.+14.5 for rho_c in tp.alldata[d_sel_inx]['system']['charge_density']]
                 
