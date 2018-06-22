@@ -95,8 +95,10 @@ class Reader():
                     update_last=False
                     if self.comsol_args['par_name']!='flux_factor':
                         alldata_inx=(i)/len(set(variable_names))
-
-                    if (i)/len(set(variable_names))+1==len(par_values_list): #self.comsol_args['par_values']):
+            
+                    #print par_values_list
+                    #print variable_names
+                    if (i+1)>len(par_values_list)*len(set(variable_names))-len(set(variable_names)):
                         update_last=True
                     if self.comsol_args['par_name']=='flux_factor' and not update_last:
                         #if the par name is the flux, this means we run comsol with a single descriptor set and we are only interested in the last value
@@ -203,7 +205,7 @@ class Reader():
                 variable_names,variable_units=map(list, zip(*a))
                 par_names=re.findall('@\s?([a-zA-Z0-9]+)',line)
                 par_values=re.findall('[a-zA-Z0-9]+\s?=\s?(-?\d+.?\d*)',line)
-                par_values_list=sorted([float(v) for v in set(par_values)])
+                par_values_list=sorted(list(set([float(v) for v in set(par_values)])))
                 initialized=True
             if not line.startswith('% Description'):
                 continue
