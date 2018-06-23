@@ -614,7 +614,10 @@ class Transport(object):
             #finally initialize bulk concentrations from buffer equilibria
             #1) check if the # of unknown concentrations matches the # of equations
             #count the number of constraints:
-            count_constraints=len([con for con in constraints])
+            if constraints is not None:
+                count_constraints=len([con for con in constraints])
+            else:
+                count_constraints=0
             count_unknowns=0
             unknowns=[]
             for sp in electrolyte_species:
@@ -665,33 +668,36 @@ class Transport(object):
                         K=tp_ref_data['electrolyte_reactions'][e][p]['constant']
                         #evaluate products:
                         fs_prod=1
-                        fs_sum=0
                         for pp in products:
                             if pp in self.system['exclude species']:
                                 continue
                             if 'bulk_concentration' in self.species[pp]:
                                 fs_prod*=self.species[pp]['bulk_concentration']
-                                fs_sum+=self.species[pp]['bulk_concentration']*self.species[pp]['charge']
                             else:
                                 fs_prod*=var[pp]
-                                fs_sum+=var[pp]*self.species[pp]['charge']
                         is_prod=1
-                        is_sum=0
                         for ee in educts:
                             if ee in self.system['exclude species']:
                                 continue
                             if 'bulk_concentration' in self.species[ee]:
                                 is_prod*=self.species[ee]['bulk_concentration']
-                                is_sum+=self.species[ee]['bulk_concentration']*self.species[ee]['charge']
                             else:
                                 is_prod*=var[ee]
-                                is_sum+=var[ee]*self.species[ee]['charge']
                         eq+=(fs_prod/is_prod-K,)
-                    if constraints is not None:
-                        for con in constraints:
-                            if con=='counter_ion_concentration':
-                                eq+=(constraints[con]+\
-                                    (fs_sum+is_sum),)
+                #sum all concentrations
+                if constraints is not None:
+                    sum_conc=0.0
+                    for sp in electrolyte_species:
+                        if sp in self.system['exclude species']:
+                            continue
+                        if 'bulk_concentration' in self.species[sp]:
+                            sum_conc+=self.species[sp]['bulk_concentration']*self.species[sp]['charge']
+                        else:
+                            sum_conc+=var[sp]*self.species[sp]['charge']
+                    for con in constraints:
+                        if con=='counter_ion_concentration':
+                            eq+=(constraints[con]+\
+                                sum_conc,)
                 return eq
 
             #solve equation system
@@ -721,6 +727,7 @@ class Transport(object):
             if 'bulk_concentration' not in self.species[sp]:
                 self.logger.warning('| CI | No bulk_concentration provided for species {}, setting it to zero'.format(sp))
                 self.species[sp]['bulk_concentration']=0.0
+                
 
     def initialize_comsol(self,comsol_args):
         """
