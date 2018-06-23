@@ -13,7 +13,7 @@ from read_data import read_data
 
 only_catmap=False
 
-pH_i=7.2 #6.8
+pH_i=6.8
 nobuffer=False #True #False #True #False #True #False #True 
 
 educt='CO2' #CO2 or CO
@@ -84,8 +84,8 @@ system=\
     'Stern capacitance': 60, #std: 20
     'bulk_pH':pH_i,
     'potential drop':'Stern', #either Stern or full
-    'Stern epsilon':4,
-    'MPB': {'ion radius':4.0e-10,'species':'K+'} #ion size in angstrom, method can be 'z' or 'z:z'
+    'Stern epsilon':5,
+    'MPB': {'ion radius':6.0e-10,'species':'K+'} #ion size in angstrom, method can be 'z' or 'z:z'
     }
 ###########################################################################
 
@@ -110,11 +110,11 @@ if not include_protons:
 species=\
     {
     'K+':             {'bulk_concentration':   'charge_neutrality'},
-#    'CO2':              {'bulk_concentration':   'Henry'},
+    'CO2':              {'bulk_concentration':   'Henry'},
     'OH-':              {'bulk_concentration':   OHm_i},
-    'HCO3-':            {'bulk_concentration':  0.5*1000.},
+#    'HCO3-':            {'bulk_concentration':  0.1*1000.},
     'CO':               {},
-    'CO2':              {}
+#    'CO2':              {}
     }
 
 if include_protons:

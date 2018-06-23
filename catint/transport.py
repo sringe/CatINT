@@ -536,18 +536,27 @@ class Transport(object):
             for e in electrode_reactions:
                 a=electrode_reactions[e]['reaction']
                 for r in sum([aa.split(' + ') for aa in a.split('->')],[]):
-                    rx=re.findall('([a-zA-Z]{1,10}[a-zA-Z-0-9]+)',r.strip())[0]
+                    print 'e',e
+                    print 'r',r
+                    rx=re.findall('([a-zA-Z]{1,10}[a-zA-Z-+0-9]+)',r.strip())[0]
                     reacting_species.append(rx)
                     if rx not in self.species and rx not in self.system['exclude species']:
                         self.species[rx]={}
         reacting_species=set(reacting_species)
         electrolyte_species=[]
+        constraints=None
+        for ie,e in enumerate(electrolyte_reactions):
+            if type(e)==dict and 'constraints' in e:
+                constraints=electrolyte_reactions[ie]['constraints']
+                del electrolyte_reactions[ie]
+                continue
         if electrolyte_reactions is not None:
-            for e in electrolyte_reactions:
+            for ie,e in enumerate(electrolyte_reactions):
                 for p in tp_ref_data['electrolyte_reactions'][e]:
                     a=tp_ref_data['electrolyte_reactions'][e][p]['reaction']
                     for r in sum([aa.split(' + ') for aa in a.split('->')],[]):
-                        rx=re.findall('([a-zA-Z]{1,10}[a-zA-Z-0-9]+)',r.strip())[0]
+                        print e,p,r
+                        rx=re.findall('([a-zA-Z]{1,10}[a-zA-Z-+0-9]+)',r.strip())[0]
                         electrolyte_species.append(rx)
                         if rx not in self.species and rx not in self.system['exclude species']:
                             self.species[rx]={}
@@ -598,10 +607,14 @@ class Transport(object):
                 else:
                     self.logger.error('| CI | Henry constant was selected for initializing bulk concentrations of {}, but Henry constant was not found in {}/data/henry_constants.txt'.format(sp,self.catint_path))
                     sys.exit()
+        #GET CHARGES AND NCATOMS FROM CHEMICAL SYMBOLS
+        self.charges=self.symbol_reader(self.species)
 
         if electrolyte_reactions is not None:
             #finally initialize bulk concentrations from buffer equilibria
             #1) check if the # of unknown concentrations matches the # of equations
+            #count the number of constraints:
+            count_constraints=len([con for con in constraints])
             count_unknowns=0
             unknowns=[]
             for sp in electrolyte_species:
@@ -612,8 +625,8 @@ class Transport(object):
             for e in electrolyte_reactions:
                 for p in tp_ref_data['electrolyte_reactions'][e]:
                     count_reactions+=1
-            if count_unknowns!=count_reactions:
-                self.logger.error('| CI | Number of unknown concentrations {} does not match the number of buffer equilibria equations {}. Cannot determine missing concentrations'.format(count_unknowns,count_reactions))
+            if count_unknowns!=count_reactions+count_constraints:
+                self.logger.error('| CI | Number of unknown concentrations {} does not match the number of buffer equilibria equations {}. Cannot determine missing concentrations'.format(count_unknowns,count_reactions+count_constraints))
                 sys.exit()
 
             #2) Solve the non-linear system of equations
@@ -646,39 +659,47 @@ class Transport(object):
                 for e in electrolyte_reactions:
                     for p in tp_ref_data['electrolyte_reactions'][e]:
                         a=tp_ref_data['electrolyte_reactions'][e][p]['reaction']
-                        educts=[re.findall('([a-zA-Z]{1,10}[a-zA-Z-0-9]+)',b.strip())[0] for b in a.split('->')[0].split(' + ')]
+                        educts=[re.findall('([a-zA-Z]{1,10}[a-zA-Z-+0-9]+)',b.strip())[0] for b in a.split('->')[0].split(' + ')]
                         products=[re.findall('([a-zA-Z]{1,10}[a-zA-Z-0-9]+)',b.strip())[0] for b in a.split('->')[1].split(' + ')]
                         #equilibrium constant
                         K=tp_ref_data['electrolyte_reactions'][e][p]['constant']
                         #evaluate products:
                         fs_prod=1
+                        fs_sum=0
                         for pp in products:
                             if pp in self.system['exclude species']:
                                 continue
                             if 'bulk_concentration' in self.species[pp]:
                                 fs_prod*=self.species[pp]['bulk_concentration']
+                                fs_sum+=self.species[pp]['bulk_concentration']*self.species[pp]['charge']
                             else:
                                 fs_prod*=var[pp]
+                                fs_sum+=var[pp]*self.species[pp]['charge']
                         is_prod=1
+                        is_sum=0
                         for ee in educts:
                             if ee in self.system['exclude species']:
                                 continue
                             if 'bulk_concentration' in self.species[ee]:
                                 is_prod*=self.species[ee]['bulk_concentration']
+                                is_sum+=self.species[ee]['bulk_concentration']*self.species[ee]['charge']
                             else:
                                 is_prod*=var[ee]
+                                is_sum+=var[ee]*self.species[ee]['charge']
                         eq+=(fs_prod/is_prod-K,)
-
+                    if constraints is not None:
+                        for con in constraints:
+                            if con=='counter_ion_concentration':
+                                eq+=(constraints[con]+\
+                                    (fs_sum+is_sum),)
                 return eq
 
             #solve equation system
-            a =  fsolve(equations, (1,)*len(unknowns))
+            a =  fsolve(equations, (1,)*(count_unknowns))
 
             for i in range(len(unknowns)):
                 self.species[unknowns[i]]['bulk_concentration'] = a[i]
 
-        #GET CHARGES AND NCATOMS FROM CHEMICAL SYMBOLS
-        self.charges=self.symbol_reader(self.species)
 
         #finally add the remaining concentration for which charge neutrality was requested:
         count=0
