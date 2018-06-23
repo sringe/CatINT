@@ -694,6 +694,7 @@ class Model():
                 u+=str(self.tp.system['flow rate'])
             if self.tp.use_mpb:
                 if self.tp.system['MPB']['species']=='all':
+                    #this model is for z:z electrolyte
                     if len(u)>0:
                         u+='+'
                     #get index of positive and negative ion:
@@ -702,7 +703,8 @@ class Model():
                     #MPB model due to Kilic, https://www.ncbi.nlm.nih.gov/pubmed/17358343
                     u+="-N_A_const*a^3*(D"+inx_cat+"*cp"+inx_cat+"x+D"+inx_an+"*cp"+inx_an+"x)/(1-a^3*cp"+inx_cat+"*N_A_const-a^3*cp"+inx_an+"*N_A_const)"
                 else:
-                    inx=str([i for i,sp in enumerate(self.tp.species) if sp == self.tp.system['MPB']['species']][0])
+                    #this model corrects for finite size of only the selected species (should be the counter-ions)
+                    inx=str([i+1 for i,sp in enumerate(self.tp.species) if sp == self.tp.system['MPB']['species']][0])
                     u+="-N_A_const*a^3*(D"+inx+"*cp"+inx+"x)/(1-a^3*cp"+inx+"*N_A_const)"
             if len(u)>0:
                 self.s+='    model.component("comp1").physics("tds").feature("cdm1").set("u", new String[][]{{"'+u+'"}, {"0"}, {"0"}});\n'
