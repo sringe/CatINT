@@ -189,13 +189,17 @@ class Reader():
                             if geo=='domain':
                                 self.tp.system[var_name].append(float(lss))
                                 if x==0.0 and var_name=='efield':
-                                    self.tp.system['Stern_efield']=self.tp.system['efield'][0]*1e-10*self.tp.system['epsilon']/self.tp.system['Stern epsilon']
+                                    self.tp.system['Stern_efield']=float(lss)*1e-10*self.tp.system['epsilon']/self.tp.system['Stern epsilon']
+                                elif x==0.0 and var_name=='potential':
+                                    self.tp.system['Stern_potential']=float(lss)
                             else:
                                 self.tp.system[var_name]=float(lss)
                         if geo=='domain':
                             self.tp.alldata[alldata_inx]['system'][var_name].append(float(lss))
                             if x==0.0 and var_name=='efield':
                                 self.tp.alldata[alldata_inx]['system']['Stern_efield']=float(lss)*1e-10*self.tp.system['epsilon']/self.tp.system['Stern epsilon']
+                            elif x==0.0 and var_name=='potential':
+                                self.tp.alldata[alldata_inx]['system']['Stern_potential']=float(lss)
                         else:
                             self.tp.alldata[alldata_inx]['system'][var_name]=float(lss)
                 continue

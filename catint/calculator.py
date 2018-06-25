@@ -411,7 +411,7 @@ class Calculator():
                 self.tp.comsol_args['par_values']='range(0,'+str(self.tp.comsol_args['dflux'])+',1)'
                 self.tp.comsol_args['parameter']['grid_factor_bound'][0]=grid_factor
                 self.tp.logger.info('|    | CS | Load/Non-linearity ramping with an interval of {}'.format(self.tp.comsol_args['dflux']))
-            if nruns>5:
+            elif nruns>5:
                 self.tp.logger.warning('|    | CS | 5x restart did not help, trying to increase grid density')
                 self.tp.comsol_args['parameter']['grid_factor_bound'][0]=str(int(float(self.tp.comsol_args['parameter']['grid_factor_bound'][0])*1.5))
                 self.tp.logger.info('|    | CS | Maximal discretization of boundary is now {}'.format(self.tp.comsol_args['parameter']['grid_factor_bound']))

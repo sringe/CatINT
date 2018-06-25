@@ -22,7 +22,7 @@ nx=200
 dflux_comsol=0.01
 grid_factor=100
 mix_scf=0.1
-nphi=20
+nphi=25
 
 include_ramp_comsol=['PZC','CS'] #,'reactions']
 
@@ -84,7 +84,7 @@ system=\
     'Stern capacitance': 60, #std: 20
     'bulk_pH':pH_i,
     'potential drop':'Stern', #either Stern or full
-    'Stern epsilon':5,
+    'Stern epsilon':10,
     'MPB': {'ion radius':6.0e-10,'species':'K+'} #ion size in angstrom, method can be 'z' or 'z:z'
     }
 ###########################################################################
@@ -110,6 +110,7 @@ if not include_protons:
 species=\
     {
     'K+':             {'bulk_concentration':   'charge_neutrality'},
+    #'Cl-':            {'bulk_concentration':    (1.45-0.09)*1000.},
     'CO2':              {'bulk_concentration':   'Henry'},
     'OH-':              {'bulk_concentration':   OHm_i},
 #    'HCO3-':            {'bulk_concentration':  0.1*1000.},
@@ -178,7 +179,7 @@ potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-0.6,-2.2,nphi))}
+    descriptors={'phiM':list(np.linspace(-0.4,-2.2,nphi))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
