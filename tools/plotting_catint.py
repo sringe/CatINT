@@ -132,7 +132,8 @@ def plot_xinyans_equation():
 
 c_list=['C'+str(i) for i in range(10)]
 colors=cycle(c_list)
-ls_list=['-',':','--']
+ls_list=['-','--',':']
+ls_list=['--',':']
 linestyles=cycle(ls_list)
 #m_list=['x','o','1','d','D','2']
 m_list=['']
@@ -213,6 +214,12 @@ def settings(ax,prop,d_sel):
     elif prop=='Stern_efield':
         xlabel='Voltage vs. '+args.scale+' (V)'
         ylabel=r'$E_{\mathrm{Stern},x}$ (V/\AA)'
+    elif prop=='Stern_potential':
+        xlabel='Voltage vs. '+args.scale+' (V)'
+        ylabel=r'$\phi^\ddagger$ (V)'
+    elif prop=='Potential_drop':
+        xlabel='Voltage vs. '+args.scale+' (V)'
+        ylabel=r'\phi^\mathrm{M}-\phi^\ddagger$ (V)'
     else:
         xlabel=''
         ylabel=''
@@ -282,8 +289,8 @@ def plot(prop):
                     y=[yy/RF for yy in y]
                     func=ax.semilogy
                 elif prop=='surface_concentration':
-                    y=[yy/1000. for yy in y]
-                    func=ax.plot #ax.semilogy #ax.plot
+                    y=[(yy)/1000. for yy in y]
+                    func=ax.semilogy #ax.plot
                 func(x,y,ls+m,color=color,label=sp)
                 #if prop=='electrode_current_density':
                 #    ax=plot_leis_new_data(ax)

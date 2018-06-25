@@ -163,7 +163,8 @@ class Transport(object):
                     #be applied. species can be either a particular species name or 'all'. if all, only a single cationic
                     #and anionic species with the same charge are implemented so far.
                 'potential drop',           #Potential drop, either Stern or full
-                'Stern_efield' #electric field in Stern layer
+                'Stern_efield', #electric field in Stern layer
+                'Stern_potential' #electrostatic potential at the OHP (outside of Stern layer)
                 ]
 
         #go over input data and put in some defaults if none
@@ -208,6 +209,7 @@ class Transport(object):
                 'exclude species': ['H2O','e-'],
                 'pressure':1,
                 'Stern_efield':0.0,
+                'Stern_potential':0.0,
                 'potential drop':'Stern'}
         if system is None:
             self.system=system_defaults

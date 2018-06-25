@@ -50,6 +50,7 @@ color_pH={
     '7.0':'C4',
     '7.15':'C3',
     '7.2':'C3',
+    '8.0':'C2',
     '9.0':'C2',
     '10.0':'C2',
     '12.2':'C3',
@@ -455,12 +456,13 @@ ax1.set_ylim([1e-5,1e2])
 #ax1.set_title(pp,fontsize=12)
 #ax1.set_title(args.title.replace('_','-').replace('*',''),fontsize=6) #[a+'\n' for a in args.title.split(';')],fontsize=6)
 ax1.set_xlim([-1.5,-0.8])
+#ax2.set_xlim([-1.2,-0.4])
 ax2.set_xlim([-1.5,-0.8])
-ax1.set_ylim([1e-8,1e2])
+ax1.set_ylim([1e-6,1e1])
 if 'pc-Au' in systems:
-    ax1.set_xlim([-0.95,-0.25])
-    ax2.set_xlim([-0.95,-0.25])
-    ax1.set_ylim([1e-3,1e1])
+    ax1.set_xlim([-1.2,-0.3])
+    ax2.set_xlim([-1.2,-0.3])
+    ax1.set_ylim([1e-8,1e1])
 #ax1.set_xlim([-1.4,-1.0])
 #ax2.set_xlim([-1.4,-1.0])
 if args.scale=='RHE':
