@@ -13,13 +13,13 @@ from read_data import read_data
 
 only_catmap=True
 
-pH_i=7.0 #12.2 #12.2 #6.8
+pH_i=6.0 #12.2 #12.2 #6.8
 nobuffer=True #False #True #False #True #False #True 
 
 educt='CO2' #CO2 or CO
 
 nx=200
-nflux_comsol=100
+dflux_comsol=0.01
 grid_factor=200
 mix_scf=0.5
 nphi=15
@@ -275,7 +275,7 @@ comsol_args['parameter']['RF']=[RF,'Roughness Factor']
 comsol_args['parameter']['grid_factor_domain']=[str(grid_factor_domain),'Grid factor']
 comsol_args['parameter']['grid_factor_bound']=[str(grid_factor_bound),'Grid factor']
 comsol_args['parameter']['grid_factor']=[str(grid_factor),'Grid factor']
-comsol_args['nflux']=nflux_comsol
+comsol_args['dflux']=dflux_comsol
 
 ###########################################################################
 #RATE EQUATIONS/FLUXES
@@ -324,7 +324,6 @@ for potential in potentials:
     #        'gradient': {'bulk':0.0}}
         'potential':{'bulk':0.0},
         'wall':system['phiM']}
-
 
     ###########################################################################
     #SETUP AND RUN

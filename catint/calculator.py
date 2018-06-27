@@ -292,7 +292,7 @@ class Calculator():
                 self.mix_scf*=0.9
                 self.tp.logger.info('| CI | Accuracy is still < 1e-1, decreasing mixing factor in order to speed up the convergence')
                 step_to_check=istep
-            self.tp.logger.info('| CI | Solving transport step {}. Current accuracy in current density = {} mV/cm^2'.format(istep,scf_accuracy))
+            self.tp.logger.info('| CI | Solving transport step {}. Current accuracy in current density = {} mA/cm^2'.format(istep,scf_accuracy))
 
             #linear mixing
             if istep>2:
@@ -374,8 +374,8 @@ class Calculator():
         was_nan=False
         #save the grid_factor and dflux before changing them in the loop
         grid_factor=float(self.tp.comsol_args['parameter']['grid_factor'][0])
-        dflux=self.tp.comsol_args['dflux']
-        dflux_step=dflux
+        dramp=self.tp.comsol_args['solver_settings']['ramp']['dramp']
+        dramp_step=dramp
         #if there were error's in the calculation or nan's in surface, run convergence loop
         nruns=0
         while nan or error:
@@ -396,21 +396,21 @@ class Calculator():
             elif nruns>20:
                 self.tp.logger.warning('|    | CS | 5x restart did again not help, maximize all settings as a final try')
                 self.tp.comsol_args['parameter']['grid_factor_bound'][0]=str(int(float(self.tp.comsol_args['parameter']['grid_factor_bound'][0])*1.5))
-                self.tp.comsol_args['dflux']/=2.
-                self.tp.comsol_args['par_values']='range(0,'+str(self.tp.comsol_args['dflux'])+',1)'
+                self.tp.comsol_args['solver_settings']['ramp']['dramp']/=2.
+                self.tp.comsol_args['par_values']='range(0,'+str(self.tp.comsol_args['solver_settings']['ramp']['dramp'])+',1)'
                 self.tp.logger.info('|    | CS | Maximal discretization of boundary is now {}'.format(self.tp.comsol_args['parameter']['grid_factor_bound']))
-                self.tp.logger.info('|    | CS | Load/Non-linearity ramping with an interval of {}'.format(self.tp.comsol_args['dflux']))
+                self.tp.logger.info('|    | CS | Load/Non-linearity ramping with an interval of {}'.format(self.tp.comsol_args['solver_settings']['ramp']['dramp']))
             elif nruns>15:
                 self.tp.logger.warning('|    | CS | 5x restart with finer ramping did not help, finally try to increase both ramping and grid density')
                 self.tp.comsol_args['parameter']['grid_factor_bound'][0]=str(int(float(self.tp.comsol_args['parameter']['grid_factor_bound'][0])*1.5))
                 self.tp.logger.info('|    | CS | Maximal discretization of boundary is now {}'.format(self.tp.comsol_args['parameter']['grid_factor_bound']))
-                self.tp.logger.info('|    | CS | Load/Non-linearity ramping with an interval of {}'.format(self.tp.comsol_args['dflux']))
+                self.tp.logger.info('|    | CS | Load/Non-linearity ramping with an interval of {}'.format(self.tp.comsol_args['solver_settings']['ramp']['dramp']))
             elif nruns>10:
                 self.tp.logger.warning('|    | CS | 5x restart with finer grid did not help trying to reduce load/non-linearity ramping with initial grid')
-                self.tp.comsol_args['dflux']/=2.
-                self.tp.comsol_args['par_values']='range(0,'+str(self.tp.comsol_args['dflux'])+',1)'
+                self.tp.comsol_args['solver_settings']['ramp']['dramp']/=2.
+                self.tp.comsol_args['par_values']='range(0,'+str(self.tp.comsol_args['solver_settings']['ramp']['dramp'])+',1)'
                 self.tp.comsol_args['parameter']['grid_factor_bound'][0]=grid_factor
-                self.tp.logger.info('|    | CS | Load/Non-linearity ramping with an interval of {}'.format(self.tp.comsol_args['dflux']))
+                self.tp.logger.info('|    | CS | Load/Non-linearity ramping with an interval of {}'.format(self.tp.comsol_args['solver_settings']['ramp']['dramp']))
             elif nruns>5:
                 self.tp.logger.warning('|    | CS | 5x restart did not help, trying to increase grid density')
                 self.tp.comsol_args['parameter']['grid_factor_bound'][0]=str(int(float(self.tp.comsol_args['parameter']['grid_factor_bound'][0])*1.5))
@@ -447,5 +447,5 @@ class Calculator():
             nan=nan_in_surface()
 
         #reset the grid_factor to original value:
-        self.tp.comsol_args['dflux']=dflux
+        self.tp.comsol_args['solver_settings']['ramp']['dramp']=dramp
         self.tp.comsol_args['parameter']['grid_factor_domain'][0]=str(grid_factor)

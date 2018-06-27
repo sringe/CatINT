@@ -90,15 +90,17 @@ class Reader():
                         #we need to read only the first line, otherwise break
                         break
                     var_name=variable_names[i]
-                    par_name=par_names[i]
-                    par_value=float(par_values[i])
+                    if not self.comsol_args['solver_settings']['solver_sequence']=='tds_elstat':
+                        par_name=par_names[i]
+                        par_value=float(par_values[i])
                     update_last=False
                     if self.comsol_args['par_name']!='flux_factor':
                         alldata_inx=(i)/len(set(variable_names))
             
                     #print par_values_list
                     #print variable_names
-                    if (i+1)>len(par_values_list)*len(set(variable_names))-len(set(variable_names)):
+                    if (i+1)>len(par_values_list)*len(set(variable_names))-len(set(variable_names)) or\
+                        self.comsol_args['solver_settings']['solver_sequence']=='tds_elstat':
                         update_last=True
                     if self.comsol_args['par_name']=='flux_factor' and not update_last:
                         #if the par name is the flux, this means we run comsol with a single descriptor set and we are only interested in the last value
@@ -205,11 +207,19 @@ class Reader():
                 continue
 
             if start_reading:
-                a=re.findall('\s+([a-zA-Z.\_-]{1,50}\d{0,4})(?:\s)(\(.*?\))?\s*@',line)
+                if self.comsol_args['solver_settings']['solver_sequence']=='tds_elstat':
+                    #we do not use the flux_factor in the final step
+                    a=re.findall('([a-zA-Z.\_-]{1,50}\d{0,4})(?:\s)(\(.*?\))?\s*',line)
+                    a=a[1:]
+                    par_names='flux_factor'
+                    par_values=[1.0]
+                    par_values_list=[1.0]
+                else:
+                    a=re.findall('\s+([a-zA-Z.\_-]{1,50}\d{0,4})(?:\s)(\(.*?\))?\s*@',line)
+                    par_names=re.findall('@\s?([a-zA-Z0-9]+)',line)
+                    par_values=re.findall('[a-zA-Z0-9]+\s?=\s?(-?\d+.?\d*)',line)
+                    par_values_list=sorted(list(set([float(v) for v in set(par_values)])))
                 variable_names,variable_units=map(list, zip(*a))
-                par_names=re.findall('@\s?([a-zA-Z0-9]+)',line)
-                par_values=re.findall('[a-zA-Z0-9]+\s?=\s?(-?\d+.?\d*)',line)
-                par_values_list=sorted(list(set([float(v) for v in set(par_values)])))
                 initialized=True
             if not line.startswith('% Description'):
                 continue

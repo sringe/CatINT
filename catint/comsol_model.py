@@ -116,20 +116,20 @@ class Model():
             self.s+=' */\n'
             label_append=''
             if 'concentrations' in outputs:
-                self.export_data('cp','mol/m^3', 'Concentrations'+label_append, self.results_folder+'/concentrations.txt',1)
+                self.export_data('cp','mol/m^3', 'Concentrations'+label_append, self.results_folder+'/concentrations.txt',export_count=1)
             if 'electrostatics' in outputs:
-                self.export_data(['phi','es.Ex'],['V','V/m'],'Potential, Field'+label_append, self.results_folder+'/electrostatics.txt',2)
+                self.export_data(['phi','es.Ex'],['V','V/m'],'Potential, Field'+label_append, self.results_folder+'/electrostatics.txt',export_count=2)
             if 'electrode_flux' in outputs:
-                self.export_data('j','mol/m^2/s','Electrode flux'+label_append, self.results_folder+'/electrode_flux.txt',3,geo='b1')
+                self.export_data('j','mol/m^2/s','Electrode flux'+label_append, self.results_folder+'/electrode_flux.txt',export_count=3,geo='b1')
             if 'rho_charge' in outputs:
-                self.export_data(['rho_charge'],['e*mol/m^3'],'Local Charge Density'+label_append, self.results_folder+'/rho_charge.txt',4)
+                self.export_data(['rho_charge'],['e*mol/m^3'],'Local Charge Density'+label_append, self.results_folder+'/rho_charge.txt',export_count=4)
             i=0
             for out in outputs:
                 if out in self.comsol_args['outputs']:
                     i+=1
                     self.export_data([out[0]],[out[1]],out[0]+label_append, self.results_folder+'/'+out[0]+'.txt',i+4)
 
-        def export_data(self,var_name='cp',unit_name='mol/m^3',label='Concentrations',file_name='results/concentrations.txt',export_count=1,geo='d1'):
+        def export_data(self,var_name='cp',unit_name='mol/m^3',label='Concentrations',file_name='results/concentrations.txt',export_count=1,geo='d1',dset_count=1):
             """exports a quantity of interest. var_name/unit_name/label can be either a single string, in which case
             it is assumed that var_name should be exported for each individual species. or it can be a list, over which
             to iterate the output"""
@@ -158,6 +158,9 @@ class Model():
                         c_str+=", "
                         unit_str+=", "
                         name_str+=", "
+            if self.comsol_args['solver_settings']['solver_sequence']=='tds_elstat':
+                #assign corret dataset to this export
+                self.s+='    model.result().export("data'+str(export_count)+'").set("data", "dset5");\n'
             self.s+='    model.result().export("data'+str(export_count)+'").set("expr", new String[]{'+c_str+'});\n'
             self.s+='    model.result().export("data'+str(export_count)+'").set("unit", new String[]{'+unit_str+'});\n'
             self.s+='    model.result().export("data'+str(export_count)+'").set("descr", new String[]{'+name_str+'});\n'
@@ -187,29 +190,179 @@ class Model():
             self.sol_index=0
             std_sol_index={}
 
+            if self.comsol_args['solver_settings']['solver_sequence'] is not None:
+                #a particular solver sequence has been requested
+                #in this case all the studies input will be neglected
+                if self.comsol_args['solver_settings']['solver_sequence']=='tds_elstat':
+                    studies=self.tds_elstat(par_values=par_values,par_unit='')
+            else:
 
-            #1st define all studies
-            for i,study in enumerate(studies):
-                #setup study and assign required solver
-                getattr(self,study)(i+1)
+                #1st define all studies
+                for i,study in enumerate(studies):
+                    #setup study and assign required solver
+                    getattr(self,study)(i+1)
         
-            #2nd define all solvers required for studies
-            for study in studies:
-                #set up specific solver for study
-                self.sol(study)
+                #2nd define all solvers required for studies
+                for study in studies:
+                    #set up specific solver for study
+                    self.sol(study)
 
-                #add parametric sweep if requested
-                if self.comsol_args['solver']=='parametric':
-                    self.add_feature(study,'param',\
-                        par_name=par_name,par_values=par_values,\
-                        par_unit='',par_method=par_method)
+                    #add parametric sweep if requested
+                    if self.comsol_args['solver']=='parametric':
+                        self.add_feature(study,'param',\
+                            par_name=par_name,par_values=par_values,\
+                            par_unit='',par_method=par_method)
 
-                self.sol_rm_feature('fcDef')
+                    self.sol_rm_feature('fcDef')
 
-            #run all solver's with assigned studies
-            for i,study in enumerate(studies):
-                #run solver
-                self.run(i+1)
+                #run all solver's with assigned studies
+                for i,study in enumerate(studies):
+                    #run solver
+                    self.run(i+1)
+
+        def tds_elstat(self,**kwargs):
+            study='stat'
+            if kwargs is not None:
+                locals().update(kwargs)
+                if 'initstep' not in kwargs:
+                    initstep=0.01
+                if 'minstep' not in kwargs:
+                    minstep=1e-6
+                if 'maxiter' not in kwargs:
+                    if study=='stat':
+                        maxiter=50
+                    elif study=='time':
+                        maxiter=8
+                if 'damp' not in kwargs:
+                    damp=0.9
+                if 'stol' not in kwargs:
+                    stol=1e-3
+                par_values=kwargs['par_values']
+                par_unit=kwargs['par_unit']
+            else:
+                initstep=0.01
+                minstep=1e-6
+                if study=='stat':
+                    maxiter=50
+                elif study=='time':
+                    maxiter=8
+                damp=0.9
+                stol=1e-4
+            #create a list of internal descriptors for which COMSOL will do the calculation
+            if self.comsol_args['desc_method'].startswith('internal'):
+                par_values_str=''
+                count=0
+                for p in par_values:
+                    count+=1
+                    par_values_str+=str(p)+' '
+                    if count%5==0:
+                        par_values_str+='\"\n      +\"'
+                par_values_str=par_values_str[:-1]+'\"'
+            else:
+                par_values_str=par_values
+            def ffc(number):
+                number=str(number)
+                number.replace('e','E')
+                return number
+            self.s+='    model.study().create("std1");\n'
+            self.s+='    model.study("std1").create("stat2", "Stationary");\n'
+            self.s+='    model.study("std1").create("stat", "Stationary");\n'
+            self.s+='    model.study("std1").feature("stat2")\n'
+            self.s+='         .set("activate", new String[]{"es", "off", "tds", "on", "frame:spatial1", "on"});\n'
+            self.s+='    model.study("std1").feature("stat2").set("activateCoupling", new String[]{"pc1", "off", "scdc1", "off"});\n'
+            self.s+='    model.study("std1").feature("stat")\n'
+            self.s+='         .set("activate", new String[]{"es", "on", "tds", "off", "frame:spatial1", "on"});\n'
+            self.s+='    model.study("std1").feature("stat").set("activateCoupling", new String[]{"pc1", "on", "scdc1", "off"});\n'
+            self.s+='    model.study().create("std2");\n'
+            self.s+='    model.study("std2").create("stat", "Stationary");\n'
+
+            self.s+='    model.sol().create("sol1");\n'
+            self.s+='    model.sol("sol1").study("std1");\n'
+            self.s+='    model.sol("sol1").attach("std1");\n'
+            self.s+='    model.sol("sol1").create("st1", "StudyStep");\n'
+            self.s+='    model.sol("sol1").create("v1", "Variables");\n'
+            self.s+='    model.sol("sol1").create("s1", "Stationary");\n'
+            self.s+='    model.sol("sol1").create("su1", "StoreSolution");\n'
+            self.s+='    model.sol("sol1").create("st2", "StudyStep");\n'
+            self.s+='    model.sol("sol1").create("v2", "Variables");\n'
+            self.s+='    model.sol("sol1").create("s2", "Stationary");\n'
+            self.s+='    model.sol("sol1").feature("s1").create("p1", "Parametric");\n'
+            self.s+='    model.sol("sol1").feature("s1").create("fc1", "FullyCoupled");\n'
+            self.s+='    model.sol("sol1").feature("s1").create("d1", "Direct");\n'
+            self.s+='    model.sol("sol1").feature("s1").feature().remove("fcDef");\n'
+            self.s+='    model.sol("sol1").feature("s2").create("p1", "Parametric");\n'
+            self.s+='    model.sol("sol1").feature("s2").create("fc1", "FullyCoupled");\n'
+            self.s+='    model.sol("sol1").feature("s2").feature().remove("fcDef");\n'
+            self.s+='    model.sol().create("sol3");\n'
+            self.s+='    model.sol("sol3").study("std2");\n'
+            self.s+='    model.sol("sol3").attach("std2");\n'
+            self.s+='    model.sol("sol3").create("st1", "StudyStep");\n'
+            self.s+='    model.sol("sol3").create("v1", "Variables");\n'
+            self.s+='    model.sol("sol3").create("s1", "Stationary");\n'
+            self.s+='    model.sol("sol3").feature("s1").create("fc1", "FullyCoupled");\n'
+            self.s+='    model.sol("sol3").feature("s1").create("d1", "Direct");\n'
+            self.s+='    model.sol("sol3").feature("s1").feature().remove("fcDef");\n'
+
+            self.s+='    model.study("std1").feature("stat2").label("Stationary TDS");\n'
+            self.s+='    model.study("std1").feature("stat2").set("useparam", true);\n'
+            self.s+='    model.study("std1").feature("stat2").set("pname", new String[]{"flux_factor"});\n' #par_name
+            self.s+='    model.study("std1").feature("stat2").set("plistarr", new String[]{"'+par_values_str+'"});\n'
+            self.s+='    model.study("std1").feature("stat2").set("punit", new String[]{"'+par_unit+'"});\n'
+            self.s+='    model.study("std1").feature("stat").label("Stationary ES");\n'
+            self.s+='    model.study("std1").feature("stat").set("useparam", true);\n'
+            self.s+='    model.study("std1").feature("stat").set("pname", new String[]{"PZC_factor"});\n'
+            self.s+='    model.study("std1").feature("stat").set("plistarr", new String[]{"'+par_values_str+'"});\n'
+            self.s+='    model.study("std1").feature("stat").set("punit", new String[]{""});\n'
+            self.s+='    model.study("std2").feature("stat").set("useinitsol", true);\n'
+            self.s+='    model.study("std2").feature("stat").set("initmethod", "sol");\n'
+            self.s+='    model.study("std2").feature("stat").set("initstudy", "std1");\n'
+            self.s+='    model.study("std2").feature("stat").set("solnum", "auto");\n'
+
+            #study step 1
+            self.s+='    model.sol("sol1").attach("std1");\n'
+            self.s+='    model.sol("sol1").feature("v1").set("clistctrl", new String[]{"p1"});\n'
+            self.s+='    model.sol("sol1").feature("v1").set("cname", new String[]{"flux_factor"});\n'
+            self.s+='    model.sol("sol1").feature("v1").set("clist", new String[]{"'+par_values_str+'"});\n'
+
+            #solution 1: pure tds problem, tune up flux_factor
+            self.s+='    model.sol("sol1").feature("s1").set("probesel", "none");\n'
+            self.s+='    model.sol("sol1").feature("s1").feature("p1").set("pname", new String[]{"flux_factor"});\n'
+            self.s+='    model.sol("sol1").feature("s1").feature("p1").set("plistarr", new String[]{"'+par_values_str+'"});\n'
+            self.s+='    model.sol("sol1").feature("s1").feature("p1").set("punit", new String[]{""});\n'
+            self.s+='    model.sol("sol1").feature("s1").feature("fc1").set("initstep", '+ffc(initstep)+');\n'
+            self.s+='    model.sol("sol1").feature("s1").feature("fc1").set("minstep", '+ffc(minstep)+');\n'
+            self.s+='    model.sol("sol1").feature("s1").feature("fc1").set("maxiter", '+ffc(maxiter)+');\n'
+            self.s+='    model.sol("sol1").feature("s1").feature("d1").set("linsolver", "pardiso");\n'
+
+            #study step 2
+            self.s+='    model.sol("sol1").feature("st2").set("studystep", "stat");\n'
+            #initialize with solution of std1
+            self.s+='    model.sol("sol1").feature("v2").set("initmethod", "sol");\n'
+            self.s+='    model.sol("sol1").feature("v2").set("initsol", "sol1");\n'
+            self.s+='    model.sol("sol1").feature("v2").set("solnum", "auto");\n'
+            self.s+='    model.sol("sol1").feature("v2").set("notsolmethod", "sol");\n'
+            self.s+='    model.sol("sol1").feature("v2").set("notsol", "sol1");\n'
+            self.s+='    model.sol("sol1").feature("v2").set("notsolnum", "auto");\n'
+            self.s+='    model.sol("sol1").feature("v2").set("clistctrl", new String[]{"p1"});\n'
+            self.s+='    model.sol("sol1").feature("v2").set("cname", new String[]{"PZC_factor"});\n'
+            self.s+='    model.sol("sol1").feature("v2").set("clist", new String[]{"'+par_values_str+'"});\n'
+            self.s+='    model.sol("sol1").feature("s2").set("probesel", "none");\n'
+            self.s+='    model.sol("sol1").feature("s2").feature("p1").set("pname", new String[]{"PZC_factor"});\n'
+            self.s+='    model.sol("sol1").feature("s2").feature("p1").set("plistarr", new String[]{"'+par_values_str+'"});\n'
+            self.s+='    model.sol("sol1").feature("s2").feature("p1").set("punit", new String[]{""});\n'
+            self.run(1)
+            self.s+='    model.sol("sol3").attach("std2");\n'
+            self.s+='    model.sol("sol3").feature("v1").set("initmethod", "sol");\n'
+            self.s+='    model.sol("sol3").feature("v1").set("initsol", "sol1");\n'
+            self.s+='    model.sol("sol3").feature("v1").set("solnum", "auto");\n'
+            self.s+='    model.sol("sol3").feature("s1").set("stol", "'+ffc(stol)+'");\n' #relative tolerance (default 1e-3)
+            self.s+='    model.sol("sol3").feature("s1").feature("fc1").set("initstep", '+ffc(initstep)+');\n'
+            self.s+='    model.sol("sol3").feature("s1").feature("fc1").set("minstep", '+ffc(minstep)+');\n'
+            self.s+='    model.sol("sol3").feature("s1").feature("fc1").set("maxiter", '+ffc(maxiter)+');\n'
+            self.s+='    model.sol("sol3").feature("s1").feature("d1").set("nliniterrefine", true);\n'
+            self.s+='    model.result().dataset().create("dset5", "Solution");\n'
+            self.s+='    model.result().dataset("dset5").set("solution", "sol3");\n'
+            self.run(3)
 
         def stat(self,sol_index):
             self.std_index+=1
@@ -354,6 +507,10 @@ class Model():
                 self.s+='    model.sol("sol'+str(j)+'").feature("s1").feature("fc1").set("minstep", '+ffc(minstep)+');\n'
                 self.s+='    model.sol("sol'+str(j)+'").feature("s1").feature("fc1").set("maxiter", '+ffc(maxiter)+');\n'
                 self.s+='    model.sol("sol'+str(j)+'").feature("s1").set("stol", "'+ffc(stol)+'");\n' #relative tolerance (default 1e-3)
+                if 'direct' in self.comsol_args['solver_settings'] and \
+                        'nliniterrefine' in self.comsol_args['solver_settings']['direct'] and\
+                        self.comsol_args['solver_settings']['direct']['nliniterrefine']:
+                    self.s+='    model.sol("sol'+str(j)+'").feature("s1").feature("d1").set("nliniterrefine", true);\n'
                 ##end fc1
             elif study=='time':
                 self.s+='    model.sol("sol'+str(j)+'").feature("v1").set("clist", new String[]{"'+ffc(min(self.tp.tmesh_init))+','+ffc(self.tp.dt_init)+', '+ffc(self.tp.tmax_init)+'"});\n'
@@ -674,14 +831,17 @@ class Model():
                     i+=1
                     if len(rate)>0:
                         rates_new.append([i,rate])
+                    else:
+                        rates_new.append([i,'0.0'])
                 return rates_new
             if self.tp.use_electrolyte_reactions:
                 self.s+='/*\n'
                 self.s+=' *REACTIONS\n'
                 self.s+=' */\n'
                 rate_str=get_rates()
+                species_names=[sp for sp in self.tp.species]
                 for index,rate in rate_str:
-                    if 'ramp' in self.comsol_args and 'reactions' in self.comsol_args['ramp']:
+                    if 'reactions' in self.comsol_args['solver_settings']['ramp']['names']:
                         self.s+='    model.component("comp1").physics("tds").feature("reac1").set("R_cp'+str(index)+'", "flux_factor*('+rate+')");\n'
                     else:
                         self.s+='    model.component("comp1").physics("tds").feature("reac1").set("R_cp'+str(index)+'", "'+rate+'");\n'
@@ -689,23 +849,38 @@ class Model():
                 self.s+='    model.component("comp1").physics("tds").feature("reac1").active(true);\n'
             if self.tp.use_convection or self.tp.use_mpb:
                 self.s+='    model.component("comp1").physics("tds").prop("AdvancedSettings").set("ConvectiveTerm", "cons");\n'
+            if self.tp.use_mpb:
+                #we have to define a fake convective term defined separately for each species:
+                species_names=[sp for sp in self.tp.species]
+                for sp in self.tp.species:
+                    index=species_names.index(sp)+1
+                    self.s+='    model.component("comp1").physics("tds").feature("cdm1").featureInfo("info").set("tds.cflux_cp'+str(index)+'x", new String[]{"cp'+str(index)+'*tds.u'+str(index)+'"});\n'
+                for sp in self.tp.species:
+                    index=species_names.index(sp)+1
+                    self.s+='    model.component("comp1").physics("tds").feature("cdm1").featureInfo("info").set("tds.Res_cp'+str(index)+'", new String[]{"-tds.D_cp'+str(index)+'xx*cp'+str(index)+'xx+d(cp'+str(index)+'*(tds.u'+str(index)+'-tds.z_cp'+str(index)+'*tds.um_cp'+str(index)+'xx*F_const*d(tds.V,x)),x)-tds.R_cp'+str(index)+'"});\n'
+                ii=0
+                for sp in self.tp.species:
+                    ii+=1
+                    index=species_names.index(sp)+1
+                    #$13 ???
+                    self.s+='    model.component("comp1").physics("tds").feature("cdm1").featureInfo("info").set("root.comp1.tds.cdm1.weak$'+str(len(species_names)*2+ii)+'", new String[]{"cp'+str(index)+'*tds.u'+str(index)+'*test(cp'+str(index)+'x)*(isScalingSystemDomain==0)", "4"});\n'
             u=''
             if self.tp.use_convection:
                 u+=str(self.tp.system['flow rate'])
-            if self.tp.use_mpb:
-                if self.tp.system['MPB']['species']=='all':
-                    #this model is for z:z electrolyte
-                    if len(u)>0:
-                        u+='+'
-                    #get index of positive and negative ion:
-                    inx_cat=str([i+1 for i,sp in enumerate(self.tp.species) if self.tp.species[sp]['charge']>0][0])
-                    inx_an=str([i+1 for i,sp in enumerate(self.tp.species) if self.tp.species[sp]['charge']<0][0])
-                    #MPB model due to Kilic, https://www.ncbi.nlm.nih.gov/pubmed/17358343
-                    u+="-N_A_const*a^3*(D"+inx_cat+"*cp"+inx_cat+"x+D"+inx_an+"*cp"+inx_an+"x)/(1-a^3*cp"+inx_cat+"*N_A_const-a^3*cp"+inx_an+"*N_A_const)"
-                else:
-                    #this model corrects for finite size of only the selected species (should be the counter-ions)
-                    inx=str([i+1 for i,sp in enumerate(self.tp.species) if sp == self.tp.system['MPB']['species']][0])
-                    u+="-N_A_const*a^3*(D"+inx+"*cp"+inx+"x)/(1-a^3*cp"+inx+"*N_A_const)"
+#                    u+="-N_A_const*a^3*(D"+inx+"*cp"+inx+"x)/(1-phi_zero)"
+#                if self.tp.system['MPB']['species']=='all':
+#                    #this model is for z:z electrolyte
+#                    if len(u)>0:
+#                        u+='+'
+#                    #get index of positive and negative ion:
+#                    inx_cat=str([i+1 for i,sp in enumerate(self.tp.species) if self.tp.species[sp]['charge']>0][0])
+#                    inx_an=str([i+1 for i,sp in enumerate(self.tp.species) if self.tp.species[sp]['charge']<0][0])
+#                    #MPB model due to Kilic, https://www.ncbi.nlm.nih.gov/pubmed/17358343
+#                    u+="-N_A_const*a^3*(D"+inx_cat+"*cp"+inx_cat+"x+D"+inx_an+"*cp"+inx_an+"x)/(1-a^3*cp"+inx_cat+"*N_A_const-a^3*cp"+inx_an+"*N_A_const)"
+#                else:
+#                    #this model corrects for finite size of only the selected species (should be the counter-ions)
+#                    inx=str([i+1 for i,sp in enumerate(self.tp.species) if sp == self.tp.system['MPB']['species']][0])
+#                    u+="-N_A_const*a^3*(D"+inx+"*cp"+inx+"x)/(1-a^3*cp"+inx+"*N_A_const)"
             if len(u)>0:
                 self.s+='    model.component("comp1").physics("tds").feature("cdm1").set("u", new String[][]{{"'+u+'"}, {"0"}, {"0"}});\n'
 
@@ -829,6 +1004,25 @@ class Model():
                 self.set("delta_phi_iR_inf","comp1.at0("+str(self.tp.system['boundary thickness'])+",delta_phi_iR)","Total iR drop over the whole cell")
                 self.set("delta_phi_inf","comp1.at0("+str(self.tp.system['boundary thickness'])+",phi)-comp1.at0(0,phi)","Total potential drop over the whole cell")
                 self.set("delta_phi_inf_min_iR","delta_phi_inf-delta_phi_iR_inf","Total potential drop over the whole cell minux iR drop")
+                if self.tp.use_mpb:
+                    #volume fraction phi_0 = NA*sum_i a_i c_i
+                    phi_zero='N_A_const*('
+                    phi_zero_grad='N_A_const*('
+                    species_names=[sp for sp in self.tp.species]
+                    for sp in self.tp.species:
+                        inx=str(species_names.index(sp)+1)
+                        if 'MPB_radius' in self.tp.species[sp]:
+                            self.set("a"+inx,str(self.tp.species[sp]['MPB_radius'])+"[m]","Ion size in MPB Model")
+                            phi_zero+="+a"+inx+"^3*cp"+inx
+                            phi_zero_grad+="+a"+inx+"^3*cp"+inx+"x"
+                        if True: #'MPB_radius' in self.tp.species[sp]: #abs(self.tp.species[sp]['charge'])>0:
+                            self.set('tds.u'+str(inx),'-D'+str(inx)+'*phi_zero_grad/(1-phi_zero)','Ion size contribution to ion flux')
+                        else:
+                            self.set('tds.u'+str(inx),'0.0','Ion size contribution to ion flux')
+                    phi_zero+=')'
+                    phi_zero_grad+=')'
+                    self.set("phi_zero",phi_zero,'Volume fraction of space occupied by ions in MPB Model')
+                    self.set("phi_zero_grad",phi_zero_grad,'Gradient of the Volume fraction of space occupied by ions in MPB Model')
                 ##REACTION RATES
                 i=0
                 if self.tp.use_electrolyte_reactions: 
@@ -912,18 +1106,24 @@ class Model():
             self.set("T", "{}[K]".format(self.tp.system['temperature']), "Temperature")
             self.set("RT", "R_const*T", "Molar gas constant * Temperature")
             self.set("phiM", str(self.tp.system['phiM'])+'[V]', "Metal Potential")
-            if 'ramp' in self.comsol_args and 'PZC' in self.comsol_args['ramp']:
+            if 'PZC' in self.comsol_args['solver_settings']['ramp']['names']:
                 #metal potential should work just fine
                 PZC_init=self.tp.system['phiM']
-                self.set("phiPZC", '(-0.8+flux_factor)[V]', "Metal PZC Potential")
+                if self.comsol_args['solver_settings']['solver_sequence']=='tds_elstat':
+                    self.set("phiPZC", '(-0.8+PZC_factor)[V]', "Metal PZC Potential")
+                else:
+                    self.set("phiPZC", '(-0.8+flux_factor)[V]', "Metal PZC Potential")
 #                self.set("phiPZC", '('+str(PZC_init)+'+flux_factor*('+str(self.tp.system['phiPZC'])+'-'+str(PZC_init)+'))[V]', "Metal PZC Potential")
             else:
                 self.set("phiPZC", str(self.tp.system['phiPZC'])+'[V]', "Metal PZC Potential")
             self.set("lambdaD", str(self.tp.debye_length)+'[m]', "Debye length")
-            if 'ramp' in self.comsol_args and 'CS' in self.comsol_args['ramp']:
+            if 'CS' in self.comsol_args['solver_settings']['ramp']['names']:
                 #2e-5 F/cm^2 (20 mikroF/cm^2) usually works fine, so ramp it up from there to the value that was requested
                 CS_init=2e-5
-                self.set("CS", '('+str(CS_init)+'+flux_factor*'+str(self.tp.system['Stern capacitance']/1e6-CS_init)+')[F/cm^2]', "Stern layer capacitance")
+                if self.comsol_args['solver_settings']['solver_sequence']=='tds_elstat':
+                    self.set("CS", '('+str(CS_init)+'+PZC_factor*'+str(self.tp.system['Stern capacitance']/1e6-CS_init)+')[F/cm^2]', "Stern layer capacitance")
+                else:
+                    self.set("CS", '('+str(CS_init)+'+flux_factor*'+str(self.tp.system['Stern capacitance']/1e6-CS_init)+')[F/cm^2]', "Stern layer capacitance")
             else:
                 self.set("CS", str(self.tp.system['Stern capacitance']/1e6)+'[F/cm^2]', "Stern layer capacitance")
             self.set("eps_r", self.tp.system['epsilon'], "relative permittivity")
@@ -932,10 +1132,9 @@ class Model():
             self.set("conc_std", "1 [mol/m^3]", "Standard concentration (1mol/l)")
     
             self.set("flux_factor", "1", "factor scaling the flux")
+            self.set("PZC_factor", "1", "factor scaling the flux")
 
-            if self.tp.use_mpb:
-                self.set("a",str(self.tp.system['MPB']['ion radius'])+"[m]","Ion size in MPB Model")
-    
+
         def set(self,par_name,par_exp,par_desc):
             self.s+='    model.param().set(\"{}\",\"{}\",\"{}\");\n'.format(par_name,\
                 par_exp,par_desc)
