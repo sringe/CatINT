@@ -136,7 +136,7 @@ class Transport(object):
         ##############################################
         
         #all the possible keys:
-        species_keys=['bulk_concentration', 'diffusion', 'name', 'symbol', 'flux','current density','flux-equation']
+        species_keys=['bulk_concentration', 'diffusion', 'name', 'symbol', 'flux','current density','flux-equation','MPB_radius']
         system_keys=[
                 'phiM',                     #V
                 'Stern capacitance',        #mF/cm^2
@@ -158,10 +158,6 @@ class Transport(object):
                 'current density',
                 'flow rate',               #flow rate or convection velocity (COMSOL equation or number)
                 'RF',                      #roughness factor
-                'MPB',                      #Size-Modified Poisson-Boltzmann dictionary. Includes 'ion radius' and 
-                    #'species' flags, selecting the size of the ion (lattice cells) and the species to which it should
-                    #be applied. species can be either a particular species name or 'all'. if all, only a single cationic
-                    #and anionic species with the same charge are implemented so far.
                 'potential drop',           #Potential drop, either Stern or full
                 'Stern_efield', #electric field in Stern layer
                 'Stern_potential' #electrostatic potential at the OHP (outside of Stern layer)
@@ -292,27 +288,6 @@ class Transport(object):
         if 'flow rate' in self.system:
             self.use_convection=True
 
-        self.use_mpb=False
-        if 'MPB' in self.system:
-            if 'species' not in self.system['MPB']:
-                self.logger.warning('| CI | Species to which MPB model should be applied was not specified, defaulting to given cations and anions')
-                self.system['MPB']['species']='all'
-            if 'ion radius' not in self.system['MPB']:
-                self.logger.warning('| CI | Ion radius for MPB model was not specified, defaulting to 5 Ang.')
-                self.system['MPB']['ion radius']=5.0
-            if self.system['MPB']['species']=='all':
-                #check if only a single positive and negative ion exist, otherwise this method does not work!
-                count_cat=len([sp for sp in self.species if self.species[sp]['charge']>0])
-                count_an=len([sp for sp in self.species if self.species[sp]['charge']<0])
-                if count_cat!=1 or count_an!=1:
-                    self.logger.error('| CI | MPB Model does only work if there is a single cationic and single anionic species')
-                    sys.exit()
-            else:
-                #check if this species is in the species list:
-                if self.system['MPB']['species'] not in self.species:
-                    self.logger.error('| CI | Species {} selected for size-modified PB treatment is not in species list'.format(self.system['MPB']['species']))
-                    sys.exit()
-            self.use_mpb=True
 
         ######################
         #REACTIONS
@@ -533,6 +508,10 @@ class Transport(object):
         6) initialize bulk_concentrations based on Henry constant (if requested)
          and buffer equilibria
         """
+        self.use_mpb=False
+        for sp in self.species:
+            if 'MPB_radius' in self.species[sp]:
+                self.use_mpb=True
         reacting_species=[]
         if electrode_reactions is not None:
             for e in electrode_reactions:
@@ -545,14 +524,14 @@ class Transport(object):
                     if rx not in self.species and rx not in self.system['exclude species']:
                         self.species[rx]={}
         reacting_species=set(reacting_species)
-        electrolyte_species=[]
-        constraints=None
-        for ie,e in enumerate(electrolyte_reactions):
-            if type(e)==dict and 'constraints' in e:
-                constraints=electrolyte_reactions[ie]['constraints']
-                del electrolyte_reactions[ie]
-                continue
         if electrolyte_reactions is not None:
+            electrolyte_species=[]
+            constraints=None
+            for ie,e in enumerate(electrolyte_reactions):
+                if type(e)==dict and 'constraints' in e:
+                    constraints=electrolyte_reactions[ie]['constraints']
+                    del electrolyte_reactions[ie]
+                    continue
             for ie,e in enumerate(electrolyte_reactions):
                 for p in tp_ref_data['electrolyte_reactions'][e]:
                     a=tp_ref_data['electrolyte_reactions'][e][p]['reaction']
@@ -562,7 +541,7 @@ class Transport(object):
                         electrolyte_species.append(rx)
                         if rx not in self.species and rx not in self.system['exclude species']:
                             self.species[rx]={}
-        electrolyte_species=set(electrolyte_species)
+            electrolyte_species=set(electrolyte_species)
         #get the diffusion coefficients
         diff={}
         for line in open(self.catint_path+'/data/diffusion_constants.txt','r'):
@@ -742,10 +721,13 @@ class Transport(object):
             boundary_variables: variables defined on a boundary
             global_equations:   differential equations defined on entire geometry
             outputs:            outputs to be created
-            dflux:              increment in auxiliary parametric sweep (for flux)
+            solver_settings:
+                ramp:           variables that should be ramped up
+                    dramp:      increment in auxiliary parametric sweep (for flux)
+                solver_sequence particular solver sequence
         """
-        comsol_keys=['outputs','boundary_variables','global_variables','global_equations','parameter','bin_path','dflux',\
-            'par_name','par_values','par_method','desc_method','model_type','solver','studies','ramp']
+        comsol_keys=['outputs','boundary_variables','global_variables','global_equations','parameter','bin_path',\
+            'par_name','par_values','par_method','desc_method','model_type','solver','studies','solver_settings']
 
         #tp_dilute_species or porous_electrode
         if 'model_type' not in comsol_args:
@@ -792,8 +774,32 @@ class Transport(object):
         else:
             comsol_args['parameter']['RF']=[str(self.system['RF']),'Roughness Factor']
 
-        if not 'dflux' in comsol_args:
-            comsol_args['dflux']=0.1 #default to 32 steps for flux ramping
+        #SOLVER settings:
+        solver_sequences_list=['tds_elstat'] #all possible solver sequences
+        if 'solver_settings' not in comsol_args:
+            comsol_args['solver_settings']={}
+            comsol_args['solver_settings']['solver_sequence']=None
+            comsol_args['solver_settings']['ramp']={}
+        if 'solver_sequence' not in comsol_args['solver_settings']:
+            comsol_args['solver_settings']['solver_sequence']=None
+        if 'ramp' not in comsol_args['solver_settings']:
+            comsol_args['solver_settings']['ramp']={}
+        if 'names' not in comsol_args['solver_settings']['ramp']:
+            comsol_args['solver_settings']['ramp']['names']=[]
+        if comsol_args['solver_settings']['solver_sequence'] is not None and\
+                comsol_args['solver_settings']['solver_sequence'] not in solver_sequences_list:
+            self.logger.error('| CI | No such solver sequence {} defined yet'.format(comsol_args['solver_sequence']))
+            sys.exit()
+        if comsol_args['solver_settings']['solver_sequence']=='tds_elstat' and\
+            'PZC' not in comsol_args['solver_settings']['ramp']['names']:
+            comsol_args['solver_settings']['ramp']['names']+=['PZC']
+        if comsol_args['solver_settings']['solver_sequence']=='tds_elstat' and\
+            'CS' not in comsol_args['solver_settings']['ramp']['names']:
+            comsol_args['solver_settings']['ramp']['names']+=['CS']
+
+
+        if 'dramp' not in comsol_args['solver_settings']['ramp']:
+            comsol_args['solver_settings']['ramp']['dramp']=0.1 #default to 32 steps for flux ramping
         for a in comsol_args:
             if a not in comsol_keys:
                 self.logger.error('| CI | {} is not a standard key of COMSOL. Implement this first. Exiting here to be sure that this key is what you want'.format(a))
@@ -804,11 +810,11 @@ class Transport(object):
             comsol_args['desc_method']='external'
             if 'par_name' not in comsol_args:
                 comsol_args['par_name']='flux_factor'
-                comsol_args['par_values']='range(0,'+str(comsol_args['dflux'])+',1)'
+                comsol_args['par_values']='range(0,'+str(comsol_args['solver_settings']['ramp']['dramp'])+',1)'
         if comsol_args['desc_method']=='external':
             if 'par_name' not in comsol_args:
                 comsol_args['par_name']='flux_factor'
-                comsol_args['par_values']='range(0,'+str(comsol_args['dflux'])+',1)'
+                comsol_args['par_values']='range(0,'+str(comsol_args['solver_settings']['ramp']['dramp'])+',1)'
 
         if comsol_args['desc_method'].startswith('internal'):
             if self.use_catmap:
@@ -817,7 +823,7 @@ class Transport(object):
                 comsol_args['desc_method']='external'
                 if 'par_name' not in comsol_args:
                     comsol_args['par_name']='flux_factor'
-                    comsol_args['par_values']='range(0,'+str(comsol_args['dflux'])+',1)' #np.linspace(0,1,comsol_args['nflux'])
+                    comsol_args['par_values']='range(0,'+str(comsol_args['solver_settings']['ramp']['dramp'])+',1)' #np.linspace(0,1,comsol_args['nflux'])
         if comsol_args['desc_method'].startswith('internal'):
             if 'par_name' not in comsol_args:
                 self.logger.error('| CI | Descriptor was requested to be used as parameter sweep inside COMSOL'+
@@ -839,6 +845,7 @@ class Transport(object):
                 comsol_args['par_method']='internal'
             else:
                 comsol_args['par_method']='external'
+
 
         self.comsol_args=comsol_args
 

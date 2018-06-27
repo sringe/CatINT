@@ -460,9 +460,9 @@ ax1.set_xlim([-1.5,-0.8])
 ax2.set_xlim([-1.5,-0.8])
 ax1.set_ylim([1e-6,1e1])
 if 'pc-Au' in systems:
-    ax1.set_xlim([-1.2,-0.3])
-    ax2.set_xlim([-1.2,-0.3])
-    ax1.set_ylim([1e-8,1e1])
+    ax1.set_xlim([-1.3,-0.6])
+    ax2.set_xlim([-1.3,-0.6])
+    ax1.set_ylim([1e-5,1e1])
 #ax1.set_xlim([-1.4,-1.0])
 #ax2.set_xlim([-1.4,-1.0])
 if args.scale=='RHE':

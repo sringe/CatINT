@@ -22,7 +22,7 @@ nx=200
 dflux_comsol=0.01
 grid_factor=100
 mix_scf=0.1
-nphi=25
+nphi=20
 
 include_ramp_comsol=['PZC','CS'] #,'reactions']
 
@@ -85,7 +85,6 @@ system=\
     'bulk_pH':pH_i,
     'potential drop':'Stern', #either Stern or full
     'Stern epsilon':10,
-    'MPB': {'ion radius':6.0e-10,'species':'K+'} #ion size in angstrom, method can be 'z' or 'z:z'
     }
 ###########################################################################
 
@@ -109,7 +108,8 @@ if not include_protons:
 
 species=\
     {
-    'K+':             {'bulk_concentration':   'charge_neutrality'},
+    'K+':             {'bulk_concentration':   'charge_neutrality',\
+                        'MPB_radius':           2e-10},
     #'Cl-':            {'bulk_concentration':    (1.45-0.09)*1000.},
     'CO2':              {'bulk_concentration':   'Henry'},
     'OH-':              {'bulk_concentration':   OHm_i},
@@ -140,8 +140,13 @@ comsol_args['parameter']['RF']=[RF,'Roughness Factor']
 comsol_args['parameter']['grid_factor_domain']=[str(grid_factor_domain),'Grid factor']
 comsol_args['parameter']['grid_factor_bound']=[str(grid_factor_bound),'Grid factor']
 comsol_args['parameter']['grid_factor']=[str(grid_factor),'Grid factor']
-comsol_args['dflux']=dflux_comsol
-comsol_args['ramp']=include_ramp_comsol
+comsol_args['solver_settings']={}
+comsol_args['solver_settings']['direct']={}
+comsol_args['solver_settings']['direct']['nliniterrefine']=True
+comsol_args['solver_settings']['ramp']={}
+comsol_args['solver_settings']['ramp']['names']=include_ramp_comsol
+comsol_args['solver_settings']['ramp']['dramp']=dflux_comsol
+#comsol_args['solver_settings']['solver_sequence']='tds_elstat'
 
 ###########################################################################
 #RATE EQUATIONS/FLUXES
@@ -179,7 +184,7 @@ potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-0.4,-2.2,nphi))}
+    descriptors={'phiM':list(np.linspace(-0.6,-2.2,nphi))}
     system['phiM']=potential
 
     #'potential','gradient','robin'
