@@ -2,6 +2,7 @@
 import re
 import numpy as np
 from units import *
+from scipy.optimize import fsolve,basinhopping
 
 class Reader():
     def __init__(self,transport=None,outputs=[],comsol_args={},\
@@ -58,6 +59,29 @@ class Reader():
         start_reading=False
         initialized=False
         toutput=output
+
+        #####some functions, if nonlinear permittivity function in Stern layer is used
+        #we have to solve a possibly non-linear equation system
+        if self.tp.system['Stern epsilon']=='Booth':
+            def coth(x):
+                return 1.+2./(np.exp(2*x)-1)
+            def eps(E):
+                #parameter for water at zero field:
+                n=1.33
+                beta=1.41e-8
+                #eps0=self.tp.system['Stern_epsilon'] #self.tp.system['epsilon']
+                eps0=self.tp.system['epsilon']
+                if E>=1e7:
+                    return n**2+(eps0-n**2)*3./(beta*E)*(coth(beta*E)-1./(beta*E))
+                else:
+                    return eps0
+        def equations(p):
+            E=p
+            #Eout,=args
+            eq=(E-Eout*self.tp.system['epsilon']/eps(abs(E)))**2
+            return eq
+        ####end
+
         jj=-1
         #first read of file to determine if this is a variable tabulated on domain or boundary
         for line in open(results_folder+'/'+toutput+'.txt', 'r'):
@@ -191,17 +215,40 @@ class Reader():
                             if geo=='domain':
                                 self.tp.system[var_name].append(float(lss))
                                 if x==0.0 and var_name=='efield':
-                                    self.tp.system['Stern_efield']=float(lss)*1e-10*self.tp.system['epsilon']/self.tp.system['Stern epsilon']
+                                    self.tp.system['surface_efield']=float(lss)
+                                    if type(self.tp.system['Stern epsilon'])!=str:
+                                        self.tp.system['Stern_efield']=float(lss)*self.tp.system['epsilon']/self.tp.system['Stern epsilon']
+                                        self.tp.system['Stern_epsilon_func']=self.tp.system['Stern epsilon']
+                                    else:
+                                        #self.tp.system['Stern_efield'],=fsolve(equations,(float(lss),),args=(float(lss),))
+                                        E0=float(lss)*self.tp.system['epsilon']/10. #self.tp.system['Stern epsilon']
+#                                        self.tp.system['Stern_efield'],=fsolve(equations,(float(lss),),args=(E0,))
+                                        minimizer_kwargs = {"method": "BFGS"}
+                                        Eout=float(lss)
+                                        self.tp.system['Stern_efield'],=basinhopping(equations, E0, minimizer_kwargs=minimizer_kwargs,
+                                                niter=200).x
+                                        self.tp.system['Stern_epsilon_func']=eps(abs(self.tp.system['Stern_efield']))
                                 elif x==0.0 and var_name=='potential':
-                                    self.tp.system['Stern_potential']=float(lss)
+                                    self.tp.system['surface_potential']=float(lss)
                             else:
                                 self.tp.system[var_name]=float(lss)
                         if geo=='domain':
                             self.tp.alldata[alldata_inx]['system'][var_name].append(float(lss))
                             if x==0.0 and var_name=='efield':
-                                self.tp.alldata[alldata_inx]['system']['Stern_efield']=float(lss)*1e-10*self.tp.system['epsilon']/self.tp.system['Stern epsilon']
+                                self.tp.alldata[alldata_inx]['system']['surface_efield']=float(lss)
+                                if type(self.tp.system['Stern epsilon'])!=str:
+                                    self.tp.alldata[alldata_inx]['system']['Stern_efield']=float(lss)*self.tp.system['epsilon']/self.tp.system['Stern epsilon']
+                                    self.tp.alldata[alldata_inx]['system']['Stern_epsilon_func']=self.tp.system['Stern epsilon']
+                                else:
+                                    E0=float(lss)*self.tp.system['epsilon']/10. #self.tp.system['Stern epsilon']
+                                    #self.tp.alldata[alldata_inx]['system']['Stern_efield'],=fsolve(equations,(float(lss),),args=(E0,))
+                                    minimizer_kwargs = {"method": "BFGS"}
+                                    Eout=float(lss)
+                                    self.tp.alldata[alldata_inx]['system']['Stern_efield'],=basinhopping(equations, E0, minimizer_kwargs=minimizer_kwargs,
+                                            niter=200).x
+                                    self.tp.alldata[alldata_inx]['system']['Stern_epsilon_func']=eps(abs(self.tp.system['Stern_efield']))
                             elif x==0.0 and var_name=='potential':
-                                self.tp.alldata[alldata_inx]['system']['Stern_potential']=float(lss)
+                                self.tp.alldata[alldata_inx]['system']['surface_potential']=float(lss)
                         else:
                             self.tp.alldata[alldata_inx]['system'][var_name]=float(lss)
                 continue

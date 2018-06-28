@@ -36,7 +36,7 @@ max_desc_delta=0.2
 grid_factor_domain=100 #grid_factor
 grid_factor_bound=200 #grid_factor
 
-include_protons=False
+include_protons=True
 
 use_elreac=True
 if nobuffer:
@@ -76,15 +76,16 @@ system=\
     #calculate the electrolyte viscosity. This will be used to rescale the diffusion coefficients
     #according to Einstein-Stokes relation: D_in_electrolyte = D_in_water * mu0/mu
     'epsilon': 78.36,
+    #'epsilon_func': 'Booth',
 #    'exclude species': ['CO32-','HCO3-'], #exclude this species from PNP equations
     'migration': True,
     'electrode reactions': True,
     'electrolyte reactions': use_elreac, #False,
     'phiPZC': 0.2, #ModernAspects of Electrochemistry Books/, value in water
-    'Stern capacitance': 60, #std: 20
     'bulk_pH':pH_i,
     'potential drop':'Stern', #either Stern or full
-    'Stern epsilon':10,
+    'Stern capacitance': 60, #std: 20
+    'Stern epsilon':'Booth' #value or Booth
     }
 ###########################################################################
 
@@ -108,11 +109,16 @@ if not include_protons:
 
 species=\
     {
-    'K+':             {'bulk_concentration':   'charge_neutrality',\
-                        'MPB_radius':           2e-10},
+#    'K+':             {'bulk_concentration':   'charge_neutrality',\
+#                        'MPB_radius':           5e-10},
     #'Cl-':            {'bulk_concentration':    (1.45-0.09)*1000.},
+    'HCO3-':            {'bulk_concentration':  91.0944666093},
+    'CO32-':            {'bulk_concentration':  0.0267841528009},
+    'K+':               {'bulk_concentration':  91.1480980107,\
+                          'MPB_radius':         5e-10},
     'CO2':              {'bulk_concentration':   'Henry'},
     'OH-':              {'bulk_concentration':   OHm_i},
+    'H+':               {'bulk_concentration':  Hm_i},
 #    'HCO3-':            {'bulk_concentration':  0.1*1000.},
     'CO':               {},
 #    'CO2':              {}
@@ -184,7 +190,7 @@ potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-0.6,-2.2,nphi))}
+    descriptors={'phiM':list(np.linspace(-0.3,-2.2,nphi))}
     system['phiM']=potential
 
     #'potential','gradient','robin'

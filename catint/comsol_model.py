@@ -1127,8 +1127,8 @@ class Model():
             else:
                 self.set("CS", str(self.tp.system['Stern capacitance']/1e6)+'[F/cm^2]', "Stern layer capacitance")
             self.set("eps_r", self.tp.system['epsilon'], "relative permittivity")
-            self.set("epsS", 'epsilon0_const*'+str(self.tp.system['Stern epsilon']), "Stern layer effective permittivity")
-            self.set("lambdaS", "epsS/CS", "Stern layer thickness")
+#            self.set("epsS", 'epsilon0_const*'+str(self.tp.system['Stern epsilon']), "Stern layer effective permittivity")
+#            self.set("lambdaS", "epsS/CS", "Stern layer thickness")
             self.set("conc_std", "1 [mol/m^3]", "Standard concentration (1mol/l)")
     
             self.set("flux_factor", "1", "factor scaling the flux")

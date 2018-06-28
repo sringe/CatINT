@@ -27,7 +27,7 @@ for arg in sys.argv[1:]:
             tmp2={}
             cphi=float(phi[0])
             phis.append(cphi)
-        acc=re.findall('Current accuracy in current density = (.*) mV',line)
+        acc=re.findall('Current accuracy in current density = (.*) mA',line)
         if len(acc)>0:
             if acc[0] != 'inf': #float(acc[0])>0:
                 tmp.append(float(acc[0]))

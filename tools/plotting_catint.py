@@ -133,7 +133,8 @@ def plot_xinyans_equation():
 c_list=['C'+str(i) for i in range(10)]
 colors=cycle(c_list)
 ls_list=['-','--',':']
-ls_list=['--',':']
+ls_list=['-','--','--']
+#ls_list=['--',':']
 linestyles=cycle(ls_list)
 #m_list=['x','o','1','d','D','2']
 m_list=['']
@@ -214,12 +215,18 @@ def settings(ax,prop,d_sel):
     elif prop=='Stern_efield':
         xlabel='Voltage vs. '+args.scale+' (V)'
         ylabel=r'$E_{\mathrm{Stern},x}$ (V/\AA)'
-    elif prop=='Stern_potential':
+    elif prop=='surface_potential':
         xlabel='Voltage vs. '+args.scale+' (V)'
         ylabel=r'$\phi^\ddagger$ (V)'
     elif prop=='Potential_drop':
         xlabel='Voltage vs. '+args.scale+' (V)'
-        ylabel=r'\phi^\mathrm{M}-\phi^\ddagger$ (V)'
+        ylabel=r'$\phi^\mathrm{M}-\phi^\ddagger$ (V)'
+    elif prop=='surface_efield':
+        xlabel='Voltage vs. '+args.scale+' (V)'
+        ylabel=r'$E^\ddagger$ (V)'
+    elif prop=='Stern_epsilon_func':
+        xlabel='Voltage vs. '+args.scale+' (V)'
+        ylabel=r'$\varepsilon_\mathrm{S}$'
     else:
         xlabel=''
         ylabel=''
@@ -317,6 +324,8 @@ def plot(prop):
             else:
                 x=[xx for xx in x]
             y=[tp.alldata[i]['system'][prop] for i in range(len(x))]
+            if 'efield' in prop:
+                y=[yy*1e-10 for yy in y]
             ax.plot(x,y,ls+m,color='k')
 
 for iif,f in enumerate(args.file):

@@ -141,7 +141,7 @@ class Transport(object):
                 'phiM',                     #V
                 'Stern capacitance',        #mF/cm^2
                 'Stern epsilon',       #in units of eps_0. only needed to calculate field inside Stern layer for 
-                #field-dependent microkinetics and for mesh generation
+                #field-dependent microkinetics and for mesh generation. beside a float, also the Booth model can be used
                 'bulk_pH',
                 'phiPZC',                   #V
                 'temperature',              #K
@@ -605,87 +605,89 @@ class Transport(object):
                 if sp not in self.system['exclude species'] and 'bulk_concentration' not in self.species[sp]:
                     count_unknowns+=1
                     unknowns.append(sp)
-            count_reactions=0
-            for e in electrolyte_reactions:
-                for p in tp_ref_data['electrolyte_reactions'][e]:
-                    count_reactions+=1
-            if count_unknowns!=count_reactions+count_constraints:
-                self.logger.error('| CI | Number of unknown concentrations {} does not match the number of buffer equilibria equations {}. Cannot determine missing concentrations'.format(count_unknowns,count_reactions+count_constraints))
-                sys.exit()
-
-            #2) Solve the non-linear system of equations
-
-            def equations(p):
-                eq=()
-                var={}
-                if count_unknowns==1:
-                    a=p
-                    var[unknowns[0]]=a
-                elif count_unknowns==2:
-                    a, b = p
-                    var[unknowns[0]]=a
-                    var[unknowns[1]]=b
-                elif count_unknowns==3:
-                    a, b, c = p
-                    var[unknowns[0]]=a
-                    var[unknowns[1]]=b
-                    var[unknowns[2]]=c
-                elif count_unknowns==4:
-                    a, b, c, d = p
-                    var[unknowns[0]]=a
-                    var[unknowns[1]]=b
-                    var[unknowns[2]]=c
-                    var[unknowns[3]]=d
-                else:
-                    self.logger.error('| CI | More than 4 unknowns in the buffer concentrations are not implemented yet')
-                    sys.exit()
-
+            if count_unknowns>0:
+                count_reactions=0
                 for e in electrolyte_reactions:
                     for p in tp_ref_data['electrolyte_reactions'][e]:
-                        a=tp_ref_data['electrolyte_reactions'][e][p]['reaction']
-                        educts=[re.findall('([a-zA-Z]{1,10}[a-zA-Z-+0-9]+)',b.strip())[0] for b in a.split('->')[0].split(' + ')]
-                        products=[re.findall('([a-zA-Z]{1,10}[a-zA-Z-0-9]+)',b.strip())[0] for b in a.split('->')[1].split(' + ')]
-                        #equilibrium constant
-                        K=tp_ref_data['electrolyte_reactions'][e][p]['constant']
-                        #evaluate products:
-                        fs_prod=1
-                        for pp in products:
-                            if pp in self.system['exclude species']:
-                                continue
-                            if 'bulk_concentration' in self.species[pp]:
-                                fs_prod*=self.species[pp]['bulk_concentration']
-                            else:
-                                fs_prod*=var[pp]
-                        is_prod=1
-                        for ee in educts:
-                            if ee in self.system['exclude species']:
-                                continue
-                            if 'bulk_concentration' in self.species[ee]:
-                                is_prod*=self.species[ee]['bulk_concentration']
-                            else:
-                                is_prod*=var[ee]
-                        eq+=(fs_prod/is_prod-K,)
-                #sum all concentrations
-                if constraints is not None:
-                    sum_conc=0.0
-                    for sp in electrolyte_species:
-                        if sp in self.system['exclude species']:
-                            continue
-                        if 'bulk_concentration' in self.species[sp]:
-                            sum_conc+=self.species[sp]['bulk_concentration']*self.species[sp]['charge']
-                        else:
-                            sum_conc+=var[sp]*self.species[sp]['charge']
-                    for con in constraints:
-                        if con=='counter_ion_concentration':
-                            eq+=(constraints[con]+\
-                                sum_conc,)
-                return eq
+                        count_reactions+=1
+                if count_unknowns!=count_reactions+count_constraints:
+                    self.logger.error('| CI | Number of unknown concentrations {} does not match the number of buffer equilibria equations {}. Cannot determine missing concentrations'.format(count_unknowns,count_reactions+count_constraints))
+                    self.logger.error('| CI | These are the unknowns = {}'.format(unknowns))
+                    sys.exit()
 
-            #solve equation system
-            a =  fsolve(equations, (1,)*(count_unknowns))
+                #2) Solve the non-linear system of equations
 
-            for i in range(len(unknowns)):
-                self.species[unknowns[i]]['bulk_concentration'] = a[i]
+                def equations(p):
+                    eq=()
+                    var={}
+                    if count_unknowns==1:
+                        a=p
+                        var[unknowns[0]]=a
+                    elif count_unknowns==2:
+                        a, b = p
+                        var[unknowns[0]]=a
+                        var[unknowns[1]]=b
+                    elif count_unknowns==3:
+                        a, b, c = p
+                        var[unknowns[0]]=a
+                        var[unknowns[1]]=b
+                        var[unknowns[2]]=c
+                    elif count_unknowns==4:
+                        a, b, c, d = p
+                        var[unknowns[0]]=a
+                        var[unknowns[1]]=b
+                        var[unknowns[2]]=c
+                        var[unknowns[3]]=d
+                    else:
+                        self.logger.error('| CI | More than 4 unknowns in the buffer concentrations are not implemented yet')
+                        sys.exit()
+
+                    for e in electrolyte_reactions:
+                        for p in tp_ref_data['electrolyte_reactions'][e]:
+                            a=tp_ref_data['electrolyte_reactions'][e][p]['reaction']
+                            educts=[re.findall('([a-zA-Z]{1,10}[a-zA-Z-+0-9]+)',b.strip())[0] for b in a.split('->')[0].split(' + ')]
+                            products=[re.findall('([a-zA-Z]{1,10}[a-zA-Z-0-9]+)',b.strip())[0] for b in a.split('->')[1].split(' + ')]
+                            #equilibrium constant
+                            K=tp_ref_data['electrolyte_reactions'][e][p]['constant']
+                            #evaluate products:
+                            fs_prod=1
+                            for pp in products:
+                                if pp in self.system['exclude species']:
+                                    continue
+                                if 'bulk_concentration' in self.species[pp]:
+                                    fs_prod*=self.species[pp]['bulk_concentration']
+                                else:
+                                    fs_prod*=var[pp]
+                            is_prod=1
+                            for ee in educts:
+                                if ee in self.system['exclude species']:
+                                    continue
+                                if 'bulk_concentration' in self.species[ee]:
+                                    is_prod*=self.species[ee]['bulk_concentration']
+                                else:
+                                    is_prod*=var[ee]
+                            eq+=(fs_prod/is_prod-K,)
+                    #sum all concentrations
+                    if constraints is not None:
+                        sum_conc=0.0
+                        for sp in electrolyte_species:
+                            if sp in self.system['exclude species']:
+                                continue
+                            if 'bulk_concentration' in self.species[sp]:
+                                sum_conc+=self.species[sp]['bulk_concentration']*self.species[sp]['charge']
+                            else:
+                                sum_conc+=var[sp]*self.species[sp]['charge']
+                        for con in constraints:
+                            if con=='counter_ion_concentration':
+                                eq+=(constraints[con]+\
+                                    sum_conc,)
+                    return eq
+
+                #solve equation system
+                a =  fsolve(equations, (1,)*(count_unknowns))
+
+                for i in range(len(unknowns)):
+                    self.species[unknowns[i]]['bulk_concentration'] = a[i]
 
 
         #finally add the remaining concentration for which charge neutrality was requested:
