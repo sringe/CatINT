@@ -30,6 +30,8 @@ parser.add_argument('--name',help='File name of figure')
 
 args = parser.parse_args()
 
+skip=1
+
 if args.scale is None:
     args.scale='RHE'
 
@@ -72,8 +74,8 @@ exp=EXPDATA()
 
 j_log_plot=True
 
-#fig=plt.figure(figsize=(5, 7))
-fig=plt.figure(figsize=(3, 5))
+fig=plt.figure(figsize=(5, 7))
+#fig=plt.figure(figsize=(3, 5))
 
 colorlist={}
 colorlist['CO']='r'
@@ -279,9 +281,9 @@ for arg in args.file: #sys.argv[1:]:
             pHtmp=pH
             pH=0
         if k==0:
-            func(x+0.059*pH,y,linestyle+symbol,color=color,label=sp) #,label=arg.split('/')[-1])
+            func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,label=sp) #,label=arg.split('/')[-1])
         else:
-            func(x+0.059*pH,y,linestyle+symbol,color=color)
+            func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color)
         if args.scale=='SHE':
             pH=pHtmp
     if args.elemrates:
@@ -317,7 +319,7 @@ for arg in args.file: #sys.argv[1:]:
             if args.scale=='SHE':
                 pHtmp=pH
                 pH=0
-            func(x+0.059*pH,y,linestyle+symbol,color=color,label=label) #,label=arg.split('/')[-1])
+            func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,label=label) #,label=arg.split('/')[-1])
             if args.scale=='SHE':
                 pH=pHtmp
     for isp,sp in enumerate(cdata):
@@ -345,9 +347,9 @@ for arg in args.file: #sys.argv[1:]:
             pHtmp=pH
             pH=0
         if k==1:
-            ax2.plot(x+0.059*pH,y,linestyle+symbol,color=color,label=sp)
+            ax2.plot(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,label=sp)
         else:
-            ax2.plot(x+0.059*pH,y,linestyle+symbol,color=color)
+            ax2.plot(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color)
         if args.scale=='SHE':
             pH=pHtmp
     if show_legend:
@@ -398,11 +400,11 @@ for pH in set(all_pH):
             exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['13.0'],\
                 system=systems,scale=args.scale,only_points=True,\
                 take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
-        elif pH == 6.8 or pH == 7.0:
+        elif pH == 6.8 or pH == 7.0 or pH == 3.0:
             #exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
             #    system=systems,scale=args.scale,only_points=True,\
             #    take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
-            exp.plot_data(reference=['wuttig','dunwell'],ax=ax1,species=all_prods,pH=['6.8','7.2'],\
+            exp.plot_data(reference=['jaramillo','wuttig','dunwell'],ax=ax1,species=all_prods,pH=['3.0','6.8'],\
                 system=systems,scale=args.scale,only_points=True,\
                 take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
         else:
@@ -460,9 +462,9 @@ ax1.set_xlim([-1.5,-0.8])
 ax2.set_xlim([-1.5,-0.8])
 ax1.set_ylim([1e-6,1e1])
 if 'pc-Au' in systems:
-    ax1.set_xlim([-1.3,-0.6])
-    ax2.set_xlim([-1.3,-0.6])
-    ax1.set_ylim([1e-5,1e1])
+    ax1.set_xlim([-1.5,-0.3])
+    ax2.set_xlim([-1.5,-0.3])
+    ax1.set_ylim([1e-7,1e1])
 #ax1.set_xlim([-1.4,-1.0])
 #ax2.set_xlim([-1.4,-1.0])
 if args.scale=='RHE':

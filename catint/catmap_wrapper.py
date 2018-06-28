@@ -501,7 +501,7 @@ class CatMAP():
                 continue
             if line.strip().startswith('field'):
                 #replace_line(self.catmap_model,i-1,'field = '+str(self.tp.system['efield'][0]*1e-10*self.tp.system['epsilon']/self.tp.system['Stern epsilon']))
-                replace_line(self.catmap_model,i-1,'field = '+str(self.tp.system['Stern_efield']))
+                replace_line(self.catmap_model,i-1,'field = '+str(self.tp.system['Stern_efield']*1e-10))
             if line.strip().startswith('voltage_diff_drop') and self.tp.system['potential drop']=='Stern':
                 replace_line(self.catmap_model,i-1,'voltage_diff_drop = '+str(self.tp.system['potential'][0])) #potential drop']))
             for sp in self.tp.species:
