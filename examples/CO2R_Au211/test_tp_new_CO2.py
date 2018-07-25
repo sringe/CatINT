@@ -19,10 +19,10 @@ nobuffer=False #True #False #True #False #True #False #True
 educt='CO2' #CO2 or CO
 
 nx=200
-dflux_comsol=0.01
+dflux_comsol=0.02
 grid_factor=100
 mix_scf=0.1
-nphi=20
+nphi=15
 
 include_ramp_comsol=['PZC','CS'] #,'reactions']
 
@@ -85,7 +85,7 @@ system=\
     'bulk_pH':pH_i,
     'potential drop':'Stern', #either Stern or full
     'Stern capacitance': 60, #std: 20
-    'Stern epsilon':'Booth' #value or Booth
+    'Stern epsilon':6 #value or Booth
     }
 ###########################################################################
 
@@ -115,7 +115,7 @@ species=\
     'HCO3-':            {'bulk_concentration':  91.0944666093},
     'CO32-':            {'bulk_concentration':  0.0267841528009},
     'K+':               {'bulk_concentration':  91.1480980107,\
-                          'MPB_radius':         5e-10},
+                          'MPB_radius':         7.64e-10},
     'CO2':              {'bulk_concentration':   'Henry'},
     'OH-':              {'bulk_concentration':   OHm_i},
     'H+':               {'bulk_concentration':  Hm_i},
@@ -190,7 +190,7 @@ potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-0.3,-2.2,nphi))}
+    descriptors={'phiM':list(np.linspace(-0.6,-2.2,nphi))}
     system['phiM']=potential
 
     #'potential','gradient','robin'

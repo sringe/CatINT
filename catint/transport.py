@@ -179,7 +179,7 @@ class Transport(object):
             for sp in species:
                 for key in species[sp]:
                     if key not in species_keys:
-                        self.logger.error('| CI | No such key "'+key+'" in species list. Quitting here.')
+                        self.logger.error('| CI | -- | No such key "'+key+'" in species list. Quitting here.')
                         sys.exit()
             self.species=species
 
@@ -212,8 +212,8 @@ class Transport(object):
         else:
             for key in system:
                 if key not in system_keys:
-                    self.logger.error('| CI | No such key "'+key+'" in system list. Quitting here.')
-                    self.logger.error('| CI | Current system list = {}'.format(system_keys))
+                    self.logger.error('| CI | -- | No such key "'+key+'" in system list. Quitting here.')
+                    self.logger.error('| CI | -- | Current system list = {}'.format(system_keys))
                     sys.exit()
             self.system=system
 
@@ -235,7 +235,7 @@ class Transport(object):
         for es in self.system['exclude species']:
             if es in self.species:
                 del self.species[es]
-        self.logger.info('| CI | '+'Excluding {} from PNP transport. They will also not participate in reactions (activity = 1)'.format(self.system['exclude species']))
+        self.logger.info('| CI | -- | '+'Excluding {} from PNP transport. They will also not participate in reactions (activity = 1)'.format(self.system['exclude species']))
 
         #initialize species.
         self.initialize_species(electrolyte_reactions,electrode_reactions)
@@ -250,7 +250,7 @@ class Transport(object):
 
         #get pH
         if 'bulk_pH' in self.system:
-            self.logger.info('| CI | '+'pH given in system list, updating H+ and OH- concentrations if species exist')
+            self.logger.info('| CI | -- | '+'pH given in system list, updating H+ and OH- concentrations if species exist')
             if 'H+' in self.species:
                 self.species['H+']['bulk_concentration']=10**(-self.system['bulk_pH'])*1000.
             elif 'OH-' in self.species:
@@ -313,22 +313,22 @@ class Transport(object):
         if self.electrolyte_reactions is not None and self.use_electrolyte_reactions:
             if any(['rates' in self.electrolyte_reactions[reaction] for reaction in self.electrolyte_reactions]):
 #                self.use_electrolyte_reactions=True
-                self.logger.info('| CI | '+'Found electrolyte reactions with specified rates. Switching electrolyte reactions on. Preparing...')
+                self.logger.info('| CI | -- | '+'Found electrolyte reactions with specified rates. Switching electrolyte reactions on. Preparing...')
                 self.electrolyte_reactions=self.initialize_reactions(self.electrolyte_reactions)
         if self.electrolyte_reactions is None and self.use_electrolyte_reactions:
-            self.logger.error('| CI | Electrolyte reactions were requested by input, but no electrolyte reaction was defined. Define electrolyte reaction first.')
+            self.logger.error('| CI | -- | Electrolyte reactions were requested by input, but no electrolyte reaction was defined. Define electrolyte reaction first.')
             sys.exit()
 
         if self.use_electrolyte_reactions:
             for el in self.electrolyte_reactions:
                 if not 'rates' in self.electrolyte_reactions[el]:
-                    self.logger.info('| CI | '+'Reaction {} has no rates given. It will not be considered for PNP dynamics!'.format(el))
+                    self.logger.info('| CI | -- | '+'Reaction {} has no rates given. It will not be considered for PNP dynamics!'.format(el))
                 for sp in sum(self.electrolyte_reactions[el]['reaction'],[]):
                     if sp not in self.species and sp not in self.system['exclude species']:
-                        self.logger.error('| CI | Species {} has not been defined, but is used in the electrolyte reactions, define it first!'.format(sp))
-                        self.logger.error('| CI |   This is the current species list:')
+                        self.logger.error('| CI | -- | Species {} has not been defined, but is used in the electrolyte reactions, define it first!'.format(sp))
+                        self.logger.error('| CI | -- |   This is the current species list:')
                         for sp in self.species:
-                            self.logger.error('| CI |   {}'.format(sp))
+                            self.logger.error('| CI | -- |   {}'.format(sp))
                         sys.exit()
 
         #Working on electrode reactions if requested
@@ -342,20 +342,20 @@ class Transport(object):
 
         if self.electrode_reactions is not None:
             self.use_electrode_reactions=True
-            self.logger.info('| CI | '+'Found electrode reactions. Switching electrode reactions on. Preparing...')
+            self.logger.info('| CI | -- | '+'Found electrode reactions. Switching electrode reactions on. Preparing...')
             self.electrode_reactions=self.initialize_reactions(self.electrode_reactions)
         elif self.electrode_reactions is None and self.use_electrode_reactions:
-            self.logger.error('| CI | Electrode reactions were requested by input, but no electrode reaction was defined. Define electrode reaction first.')
+            self.logger.error('| CI | -- | Electrode reactions were requested by input, but no electrode reaction was defined. Define electrode reaction first.')
             sys.exit()
 
         if self.use_electrode_reactions:
             for el in self.electrode_reactions:
                 for sp in sum(self.electrode_reactions[el]['reaction'],[]):
                     if sp not in self.species and sp not in self.system['exclude species'] and not sp.startswith('*'):
-                        self.logger.error('| CI | Species {} has not been defined, but is used in the electrode reactions, define it first!'.format(sp))
-                        self.logger.error('| CI |   This is the current species list:')
+                        self.logger.error('| CI | -- | Species {} has not been defined, but is used in the electrode reactions, define it first!'.format(sp))
+                        self.logger.error('| CI | -- |   This is the current species list:')
                         for sp in self.species:
-                            self.logger.error('| CI |   {}'.format(sp))
+                            self.logger.error('| CI | -- |   {}'.format(sp))
                         sys.exit()
 
         #sort different species into lists:
@@ -379,10 +379,10 @@ class Transport(object):
                 self.electrolyte_list.append(sp)
 
         if self.use_electrode_reactions:
-            self.logger.info('| CI | '+'Educts: {}'.format(self.educt_list))
-            self.logger.info('| CI | '+'Products: {}'.format(self.product_list))
+            self.logger.info('| CI | -- | '+'Educts: {}'.format(self.educt_list))
+            self.logger.info('| CI | -- | '+'Products: {}'.format(self.product_list))
         if self.use_electrolyte_reactions:
-            self.logger.info('| CI | '+'Electrolyte Components: {}'.format(self.electrolyte_list))
+            self.logger.info('| CI | -- | '+'Electrolyte Components: {}'.format(self.electrolyte_list))
 
 
         #DIFFUSION CONSTANTS
@@ -396,7 +396,7 @@ class Transport(object):
 
         if all([a in self.system for a in ['water viscosity','electrolyte viscosity']]):
             #rescale diffusion coefficients according to ionic strength (Stokes-Einstein):
-            self.logger.info('| CI | '+'Rescaling diffusion coefficients from water viscosity {} to electrolyte viscosity {}'.format(self.system['water viscosity'], self.system['electrolyte viscosity']))
+            self.logger.info('| CI | -- | '+'Rescaling diffusion coefficients from water viscosity {} to electrolyte viscosity {}'.format(self.system['water viscosity'], self.system['electrolyte viscosity']))
             self.D=np.array([d*float(self.system['water viscosity'])/float(self.system['electrolyte viscosity']) for d in self.D])
             
         self.mu = self.D * self.charges *self.beta  #ion mobilities according to Einstein relation
@@ -430,8 +430,8 @@ class Transport(object):
         self.xmax_init=self.xmax
 
         if self.debye_length>self.xmax/2.:
-            self.logger.warning('| CI | Debye length is larger than 1/4th of the xmesh. Take care that the x discretization is not too coarse!.')
-            self.logger.warning('| CI | Current xmesh: xmax={}, dx={} at debye_length={}'.format(self.xmax,self.dx,self.debye_length))
+            self.logger.warning('| CI | -- | Debye length is larger than 1/4th of the xmesh. Take care that the x discretization is not too coarse!.')
+            self.logger.warning('| CI | -- | Current xmesh: xmax={}, dx={} at debye_length={}'.format(self.xmax,self.dx,self.debye_length))
 
 #        if min(self.xmesh)<=0:
 #            min_x=1e-15
@@ -487,7 +487,7 @@ class Transport(object):
         else:
             ntasks=1
         if size!=ntasks and use_mpi:
-            self.logger.error('| CI | # of CPUs is different from # of tasks. This is currently not supported.')
+            self.logger.error('| CI | -- | # of CPUs is different from # of tasks. This is currently not supported.')
             sys.exit()
 
         #INITIALIZE PARAMETERS OF EXTERNAL SOFTWARE
@@ -552,7 +552,7 @@ class Transport(object):
         for sp in self.species:
             if 'diffusion' not in self.species[sp]:
                 if sp not in diff:
-                    self.logger.error('| CI | No diffusion constant for {}. Either add this to {}/data/diffusion_constants.txt file or manually provide it as an input'.format(sp,self.catint_path))
+                    self.logger.error('| CI | -- | No diffusion constant for {}. Either add this to {}/data/diffusion_constants.txt file or manually provide it as an input'.format(sp,self.catint_path))
                     sys.exit()
                 else:
                     self.species[sp]['diffusion']=diff[sp][1]
@@ -576,7 +576,7 @@ class Transport(object):
                 and sp in reacting_species\
                 and sp not in self.system['exclude species']\
                 and sp not in ['OH-','H+']:
-                self.logger.error('| CI | No Henry constant found for {}. Add this to {}/data/henry_constants.txt'.format(sp,self.catint_path))
+                self.logger.error('| CI | -- | No Henry constant found for {}. Add this to {}/data/henry_constants.txt'.format(sp,self.catint_path))
                 sys.exit()
         #end henry
 
@@ -586,7 +586,7 @@ class Transport(object):
                 if 'Henry constant' in self.species[sp]:
                     self.species[sp]['bulk_concentration']=self.species[sp]['Henry constant']*self.system['pressure']
                 else:
-                    self.logger.error('| CI | Henry constant was selected for initializing bulk concentrations of {}, but Henry constant was not found in {}/data/henry_constants.txt'.format(sp,self.catint_path))
+                    self.logger.error('| CI | -- | Henry constant was selected for initializing bulk concentrations of {}, but Henry constant was not found in {}/data/henry_constants.txt'.format(sp,self.catint_path))
                     sys.exit()
         #GET CHARGES AND NCATOMS FROM CHEMICAL SYMBOLS
         self.charges=self.symbol_reader(self.species)
@@ -611,8 +611,8 @@ class Transport(object):
                     for p in tp_ref_data['electrolyte_reactions'][e]:
                         count_reactions+=1
                 if count_unknowns!=count_reactions+count_constraints:
-                    self.logger.error('| CI | Number of unknown concentrations {} does not match the number of buffer equilibria equations {}. Cannot determine missing concentrations'.format(count_unknowns,count_reactions+count_constraints))
-                    self.logger.error('| CI | These are the unknowns = {}'.format(unknowns))
+                    self.logger.error('| CI | -- | Number of unknown concentrations {} does not match the number of buffer equilibria equations {}. Cannot determine missing concentrations'.format(count_unknowns,count_reactions+count_constraints))
+                    self.logger.error('| CI | -- | These are the unknowns = {}'.format(unknowns))
                     sys.exit()
 
                 #2) Solve the non-linear system of equations
@@ -639,7 +639,7 @@ class Transport(object):
                         var[unknowns[2]]=c
                         var[unknowns[3]]=d
                     else:
-                        self.logger.error('| CI | More than 4 unknowns in the buffer concentrations are not implemented yet')
+                        self.logger.error('| CI | -- | More than 4 unknowns in the buffer concentrations are not implemented yet')
                         sys.exit()
 
                     for e in electrolyte_reactions:
@@ -702,13 +702,13 @@ class Transport(object):
                 self.species[sp]['bulk_concentration']=-sum_of_charge/self.species[sp]['charge']
                 count+=1
         if count>1:
-            self.logger.error('| CI | Only a single species can be evaluated by charge neutrality')
+            self.logger.error('| CI | -- | Only a single species can be evaluated by charge neutrality')
             sys.exit()
 
         #check if all concentrations were provided as input
         for sp in self.species:
             if 'bulk_concentration' not in self.species[sp]:
-                self.logger.warning('| CI | No bulk_concentration provided for species {}, setting it to zero'.format(sp))
+                self.logger.warning('| CI | -- | No bulk_concentration provided for species {}, setting it to zero'.format(sp))
                 self.species[sp]['bulk_concentration']=0.0
                 
 
@@ -790,7 +790,7 @@ class Transport(object):
             comsol_args['solver_settings']['ramp']['names']=[]
         if comsol_args['solver_settings']['solver_sequence'] is not None and\
                 comsol_args['solver_settings']['solver_sequence'] not in solver_sequences_list:
-            self.logger.error('| CI | No such solver sequence {} defined yet'.format(comsol_args['solver_sequence']))
+            self.logger.error('| CI | -- | No such solver sequence {} defined yet'.format(comsol_args['solver_sequence']))
             sys.exit()
         if comsol_args['solver_settings']['solver_sequence']=='tds_elstat' and\
             'PZC' not in comsol_args['solver_settings']['ramp']['names']:
@@ -804,7 +804,7 @@ class Transport(object):
             comsol_args['solver_settings']['ramp']['dramp']=0.1 #default to 32 steps for flux ramping
         for a in comsol_args:
             if a not in comsol_keys:
-                self.logger.error('| CI | {} is not a standard key of COMSOL. Implement this first. Exiting here to be sure that this key is what you want'.format(a))
+                self.logger.error('| CI | -- | {} is not a standard key of COMSOL. Implement this first. Exiting here to be sure that this key is what you want'.format(a))
                 sys.exit()
 
         if 'desc_method' not in comsol_args:
@@ -828,12 +828,12 @@ class Transport(object):
                     comsol_args['par_values']='range(0,'+str(comsol_args['solver_settings']['ramp']['dramp'])+',1)' #np.linspace(0,1,comsol_args['nflux'])
         if comsol_args['desc_method'].startswith('internal'):
             if 'par_name' not in comsol_args:
-                self.logger.error('| CI | Descriptor was requested to be used as parameter sweep inside COMSOL'+
+                self.logger.error('| CI | -- | Descriptor was requested to be used as parameter sweep inside COMSOL'+
                     ', however no descriptor was selected. Select one by setting the par_name key in'+
                     'the comsol_args dictionary')
                 sys.exit()
             if comsol_args['par_name'] not in self.descriptors:
-                self.logger.error('| CI | Selected descriptor for internal COMSOL ramping {} was not found'+
+                self.logger.error('| CI | -- | Selected descriptor for internal COMSOL ramping {} was not found'+
                     ' in global descriptor list.')
                 sys.exit()
             if 'par_values' not in comsol_args:
@@ -869,7 +869,7 @@ class Transport(object):
             for sp in self.species:
                 if not 'flux' in self.species[sp]:
                     self.species[sp]['flux']='catmap'
-            self.logger.info('| CI | '+'Found flux = catmap, all fluxes will be calculated by CatMAP.')
+            self.logger.info('| CI | -- | '+'Found flux = catmap, all fluxes will be calculated by CatMAP.')
             return
                 
         #some consistency check, either flux, current density or flux-equation should be given, NOT all
@@ -879,14 +879,14 @@ class Transport(object):
                 if key in ['flux','current density','flux-equation']:
                     count+=1
             if count>1:
-                self.logger.error('| CI | Flux of species {} has been defined by more than one method.'.format(sp))
+                self.logger.error('| CI | -- | Flux of species {} has been defined by more than one method.'.format(sp))
                 sys.exit()
                 
         #another check, the current density method should be only selected if the species is a product:
         for sp in self.species:
             if 'current density' in self.species[sp]:
                 if sp not in [prod.split('-')[0] for prod in self.electrode_reactions]:
-                    self.logger.error('| CI | Flux of species {} has been given as current density but this species is not product.'.format(sp))
+                    self.logger.error('| CI | -- | Flux of species {} has been given as current density but this species is not product.'.format(sp))
 
         #last check, check if more than one flux per equation has been defined which is not necessary!
         ers=self.electrode_reactions
@@ -902,10 +902,10 @@ class Transport(object):
                 if any([a in ['flux','current density','flux-equation'] for a in self.species[ep]]):
                     count+=1
             if count>1:
-                self.logger.error('| CI | More than one flux has been defined for equation {}. Select one of the fluxes, the rest will be automatically calculated.'.format(ers[er]['reaction']))
+                self.logger.error('| CI | -- | More than one flux has been defined for equation {}. Select one of the fluxes, the rest will be automatically calculated.'.format(ers[er]['reaction']))
                 sys.exit()
             if count==0:
-                self.logger.error('| CI | No flux defined in equation {}. Define one flux.'.format(ers[er]['reaction']))
+                self.logger.error('| CI | -- | No flux defined in equation {}. Define one flux.'.format(ers[er]['reaction']))
                 sys.exit()
 
         #first search fluxes. if any flux is given as equation, we create a comsol parameter first for
@@ -925,7 +925,7 @@ class Transport(object):
             elif 'e-' in products:
                 e_in_educts=False
             else:
-                self.logger.error('| CI | No electron found in the reactions.')
+                self.logger.error('| CI | -- | No electron found in the reactions.')
                 sys.exit()
 
         #convert given current densities into fluxes
@@ -966,7 +966,7 @@ class Transport(object):
                 if reac not in ers and reac not in ['e-'] and reac not in self.system['exclude species'] and reac not in missing_species and not reac.startswith('*'):
                     missing_species+=[reac]
             if len(missing_species)>0:
-                self.logger.info('| CI | '+'Calculating fluxes of {} as sum of other fluxes'.format(missing_species))
+                self.logger.info('| CI | -- | '+'Calculating fluxes of {} as sum of other fluxes'.format(missing_species))
         ref_sp={}
         for er in ers:
             educts=ers[er]['reaction'][0]
@@ -1066,7 +1066,7 @@ class Transport(object):
         #list of descriptors over which to iterate
         if descriptors is not None:
             if any([type(descriptors[desc]) not in [list,np.array] for desc in descriptors]):
-                self.logger.error('| CI | Descriptors must be given as list. Stopping here for safety')
+                self.logger.error('| CI | -- | Descriptors must be given as list. Stopping here for safety')
                 sys.exit()
             self.descriptors=descriptors
         else:
@@ -1091,13 +1091,13 @@ class Transport(object):
 
         desc_keys=[key for key in self.descriptors]
         if len(desc_keys)!=2:
-            self.logger.error('| CI | Cannot use other than 2 descriptors')
+            self.logger.error('| CI | -- | Cannot use other than 2 descriptors')
             sys.exit()
 
         for desc in desc_keys:
             if desc not in self.system:
-                self.logger.error('| CI | '+desc+' not found in system list, cannot evaluate other than system descriptors, yet')
-                self.logger.error('| CI | Here is the current system list:\n{}'.format(self.system))
+                self.logger.error('| CI | -- | '+desc+' not found in system list, cannot evaluate other than system descriptors, yet')
+                self.logger.error('| CI | -- | Here is the current system list:\n{}'.format(self.system))
 
         #self.alldata_names
         #gives the values of the descriptors for the alldata array
@@ -1123,7 +1123,7 @@ class Transport(object):
 
 
 #    def evaluate_fluxes(self):
-#        self.logger.info('| CI | '+'Evaluating fluxes of {} as sum of products/educts'.format([sp for sp in self.species if type(self.species[sp]['flux'])==dict]))
+#        self.logger.info('| CI | -- | '+'Evaluating fluxes of {} as sum of products/educts'.format([sp for sp in self.species if type(self.species[sp]['flux'])==dict]))
 #        tmp_rates=np.zeros([self.nspecies])
 #        for isp,sp in enumerate(self.species):
 #            if 'zeff' in self.species[sp]:
@@ -1256,7 +1256,7 @@ class Transport(object):
             else:
                 self.phiM_init=phiM
             if self.nspecies!=2:
-                self.logger.error('| CI | Gouy-Chapman limit only implemented for two species, cationic'+\
+                self.logger.error('| CI | -- | Gouy-Chapman limit only implemented for two species, cationic'+\
                         'and anionic. Not applying initialization.')
                 return
             function=self.gouy_chapman
@@ -1355,7 +1355,7 @@ class Transport(object):
         elif len(dc_dt_boundary)>0:
             self.boundary_type='dc_dt'
         else:
-            self.logger.error('| CI | No boundary conditions defined, stopping here.')
+            self.logger.error('| CI | -- | No boundary conditions defined, stopping here.')
             sys.exit()
 
         flux_bound=np.zeros([self.nspecies,2])
@@ -1443,5 +1443,5 @@ class Transport(object):
 
     def save(self):
         if self.mpi_rank==0:
-            self.logger.info('| CI | '+'Saving all data into binary pickle files.')
+            self.logger.info('| CI | -- | '+'Saving all data into binary pickle files.')
             save_all(self)

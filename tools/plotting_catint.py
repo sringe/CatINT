@@ -133,7 +133,7 @@ def plot_xinyans_equation():
 c_list=['C'+str(i) for i in range(10)]
 colors=cycle(c_list)
 ls_list=['-','--',':']
-ls_list=['-','--','--']
+#ls_list=['-','--','--']
 #ls_list=['--',':']
 linestyles=cycle(ls_list)
 #m_list=['x','o','1','d','D','2']
@@ -256,6 +256,8 @@ def plot(prop):
                     min_d=abs(d-float(desc))
                     d_sel_inx=i
                     d_sel=d
+        if prop not in tp.alldata[0]['system'] and prop not in tp.alldata[0]['species'][[sp for sp in tp.alldata[0]['species']][0]]:
+            return
         xlabel,ylabel=settings(ax,prop,d_sel)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
@@ -325,7 +327,8 @@ def plot(prop):
                 x=[xx for xx in x]
             y=[tp.alldata[i]['system'][prop] for i in range(len(x))]
             if 'efield' in prop:
-                y=[yy*1e-10 for yy in y]
+                if abs(y[0])>1e7:
+                    y=[yy*1e-10 for yy in y]
             ax.plot(x,y,ls+m,color='k')
 
 for iif,f in enumerate(args.file):

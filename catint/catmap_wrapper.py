@@ -156,16 +156,26 @@ class CatMAP():
             ma.include_labels = True #way too messy with labels
             ma.pressure_correction = pressure_corr #assume all pressures are 1 bar (so that energies are the same as from DFT)
             ma.coverage_correction = coverage_corr #False
+            min_a=np.inf
+            desc_cm=None
+            for a,b in model.descriptor_ranges:
+                if min_a>abs(a-float(desc_val[0])):
+                    min_a=abs(a-float(desc_val[0]))
+                    desc_cm=a
+            if min_a>1e-5 or desc_cm is None:
+                self.tp.logger.warning('| CI | CM | Somehow, there was an error searching for the descriptor in the catmap'+\
+                        'descriptor list, skipping the FED plot to not harm simulation')
+                return
             if self.use_interactions:
                 ma.energy_type = 'interacting_energy'
             if not pressure_corr and not coverage_corr:
-                fig = ma.plot(save='FED.pdf',plot_variants=[float(desc_val[0])],method=method)
+                fig = ma.plot(save='FED.pdf',plot_variants=[desc_cm],method=method)
             elif pressure_corr and not coverage_corr:
-                fig = ma.plot(save='FED_pressure_corrected.pdf',plot_variants=[float(desc_val[0])],method=method)
+                fig = ma.plot(save='FED_pressure_corrected.pdf',plot_variants=[desc_cm],method=method)
             elif pressure_corr and coverage_corr:
-                fig = ma.plot(save='FED_pressure_and_cov_corrected.pdf',plot_variants=[float(desc_val[0])],method=method)
+                fig = ma.plot(save='FED_pressure_and_cov_corrected.pdf',plot_variants=[desc_cm],method=method)
             elif not pressure_corr and coverage_corr:
-                fig = ma.plot(save='FED_cov_corrected.pdf',plot_variants=[float(desc_val[0])],method=method)
+                fig = ma.plot(save='FED_cov_corrected.pdf',plot_variants=[desc_cm],method=method)
         #plot_fed(True)
 #        if not self.use_interactions:
 #            plot_fed(False)
@@ -325,15 +335,15 @@ class CatMAP():
         try:
             plot_fed(True,False,method=2)
         except UserWarning:
-            self.tp.logger.warning('|    | CM | Error in writing FED with coverage correction')
+            self.tp.logger.warning('|    | CM | Error in writing FED with pressure correction')
         try:
             plot_fed(True,True,method=2)
         except UserWarning:
-            self.tp.logger.warning('|    | CM | Error in writing FED with pressure correction')
+            self.tp.logger.warning('|    | CM | Error in writing FED with all corrections')
         try:
             plot_fed(False,True,method=2)
         except UserWarning:
-            self.tp.logger.warning('|    | CM | Error in writing FED with all corrections')
+            self.tp.logger.warning('|    | CM | Error in writing FED with coverage correction')
 #        sys.stdout.flush()
 #        os.close(1)
 #        os.dup(old) # should dup to 1

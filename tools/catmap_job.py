@@ -1,4 +1,5 @@
 import sys
+from catmap import analyze
 sys.path.insert(0,'/scratch/users/sringe/transport/catmap')
 from catmap.model import ReactionModel
 #import sys
@@ -29,7 +30,27 @@ model = ReactionModel(setup_file = mkm_file)
 model.output_variables+=['production_rate', 'free_energy', 'selectivity', 'interacting_energy']
 model.run()
 
-from catmap import analyze
+ma = analyze.MechanismAnalysis(model)
+ma.energy_type = 'interacting_energy'
+ma.energy_type = 'free_energy'
+label_size = 10
+#ma.kwarg_dict = {
+#        'VTA':{'label_positions':None,'label_args':{'color':'black','rotation':45,'ha':'center','size':label_size}},
+#        'VHA':{'label_positions':None,'label_args':{'color':'blue','rotation':45,'ha':'center','size':label_size}},
+#        'VTB':{'label_positions':None,'label_args':{'color':'darkviolet','rotation':45,'ha':'center','size':label_size}},
+#        'VHB':{'label_positions':None,'label_args':{'color':'firebrick','rotation':45,'ha':'center','size':label_size}},
+#        }
+
+#ma.subplots_adjust_kwargs = {'top': 0.87, 'bottom':0.22}
+ma.include_labels = True
+ma.label_args['size'] = 12
+ma.pressure_correction = True
+ma.coverage_correction = True
+fig = ma.plot(save=False, plot_variants = [-1.32727272727])
+ax = fig.add_subplot(111)
+#ax.set_ylim([-0.5,2.5])
+fig.savefig('FED'+j+'.png')
+
 vm = analyze.VectorMap(model)
 #vm.plot_variable = 'rate'
 #vm.descriptor_labels = ['U vs. SHE (V)']
@@ -70,24 +91,5 @@ vm.max = 1
 fig = vm.plot(save=False)
 fig.savefig('coverage'+j+'.png')
 
-ma = analyze.MechanismAnalysis(model)
-ma.energy_type = 'interacting_energy'
-label_size = 10
-ma.kwarg_dict = {
-        'VTA':{'label_positions':None,'label_args':{'color':'black','rotation':45,'ha':'center','size':label_size}},
-        'VHA':{'label_positions':None,'label_args':{'color':'blue','rotation':45,'ha':'center','size':label_size}},
-        'VTB':{'label_positions':None,'label_args':{'color':'darkviolet','rotation':45,'ha':'center','size':label_size}},
-        'VHB':{'label_positions':None,'label_args':{'color':'firebrick','rotation':45,'ha':'center','size':label_size}},
-        }
-
-ma.subplots_adjust_kwargs = {'top': 0.87, 'bottom':0.22}
-ma.include_labels = True
-ma.label_args['size'] = 12
-ma.pressure_correction = False
-ma.coverage_correction = False
-fig = ma.plot(save=False, plot_variants = [0.0])
-ax = fig.add_subplot(111)
-ax.set_ylim([-0.5,2.5])
-fig.savefig('FED'+j+'.png')
 
 

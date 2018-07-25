@@ -46,6 +46,7 @@ if args.name is None:
 
 print args.products
 color_pH={
+    '3.0':'C5',
     '6.0':'C1',
     '6.5':'C1',
     '6.8':'C2',
@@ -346,7 +347,7 @@ for arg in args.file: #sys.argv[1:]:
         if args.scale=='SHE':
             pHtmp=pH
             pH=0
-        if k==1:
+        if k==0:
             ax2.plot(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,label=sp)
         else:
             ax2.plot(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color)
@@ -384,6 +385,10 @@ if args.products is not None:
 else:
     all_prods=[name_to_cm(a) for a in all_prods]
 print all_prods
+if 'pc-Au' in systems:
+    fit_tafel=True
+else:
+    fit_tafel=False
 for pH in set(all_pH):
     if args.expdata:
         symbol=None #symbol_pH[pH]
@@ -400,13 +405,20 @@ for pH in set(all_pH):
             exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['13.0'],\
                 system=systems,scale=args.scale,only_points=True,\
                 take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
-        elif pH == 6.8 or pH == 7.0 or pH == 3.0:
+        elif pH == 6.8 or pH == 7.0:
             #exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
             #    system=systems,scale=args.scale,only_points=True,\
             #    take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
-            exp.plot_data(reference=['jaramillo','wuttig','dunwell'],ax=ax1,species=all_prods,pH=['3.0','6.8'],\
+            exp.plot_data(reference=['jaramillo','wuttig'],ax=ax1,species=all_prods,pH=['6.8'],\
                 system=systems,scale=args.scale,only_points=True,\
-                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
+                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color,fit_tafel=fit_tafel)
+        elif pH == 3.0: #6.8 or pH == 7.0:
+            #exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
+            #    system=systems,scale=args.scale,only_points=True,\
+            #    take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
+            exp.plot_data(reference=['jaramillo','wuttig'],ax=ax1,species=all_prods,pH=['3.0'],\
+                system=systems,scale=args.scale,only_points=True,\
+                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color,fit_tafel=fit_tafel)
         else:
             print 'TEST',pH
             for i,p in enumerate(all_prods):
@@ -464,7 +476,7 @@ ax1.set_ylim([1e-6,1e1])
 if 'pc-Au' in systems:
     ax1.set_xlim([-1.5,-0.3])
     ax2.set_xlim([-1.5,-0.3])
-    ax1.set_ylim([1e-7,1e1])
+    ax1.set_ylim([1e-5,5e1])
 #ax1.set_xlim([-1.4,-1.0])
 #ax2.set_xlim([-1.4,-1.0])
 if args.scale=='RHE':
