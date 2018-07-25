@@ -214,7 +214,7 @@ class Calculator():
                     self.tp.system[desc_keys[0]]=float(value1)
                     self.tp.system[desc_keys[1]]=float(value2)
 
-                    self.tp.logger.info('| CI | Starting calculation for {} = {} and {} = {} on CPU {} of {}'.format(desc_keys[0],value1,desc_keys[1],value2,self.tp.mpi_rank,self.tp.mpi_size))
+                    self.tp.logger.info('| CI | -- | Starting calculation for {} = {} and {} = {} on CPU {} of {}'.format(desc_keys[0],value1,desc_keys[1],value2,self.tp.mpi_rank,self.tp.mpi_size))
                     label=str(i1).zfill(4)+'_'+str(i2).zfill(4)
 
                     if not self.tp.use_catmap:
@@ -230,7 +230,7 @@ class Calculator():
             if not self.tp.use_catmap:
                 self.run_single_step()
             else:
-                self.tp.logger.error('| CI | Catmap has been selected but current descriptor method is Comsol internal which does not work. Stopping here.')
+                self.tp.logger.error('| CI | -- | Catmap has been selected but current descriptor method is Comsol internal which does not work. Stopping here.')
                 sys.exit()
 
             self.tp.save()
@@ -246,7 +246,7 @@ class Calculator():
         n=0
         par_sum=sum(par)
         #self.tp.logger.debug(' | Current current density = {} mA/cm^2'.format(par_sum))
-        self.tp.logger.debug('| CI | Flux = {} mol/m^2/s'.format(par_sum))
+        self.tp.logger.debug('| CI | -- | Flux = {} mol/m^2/s'.format(par_sum))
         par_old_sum=sum(par_old)
         errors=[]
         for p1,p2 in zip(par,par_old):
@@ -277,8 +277,8 @@ class Calculator():
         istep=0
         step_to_check=0
         scf_accuracy=np.inf
-        self.tp.logger.info('| CI | Starting iterative solution with CatMAP and COMSOL')
-        self.tp.logger.info('| CI |  using a current density accuracy cutoff of {} mV/cm^2 and a linear mixing parameter of {}'.format(self.tau_scf,self.mix_scf))
+        self.tp.logger.info('| CI | -- | Starting iterative solution with CatMAP and COMSOL')
+        self.tp.logger.info('| CI | -- |  using a current density accuracy cutoff of {} mV/cm^2 and a linear mixing parameter of {}'.format(self.tau_scf,self.mix_scf))
         accuracies=[]
         desc_keys=self.tp.descriptors.keys()
         desc1_val=self.tp.system[desc_keys[0]]
@@ -290,9 +290,9 @@ class Calculator():
             if istep-step_to_check>40: # and abs(accuracies[-2]-accuracies[-1])>1e-1:
                 #still no convergence, try to decrease mixing factor
                 self.mix_scf*=0.9
-                self.tp.logger.info('| CI | Accuracy is still < 1e-1, decreasing mixing factor in order to speed up the convergence')
+                self.tp.logger.info('| CI | -- | Accuracy is still < 1e-1, decreasing mixing factor in order to speed up the convergence')
                 step_to_check=istep
-            self.tp.logger.info('| CI | Solving transport step {}. Current accuracy in current density = {} mA/cm^2'.format(istep,scf_accuracy))
+            self.tp.logger.info('| CI | -- | Solving transport step {}. Current accuracy in current density = {} mA/cm^2'.format(istep,scf_accuracy))
 
             #linear mixing
             if istep>2:
@@ -319,21 +319,21 @@ class Calculator():
 
             #1) Microkinetic Model: CatMAP
             if istep==1:
-                self.tp.logger.debug('| CI | Electrode Fluxes:')
+                self.tp.logger.debug('| CI | -- | Electrode Fluxes:')
                 for sp in self.tp.species:
-                    self.tp.logger.debug('| CI | {}: {}'.format(sp,self.tp.species[sp]['flux']))
+                    self.tp.logger.debug('| CI | -- | {}: {}'.format(sp,self.tp.species[sp]['flux']))
 
             #run catmap. the fluxes will be updated automatically
             self.catmap.run()
-            self.tp.logger.debug('| CI | Electrode Fluxes:')
+            self.tp.logger.debug('| CI | -- | Electrode Fluxes:')
             for sp in self.tp.species:
-                self.tp.logger.debug('| CI | {}: {}'.format(sp,self.tp.species[sp]['flux']))
+                self.tp.logger.debug('| CI | -- | {}: {}'.format(sp,self.tp.species[sp]['flux']))
 
             #2) Transport: COMSOL
 
-            self.tp.logger.debug('| CI | Surface Concentrations:')
+            self.tp.logger.debug('| CI | -- | Surface Concentrations:')
             for sp in self.tp.species:
-                self.tp.logger.debug('| CI | {}: {} mol/L'.format(sp,self.tp.species[sp]['surface_concentration']/1000.))
+                self.tp.logger.debug('| CI | -- | {}: {} mol/L'.format(sp,self.tp.species[sp]['surface_concentration']/1000.))
 
             #only_last updates the descriptor based dictionaries only for the last entry in self.tp.descriptors
             self.run_single_step(label=label)
@@ -351,17 +351,18 @@ class Calculator():
                     nel=1
                 cd=self.tp.species[sp]['flux']*nel*unit_F/nprod/10.
                 current_density.append(cd)
-                self.tp.logger.debug('| CI | Current Density of {} = {} mA/cm^2'.format(sp,cd))
+                self.tp.logger.debug('| CI | -- | Current Density of {} = {} mA/cm^2'.format(sp,cd))
             if istep>1:
                 scf_accuracy=self.evaluate_accuracy(current_density,old_current_density)
             old_current_density=deepcopy(current_density)
             accuracies.append(scf_accuracy)
         if scf_accuracy<=self.tau_scf:
-            self.tp.logger.info('| CI | Iterative Solver converged in {} steps. Final accuracy in current density = {} mV/cm^2'.format(istep,scf_accuracy))
+            self.tp.logger.info('| CI | -- | Iterative Solver converged in {} steps. Final accuracy in current density = {} mV/cm^2'.format(istep,scf_accuracy))
 
     def run_single_step(self,label=''):
         def nan_in_surface():
-            if any([math.isnan(self.tp.species[sp]['surface_concentration']) for sp in self.tp.species]):
+            if any([math.isnan(self.tp.species[sp]['surface_concentration']) for sp in self.tp.species]) or\
+                math.isnan(self.tp.system['surface_pH']):
                 return True
             else:
                 return False
@@ -389,8 +390,8 @@ class Calculator():
                 self.tp.logger.warning('|    | CS | COMSOL encountered convergence problems')
 
             if nruns>25:
-                self.tp.logger.error('| CI | Restarting COMSOL with various settings and restarts did not help, stopping.')
-                self.tp.logger.error('| CI | Try to load the COMSOL file into the GUI and see how you can get convergence, maybe a denser grid '+
+                self.tp.logger.error('| CI | -- | Restarting COMSOL with various settings and restarts did not help, stopping.')
+                self.tp.logger.error('| CI | -- | Try to load the COMSOL file into the GUI and see how you can get convergence, maybe a denser grid '+
                         'can help, maybe a finer ramping of the load/non-linearity')
                 sys.exit()
             elif nruns>20:

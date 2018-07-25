@@ -1,0 +1,75 @@
+scaler = 'ThermodynamicScaler'
+
+rxn_expressions = [
+    #'CO2_g + *_t <-> CO2*_t',
+    #'CO2*_t + H2O_g + ele_g <-> COOH*_t + OH_g',
+    #'COOH*_t + H2O_g + ele_g <-> COOH-H2O-ele_t <-> CO*_t + H2O_g + OH_g; beta=0.59',
+    #'CO*_t <-> CO_g + *_t',
+    #'H2_g <-> H2_g',
+    #'CO2_g + 2*_t <-> CO2-*_t <-> CO2*_t',	                  #1
+    'CO2_g + 2*_t <-> CO2*_t',	                  #1
+    'CO2*_t + H2O_g + ele_g <-> COOH*_t + OH_g',  #2
+    'COOH*_t + H2O_g + ele_g <-> COOH-H2O-ele_t <-> CO*_t + H2O_g + OH_g + *_t; beta=0.59', #3
+    'CO*_t <-> CO_g + *_t',	                      #4
+    'H2_g <-> H2_g',                              #5
+    #'H2O_g + ele_g <-> OH_g + H_g' #5?
+]
+
+rxn_expressions_names=[str(i) for i in range(len(rxn_expressions))]
+
+prefactor_list = [1e13]*len(rxn_expressions)  #Heine: prefactor for CO is 1e8
+#prefactor_list[-2] = 1e8
+surface_names = ['Au']
+
+descriptor_names= ['voltage', 'temperature']
+descriptors = [-1.5,298]
+descriptor_ranges = [[-1.5,-1.5],[298,298]]
+resolution = [1,1]
+
+species_definitions = {}
+species_definitions['ele_g'] = {'pressure':1.0, 'composition':{}}
+species_definitions['H2O_g'] = {'pressure':1.0}
+species_definitions['H2_g'] = {'pressure':0.001}
+species_definitions['CO2_g'] = {'pressure':1.0}
+species_definitions['CO_g'] = {'pressure':0.1}
+species_definitions['OH_g'] = {'pressure':0.0}
+
+
+species_definitions['t'] = {'site_names': ['211'], 'total':1.0}
+#species_definitions['dl'] = {'site_names':['dl'], 'total':c_HP}
+
+pH = 7.0
+bulk_ph = 7
+c_HP = 10**((-1)*pH)
+data_file = 'CO2R_pH'+'$pH_new'+'.pkl'
+input_file = 'FE_input.txt'
+
+potential_reference_scale = 'SHE'
+voltage_diff_drop = 0.0
+
+gas_thermo_mode = 'ideal_gas' 
+adsorbate_thermo_mode = 'harmonic_adsorbate'
+electrochemical_thermo_mode = 'homogeneous_field' #simple_electrochemical'
+#electrochemical_thermo_mode = 'simple_electrochemical'
+#specify field in V/Ang
+field=1.2
+
+decimal_precision = 100
+tolerance = 1e-25
+max_rootfinding_iterations = 200
+max_bisections = 3
+
+rxn_mechanisms = {
+	'CO2R': [1, 2, 3, 4],
+}
+
+for sp in ['CO2_t', 'COOH_t','COOH-H2O-ele_t']:
+	species_definitions[sp] = {'n_sites':2}
+
+
+species_definitions['CO2_t']['field_params']=[0.58,-0.53]
+species_definitions['COOH_t']['field_params']=[0.09,-0.42]
+species_definitions['CO_t']={}
+species_definitions['CO_t']['field_params']=[-0.07,-0.24]
+species_definitions['COOH-H2O-ele_t']['field_params']=[0.27,-0.61]
+

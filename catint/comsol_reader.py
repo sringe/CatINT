@@ -3,6 +3,7 @@ import re
 import numpy as np
 from units import *
 from scipy.optimize import fsolve,basinhopping
+import matplotlib.pyplot as plt
 
 class Reader():
     def __init__(self,transport=None,outputs=[],comsol_args={},\
@@ -69,6 +70,7 @@ class Reader():
                 #parameter for water at zero field:
                 n=1.33
                 beta=1.41e-8
+                E*=1e10
                 #eps0=self.tp.system['Stern_epsilon'] #self.tp.system['epsilon']
                 eps0=self.tp.system['epsilon']
                 if E>=1e7:
@@ -221,13 +223,20 @@ class Reader():
                                         self.tp.system['Stern_epsilon_func']=self.tp.system['Stern epsilon']
                                     else:
                                         #self.tp.system['Stern_efield'],=fsolve(equations,(float(lss),),args=(float(lss),))
-                                        E0=float(lss)*self.tp.system['epsilon']/10. #self.tp.system['Stern epsilon']
+                                        E0=(float(lss)*self.tp.system['epsilon']/10.*1e-10,) #self.tp.system['Stern epsilon']
 #                                        self.tp.system['Stern_efield'],=fsolve(equations,(float(lss),),args=(E0,))
                                         minimizer_kwargs = {"method": "BFGS"}
-                                        Eout=float(lss)
+                                        Eout=float(lss)*1e-10
                                         self.tp.system['Stern_efield'],=basinhopping(equations, E0, minimizer_kwargs=minimizer_kwargs,
-                                                niter=200).x
+                                                niter=200).x*1e10
+                                        #x=np.linspace(-5,5,10000)
+                                        #plt.figure()
+                                        #plt.plot(x,[equations(xx) for xx in x],'-')
                                         self.tp.system['Stern_epsilon_func']=eps(abs(self.tp.system['Stern_efield']))
+                                        #print 'init',E0
+                                        #print self.tp.system['Stern_efield'],self.tp.system['Stern_epsilon_func']
+                                        #plt.show()
+                                        #sys.exit()
                                 elif x==0.0 and var_name=='potential':
                                     self.tp.system['surface_potential']=float(lss)
                             else:
@@ -240,12 +249,12 @@ class Reader():
                                     self.tp.alldata[alldata_inx]['system']['Stern_efield']=float(lss)*self.tp.system['epsilon']/self.tp.system['Stern epsilon']
                                     self.tp.alldata[alldata_inx]['system']['Stern_epsilon_func']=self.tp.system['Stern epsilon']
                                 else:
-                                    E0=float(lss)*self.tp.system['epsilon']/10. #self.tp.system['Stern epsilon']
+                                    E0=(float(lss)*self.tp.system['epsilon']/10.*1e-10,) #self.tp.system['Stern epsilon']
                                     #self.tp.alldata[alldata_inx]['system']['Stern_efield'],=fsolve(equations,(float(lss),),args=(E0,))
                                     minimizer_kwargs = {"method": "BFGS"}
-                                    Eout=float(lss)
-                                    self.tp.alldata[alldata_inx]['system']['Stern_efield'],=basinhopping(equations, E0, minimizer_kwargs=minimizer_kwargs,
-                                            niter=200).x
+                                    Eout=float(lss)*1e-10
+                                    self.tp.alldata[alldata_inx]['system']['Stern_efield']=basinhopping(equations, E0, minimizer_kwargs=minimizer_kwargs,
+                                            niter=200).x*1e10
                                     self.tp.alldata[alldata_inx]['system']['Stern_epsilon_func']=eps(abs(self.tp.system['Stern_efield']))
                             elif x==0.0 and var_name=='potential':
                                 self.tp.alldata[alldata_inx]['system']['surface_potential']=float(lss)
