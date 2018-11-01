@@ -326,9 +326,8 @@ def plot(prop):
             else:
                 x=[xx for xx in x]
             y=[tp.alldata[i]['system'][prop] for i in range(len(x))]
-            if 'efield' in prop:
-                if abs(y[0])>1e7:
-                    y=[yy*1e-10 for yy in y]
+            if prop in ['Stern_efield']:
+                y=[yy*1e-10 for yy in y]
             ax.plot(x,y,ls+m,color='k')
 
 for iif,f in enumerate(args.file):
@@ -353,5 +352,6 @@ for iif,f in enumerate(args.file):
         plot(p)
 for ax in ax_list:
     ax.legend(prop={'size': 6})
-plt.tight_layout()
-plt.show()
+#plt.tight_layout()
+plt.savefig('test.pdf')
+#plt.show()

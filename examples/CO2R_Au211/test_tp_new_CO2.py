@@ -36,7 +36,7 @@ max_desc_delta=0.2
 grid_factor_domain=100 #grid_factor
 grid_factor_bound=200 #grid_factor
 
-include_protons=True
+include_protons=False #True
 
 use_elreac=True
 if nobuffer:
@@ -84,8 +84,8 @@ system=\
     'phiPZC': 0.2, #ModernAspects of Electrochemistry Books/, value in water
     'bulk_pH':pH_i,
     'potential drop':'Stern', #either Stern or full
-    'Stern capacitance': 60, #std: 20
-    'Stern epsilon':6 #value or Booth
+    'Stern capacitance': 25, #std: 20, Journal of Electroanalytical Chemistry 414 (1996) 209-220
+    'Stern epsilon':2 #value or Booth
     }
 ###########################################################################
 
@@ -109,16 +109,16 @@ if not include_protons:
 
 species=\
     {
-#    'K+':             {'bulk_concentration':   'charge_neutrality',\
-#                        'MPB_radius':           5e-10},
+    'K+':             {'bulk_concentration':   'charge_neutrality',\
+                        'MPB_radius':           2*4.1e-10},
     #'Cl-':            {'bulk_concentration':    (1.45-0.09)*1000.},
-    'HCO3-':            {'bulk_concentration':  91.0944666093},
-    'CO32-':            {'bulk_concentration':  0.0267841528009},
-    'K+':               {'bulk_concentration':  91.1480980107,\
-                          'MPB_radius':         7.64e-10},
+    #'HCO3-':            {'bulk_concentration':  91.0944666093},
+    #'CO32-':            {'bulk_concentration':  0.0267841528009},
+    #'K+':               {'bulk_concentration':  91.1480980107,\
+    #                      'MPB_radius':         6.62e-10},
     'CO2':              {'bulk_concentration':   'Henry'},
     'OH-':              {'bulk_concentration':   OHm_i},
-    'H+':               {'bulk_concentration':  Hm_i},
+    #'H+':               {'bulk_concentration':  Hm_i},
 #    'HCO3-':            {'bulk_concentration':  0.1*1000.},
     'CO':               {},
 #    'CO2':              {}
@@ -190,7 +190,7 @@ potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 
 for potential in potentials:
-    descriptors={'phiM':list(np.linspace(-0.6,-2.2,nphi))}
+    descriptors={'phiM':list(np.linspace(-0.0592*6.8,-2.0,nphi))}
     system['phiM']=potential
 
     #'potential','gradient','robin'

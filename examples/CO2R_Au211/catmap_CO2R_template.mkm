@@ -9,7 +9,7 @@ rxn_expressions = [
     #'CO2_g + 2*_t <-> CO2-*_t <-> CO2*_t',	                  #1
     'CO2_g + 2*_t <-> CO2*_t',	                  #1
     'CO2*_t + H2O_g + ele_g <-> COOH*_t + OH_g',  #2
-    'COOH*_t + H2O_g + ele_g <-> COOH-H2O-ele_t <-> CO*_t + H2O_g + OH_g + *_t; beta=0.59', #3
+    'COOH*_t + H2O_g + ele_g <-> COOH-H2O-ele_t <-> CO*_t + H2O_g + OH_g + *_t; beta=0.5', #3
     'CO*_t <-> CO_g + *_t',	                      #4
     'H2_g <-> H2_g',                              #5
     #'H2O_g + ele_g <-> OH_g + H_g' #5?
@@ -38,21 +38,21 @@ species_definitions['OH_g'] = {'pressure':0.0}
 species_definitions['t'] = {'site_names': ['211'], 'total':1.0}
 #species_definitions['dl'] = {'site_names':['dl'], 'total':c_HP}
 
-pH = 7.0
-bulk_ph = 7
+pH = 6.8
+bulk_ph = 6.8
 c_HP = 10**((-1)*pH)
-data_file = 'CO2R_pH'+'$pH_new'+'.pkl'
-input_file = 'FE_input.txt'
+data_file = 'test.pkl' #'CO2R_pH'+'$pH_new'+'.pkl'
+input_file = 'catmap_CO2R_energies.txt'
 
 potential_reference_scale = 'SHE'
 voltage_diff_drop = 0.0
 
 gas_thermo_mode = 'ideal_gas' 
 adsorbate_thermo_mode = 'harmonic_adsorbate'
-electrochemical_thermo_mode = 'homogeneous_field' #simple_electrochemical'
+electrochemical_thermo_mode = 'surface_charge_density' #homogeneous_field' #simple_electrochemical'
 #electrochemical_thermo_mode = 'simple_electrochemical'
 #specify field in V/Ang
-field=1.2
+#field=1.2
 
 decimal_precision = 100
 tolerance = 1e-25
@@ -67,9 +67,22 @@ for sp in ['CO2_t', 'COOH_t','COOH-H2O-ele_t']:
 	species_definitions[sp] = {'n_sites':2}
 
 
-species_definitions['CO2_t']['field_params']=[0.58,-0.53]
-species_definitions['COOH_t']['field_params']=[0.09,-0.42]
-species_definitions['CO_t']={}
-species_definitions['CO_t']['field_params']=[-0.07,-0.24]
-species_definitions['COOH-H2O-ele_t']['field_params']=[0.27,-0.61]
+#species_definitions['CO2_t']['field_params']=[0.438,0.15*2.]
+#species_definitions['COOH_t']['field_params']=[0.06,0.2*2.]
+#species_definitions['CO_t']={}
+#species_definitions['CO_t']['field_params']=[-0.05,0.12*2.]
+#species_definitions['COOH-H2O-ele_t']['field_params']=[0.16,0.22*2.]
 
+Upzc = 0.16
+
+#eps=6
+#sigma input can be a list of polynomial parameters of sigma-potential curve or file 
+sigma_input=[  -5.01117371,  -52.55943382, -236.48834372, -597.13999034, -929.9802107,\
+ -923.87822975, -578.11454823, -199.44566277,  -3.15378552,   50.1250555,\
+   -6.43429907]
+#sigma_input='/Users/sringe/software/catint/examples/CO2R_Au211/pc-au_PZC_0.16_CH_25.txt'
+species_definitions['CO2_t']['sigma_params']=[-6.04210199e-06,0.0247639012,0.778606901]
+species_definitions['CO_t']={}
+species_definitions['CO_t']['sigma_params']=[3.64651593e-05,-0.0111837285,0.715122431]
+species_definitions['COOH_t']['sigma_params']=[-0.000205088705,-0.00186659496,0.0]
+species_definitions['COOH-H2O-ele_t']['sigma_params']=[-0.000205088705,-0.00186659496,0.0]

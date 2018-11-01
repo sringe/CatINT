@@ -139,7 +139,7 @@ class Transport(object):
         species_keys=['bulk_concentration', 'diffusion', 'name', 'symbol', 'flux','current density','flux-equation','MPB_radius']
         system_keys=[
                 'phiM',                     #V
-                'Stern capacitance',        #mF/cm^2
+                'Stern capacitance',        #microF/cm^2
                 'Stern epsilon',       #in units of eps_0. only needed to calculate field inside Stern layer for 
                 #field-dependent microkinetics and for mesh generation. beside a float, also the Booth model can be used
                 'bulk_pH',
