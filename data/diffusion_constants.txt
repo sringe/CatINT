@@ -24,6 +24,7 @@ bicarbonate     HCO3-           HCO_3^-         1.185e-9        [1]
 carboxylate     CO32-           CO_3^{2-}       0.923e-9        [1]
 #cations
 cesium          Cs+             Cs^+            2.056e-9        [1]
+deuterium       D+              D^+             6.655e-9        [1]
 hydronium       H+              H^+             9.311e-9        [1]
 potassium       K+              K^+             1.957e-9        [1]
 sodium          Na+             Na^+            1.334e-9        [1]

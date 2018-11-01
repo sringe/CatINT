@@ -1,10 +1,11 @@
 import sys
+import os
+sys.path.insert(0,os.getenv("HOME")+'/software/catmap')
+import catmap
 from catmap import analyze
-sys.path.insert(0,'/scratch/users/sringe/transport/catmap')
 from catmap.model import ReactionModel
 #import sys
 from string import Template
-import os
 import numpy as np
 from glob import glob
 
@@ -44,52 +45,52 @@ label_size = 10
 #ma.subplots_adjust_kwargs = {'top': 0.87, 'bottom':0.22}
 ma.include_labels = True
 ma.label_args['size'] = 12
-ma.pressure_correction = True
-ma.coverage_correction = True
-fig = ma.plot(save=False, plot_variants = [-1.32727272727])
+ma.pressure_correction = False
+ma.coverage_correction = False #True
+fig = ma.plot(save=False, plot_variants = [-0.0592*6.8],method=2)
 ax = fig.add_subplot(111)
 #ax.set_ylim([-0.5,2.5])
 fig.savefig('FED'+j+'.png')
 
-vm = analyze.VectorMap(model)
+#vm = analyze.VectorMap(model)
+##vm.plot_variable = 'rate'
+##vm.descriptor_labels = ['U vs. SHE (V)']
+##vm.log_scale = False
+##vm.min = -100
+##vm.max = 100
+##fig = vm.plot(save=False)
+##fig.savefig('rate'+j+'.png')
+#vm.descriptor_labels = ['U vs. SHE (V)']
 #vm.plot_variable = 'rate'
-#vm.descriptor_labels = ['U vs. SHE (V)']
-#vm.log_scale = False
-#vm.min = -100
-#vm.max = 100
-#fig = vm.plot(save=False)
-#fig.savefig('rate'+j+'.png')
-vm.descriptor_labels = ['U vs. SHE (V)']
-vm.plot_variable = 'rate'
-vm.log_scale = True
-vm.min = 1e-10
-vm.max = 1e6
-fig = vm.plot(save=False)
-fig.savefig('rate.pdf')
-
-#vm.plot_variable = 'production_rate'
-#vm.descriptor_labels = ['U vs. SHE (V)']
 #vm.log_scale = True
-#vm.min = -10 #1e-10
-#vm.max = 6 #1e6
+#vm.min = 1e-10
+#vm.max = 1e6
 #fig = vm.plot(save=False)
-#fig.savefig('production_rate'+j+'.png')
-vm.descriptor_labels = ['U vs. SHE (V)']
-vm.plot_variable = 'production_rate'
-vm.log_scale = True
-vm.min = 1e-10
-vm.max = 1e6
-fig = vm.plot(save=False)
-fig.savefig('production_rate.pdf')
-
-vm = analyze.VectorMap(model)
-vm.log_scale = False
-vm.plot_variable = 'coverage'
-vm.descriptor_labels = ['coverage (ML)']
-vm.min = 0
-vm.max = 1
-fig = vm.plot(save=False)
-fig.savefig('coverage'+j+'.png')
-
-
-
+#fig.savefig('rate.pdf')
+#
+##vm.plot_variable = 'production_rate'
+##vm.descriptor_labels = ['U vs. SHE (V)']
+##vm.log_scale = True
+##vm.min = -10 #1e-10
+##vm.max = 6 #1e6
+##fig = vm.plot(save=False)
+##fig.savefig('production_rate'+j+'.png')
+#vm.descriptor_labels = ['U vs. SHE (V)']
+#vm.plot_variable = 'production_rate'
+#vm.log_scale = True
+#vm.min = 1e-10
+#vm.max = 1e6
+#fig = vm.plot(save=False)
+#fig.savefig('production_rate.pdf')
+#
+#vm = analyze.VectorMap(model)
+#vm.log_scale = False
+#vm.plot_variable = 'coverage'
+#vm.descriptor_labels = ['coverage (ML)']
+#vm.min = 0
+#vm.max = 1
+#fig = vm.plot(save=False)
+#fig.savefig('coverage'+j+'.png')
+#
+#
+#
