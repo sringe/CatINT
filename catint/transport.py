@@ -145,11 +145,12 @@ class Transport(object):
                 'bulk_pH',
                 'phiPZC',                   #V
                 'temperature',              #K
-                'pressure',     
+                'pressure',
                 'water viscosity',
                 'electrolyte viscosity',
                 'epsilon',                  #epsilon_0
                 'migration',
+                'field dependence',         #which field dependence of energetics to be used. either sigma, field or None
                 'electrode reactions',
                 'electrolyte reactions',
                 'boundary thickness',       #m
@@ -160,7 +161,8 @@ class Transport(object):
                 'RF',                      #roughness factor
                 'potential drop',           #Potential drop, either Stern or full
                 'Stern_efield', #electric field in Stern layer
-                'Stern_potential' #electrostatic potential at the OHP (outside of Stern layer)
+                'Stern_potential', #electrostatic potential at the OHP (outside of Stern layer)
+                'init_folder' #put here a comsol_results folder from which to initialize the calculation
                 ]
 
         #go over input data and put in some defaults if none
@@ -204,6 +206,8 @@ class Transport(object):
                 'electrolyte reactions': False,
                 'exclude species': ['H2O','e-'],
                 'pressure':1,
+                'field dependence':None,
+                'init_folder':None,
                 'Stern_efield':0.0,
                 'Stern_potential':0.0,
                 'potential drop':'Stern'}
@@ -266,11 +270,13 @@ class Transport(object):
 
 
         self.system['surface_pH']=self.system['bulk_pH']
+        self.system['surface_potential']=self.system['phiM']
         self.system['pH']=[self.system['bulk_pH']]
 
         #initialize concentrations at electrode
         for sp in self.species:
-            self.species[sp]['surface_concentration']=self.species[sp]['bulk_concentration']
+            if not 'surface_concentration' in self.species[sp]:
+                self.species[sp]['surface_concentration']=self.species[sp]['bulk_concentration']
 
 
 
@@ -742,9 +748,10 @@ class Transport(object):
             #parametric or simple
             comsol_args['solver']='parametric'
 
-        for a in ['outputs','global_variables','boundary_variables','parameter']:
+        for a in ['global_variables','boundary_variables','parameter']:
             if not a in comsol_args:
                 comsol_args[a]={}
+        comsol_args['outputs']=[]
         if 'grid_factor_bound' not in comsol_args['parameter']:
             comsol_args['parameter']['grid_factor_bound']=['100','Fineness of Grid']
         if 'grid_factor_domain' not in comsol_args['parameter']:
@@ -1082,7 +1089,7 @@ class Transport(object):
 
         desc_keys=[key for key in self.descriptors]
         if len(desc_keys)==1:
-            self.logger.debug('CI Adding a dummy descriptor for convenience in the code')
+            self.logger_db.debug('CI Adding a dummy descriptor for convenience in the code')
             if 'temperature' not in desc_keys:
                 self.descriptors['temperature']=[self.system['temperature']]
             else:

@@ -147,7 +147,7 @@ class CatMAP():
         model = ReactionModel(setup_file = mkm_file, max_log_line_length=0) #we set the maximum line length to 0, because we work
         #with pickle files anyhow
         #output
-        model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency']
+        model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency','rate_control']
         def plot_fed(pressure_corr=False,coverage_corr=False,method=0):
             ma = analyze.MechanismAnalysis(model)
             ma.surface_colors = ['k','b','r','yellow','green','orange','cyan']
@@ -232,7 +232,7 @@ class CatMAP():
                                 replace_line(mkm_file,i-1,'interaction_strength = '+str(ii))
                         self.tp.logger.info('|    | CM | Running interaction_strength = {}'.format(ii))
                     model = ReactionModel(setup_file = mkm_file, max_log_line_length=0)
-                    model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency']
+                    model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency','rate_control']
                     model.run()
             except:
                 #SOME CRASH OF CATMAP
@@ -512,6 +512,9 @@ class CatMAP():
             if line.strip().startswith('field'):
                 #replace_line(self.catmap_model,i-1,'field = '+str(self.tp.system['efield'][0]*1e-10*self.tp.system['epsilon']/self.tp.system['Stern epsilon']))
                 replace_line(self.catmap_model,i-1,'field = '+str(self.tp.system['Stern_efield']*1e-10))
+            #if line.strip().startswith('sigma'):
+            #    #replace_line(self.catmap_model,i-1,'field = '+str(self.tp.system['efield'][0]*1e-10*self.tp.system['epsilon']/self.tp.system['Stern epsilon']))
+            #    replace_line(self.catmap_model,i-1,'sigma_input = '+str(((self.tp.system['phiM']-self.tp.system['phiPZC'])-self.tp.system['surface_potential'])*self.tp.system['Stern capacitance']))
             if line.strip().startswith('voltage_diff_drop') and self.tp.system['potential drop']=='Stern':
                 replace_line(self.catmap_model,i-1,'voltage_diff_drop = '+str(self.tp.system['potential'][0])) #potential drop']))
             for sp in self.tp.species:
@@ -525,9 +528,8 @@ class CatMAP():
                     if sp in ['OH-','H+']:
                         activity=1 #this is irrelevant, since it will be controlled by the pH
                     else:
-                        print sp
                         activity=self.tp.species[sp]['surface_concentration']/(self.tp.species[sp]['Henry constant']*self.tp.system['pressure']) #self.tp.species[sp]['bulk_concentration']
-                    self.tp.logger.debug('|    | CM | checking concentration of species {}, found c = {} mol/L'.format(sp,activity))
+                    self.tp.logger.debug('|    | CM | a_{}(x=0) = {}'.format(sp,activity))
                     replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':"+str(max(0.,activity))+"}")
                     replaced_species.append(sp)
             sp_cm='H2O'
@@ -568,6 +570,7 @@ class CatMAP():
         model = ReactionModel(setup_file = log_file)
         pickle_file = self.model_name+'.pkl'
         data = self.get_data(pickle_file,model)
+        self.tp.catmap_data=data
         os.chdir(root)
         for sp in self.tp.species:
             self.tp.species[sp]['flux']=0.0
@@ -582,6 +585,8 @@ class CatMAP():
             name=self.species_to_catmap(sp)
             name+='_g'
             idx=None
+
+            #TOF
             #"tof" is the signed rate of conversion/active site/s
             if name in data.turnover_frequency_names:
                 idx=data.turnover_frequency_names.index(name)
@@ -598,6 +603,7 @@ class CatMAP():
             else:
                 nprod=1
                 nel=1
+
             rates=data_ref[np.argsort(data_ref[:, 0])][:,1]*self.tp.system['active site density']
             current_densities=rates*nel*unit_F/nprod/10.
 #            currents=self.convert_TOF(data_ref[np.argsort(data_ref[:, 0])][:,1])
@@ -612,13 +618,28 @@ class CatMAP():
             self.tp.species[sp]['flux']=rates[index]
             self.tp.species[sp]['electrode_current_density']=current_densities[index]
 
-            print self.tp.alldata_names
             #update also alldata array:
             alldata_inx=self.tp.alldata_names.index([desc_val[0],desc_val[1]])
             self.tp.alldata[alldata_inx]['species'][sp]['electrode_current_density']=self.tp.species[sp]['electrode_current_density']
             self.tp.alldata[alldata_inx]['species'][sp]['electrode_flux']=self.tp.species[sp]['flux']
+
+            ###############
+            #2) rate control
+            ###############
+            if name in data.rate_control_names[0]:
+                idx=data.rate_control_names[0].index(name)
+                rate_control=data.rate_control[:,idx]
+            elif sp not in self.tp.system['exclude species'] and sp not in self.tp.electrolyte_list:
+                self.tp.logger.warning('|    | CM | No CatMAP rate control data was found for species {}. Check your species definition names. CatINT uses the CatINT equation names to map to the CatMAP names!'.format(sp))
+            #loop over influencing states
+            for name2 in data.rate_control_names[1]:
+                data_rc=np.column_stack((data.voltage,rate_control[:,data.rate_control_names[1].index(name2)]))
+                data_rc=data_rc[np.argsort(data_rc[:,0])][:,1]
+                rc_file=self.output_folder+'/rc_'+name.split('_')[0]+'_'+name2.split('_')[0]+'.tsv'
+                np.savetxt(rc_file, np.array([voltages,data_rc]).T)
+
             ##############
-            #2) the Coverages
+            #3) the Coverages
             ##############
     
             name=name.split('_')[0]
@@ -641,7 +662,7 @@ class CatMAP():
                 cov_file=self.output_folder+'/cov_'+name.split('_')[0]+'.tsv'
                 np.savetxt(cov_file,np.array([voltages,coverages]).T)
         ###############
-        #3) current densities associated with elementary steps
+        #4) current densities associated with elementary steps
         ###############
         rate=None
         idx=None
@@ -674,13 +695,12 @@ class CatMAP():
                     of.write('{} {}\n'.format(v,c))
 #            np.savetxt(pol_file, np.array([voltages,current_densities]).T)
 
+
     def get_data(self,pickle_file,model):
         a = pickle.load(open(pickle_file))
         data = Object()
         #COVERAGES
         data.coverage_names = model.output_labels['coverage']
-        print 'data.coverage_names names',data.coverage_names
-        print 'interacting names',model.output_labels['interacting_energy']
         coverage_map = np.array(a['coverage_map'])
         data.voltage = []
         scaler_array = coverage_map[:,0]
@@ -696,15 +716,30 @@ class CatMAP():
         data.prod_names = model.output_labels['production_rate']
         data.cons_names = model.output_labels['consumption_rate']
         data.turnover_frequency_names = model.output_labels['turnover_frequency']
+        data.rate_control_names=model.output_labels['rate_control']
+        print data.rate_control_names
+
         production_rate_map = np.array(a['production_rate_map'])
         consumption_rate_map = np.array(a['consumption_rate_map'])
         turnover_frequency_map = np.array(a['turnover_frequency_map'])
+        print 'turnover_frequency_map'
+        print turnover_frequency_map
+        rate_control_map=np.array(a['rate_control_map'])
+        print 'rc_map'
+        print rate_control_map
+
         production_rate_mpf = production_rate_map[:,1]
         consumption_rate_mpf = consumption_rate_map[:,1]
         turnover_frequency_mpf = turnover_frequency_map[:,1]
+        rate_control_mpf = rate_control_map[:,1]
+        print 'rc_mpf'
+        print rate_control_mpf
+
         data.production_rate = np.zeros((len(production_rate_mpf),len(data.prod_names)))
         data.consumption_rate = np.zeros((len(consumption_rate_mpf),len(data.cons_names)))
         data.turnover_frequency = np.zeros((len(turnover_frequency_mpf),len(data.turnover_frequency_names)))
+        data.rate_control = np.zeros((len(rate_control_mpf),len(data.rate_control_names[0]),len(data.rate_control_names[1])))
+
         data.voltage = np.zeros((len(production_rate_mpf),1))
         for i in range(0,len(production_rate_mpf)):
             data.voltage[i][0] = production_rate_map[:,0][i][0]
@@ -721,6 +756,15 @@ class CatMAP():
             for j in range(0,len(data.turnover_frequency_names)):
                 float_rate = float(turnover_frequency_mpf[i][j])
                 data.turnover_frequency[i][j]=float_rate
+        #rate control is
+            #2nd index: products
+            #3rd index: controlling states
+        for i in range(0,len(rate_control_mpf)):
+            for j in range(0,len(data.rate_control_names[0])):
+                for k in range(0,len(data.rate_control_names[1])):
+                    rate_control = float(rate_control_mpf[i][j][k])
+                    data.rate_control[i][j][k]=rate_control
+
         #RATES
         data.rate_names = model.output_labels['rate']
         rate_map = np.array(a['rate_map'])

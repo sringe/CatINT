@@ -29,9 +29,9 @@ resolution = [1,1]
 species_definitions = {}
 species_definitions['ele_g'] = {'pressure':1.0, 'composition':{}}
 species_definitions['H2O_g'] = {'pressure':1.0}
-species_definitions['H2_g'] = {'pressure':0.001}
-species_definitions['CO2_g'] = {'pressure':1.0}
-species_definitions['CO_g'] = {'pressure':0.1}
+species_definitions['H2_g'] = {'pressure':0.1}
+species_definitions['CO2_g'] = {'pressure':0.0}
+species_definitions['CO_g'] = {'pressure':0.0}
 species_definitions['OH_g'] = {'pressure':0.0}
 
 
@@ -76,13 +76,18 @@ for sp in ['CO2_t', 'COOH_t','COOH-H2O-ele_t']:
 Upzc = 0.16
 
 #eps=6
-#sigma input can be a list of polynomial parameters of sigma-potential curve or file 
-sigma_input=[  -5.01117371,  -52.55943382, -236.48834372, -597.13999034, -929.9802107,\
- -923.87822975, -578.11454823, -199.44566277,  -3.15378552,   50.1250555,\
-   -6.43429907]
+#sigma input can be a list of polynomial parameters of sigma-potential curve or file or single value
+#au211
+#sigma_input=[  -5.01117371,  -52.55943382, -236.48834372, -597.13999034, -929.9802107,\
+# -923.87822975, -578.11454823, -199.44566277,  -3.15378552,   50.1250555,\
+#   -6.43429907]
+#au111
+sigma_input=[1.17037299,  10.47845915,   37.42574169,  65.47833594,  50.81865663,\
+  -0.84928822, -22.98285916,  -2.69586594,  11.15659054,  26.10633278,\
+ -16.47016134]
 #sigma_input='/Users/sringe/software/catint/examples/CO2R_Au211/pc-au_PZC_0.16_CH_25.txt'
-species_definitions['CO2_t']['sigma_params']=[-6.04210199e-06,0.0247639012,0.778606901]
+species_definitions['CO2_t']['sigma_params']=[-0.000189651545,0.0211273194,0.619034594]
 species_definitions['CO_t']={}
-species_definitions['CO_t']['sigma_params']=[3.64651593e-05,-0.0111837285,0.715122431]
-species_definitions['COOH_t']['sigma_params']=[-0.000205088705,-0.00186659496,0.0]
-species_definitions['COOH-H2O-ele_t']['sigma_params']=[-0.000205088705,-0.00186659496,0.0]
+species_definitions['CO_t']['sigma_params']=[-0.00102957,-0.03303381,0.4962946]
+species_definitions['COOH_t']['sigma_params']=[-0.000361959351,-0.00296221404,0.689265032]
+species_definitions['COOH-H2O-ele_t']['sigma_params']=[-0.000361959351,-0.00296221404,0.0]
