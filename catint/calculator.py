@@ -27,6 +27,7 @@ import imp
 from io import sync_mpi,reduce_dict_mpi
 from comsol_wrapper import Comsol
 from catmap_wrapper import CatMAP
+from comsol_reader import Reader
 
 #import mpi if available
 use_mpi=False
@@ -279,6 +280,16 @@ class Calculator():
         scf_accuracy=np.inf
         self.tp.logger.info('| CI | -- | Starting iterative solution with CatMAP and COMSOL')
         self.tp.logger.info('| CI | -- |  using a current density accuracy cutoff of {} mV/cm^2 and a linear mixing parameter of {}'.format(self.tau_scf,self.mix_scf))
+
+        #initialization
+        if self.tp.system['init_folder'] is not None:
+            self.tp.logger.info('| CI | -- | Initializing surface concentrations with {}'.format(self.tp.system['init_folder']))
+            comsol_reader=Reader(transport=self.tp,results_folder=self.tp.system['init_folder'],\
+                    outputs=['concentrations','electrostatics','electrode_flux','rho_charge'],comsol_args=self.tp.comsol_args)
+            comsol_reader.read_all()
+            for sp in self.tp.species:
+                self.tp.logger.debug('| CI | -- | ci(x=0)_{} = {} M'.format(sp,self.tp.species[sp]['surface_concentration']/1000.))
+
         accuracies=[]
         desc_keys=self.tp.descriptors.keys()
         desc1_val=self.tp.system[desc_keys[0]]

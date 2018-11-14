@@ -226,9 +226,12 @@ class EXPDATA():
         data.view(data.dtype.str+','+data.dtype.str).sort(order=['f0'], axis=0)
         V=data[:,0]
         J=data[:,1]
-        if skip:
-            V=V[skip:]
-            J=J[skip:]
+        #if skip:
+        #    V=V[skip:]
+        #    J=J[skip:]
+        res=np.array([[vv,jj] for vv,jj in zip(V,J) if vv>-1.0])
+        V=res[:,0]
+        J=res[:,1]
         #A = array([V, ones(len(V))])
         #w = linalg.lstsq(A.T,J )[0]
         #line_tafel = w[0]*np.array(V)+w[1]
@@ -238,7 +241,11 @@ class EXPDATA():
         tafel_slope=-1000./p[1]
         if 300<tafel_slope<500:
             return ax
-        ax.semilogy(V,10**z(V),color=linecol, linestyle=linestyle)
+        minV=min(V)
+        maxV=max(V)
+        dV=maxV-minV
+        Vf=np.linspace(minV-dV/4.,maxV+dV/3.,1000)
+        ax.semilogy(Vf,10**z(Vf),color=linecol, linestyle=linestyle)
         ax.text(V[0],10**z(V[0]),str(int(tafel_slope))+'mV/dec', color=linecol, fontsize=11)  #
         return ax
     
@@ -372,7 +379,7 @@ class EXPDATA():
             return heads
     
         linestyles=cycle(['-','-',':','-.'])
-        self.symbols=cycle(['d','D','o','x','p','*','v','h','1','2'])
+        self.symbols=cycle(['o','d','s','D','x','p','*','v','h','1','2'])
         symbols=self.symbols
     
         if fit_tafel:

@@ -1,5 +1,7 @@
 #tools for plotting various properties from transport simulations
 import numpy as np
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from catint.plot import Plot
 from catint.transport import Transport
@@ -271,12 +273,16 @@ def plot(prop):
                 y=[-np.log10(yy/1000./1000.) for yy in y]
                 ax.semilogx(x,y,ls+m,color=color,label='water diss')
             else:
+                if prop=='concentration':
+                    func=ax.loglog
+                else:
+                    func=ax.semilogx
                 for sp in tp.species:
                     color=next(colors)
                     print d_sel_inx,'species',sp,prop
                     y=tp.alldata[d_sel_inx]['species'][sp][prop]
                     y=[yy/1000. for yy in y]
-                    ax.semilogx(x,y,ls+m,color=color,label=sp)
+                    func(x,y,ls+m,color=color,label=sp)
 #                    ax.plot(x,y,ls+m,color=color,label=sp)
         elif prop in ['electrode_current_density','electrode_flux','surface_concentration']:
             #x: descriptors
@@ -301,6 +307,9 @@ def plot(prop):
                     y=[(yy)/1000. for yy in y]
                     func=ax.semilogy #ax.plot
                 func(x,y,ls+m,color=color,label=sp)
+                if prop=='surface_concentration':
+                    for xx,yy in zip(x,y):
+                        print 'sc',sp,xx,yy
                 #if prop=='electrode_current_density':
                 #    ax=plot_leis_new_data(ax)
         elif prop in ['pH','potential','efield','charge_density','pKa']:
@@ -352,6 +361,6 @@ for iif,f in enumerate(args.file):
         plot(p)
 for ax in ax_list:
     ax.legend(prop={'size': 6})
-#plt.tight_layout()
-plt.savefig('test.pdf')
-#plt.show()
+plt.tight_layout()
+#plt.savefig('test.pdf')
+plt.show()

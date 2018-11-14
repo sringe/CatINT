@@ -1,3 +1,4 @@
+import re
 from tabulate import tabulate
 import os
 import matplotlib.pyplot as plt
@@ -27,8 +28,12 @@ parser.add_argument('--scale',help='RHE (default) or SHE')
 parser.add_argument('--color',help='pH or species (default)')
 parser.add_argument('--title',help='Title of figure')
 parser.add_argument('--name',help='File name of figure')
+parser.add_argument('--ratecontrol',help='plot also degree of rate-control',action="store_true")
 
 args = parser.parse_args()
+
+msize=8
+lw=2
 
 skip=1
 
@@ -183,34 +188,64 @@ def read_data(files,header=False,dtype='species'):
         else:
             x=data[0]
             y=data[1]
-        species=arg2.split('/')[-1].split('_')[-1].split('.')[0]
-        if species not in pdata:
-            pdata[species]=[]
-        if len(np.shape(data))>1:
-            pdata[species].append([x[0],y[0]])
+        species=arg2.split('/')[-1].split('_')[1].split('.')[0]
+        if args.ratecontrol and len(arg2.split('/')[-1].split('_'))>2:
+            ratecontrol=True
         else:
-            pdata[species].append([x,y])
-    for sp in pdata:
-        pdata[sp].sort(key=lambda x: x[0])
-        pdata[sp]=np.array(pdata[sp])
+            ratecontrol=False
+        if ratecontrol:
+            species2=arg2.split('/')[-1].split('_')[2].split('.')[0]
+        if species not in pdata:
+            if not ratecontrol:
+                pdata[species]=[]
+            else:
+                pdata[species]={}
+        if ratecontrol and species2 not in pdata[species]:
+            pdata[species][species2]=[]
+        if len(np.shape(data))>1:
+            if not ratecontrol:
+                pdata[species].append([x[0],y[0]])
+            else:
+                pdata[species][species2].append([x[0],y[0]])
+        else:
+            if not ratecontrol:
+                pdata[species].append([x,y])
+            else:
+                pdata[species][species2].append([x,y])
+    if not ratecontrol:
+        for sp in pdata:
+            pdata[sp].sort(key=lambda x: x[0])
+            pdata[sp]=np.array(pdata[sp])
+    else:
+        for sp in pdata:
+            for sp2 in pdata[sp]:
+                pdata[sp][sp2].sort(key=lambda x: x[0])
+                pdata[sp][sp2]=np.array(pdata[sp][sp2])
     return pdata, labels
 
 colors=cycle(['C'+str(i) for i in range(10)])
+color_eps={6:'C1',10:'C2',80:'C3'}
 linestyles=cycle(['-','--',':','-.'])
 symbols=cycle(['o','d','1','2','x'])
 k=-1
 all_pH=[]
 symbol_pH={}
 
+ax1=plt.subplot('211')
+ax1m=ax1.twinx()
+ax2=plt.subplot('212')
+
 for arg in args.file: #sys.argv[1:]:
     k+=1
     results_folder=arg+'/catmap_output'
-    if True: # k==2 or k==0:
-        linestyle=next(linestyles)
+    #if True: # k==2 or k==0:
+    #    linestyle=next(linestyles)
+    if 'etp' in arg:
+        linestyle='--'
+    else:
+        linestyle='-'
     symbol=next(symbols)
     
-    ax1=plt.subplot('211')
-    ax2=plt.subplot('212')
     
     ax1.set_title('Polarization')
     searchedfile=[s for s in glob(arg+'/catmap_input/*/*.mkm') if 'template' not in s]
@@ -246,9 +281,14 @@ for arg in args.file: #sys.argv[1:]:
     symbol_pH[pH]=symbol
     if color_pH is not None:
         color=color_pH[str(pH)]
+
 #    if args.scale=='SHE':
 #        pH=0.
+
+    #READ CURRENT DENSITIES
     pdata,dummy=read_data(glob(results_folder+'/*/j_*'))
+    if args.ratecontrol:
+        pdata_rc,dummy=read_data(glob(results_folder+'/*/rc_*'))
     if args.elemrates:
         pdata_elem,label_elem=read_data(glob(results_folder+'/*/jelem*'),header=True,dtype='elem')
     cdata,dummy=read_data(glob(results_folder+'/*/cov*'),dtype='cov')
@@ -257,6 +297,12 @@ for arg in args.file: #sys.argv[1:]:
             continue
         x=pdata[sp][:,0]
         y=pdata[sp][:,1]
+        if args.ratecontrol:
+            xrc={}
+            yrc={}
+            for sp2 in pdata_rc[sp]:
+                xrc[sp2]=pdata_rc[sp][sp2][:,0]
+                yrc[sp2]=pdata_rc[sp][sp2][:,1]
         if args.color=='species':
             color=exp.get_color(sp)
             if color is None and sp in colorlist:
@@ -270,21 +316,36 @@ for arg in args.file: #sys.argv[1:]:
                     color=colorlist[sp]
                 elif color is None:
                     color='k'
-        symbol=''
-        if isp==len(pdata)-1:
+        sol=re.findall('eps([0-9.]+)',results_folder)
+        if len(sol)>0:
+            eps=int(sol[0])
+        else:
+            eps=6.0
+        color=color_eps[eps]
+        #symbol=''
+        #if isp==len(pdata)-1:
+        #    symbol='o'
+        if 'etp' in arg:
+            symbol=''
+        else:
             symbol='o'
+            msize=3
         if j_log_plot:
             func=ax1.semilogy
         else:
             func=ax1.plot
-        symbol='' #next(symbols)
+#        symbol='' #next(symbols)
         if args.scale=='SHE':
             pHtmp=pH
             pH=0
         if k==0:
-            func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,label=sp) #,label=arg.split('/')[-1])
+            func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,label=sp,ms=msize) #,label=arg.split('/')[-1])
         else:
-            func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color)
+            func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,ms=msize)
+        for sp2 in pdata_rc[sp]:
+            color_rc=next(colors)
+            ax1m.plot(xrc[sp2][skip:]+0.059*pH,yrc[sp2][skip:],':',color=color_rc,lw=1.5,label=sp2)
+            ax1m.annotate(sp2,xy=(xrc[sp2][len(xrc[sp2][skip:])/3],yrc[sp2][len(xrc[sp2][skip:])/3]),color=color_rc,fontsize=12)
         if args.scale=='SHE':
             pH=pHtmp
     if args.elemrates:
@@ -339,7 +400,11 @@ for arg in args.file: #sys.argv[1:]:
         #    symbol='x'
         #else:
         #    symbol='o'
-        symbol=''
+        if 'etp' in arg:
+            symbol=''
+        else:
+            symbol='o'
+            msize=3
         #if isp==len(cdata)-1:
         #    symbol='o'
         print 'the color',k,sp,color
@@ -348,9 +413,9 @@ for arg in args.file: #sys.argv[1:]:
             pHtmp=pH
             pH=0
         if k==0:
-            ax2.plot(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,label=sp)
+            ax2.plot(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,label=sp,lw=lw,ms=msize)
         else:
-            ax2.plot(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color)
+            ax2.plot(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,lw=lw,ms=msize)
         if args.scale=='SHE':
             pH=pHtmp
     if show_legend:
@@ -409,9 +474,17 @@ for pH in set(all_pH):
             #exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
             #    system=systems,scale=args.scale,only_points=True,\
             #    take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
-            exp.plot_data(reference=['jaramillo','wuttig'],ax=ax1,species=all_prods,pH=['6.8'],\
-                system=systems,scale=args.scale,only_points=True,\
-                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color,fit_tafel=fit_tafel)
+            only_points=True
+            fit_tafel=True
+            #wuttig
+            refs=['jaramillo'] #,'wuttig']
+            exp.plot_data(reference=refs,ax=ax1,species=all_prods,pH=['6.8'],\
+                system=systems,scale=args.scale,only_points=only_points,\
+                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=5,color=color,fit_tafel=fit_tafel)
+            fit_tafel=False
+            exp.plot_data(reference=refs,ax=ax1,species=all_prods,pH=['3.0'],\
+                system=systems,scale=args.scale,only_points=only_points,\
+                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=5,color=color,fit_tafel=fit_tafel)
         elif pH == 3.0: #6.8 or pH == 7.0:
             #exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
             #    system=systems,scale=args.scale,only_points=True,\
@@ -469,14 +542,14 @@ ax1.set_ylim([1e-5,1e2])
 #print 'TESTING',pp
 #ax1.set_title(pp,fontsize=12)
 #ax1.set_title(args.title.replace('_','-').replace('*',''),fontsize=6) #[a+'\n' for a in args.title.split(';')],fontsize=6)
-ax1.set_xlim([-1.5,-0.8])
+ax1.set_xlim([-2.0,0.2])
 #ax2.set_xlim([-1.2,-0.4])
-ax2.set_xlim([-1.5,-0.8])
-ax1.set_ylim([1e-6,1e1])
-if 'pc-Au' in systems:
-    ax1.set_xlim([-1.9,-0.0])
-    ax2.set_xlim([-1.9,-0.0])
-    ax1.set_ylim([1e-5,5e1])
+ax2.set_xlim([-2.0,0.2])
+ax1.set_ylim([1e-4,1e11])
+if 'Au' in systems:
+    ax1.set_xlim([-1.9,-0.2])
+    ax2.set_xlim([-1.9,-0.2])
+    ax1.set_ylim([1e-8,1e2])
 #ax1.set_xlim([-1.4,-1.0])
 #ax2.set_xlim([-1.4,-1.0])
 if args.scale=='RHE':
@@ -485,6 +558,7 @@ if args.scale=='RHE':
 else:
     ax1.set_xlabel(r'Voltage vs. SHE (V)')
     ax2.set_xlabel(r'Voltage vs. SHE (V)')
+ax1m.set_ylim([-1.1,1.1])
 plt.tight_layout()
 print('Saving to {}'.format(args.name+'.pdf'))
 plt.savefig(args.name+'.pdf')# ,dpi=500)
