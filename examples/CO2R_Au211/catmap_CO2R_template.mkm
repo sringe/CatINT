@@ -86,8 +86,8 @@ sigma_input=[1.17037299,  10.47845915,   37.42574169,  65.47833594,  50.81865663
   -0.84928822, -22.98285916,  -2.69586594,  11.15659054,  26.10633278,\
  -16.47016134]
 #sigma_input='/Users/sringe/software/catint/examples/CO2R_Au211/pc-au_PZC_0.16_CH_25.txt'
-species_definitions['CO2_t']['sigma_params']=[-0.000189651545,0.0211273194,0.619034594]
+species_definitions['CO2_t']['sigma_params']=[-0.000189651545,0.0211273194,1.019034594]
 species_definitions['CO_t']={}
 species_definitions['CO_t']['sigma_params']=[-0.00102957,-0.03303381,0.4962946]
-species_definitions['COOH_t']['sigma_params']=[-0.000361959351,-0.00296221404,0.689265032]
+species_definitions['COOH_t']['sigma_params']=[-0.000361959351,-0.00296221404,0.489265032]
 species_definitions['COOH-H2O-ele_t']['sigma_params']=[-0.000361959351,-0.00296221404,0.0]
