@@ -1,5 +1,7 @@
 #tools for plotting various properties from transport simulations
 import numpy as np
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from catint.plot import Plot
 from catint.transport import Transport
@@ -132,7 +134,9 @@ def plot_xinyans_equation():
 
 c_list=['C'+str(i) for i in range(10)]
 colors=cycle(c_list)
-ls_list=['-',':','--']
+ls_list=['-','--',':']
+#ls_list=['-','--','--']
+#ls_list=['--',':']
 linestyles=cycle(ls_list)
 #m_list=['x','o','1','d','D','2']
 m_list=['']
@@ -191,7 +195,7 @@ def settings(ax,prop,d_sel):
             label+=r' at $\phi_M$ = {} V'.format(round(d_sel,3))
     elif prop=='efield':
         xlabel=r'x ($\AA$)'
-        ylabel=r'E (V/m)'
+        ylabel=r'$E_x$ (V/\AA)'
         if args.scale=='RHE':
             label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
         else:
@@ -210,6 +214,21 @@ def settings(ax,prop,d_sel):
             label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
         else:
             label+=r' at $\phi_M$ = {} V'.format(round(d_sel,3))
+    elif prop=='Stern_efield':
+        xlabel='Voltage vs. '+args.scale+' (V)'
+        ylabel=r'$E_{\mathrm{Stern},x}$ (V/\AA)'
+    elif prop=='surface_potential':
+        xlabel='Voltage vs. '+args.scale+' (V)'
+        ylabel=r'$\phi^\ddagger$ (V)'
+    elif prop=='Potential_drop':
+        xlabel='Voltage vs. '+args.scale+' (V)'
+        ylabel=r'$\phi^\mathrm{M}-\phi^\ddagger$ (V)'
+    elif prop=='surface_efield':
+        xlabel='Voltage vs. '+args.scale+' (V)'
+        ylabel=r'$E^\ddagger$ (V)'
+    elif prop=='Stern_epsilon_func':
+        xlabel='Voltage vs. '+args.scale+' (V)'
+        ylabel=r'$\varepsilon_\mathrm{S}$'
     else:
         xlabel=''
         ylabel=''
@@ -239,6 +258,8 @@ def plot(prop):
                     min_d=abs(d-float(desc))
                     d_sel_inx=i
                     d_sel=d
+        if prop not in tp.alldata[0]['system'] and prop not in tp.alldata[0]['species'][[sp for sp in tp.alldata[0]['species']][0]]:
+            return
         xlabel,ylabel=settings(ax,prop,d_sel)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
@@ -252,12 +273,16 @@ def plot(prop):
                 y=[-np.log10(yy/1000./1000.) for yy in y]
                 ax.semilogx(x,y,ls+m,color=color,label='water diss')
             else:
+                if prop=='concentration':
+                    func=ax.loglog
+                else:
+                    func=ax.semilogx
                 for sp in tp.species:
                     color=next(colors)
                     print d_sel_inx,'species',sp,prop
                     y=tp.alldata[d_sel_inx]['species'][sp][prop]
                     y=[yy/1000. for yy in y]
-                    ax.semilogx(x,y,ls+m,color=color,label=sp)
+                    func(x,y,ls+m,color=color,label=sp)
 #                    ax.plot(x,y,ls+m,color=color,label=sp)
         elif prop in ['electrode_current_density','electrode_flux','surface_concentration']:
             #x: descriptors
@@ -279,9 +304,12 @@ def plot(prop):
                     y=[yy/RF for yy in y]
                     func=ax.semilogy
                 elif prop=='surface_concentration':
-                    y=[yy/1000. for yy in y]
-                    func=ax.plot #ax.semilogy #ax.plot
+                    y=[(yy)/1000. for yy in y]
+                    func=ax.semilogy #ax.plot
                 func(x,y,ls+m,color=color,label=sp)
+                if prop=='surface_concentration':
+                    for xx,yy in zip(x,y):
+                        print 'sc',sp,xx,yy
                 #if prop=='electrode_current_density':
                 #    ax=plot_leis_new_data(ax)
         elif prop in ['pH','potential','efield','charge_density','pKa']:
@@ -291,6 +319,8 @@ def plot(prop):
             y=tp.alldata[d_sel_inx]['system'][prop]
             if prop=='charge_density':
                 y=[yy/1000/unit_F for yy in y]
+            elif prop=='efield':
+                y=[yy*1e-10 for yy in y]
             #if prop=='pKa':
                 #y=[-(14.5-8.49)/19.8*rho_c/unit_F/1000.+14.5 for rho_c in tp.alldata[d_sel_inx]['system']['charge_density']]
                 
@@ -305,6 +335,8 @@ def plot(prop):
             else:
                 x=[xx for xx in x]
             y=[tp.alldata[i]['system'][prop] for i in range(len(x))]
+            if prop in ['Stern_efield']:
+                y=[yy*1e-10 for yy in y]
             ax.plot(x,y,ls+m,color='k')
 
 for iif,f in enumerate(args.file):
@@ -330,4 +362,5 @@ for iif,f in enumerate(args.file):
 for ax in ax_list:
     ax.legend(prop={'size': 6})
 plt.tight_layout()
+#plt.savefig('test.pdf')
 plt.show()
