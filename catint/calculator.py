@@ -27,6 +27,7 @@ import imp
 from io import sync_mpi,reduce_dict_mpi
 from comsol_wrapper import Comsol
 from catmap_wrapper import CatMAP
+from comsol_reader import Reader
 
 #import mpi if available
 use_mpi=False
@@ -214,7 +215,7 @@ class Calculator():
                     self.tp.system[desc_keys[0]]=float(value1)
                     self.tp.system[desc_keys[1]]=float(value2)
 
-                    self.tp.logger.info('Starting calculation for {} = {} and {} = {} on CPU {} of {}'.format(desc_keys[0],value1,desc_keys[1],value2,self.tp.mpi_rank,self.tp.mpi_size))
+                    self.tp.logger.info('| CI | -- | Starting calculation for {} = {} and {} = {} on CPU {} of {}'.format(desc_keys[0],value1,desc_keys[1],value2,self.tp.mpi_rank,self.tp.mpi_size))
                     label=str(i1).zfill(4)+'_'+str(i2).zfill(4)
 
                     if not self.tp.use_catmap:
@@ -230,7 +231,7 @@ class Calculator():
             if not self.tp.use_catmap:
                 self.run_single_step()
             else:
-                self.tp.logger.error('Catmap has been selected but current descriptor method is Comsol internal which does not work. Stopping here.')
+                self.tp.logger.error('| CI | -- | Catmap has been selected but current descriptor method is Comsol internal which does not work. Stopping here.')
                 sys.exit()
 
             self.tp.save()
@@ -246,7 +247,7 @@ class Calculator():
         n=0
         par_sum=sum(par)
         #self.tp.logger.debug(' | Current current density = {} mA/cm^2'.format(par_sum))
-        self.tp.logger.debug(' | Flux = {} mol/m^2/s'.format(par_sum))
+        self.tp.logger.debug('| CI | -- | Flux = {} mol/m^2/s'.format(par_sum))
         par_old_sum=sum(par_old)
         errors=[]
         for p1,p2 in zip(par,par_old):
@@ -272,24 +273,23 @@ class Calculator():
         else:
             return False
 
-    def run_single_step(self,label=''):
-        """run a single transport calculation"""
-#        if self.calc != 'comsol':
-#            cout=self.integrate_pnp(self.tp.dx,self.tp.nx,self.tp.dt,\
-#                len(self.tp.tmesh),self.tp.ntout,method=self.calc)
-#            for i_sp,sp in enumerate(self.tp.species):
-#                self.tp.species[sp]['concentration']=cout[-1,i_sp*self.tp.nx:(i_sp+1)*self.tp.nx]
-#            self.tp.cout=cout
-#        else:
-        self.comsol.run(label=label)
-
     def run_scf_cycle(self,label=''):
         """run scf cycle to converge catmap-comsol iterations"""
         istep=0
         step_to_check=0
         scf_accuracy=np.inf
-        self.tp.logger.info('Starting iterative solution with CatMAP and COMSOL')
-        self.tp.logger.info('  using a current density accuracy cutoff of {} mV/cm^2 and a linear mixing parameter of {}'.format(self.tau_scf,self.mix_scf))
+        self.tp.logger.info('| CI | -- | Starting iterative solution with CatMAP and COMSOL')
+        self.tp.logger.info('| CI | -- |  using a current density accuracy cutoff of {} mV/cm^2 and a linear mixing parameter of {}'.format(self.tau_scf,self.mix_scf))
+
+        #initialization
+        if self.tp.system['init_folder'] is not None:
+            self.tp.logger.info('| CI | -- | Initializing surface concentrations with {}'.format(self.tp.system['init_folder']))
+            comsol_reader=Reader(transport=self.tp,results_folder=self.tp.system['init_folder'],\
+                    outputs=['concentrations','electrostatics','electrode_flux','rho_charge'],comsol_args=self.tp.comsol_args)
+            comsol_reader.read_all()
+            for sp in self.tp.species:
+                self.tp.logger.debug('| CI | -- | ci(x=0)_{} = {} M'.format(sp,self.tp.species[sp]['surface_concentration']/1000.))
+
         accuracies=[]
         desc_keys=self.tp.descriptors.keys()
         desc1_val=self.tp.system[desc_keys[0]]
@@ -301,9 +301,9 @@ class Calculator():
             if istep-step_to_check>40: # and abs(accuracies[-2]-accuracies[-1])>1e-1:
                 #still no convergence, try to decrease mixing factor
                 self.mix_scf*=0.9
-                self.tp.logger.info(' | Accuracy is still < 1e-1, decreasing mixing factor in order to speed up the convergence')
+                self.tp.logger.info('| CI | -- | Accuracy is still < 1e-1, decreasing mixing factor in order to speed up the convergence')
                 step_to_check=istep
-            self.tp.logger.info(' | Solving transport step {}. Current accuracy in current density = {} mV/cm^2'.format(istep,scf_accuracy))
+            self.tp.logger.info('| CI | -- | Solving transport step {}. Current accuracy in current density = {} mA/cm^2'.format(istep,scf_accuracy))
 
             #linear mixing
             if istep>2:
@@ -330,63 +330,24 @@ class Calculator():
 
             #1) Microkinetic Model: CatMAP
             if istep==1:
-                self.tp.logger.debug('Electrode Fluxes:')
+                self.tp.logger.debug('| CI | -- | Electrode Fluxes:')
                 for sp in self.tp.species:
-                    self.tp.logger.debug('  {}: {}'.format(sp,self.tp.species[sp]['flux']))
+                    self.tp.logger.debug('| CI | -- | {}: {}'.format(sp,self.tp.species[sp]['flux']))
 
             #run catmap. the fluxes will be updated automatically
             self.catmap.run()
-            self.tp.logger.debug('Electrode Fluxes:')
+            self.tp.logger.debug('| CI | -- | Electrode Fluxes:')
             for sp in self.tp.species:
-                self.tp.logger.debug('  {}: {}'.format(sp,self.tp.species[sp]['flux']))
+                self.tp.logger.debug('| CI | -- | {}: {}'.format(sp,self.tp.species[sp]['flux']))
 
             #2) Transport: COMSOL
 
-            self.tp.logger.debug('Surface Concentrations:')
+            self.tp.logger.debug('| CI | -- | Surface Concentrations:')
             for sp in self.tp.species:
-                self.tp.logger.debug('  {}: {} mol/L'.format(sp,self.tp.species[sp]['surface_concentration']/1000.))
+                self.tp.logger.debug('| CI | -- | {}: {} mol/L'.format(sp,self.tp.species[sp]['surface_concentration']/1000.))
 
             #only_last updates the descriptor based dictionaries only for the last entry in self.tp.descriptors
             self.run_single_step(label=label)
-
-            was_nan=False
-            grid_factor=float(self.tp.comsol_args['parameter']['grid_factor'][0])
-            nflux=self.tp.comsol_args['nflux']
-            nflux_step=0
-            while any([math.isnan(self.tp.species[sp]['surface_concentration']) for sp in self.tp.species]):
-                was_nan=True
-                #rerun comsol with finer mesh
-                self.tp.logger.warning(' | CS | NaN appeared in surface_concentrations, rerunning COMSOL with slower ramping'+\
-                        ' and finer resolution of grid')
-                self.tp.comsol_args['nflux']*=2.
-                self.tp.comsol_args['nflux']=int(self.tp.comsol_args['nflux'])
-                self.tp.logger.info(' | CS | Number of flux ramping steps increased to {}'.format(self.tp.comsol_args['nflux']))
-
-                if self.tp.comsol_args['nflux']/200 != nflux_step:
-                    nflux_step=self.tp.comsol_args['nflux']/200
-                    self.tp.logger.info(' | CS | Ramping increase of 200 did not help, trying to decrease also minimal grid discretization')
-                    self.tp.comsol_args['parameter']['grid_factor_domain'][0]=str(int(float(self.tp.comsol_args['parameter']['grid_factor_domain'][0])*1.1))
-                    self.tp.logger.info(' | CS | Maximal discretization of domain raised by {}x'.format(self.tp.comsol_args['parameter']['grid_factor_domain']))
-
-                if self.tp.comsol_args['nflux']>20000:
-                    self.tp.logger.error(' | CS | ramping # nflux is larger than 20000, stopping here, we will probably not get any convergence')
-                    sys.exit()
-
-                self.tp.comsol_args['par_values']=np.linspace(0,1,self.tp.comsol_args['nflux'])
-
-#                self.tp.logger.warning(' | CS | Current x-axis resolution =  {} intervals.'.format(self.tp.comsol_args['nflux']))
-                self.tp.logger.warning(' | CS | Current ramping of flux =  {} intervals.'.format(self.tp.comsol_args['nflux']))
-
-                self.run_single_step(label=label)
-
-                self.tp.logger.debug('Surface Concentrations:')
-                for sp in self.tp.species:
-                    self.tp.logger.debug('  {}: {} mol/L'.format(sp,self.tp.species[sp]['surface_concentration']/1000.))
-
-            if was_nan:
-                #reset the grid_factor to original value:
-                self.tp.comsol_args['nflux']=nflux
-                self.tp.comsol_args['parameter']['grid_factor_domain'][0]=str(grid_factor)
 
             #3) Check Convergence
             current_density=[]
@@ -401,10 +362,102 @@ class Calculator():
                     nel=1
                 cd=self.tp.species[sp]['flux']*nel*unit_F/nprod/10.
                 current_density.append(cd)
-                self.tp.logger.debug('Current Density of {} = {} mA/cm^2'.format(sp,cd))
+                self.tp.logger.debug('| CI | -- | Current Density of {} = {} mA/cm^2'.format(sp,cd))
             if istep>1:
                 scf_accuracy=self.evaluate_accuracy(current_density,old_current_density)
             old_current_density=deepcopy(current_density)
             accuracies.append(scf_accuracy)
         if scf_accuracy<=self.tau_scf:
-            self.tp.logger.info(' | Iterative Solver converged in {} steps. Final accuracy in current density = {} mV/cm^2'.format(istep,scf_accuracy))
+            self.tp.logger.info('| CI | -- | Iterative Solver converged in {} steps. Final accuracy in current density = {} mV/cm^2'.format(istep,scf_accuracy))
+
+    def run_single_step(self,label=''):
+        def nan_in_surface():
+            if any([math.isnan(self.tp.species[sp]['surface_concentration']) for sp in self.tp.species]) or\
+                math.isnan(self.tp.system['surface_pH']):
+                return True
+            else:
+                return False
+        #start with a single comsol calculation
+        self.comsol.run(label=label)
+        #check error
+        error=self.comsol.check_error()
+        #check for nan
+        nan=nan_in_surface()
+        was_nan=False
+        #save the grid_factor and dflux before changing them in the loop
+        grid_factor=float(self.tp.comsol_args['parameter']['grid_factor'][0])
+        dramp=self.tp.comsol_args['solver_settings']['ramp']['dramp']
+        dramp_step=dramp
+        #if there were error's in the calculation or nan's in surface, run convergence loop
+        nruns=0
+        while nan or error:
+            nruns+=1
+            was_nan=True
+            #rerun comsol with finer mesh
+            if nan:
+                self.tp.logger.warning('|    | CS | NaN appeared in surface_concentrations, rerunning COMSOL with slower ramping'+\
+                    ' and finer resolution of grid')
+            if error:
+                self.tp.logger.warning('|    | CS | COMSOL encountered convergence problems')
+
+            if nruns>25:
+                self.tp.logger.error('| CI | -- | Restarting COMSOL with various settings and restarts did not help, stopping.')
+                self.tp.logger.error('| CI | -- | Try to load the COMSOL file into the GUI and see how you can get convergence, maybe a denser grid '+
+                        'can help, maybe a finer ramping of the load/non-linearity')
+                sys.exit()
+            elif nruns>20:
+                self.tp.logger.warning('|    | CS | 5x restart did again not help, maximize all settings as a final try')
+                self.tp.comsol_args['parameter']['grid_factor_bound'][0]=str(int(float(self.tp.comsol_args['parameter']['grid_factor_bound'][0])*1.5))
+                self.tp.comsol_args['solver_settings']['ramp']['dramp']/=2.
+                self.tp.comsol_args['par_values']='range(0,'+str(self.tp.comsol_args['solver_settings']['ramp']['dramp'])+',1)'
+                self.tp.logger.info('|    | CS | Maximal discretization of boundary is now {}'.format(self.tp.comsol_args['parameter']['grid_factor_bound']))
+                self.tp.logger.info('|    | CS | Load/Non-linearity ramping with an interval of {}'.format(self.tp.comsol_args['solver_settings']['ramp']['dramp']))
+            elif nruns>15:
+                self.tp.logger.warning('|    | CS | 5x restart with finer ramping did not help, finally try to increase both ramping and grid density')
+                self.tp.comsol_args['parameter']['grid_factor_bound'][0]=str(int(float(self.tp.comsol_args['parameter']['grid_factor_bound'][0])*1.5))
+                self.tp.logger.info('|    | CS | Maximal discretization of boundary is now {}'.format(self.tp.comsol_args['parameter']['grid_factor_bound']))
+                self.tp.logger.info('|    | CS | Load/Non-linearity ramping with an interval of {}'.format(self.tp.comsol_args['solver_settings']['ramp']['dramp']))
+            elif nruns>10:
+                self.tp.logger.warning('|    | CS | 5x restart with finer grid did not help trying to reduce load/non-linearity ramping with initial grid')
+                self.tp.comsol_args['solver_settings']['ramp']['dramp']/=2.
+                self.tp.comsol_args['par_values']='range(0,'+str(self.tp.comsol_args['solver_settings']['ramp']['dramp'])+',1)'
+                self.tp.comsol_args['parameter']['grid_factor_bound'][0]=grid_factor
+                self.tp.logger.info('|    | CS | Load/Non-linearity ramping with an interval of {}'.format(self.tp.comsol_args['solver_settings']['ramp']['dramp']))
+            elif nruns>5:
+                self.tp.logger.warning('|    | CS | 5x restart did not help, trying to increase grid density')
+                self.tp.comsol_args['parameter']['grid_factor_bound'][0]=str(int(float(self.tp.comsol_args['parameter']['grid_factor_bound'][0])*1.5))
+                self.tp.logger.info('|    | CS | Maximal discretization of boundary is now {}'.format(self.tp.comsol_args['parameter']['grid_factor_bound']))
+
+            #self.tp.comsol_args['dflux']/=2.
+#           # self.tp.comsol_args['dflux']=int(self.tp.comsol_args['dflux'])
+            #self.tp.logger.info('|    | CS | Flux descretization reduced to {}'.format(self.tp.comsol_args['dflux']))
+
+            #if self.tp.comsol_args['dflux']/dflux_step == 2**3:
+            #    dflux_step=self.tp.comsol_args['dflux']
+            #    self.tp.logger.info('|    | CS | Discretization decrease of flux by factor of {} did not help, trying to decrease also minimal grid discretization'.format(2**3))
+            #    #self.tp.comsol_args['parameter']['grid_factor_domain'][0]=str(int(float(self.tp.comsol_args['parameter']['grid_factor_domain'][0])*1.1))
+            #    self.tp.comsol_args['parameter']['grid_factor_bound'][0]=str(int(float(self.tp.comsol_args['parameter']['grid_factor_bound'][0])*1.1))
+            #    self.tp.logger.info('|    | CS | Maximal discretization of domain raised by {}x'.format(self.tp.comsol_args['parameter']['grid_factor_domain']))
+
+            #if self.tp.comsol_args['dflux']<1e-5:
+            #    self.tp.logger.error('|    | CS | Discretization of flux is smaller than 1e-5, stopping here, we will probably not get any convergence')
+            #    sys.exit()
+
+            #self.tp.comsol_args['par_values']='range(0,'+str(self.tp.comsol_args['dflux'])+',1)' #np.linspace(0,1,self.tp.comsol_args['nflux'])
+
+#           # self.tp.logger.warning('|    | CS | Current x-axis resolution =  {} intervals.'.format(self.tp.comsol_args['nflux']))
+            #self.tp.logger.warning('|    | CS | Current ramping with a flux decrement of  {}.'.format(self.tp.comsol_args['dflux']))
+
+            self.comsol.run(label=label,restart=True)
+            error=self.comsol.check_error()
+
+            if nan:
+                self.tp.logger.debug('Surface Concentrations:')
+                for sp in self.tp.species:
+                    self.tp.logger.debug('  {}: {} mol/L'.format(sp,self.tp.species[sp]['surface_concentration']/1000.))
+
+            nan=nan_in_surface()
+
+        #reset the grid_factor to original value:
+        self.tp.comsol_args['solver_settings']['ramp']['dramp']=dramp
+        self.tp.comsol_args['parameter']['grid_factor_domain'][0]=str(grid_factor)

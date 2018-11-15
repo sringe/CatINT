@@ -8,18 +8,18 @@ rxn_expressions = [
     #3 Tafel
     'H*_t + H*_t <-> H-H*_t + *_t -> H2_g + 2*_t',
     #H2O chemisorption
-    'OH_g + *_t <-> OH_t + ele_g',
-    'H2O_g + 2*_t <-> H2O-*_t <-> OH*_t + H*_t',
+#    'OH_g + *_t <-> OH_t + ele_g',
+#    'H2O_g + 2*_t <-> H2O-*_t <-> OH*_t + H*_t',
 
     #4 CO adsorption
     'CO_g + *_t <-> CO-*_t -> CO*_t',
 
     #5 CO to CHO (barrierless)
-    'CO*_t + H2O_g + ele_g <-> H2O-CO-ele*_t <-> CHO*_t + OH_g; beta=0.7',
+    'CO*_t + H2O_g + ele_g <-> H2O-CO-ele*_t <-> CHO*_t + OH_g; beta=0.5',
 #    'CO*_t + H2O_g + ele_g <-> CHO*_t + OH_g',
     #6 CHO to CHOH
-    'CHO*_t + H2O_g + ele_g <-> CHO-H2O-ele*_t <-> CHOH*_t + OH_g; beta=0.75',
-    # 'CHO*_t + H2O_g + ele_g <-> CHOH*_t + OH_g',
+    #'CHO*_t + H2O_g + ele_g <-> CHO-H2O-ele*_t <-> CHOH*_t + OH_g; beta=0.75',
+     'CHO*_t + H2O_g + ele_g <-> CHOH*_t + OH_g',
     #7 rate-limiting for CH4: CHO to CHOH
     'CHOH*_t + ele_g <-> CH-OH-ele*_t <-> CH*_t + OH_g; beta=0.5',
     #'CHOH*_t + ele_g <-> CH*_t + OH_g',
@@ -45,7 +45,7 @@ rxn_mechanisms = { 'HER_Tafel':[1,1,3],
 #                   'C2':[4,4,5,5,6,6,12,13,14]
 }
 
-prefactor_list = [1e13]*len(rxn_expressions)  #Heine: prefactor for CO is 1e8
+prefactor_list = [1e16]*len(rxn_expressions)  #Heine: prefactor for CO is 1e8
 
 surface_names = ['Cu']
 
@@ -135,7 +135,7 @@ species_definitions['CO_t'] = {
                         'H-H2O-ele_t': [eHCO*0.7],
                         'H-H_t': [eHCO*1.59],
                         #'CH-OH-ele_t':[eCO*1.],
-                        'CHO-H2O-ele_t':[eCO*1.],
+#                        'CHO-H2O-ele_t':[eCO*1.],
                         'OC-CO_t': [1.*eCO],
                         'OCCO_t': [1.*eCO],
                         'OCCO-H2O-ele_t': [1.1*eCO],
@@ -148,7 +148,8 @@ species_definitions['CO_t'] = {
 
 #for species in ['CHOH_t', 'CHO_t','CH-OH-ele_t','CH_t','H2O-CO-ele_t']: 
 #for species in ['CHOH_t', 'CHO_t','CH_t','H2O-CO-ele_t','CHO-H2O-ele_t']: 
-for species in ['CHOH_t', 'CHO_t','CH_t','H2O-CO-ele_t','CHO-H2O-ele_t','CH-OH-ele_t']: 
+#for species in ['CHOH_t', 'CHO_t','CH_t','H2O-CO-ele_t','CHO-H2O-ele_t','CH-OH-ele_t']: 
+for species in ['CHOH_t', 'CHO_t','CH_t','H2O-CO-ele_t','CH-OH-ele_t']: 
         species_definitions[species] = species_definitions['CO_t']
 
 species_definitions['OCCO_t'] = {

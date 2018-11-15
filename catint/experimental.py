@@ -54,7 +54,10 @@ class EXPDATA():
 
 
         self.DATA_h2s=self.get_data('CO2R_hori_normalized_SHE.csv')
-        
+       
+        self.DATA_wu=self.get_data('CO2R_wuttig_normalized_SHE.csv')
+        self.DATA_du=self.get_data('CO2R_dunwell_normalized_RHE.csv')
+
         self.DATA_kr=self.get_data('CO2R_kanan_normalized_RHE.csv')
         self.DATA_wr_NW=self.get_data('COR_Wang_NW.csv')
         self.DATA_wr_NW_all=self.get_data('COR_Wang_NW_all.csv')
@@ -67,6 +70,9 @@ class EXPDATA():
         self.DATA_ss_02_FE=self.get_data('strasser_jpart_KHCO3_02_CO2R_NHE.csv')
         
         self.DATA_lr=self.get_data('COR_lei_normalized_rhe.csv')
+
+        self.DATA_cas=self.get_data('CO2R_Au_carlos_SHE.csv')
+        self.DATA_cas2=self.get_data('CO2R_Au_carlos_SHE_pH3.csv')
 #        self.DATA_lr2=self.get_data('COR_lei_high_surface_x380_rhe.csv')
         os.chdir(root)
         
@@ -144,7 +150,6 @@ class EXPDATA():
                 pH=7.0
             if symbol is None:
                 cmarker=self.marker[n]
-            print 'voltage before shift',voltage
             if convert is not None:
                 if convert.split('_')[0]=='RHE':
                     shift=-0.0592*pH
@@ -160,16 +165,14 @@ class EXPDATA():
     
             #if fit_tafel:
             #    tafel_fitting(voltage,current)
-            print 'FIT',fit
             if not fit>2:
-                print 'TESTING',DATA.label[j]
-                print 'TESTING',voltage,current
-                #plt.figure()
-                print func
 #                plt.figure()
                 func(voltage, current, color=self.color[n], linestyle=linestyle_2, marker = cmarker, markersize=msize,label=DATA.label[j])  #linestyle = ':',
 #                plt.show()
 #                sys.exit()
+            if fit_tafel:
+                fit=1
+                linestyle=':'
             if fit>0:
                 if len(voltage)>1:
                     species=DATA.label[j].split(',')[0].strip()
@@ -178,7 +181,7 @@ class EXPDATA():
                         if sk in species:
                             skip_val=skip[sk]
                     if fit==1:
-                        self.plot_tafel(voltage,current,self.color[n],skip_val,linestyle=linestyle,take_log=take_log)
+                        self.plot_tafel(bf,voltage,current,self.color[n],skip_val,linestyle=linestyle,take_log=take_log)
                     if fit>1:
                         V=voltage
                         J=current
@@ -209,31 +212,42 @@ class EXPDATA():
             for line,text in zip(leg.get_lines(), leg.get_texts()):
                 text.set_color(line.get_color())
     
-    def plot_tafel(self,V,J,linecol,skip=0,linestyle='-',take_log=True):
+    def plot_tafel(self,ax,V,J,linecol,skip=0,linestyle='-',take_log=True):
         # fit lines
-        data=[V,J]
         if take_log:
             J=np.log10(J)
+        data=[V,J]
         data=map(list,zip(*data))
         data=np.array(data)
-        print 'before',data
         #print 'before',data
         #data=sorted(data,key=lambda l:l[1], reverse=True)
         #data=np.array(data)
         #print 'after',data
         data.view(data.dtype.str+','+data.dtype.str).sort(order=['f0'], axis=0)
-        print 'after',data
         V=data[:,0]
         J=data[:,1]
-        if skip:
-            V=V[skip:]
-            J=J[skip:]
-        A = array([V, ones(len(V))])
-        w = linalg.lstsq(A.T,J )[0]
-        line_tafel = w[0]*np.array(V)+w[1]
-        tafel_slope = 1000/w[0]
-        plt.semilogy(V,10**line_tafel,color=linecol, linestyle=linestyle)
-        plt.text(V[0],line_tafel[0],str(int(tafel_slope))+'mV/dec', color=linecol, fontsize=13)  #
+        #if skip:
+        #    V=V[skip:]
+        #    J=J[skip:]
+        res=np.array([[vv,jj] for vv,jj in zip(V,J) if vv>-1.0])
+        V=res[:,0]
+        J=res[:,1]
+        #A = array([V, ones(len(V))])
+        #w = linalg.lstsq(A.T,J )[0]
+        #line_tafel = w[0]*np.array(V)+w[1]
+        #tafel_slope = 1000/w[0]
+        p=np.polyfit(V,J,1)
+        z=np.poly1d(p)
+        tafel_slope=-1000./p[1]
+        if 300<tafel_slope<500:
+            return ax
+        minV=min(V)
+        maxV=max(V)
+        dV=maxV-minV
+        Vf=np.linspace(minV-dV/4.,maxV+dV/3.,1000)
+        ax.semilogy(Vf,10**z(Vf),color=linecol, linestyle=linestyle)
+        ax.text(V[0],10**z(V[0]),str(int(tafel_slope))+'mV/dec', color=linecol, fontsize=11)  #
+        return ax
     
     def plot_data(self,ax=None,reference=['all'],species=['all'],pH=['all'],ci_bic=['all'],scale='RHE',reaction='all',\
             system=['all'],coloring='species',fit_tafel=False,only_points=False,\
@@ -365,7 +379,7 @@ class EXPDATA():
             return heads
     
         linestyles=cycle(['-','-',':','-.'])
-        self.symbols=cycle(['d','D','o','x','p','*','v','h','1','2'])
+        self.symbols=cycle(['o','d','s','D','x','p','*','v','h','1','2'])
         symbols=self.symbols
     
         if fit_tafel:
@@ -378,7 +392,7 @@ class EXPDATA():
         
     
     #    data_labels=[','.join(a.label[1].split(',')[1:]) for a in [self.DATA_ss_01,self.DATA_ss_005,self.DATA_ss_02,self.DATA_ss_005_FE,self.DATA_ss_01_FE,self.DATA_ss_02_FE,self.DATA_jr,self.DATA_kr,self.DATA_lr,self.DATA_h2s,self.DATA_hr,self.DATA_hs,self.DATA_]]
-        data_labels=[','.join(a.label[1].split(',')[1:]) for a in [self.DATA_ss_01,self.DATA_ss_005,self.DATA_ss_02,self.DATA_ss_005_FE,self.DATA_ss_01_FE,self.DATA_ss_02_FE,self.DATA_jr,self.DATA_jr_NF,self.DATA_jr_NC,self.DATA_kr,self.DATA_lr,self.DATA_lr_NF,self.DATA_lr_HER,self.DATA_h2s,self.DATA_hr,self.DATA_hs,self.DATA_wr_NW,self.DATA_wr_NW_all]]
+        data_labels=[','.join(a.label[1].split(',')[1:]) for a in [self.DATA_ss_01,self.DATA_ss_005,self.DATA_ss_02,self.DATA_ss_005_FE,self.DATA_ss_01_FE,self.DATA_ss_02_FE,self.DATA_jr,self.DATA_jr_NF,self.DATA_jr_NC,self.DATA_kr,self.DATA_lr,self.DATA_lr_NF,self.DATA_lr_HER,self.DATA_h2s,self.DATA_hr,self.DATA_hs,self.DATA_wr_NW,self.DATA_wr_NW_all,self.DATA_wu,self.DATA_du,self.DATA_cas,self.DATA_cas2]]
     
     
     
@@ -410,12 +424,18 @@ class EXPDATA():
                                       'EtOH':0,\
                                       'Acetate':0,\
                                       'propol':0}
+                    if 'pc-Au' in label and 'pH = 3.0' in label:
+                        skip_dict[label]={'CO': 3}
+                    elif 'pc-Au' in label and 'pH = 6.8' in label:
+                        skip_dict[label]={'CO': 0}
                 elif 'Kanan' in label:
                     skip_dict[label]={'HCOO':   9,\
                                       'CO':     10,\
                                       'H$_2$':     9,\
                                       'C$_2$H$_4$':2,\
                                       'C$_2$H$_6$':3}
+                elif 'Wuttig' in label or 'Dunwell' in label:
+                    skip_dict[label]={}
                 elif 'Strasser' in label:
                     skip_dict[label]={'HCOO':   0,\
                                       'CO':     8}
@@ -637,6 +657,34 @@ class EXPDATA():
                                 self.plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,\
                                     voltage_mode='first',take_log=True,convert='RHE_TO_SHE',fit_tafel=fit_tafel,legend=legend,\
                                     msize=msize,ax=ax,color=color)
+                        DATA=self.DATA_cas
+                        name=','.join(DATA.label[1].split(',')[1:])
+                        skip=skip_dict[name]
+                        spp=s2i(species,DATA,pH=cpH)
+                        if len(spp)>0:
+                            linestyle=next(linestyles)
+                            symbol=next(symbols)
+                            if scale=='SHE':
+                                self.plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,\
+                                    voltage_mode='first',take_log=True,fit_tafel=fit_tafel,legend=legend,ax=ax,msize=msize,color=color)
+                            elif scale=='RHE':
+                                self.plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,\
+                                    voltage_mode='first',take_log=True,convert='SHE_TO_RHE',fit_tafel=fit_tafel,legend=legend,\
+                                    msize=msize,ax=ax,color=color)
+                        DATA=self.DATA_cas2
+                        name=','.join(DATA.label[1].split(',')[1:])
+                        skip=skip_dict[name]
+                        spp=s2i(species,DATA,pH=cpH)
+                        if len(spp)>0:
+                            linestyle=next(linestyles)
+                            symbol=next(symbols)
+                            if scale=='SHE':
+                                self.plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,\
+                                    voltage_mode='first',take_log=True,fit_tafel=fit_tafel,legend=legend,ax=ax,msize=msize,color=color)
+                            elif scale=='RHE':
+                                self.plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,\
+                                    voltage_mode='first',take_log=True,convert='SHE_TO_RHE',fit_tafel=fit_tafel,legend=legend,\
+                                    msize=msize,ax=ax,color=color)
 #                        DATA=self.DATA_lr2
 #                        name=','.join(DATA.label[1].split(',')[1:])
 #                        skip=skip_dict[name]
@@ -697,6 +745,43 @@ class EXPDATA():
                                 symbol=marker
                             self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,linestyle=linestyle,symbol=symbol,fit_tafel=fit_tafel,legend=legend,msize=msize,color=color) 
     
+                    if isref('wuttig'):
+                        DATA=self.DATA_wu
+                        name=','.join(DATA.label[1].split(',')[1:])
+                        skip=skip_dict[name]
+                        spp=s2i(species,DATA,pH=cpH)
+                        if len(spp)>0:
+                            linestyle=next(linestyles)
+                            if marker is None:
+                                symbol=next(symbols)
+                            else:
+                                symbol=marker
+                            if scale=='RHE':
+                                self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='first',take_log=False,linestyle=linestyle,\
+                                    symbol=symbol,convert='SHE_TO_RHE',fit_tafel=fit_tafel,legend=legend,msize=msize,color=color)
+                            elif scale=='SHE':
+                                self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='first',take_log=False,linestyle=linestyle,\
+                                    symbol=symbol,fit_tafel=fit_tafel,legend=legend,msize=msize,color=color)
+
+                    if isref('dunwell'):
+                        DATA=self.DATA_du
+                        name=','.join(DATA.label[1].split(',')[1:])
+                        skip=skip_dict[name]
+                        spp=s2i(species,DATA,pH=cpH)
+                        if len(spp)>0:
+                            linestyle=next(linestyles)
+                            if marker is None:
+                                symbol=next(symbols)
+                            else:
+                                symbol=marker
+                            if scale=='RHE':
+                                self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='first',take_log=False,linestyle=linestyle,\
+                                    symbol=symbol,fit_tafel=fit_tafel,legend=legend,msize=msize,color=color)
+                            elif scale=='SHE':
+                                self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='first',take_log=False,linestyle=linestyle,\
+                                    symbol=symbol,convert='RHE_TO_SHE',fit_tafel=fit_tafel,legend=legend,msize=msize,color=color)
+                        
+
                     if isref('kanan'):
                         DATA=self.DATA_kr
                         name=','.join(DATA.label[1].split(',')[1:])

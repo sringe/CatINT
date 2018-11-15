@@ -35,7 +35,7 @@ class CatMAP():
         self.use_interactions=False
 
         if transport is None:
-            self.tp.logger.error(' | CM | No transport object provided for catmap_wrapper. Stopping here.')
+            self.tp.logger.error('|    | CM | No transport object provided for catmap_wrapper. Stopping here.')
             sys.exit()
         else:
             self.tp=transport
@@ -104,7 +104,7 @@ class CatMAP():
     def run(self):
         desc_keys=[key for key in self.tp.descriptors]
         desc_val=[self.tp.system[key] for key in self.tp.descriptors]
-        self.tp.logger.info(' | CM | Starting CatMAP for {} = {}'.format(desc_keys[0],desc_val[0]))
+        self.tp.logger.info('|    | CM | Starting CatMAP for {} = {}'.format(desc_keys[0],desc_val[0]))
 
         self.input_folder=self.input_base_folder+'/desc_'+str(desc_val[0])
         self.output_folder=self.output_base_folder+'/desc_'+str(desc_val[0])
@@ -121,7 +121,7 @@ class CatMAP():
         #setting up the mkm files
         mkm_template_file=root+'/'+self.model_name+'_template.mkm'
         if not os.path.exists(mkm_template_file):
-            self.tp.logger.error(' | CM | mkm file {} required for CatMAP does not exist.'.format(mkm_template_file))
+            self.tp.logger.error('|    | CM | mkm file {} required for CatMAP does not exist.'.format(mkm_template_file))
             sys.exit()
         else:
             copy(mkm_template_file,self.model_name+'_template.mkm')
@@ -138,7 +138,7 @@ class CatMAP():
         #energies file
         energies_file=root+'/'+self.model_name+'_energies.txt'
         if not os.path.exists(energies_file):
-            self.tp.logger.error(' | CM | energy data file {} required by CatMAP does not exist.'.format(energies_file))
+            self.tp.logger.error('|    | CM | energy data file {} required by CatMAP does not exist.'.format(energies_file))
             sys.exit()
         else:
             copy(energies_file,self.model_name+'_energies.txt')
@@ -147,7 +147,7 @@ class CatMAP():
         model = ReactionModel(setup_file = mkm_file, max_log_line_length=0) #we set the maximum line length to 0, because we work
         #with pickle files anyhow
         #output
-        model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency']
+        model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency','rate_control']
         def plot_fed(pressure_corr=False,coverage_corr=False,method=0):
             ma = analyze.MechanismAnalysis(model)
             ma.surface_colors = ['k','b','r','yellow','green','orange','cyan']
@@ -156,16 +156,26 @@ class CatMAP():
             ma.include_labels = True #way too messy with labels
             ma.pressure_correction = pressure_corr #assume all pressures are 1 bar (so that energies are the same as from DFT)
             ma.coverage_correction = coverage_corr #False
+            min_a=np.inf
+            desc_cm=None
+            for a,b in model.descriptor_ranges:
+                if min_a>abs(a-float(desc_val[0])):
+                    min_a=abs(a-float(desc_val[0]))
+                    desc_cm=a
+            if min_a>1e-5 or desc_cm is None:
+                self.tp.logger.warning('| CI | CM | Somehow, there was an error searching for the descriptor in the catmap'+\
+                        'descriptor list, skipping the FED plot to not harm simulation')
+                return
             if self.use_interactions:
                 ma.energy_type = 'interacting_energy'
             if not pressure_corr and not coverage_corr:
-                fig = ma.plot(save='FED.pdf',plot_variants=[float(desc_val[0])],method=method)
+                fig = ma.plot(save='FED.pdf',plot_variants=[desc_cm],method=method)
             elif pressure_corr and not coverage_corr:
-                fig = ma.plot(save='FED_pressure_corrected.pdf',plot_variants=[float(desc_val[0])],method=method)
+                fig = ma.plot(save='FED_pressure_corrected.pdf',plot_variants=[desc_cm],method=method)
             elif pressure_corr and coverage_corr:
-                fig = ma.plot(save='FED_pressure_and_cov_corrected.pdf',plot_variants=[float(desc_val[0])],method=method)
+                fig = ma.plot(save='FED_pressure_and_cov_corrected.pdf',plot_variants=[desc_cm],method=method)
             elif not pressure_corr and coverage_corr:
-                fig = ma.plot(save='FED_cov_corrected.pdf',plot_variants=[float(desc_val[0])],method=method)
+                fig = ma.plot(save='FED_cov_corrected.pdf',plot_variants=[desc_cm],method=method)
         #plot_fed(True)
 #        if not self.use_interactions:
 #            plot_fed(False)
@@ -208,7 +218,7 @@ class CatMAP():
             #            i+=1
             #            if 'interaction_strength' in line:
             #                replace_line(mkm_file,i-1,'interaction_strength = '+str(ii))
-            #        self.tp.logger.info(' | CM | Running interaction_strength = {}'.format(ii))
+            #        self.tp.logger.info('|    | CM | Running interaction_strength = {}'.format(ii))
             #    model = ReactionModel(setup_file = mkm_file, max_log_line_length=0)
             #    model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency']
             #    model.run()
@@ -220,27 +230,27 @@ class CatMAP():
                             i+=1
                             if 'interaction_strength' in line:
                                 replace_line(mkm_file,i-1,'interaction_strength = '+str(ii))
-                        self.tp.logger.info(' | CM | Running interaction_strength = {}'.format(ii))
+                        self.tp.logger.info('|    | CM | Running interaction_strength = {}'.format(ii))
                     model = ReactionModel(setup_file = mkm_file, max_log_line_length=0)
-                    model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency']
+                    model.output_variables+=['consumption_rate','production_rate', 'free_energy', 'selectivity', 'interacting_energy','turnover_frequency','rate_control']
                     model.run()
             except:
                 #SOME CRASH OF CATMAP
                 # - check if due to high interaction strength or missing data points
-                self.tp.logger.warning(' | CM | CatMAP did not converge with interaction strength = {}'.format(ii))
+                self.tp.logger.warning('|    | CM | CatMAP did not converge with interaction strength = {}'.format(ii))
 
                 if desc_method is not None:
-                    self.tp.logger.error(' | CM | Running on discrete descriptor space did not help, CatMAP did not converge. Try to increase descriptor space manually.')
+                    self.tp.logger.error('|    | CM | Running on discrete descriptor space did not help, CatMAP did not converge. Try to increase descriptor space manually.')
 
                 desc_method=None
 
                 if not self.use_interactions or (self.use_interactions and ii==0):
-                    self.tp.logger.error(' | CM | Unexpected end of CatMAP even though interactions_strength = 0, check error files for hints.')
+                    self.tp.logger.error('|    | CM | Unexpected end of CatMAP even though interactions_strength = 0, check error files for hints.')
 
                     if self.tp.catmap_args['desc_method']=='automatic':
-                        self.tp.logger.info(' | CM | Since desc_method = automatic, CatINT tries to solve this problem by')
-                        self.tp.logger.info(' | CM | running CatMAP on discrete descriptor space instead of single point.')
-                        self.tp.logger.info(' | CM | This will usually take much more time.')
+                        self.tp.logger.info('|    | CM | Since desc_method = automatic, CatINT tries to solve this problem by')
+                        self.tp.logger.info('|    | CM | running CatMAP on discrete descriptor space instead of single point.')
+                        self.tp.logger.info('|    | CM | This will usually take much more time.')
                         desc_method='descriptor_range'
 
                         ######UPDATE INPUT########
@@ -250,7 +260,7 @@ class CatMAP():
                         #energies file
                         energies_file=root+'/'+self.model_name+'_energies.txt'
                         if not os.path.exists(energies_file):
-                            self.tp.logger.error(' | CM | energy data file {} required by CatMAP does not exist.'.format(energies_file))
+                            self.tp.logger.error('|    | CM | energy data file {} required by CatMAP does not exist.'.format(energies_file))
                             sys.exit()
                         else:
                             copy(energies_file,self.model_name+'_energies.txt')
@@ -263,18 +273,18 @@ class CatMAP():
                         ##########################
                     else:
                         if self.tp.catmap_args['desc_method']=='descriptor_range':
-                            self.tp.logger.error(' | CM | Descriptor method was already descriptor_range, but no convergence was achieved, try to increase max_bisections')
+                            self.tp.logger.error('|    | CM | Descriptor method was already descriptor_range, but no convergence was achieved, try to increase max_bisections')
                             sys.exit()
                         elif self.tp.catmap_args['desc_method']=='single_point':
-                            self.tp.logger.error(' | CM | Try to rerun using desc_method = automatic settings.')
+                            self.tp.logger.error('|    | CM | Try to rerun using desc_method = automatic settings.')
                             sys.exit()
                 else:
                     if self.n_inter=='automatic':
                         jj+=1
                         if 10*jj>self.n_inter_max:
-                            self.tp.logger.error(' | CM | Adjusted interaction ramping range is larger than n_inter_max. Adjust n_inter_max in order to run finer range')
+                            self.tp.logger.error('|    | CM | Adjusted interaction ramping range is larger than n_inter_max. Adjust n_inter_max in order to run finer range')
                             sys.exit()
-                        self.tp.logger.warning(' | CM | Adjusting interaction ramping to range 0 to 1 with {} steps'.format(10*jj))
+                        self.tp.logger.warning('|    | CM | Adjusting interaction ramping to range 0 to 1 with {} steps'.format(10*jj))
                         inter=np.linspace(0,self.interaction_strength,10*jj)
                         pass
                     else:
@@ -294,8 +304,8 @@ class CatMAP():
                 idx = [i for i in range(len(model.interacting_energy_map)) if abs(model.interacting_energy_map[i][0][0]-float(desc_val[0]))<1e-5][0]
                 descrip, coverages = model.coverage_map[idx]
                 rxn_parameters = model.scaler.get_rxn_parameters(descrip)
-                self.tp.logger.info(' | CM | --- Interaction energies ---')
-                self.tp.logger.info(' | CM |  - desc = {}'.format(desc_val[0]))
+                self.tp.logger.info('|    | CM | --- Interaction energies ---')
+                self.tp.logger.info('|    | CM |  - desc = {}'.format(desc_val[0]))
 #                self.tp.logger.info(model.output_labels['interacting_energy'])
 #                self.tp.logger.info(model.solver.get_interacting_energies(rxn_parameters))
                 all_ads = model.adsorbate_names + model.transition_state_names
@@ -313,27 +323,27 @@ class CatMAP():
                 #        model.interaction_function(cvg,energies,eps_vector,\
                 #        model.thermodynamics.adsorbate_interactions.interaction_response_function,False,False)[1]),\
                 #        headers=['species','energy']))
-                self.tp.logger.info(' | CM | --- END OUTPUT ---')
+                self.tp.logger.info('|    | CM | --- END OUTPUT ---')
                 sys.exit()
             except:
-                self.tp.logger.info(' | CM | Error in reading interaction energies')
+                self.tp.logger.info('|    | CM | Error in reading interaction energies')
                 pass
-        #try:
-        plot_fed(False,False,method=2)
-        #except:
-        #    self.tp.logger.warning(' | CM | Error in writing FED')
-        #try:
-        plot_fed(True,False,method=2)
-        #except:
-        #    self.tp.logger.warning(' | CM | Error in writing FED')
-        #try:
-        plot_fed(True,True,method=2)
-        #except:
-        #    self.tp.logger.warning(' | CM | Error in writing FED')
-        #try:
-        plot_fed(False,True,method=2)
-        #except:
-        #    self.tp.logger.warning(' | CM | Error in writing FED')
+        try:
+            plot_fed(False,False,method=2)
+        except UserWarning:
+            self.tp.logger.warning('|    | CM | Error in writing FED with no corrections')
+        try:
+            plot_fed(True,False,method=2)
+        except UserWarning:
+            self.tp.logger.warning('|    | CM | Error in writing FED with pressure correction')
+        try:
+            plot_fed(True,True,method=2)
+        except UserWarning:
+            self.tp.logger.warning('|    | CM | Error in writing FED with all corrections')
+        try:
+            plot_fed(False,True,method=2)
+        except UserWarning:
+            self.tp.logger.warning('|    | CM | Error in writing FED with coverage correction')
 #        sys.stdout.flush()
 #        os.close(1)
 #        os.dup(old) # should dup to 1
@@ -362,9 +372,9 @@ class CatMAP():
         os.chdir(root)
 
         if not converged:
-            self.tp.logger.error(' | CM | CatMAP did not converge')
+            self.tp.logger.error('|    | CM | CatMAP did not converge')
         else:
-            self.tp.logger.info(' | CM | CatMAP finished successfully in {} steps'.format(max_iter))
+            self.tp.logger.info('|    | CM | CatMAP finished successfully in {} steps'.format(max_iter))
 
         self.read_output(desc_val)
         #species_definitions['CO2_g'] = {'concentration':0.2}
@@ -402,9 +412,9 @@ class CatMAP():
                 else:
                     desc_method='descriptor_range'
                 self.tp.catmap_args['desc_method']=desc_method
-                self.tp.logger.info(' | CM | Descriptor method was determined from CatMAP input file to be {}'.format(desc_method))
+                self.tp.logger.info('|    | CM | Descriptor method was determined from CatMAP input file to be {}'.format(desc_method))
 
-        self.tp.logger.info(' | CM | Running CatMAP using descriptor method = {}'.format(desc_method))
+        self.tp.logger.info('|    | CM | Running CatMAP using descriptor method = {}'.format(desc_method))
 
 #        if self.method is None:
 #            self.method='descriptor_range'
@@ -422,7 +432,7 @@ class CatMAP():
                 found_descriptor_range=True
         if not all([found_descriptor_range,found_resolution]):
                 #or found_descriptors):
-            self.tp.logger.error(' | CM | Missing resolution definition or descriptor range')
+            self.tp.logger.error('|    | CM | Missing resolution definition or descriptor range')
             sys.exit()
 
         def convert(name_catint):
@@ -440,7 +450,7 @@ class CatMAP():
         if desc_method=='descriptor_range':
             desc_list=self.tp.descriptors[desc_keys[0]]
             if len(desc_list)<5 and desc_1 != 'voltage':
-                self.tp.logger.warning(' | CM | It could be that no pkl files are written out because the given descriptor axis is too coarse, consider a denser axis')
+                self.tp.logger.warning('|    | CM | It could be that no pkl files are written out because the given descriptor axis is too coarse, consider a denser axis')
 
             if desc_1=='voltage':
                 #use manual range here that contains current descriptor value
@@ -469,7 +479,7 @@ class CatMAP():
             n_desc=len(desc_list)
             delta_desc=desc_list[1]-desc_list[0]
             if delta_desc<1e-9:
-                self.tp.logger.warning(' | CM | The descriptor separation is smaller then 1e-9. The index assignment of the catmap data will fail, so I quit here')
+                self.tp.logger.warning('|    | CM | The descriptor separation is smaller then 1e-9. The index assignment of the catmap data will fail, so I quit here')
                 sys.exit()
 
         #check if interactions are desired, if yes read out the desired interaction strength
@@ -499,6 +509,12 @@ class CatMAP():
             if line.strip().startswith('bulk_ph'):
                 replace_line(self.catmap_model,i-1,'bulk_ph = '+str(self.tp.system['bulk_pH']))
                 continue
+            if line.strip().startswith('field'):
+                #replace_line(self.catmap_model,i-1,'field = '+str(self.tp.system['efield'][0]*1e-10*self.tp.system['epsilon']/self.tp.system['Stern epsilon']))
+                replace_line(self.catmap_model,i-1,'field = '+str(self.tp.system['Stern_efield']*1e-10))
+            #if line.strip().startswith('sigma'):
+            #    #replace_line(self.catmap_model,i-1,'field = '+str(self.tp.system['efield'][0]*1e-10*self.tp.system['epsilon']/self.tp.system['Stern epsilon']))
+            #    replace_line(self.catmap_model,i-1,'sigma_input = '+str(((self.tp.system['phiM']-self.tp.system['phiPZC'])-self.tp.system['surface_potential'])*self.tp.system['Stern capacitance']))
             if line.strip().startswith('voltage_diff_drop') and self.tp.system['potential drop']=='Stern':
                 replace_line(self.catmap_model,i-1,'voltage_diff_drop = '+str(self.tp.system['potential'][0])) #potential drop']))
             for sp in self.tp.species:
@@ -507,14 +523,13 @@ class CatMAP():
                 if len(sol)>0:
                     #shortly check if concentrations are very negative, stop if they are:
                     if self.tp.species[sp]['surface_concentration']<-1.:
-                        self.tp.logger.warning(' | CM | Surface concentration of {} is more negative than 1e-3 mol/L, stopping to be safe.'.format(sp))
+                        self.tp.logger.warning('|    | CM | Surface concentration of {} is more negative than 1e-3 mol/L, stopping to be safe.'.format(sp))
 #                        sys.exit()
                     if sp in ['OH-','H+']:
                         activity=1 #this is irrelevant, since it will be controlled by the pH
                     else:
-                        print sp
                         activity=self.tp.species[sp]['surface_concentration']/(self.tp.species[sp]['Henry constant']*self.tp.system['pressure']) #self.tp.species[sp]['bulk_concentration']
-                    self.tp.logger.debug(' | CM | checking concentration of species {}, found c = {} mol/L'.format(sp,activity))
+                    self.tp.logger.debug('|    | CM | a_{}(x=0) = {}'.format(sp,activity))
                     replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':"+str(max(0.,activity))+"}")
                     replaced_species.append(sp)
             sp_cm='H2O'
@@ -541,7 +556,7 @@ class CatMAP():
 #                replace_line(self.catmap_model,i-1,'pH = '+str(max(self.tp.system['pH']))+'')
         for sp in self.tp.species:
             if sp not in replaced_species and sp not in self.tp.system['exclude species'] and sp not in self.tp.electrolyte_list:
-                self.tp.logger.warning(' | CM | Pressure of species {} not in catmap mkm file, give an arbitrary pressure of all species needed which will then be replaced by CatINT'.format(sp))
+                self.tp.logger.warning('|    | CM | Pressure of species {} not in catmap mkm file, give an arbitrary pressure of all species needed which will then be replaced by CatINT'.format(sp))
                 sys.exit()
     #SETTINGS
     def convert_TOF(self,A): # Given a list, convert all the TOF to j(mA/cm2) using 0.161*TOF(According to Heine's ORR paper)
@@ -555,6 +570,7 @@ class CatMAP():
         model = ReactionModel(setup_file = log_file)
         pickle_file = self.model_name+'.pkl'
         data = self.get_data(pickle_file,model)
+        self.tp.catmap_data=data
         os.chdir(root)
         for sp in self.tp.species:
             self.tp.species[sp]['flux']=0.0
@@ -569,12 +585,14 @@ class CatMAP():
             name=self.species_to_catmap(sp)
             name+='_g'
             idx=None
+
+            #TOF
             #"tof" is the signed rate of conversion/active site/s
             if name in data.turnover_frequency_names:
                 idx=data.turnover_frequency_names.index(name)
                 tof=data.turnover_frequency[:,idx]
             elif sp not in self.tp.system['exclude species'] and sp not in self.tp.electrolyte_list:
-                self.tp.logger.warning(' | CM | No CatMAP TOF data was found for species {}. Check your species definition names. CatINT uses the CatINT equation names to map to the CatMAP names!'.format(sp))
+                self.tp.logger.warning('|    | CM | No CatMAP TOF data was found for species {}. Check your species definition names. CatINT uses the CatINT equation names to map to the CatMAP names!'.format(sp))
             if tof is None:
                 continue
             data_ref=np.column_stack((data.voltage, tof))
@@ -585,6 +603,7 @@ class CatMAP():
             else:
                 nprod=1
                 nel=1
+
             rates=data_ref[np.argsort(data_ref[:, 0])][:,1]*self.tp.system['active site density']
             current_densities=rates*nel*unit_F/nprod/10.
 #            currents=self.convert_TOF(data_ref[np.argsort(data_ref[:, 0])][:,1])
@@ -599,13 +618,28 @@ class CatMAP():
             self.tp.species[sp]['flux']=rates[index]
             self.tp.species[sp]['electrode_current_density']=current_densities[index]
 
-            print self.tp.alldata_names
             #update also alldata array:
             alldata_inx=self.tp.alldata_names.index([desc_val[0],desc_val[1]])
             self.tp.alldata[alldata_inx]['species'][sp]['electrode_current_density']=self.tp.species[sp]['electrode_current_density']
             self.tp.alldata[alldata_inx]['species'][sp]['electrode_flux']=self.tp.species[sp]['flux']
+
+            ###############
+            #2) rate control
+            ###############
+            if name in data.rate_control_names[0]:
+                idx=data.rate_control_names[0].index(name)
+                rate_control=data.rate_control[:,idx]
+            elif sp not in self.tp.system['exclude species'] and sp not in self.tp.electrolyte_list:
+                self.tp.logger.warning('|    | CM | No CatMAP rate control data was found for species {}. Check your species definition names. CatINT uses the CatINT equation names to map to the CatMAP names!'.format(sp))
+            #loop over influencing states
+            for name2 in data.rate_control_names[1]:
+                data_rc=np.column_stack((data.voltage,rate_control[:,data.rate_control_names[1].index(name2)]))
+                data_rc=data_rc[np.argsort(data_rc[:,0])][:,1]
+                rc_file=self.output_folder+'/rc_'+name.split('_')[0]+'_'+name2.split('_')[0]+'.tsv'
+                np.savetxt(rc_file, np.array([voltages,data_rc]).T)
+
             ##############
-            #2) the Coverages
+            #3) the Coverages
             ##############
     
             name=name.split('_')[0]
@@ -628,7 +662,7 @@ class CatMAP():
                 cov_file=self.output_folder+'/cov_'+name.split('_')[0]+'.tsv'
                 np.savetxt(cov_file,np.array([voltages,coverages]).T)
         ###############
-        #3) current densities associated with elementary steps
+        #4) current densities associated with elementary steps
         ###############
         rate=None
         idx=None
@@ -661,13 +695,12 @@ class CatMAP():
                     of.write('{} {}\n'.format(v,c))
 #            np.savetxt(pol_file, np.array([voltages,current_densities]).T)
 
+
     def get_data(self,pickle_file,model):
         a = pickle.load(open(pickle_file))
         data = Object()
         #COVERAGES
         data.coverage_names = model.output_labels['coverage']
-        print 'data.coverage_names names',data.coverage_names
-        print 'interacting names',model.output_labels['interacting_energy']
         coverage_map = np.array(a['coverage_map'])
         data.voltage = []
         scaler_array = coverage_map[:,0]
@@ -683,15 +716,30 @@ class CatMAP():
         data.prod_names = model.output_labels['production_rate']
         data.cons_names = model.output_labels['consumption_rate']
         data.turnover_frequency_names = model.output_labels['turnover_frequency']
+        data.rate_control_names=model.output_labels['rate_control']
+        print data.rate_control_names
+
         production_rate_map = np.array(a['production_rate_map'])
         consumption_rate_map = np.array(a['consumption_rate_map'])
         turnover_frequency_map = np.array(a['turnover_frequency_map'])
+        print 'turnover_frequency_map'
+        print turnover_frequency_map
+        rate_control_map=np.array(a['rate_control_map'])
+        print 'rc_map'
+        print rate_control_map
+
         production_rate_mpf = production_rate_map[:,1]
         consumption_rate_mpf = consumption_rate_map[:,1]
         turnover_frequency_mpf = turnover_frequency_map[:,1]
+        rate_control_mpf = rate_control_map[:,1]
+        print 'rc_mpf'
+        print rate_control_mpf
+
         data.production_rate = np.zeros((len(production_rate_mpf),len(data.prod_names)))
         data.consumption_rate = np.zeros((len(consumption_rate_mpf),len(data.cons_names)))
         data.turnover_frequency = np.zeros((len(turnover_frequency_mpf),len(data.turnover_frequency_names)))
+        data.rate_control = np.zeros((len(rate_control_mpf),len(data.rate_control_names[0]),len(data.rate_control_names[1])))
+
         data.voltage = np.zeros((len(production_rate_mpf),1))
         for i in range(0,len(production_rate_mpf)):
             data.voltage[i][0] = production_rate_map[:,0][i][0]
@@ -708,6 +756,15 @@ class CatMAP():
             for j in range(0,len(data.turnover_frequency_names)):
                 float_rate = float(turnover_frequency_mpf[i][j])
                 data.turnover_frequency[i][j]=float_rate
+        #rate control is
+            #2nd index: products
+            #3rd index: controlling states
+        for i in range(0,len(rate_control_mpf)):
+            for j in range(0,len(data.rate_control_names[0])):
+                for k in range(0,len(data.rate_control_names[1])):
+                    rate_control = float(rate_control_mpf[i][j][k])
+                    data.rate_control[i][j][k]=rate_control
+
         #RATES
         data.rate_names = model.output_labels['rate']
         rate_map = np.array(a['rate_map'])
@@ -729,7 +786,7 @@ class CatMAP():
         try:
             model = ReactionModel(setup_file=logfile[0])
         except:
-            self.tp.logger.error(' | CM | Error in reading CatMAP log file {}'.format(logfile[0]))
+            self.tp.logger.error('|    | CM | Error in reading CatMAP log file {}'.format(logfile[0]))
             sys.exit()
         
         if output_variable == 'rate_control':
