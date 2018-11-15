@@ -1,6 +1,18 @@
+#!/usr/bin/env python
+
+#LSF -q suncat-test
+#LSF -n 8
+#LSF -o opt_work.log
+#LSF -e err_work.log
+#LSF -W 0:10
+#LSF -sp 100
+#LSF LSB_JOB_REPORT_MAIL=n
 import sys
-sys.path.insert(0,'/scratch/users/sringe/transport/catint2')
-sys.path.insert(0,'/scratch/users/sringe/transport/catmap')
+#sys.path.insert(0,'/scratch/users/sringe/transport/catint2')
+#sys.path.insert(0,'/scratch/users/sringe/transport/catmap')
+#sys.path.insert(0,'/nfs/slac/g/suncatfs/sringe/software/catmap')
+sys.path.insert(0,'/nfs/slac/g/suncatfs/sringe/software/CatINT')
+#sys.path.insert(0,'/nfs/slac/g/suncatfs/sringe/software/ase')
 from shutil import copyfile as copy
 from catint.transport import Transport
 from catint.calculator import Calculator
