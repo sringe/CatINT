@@ -12,7 +12,7 @@ from units import *
 from read_data import read_data
 from extrapolate_surface_conc import extrapolate
 
-transport_mode='extrapolate'
+transport_mode='comsol' #None #extrapolate'
 #can be one of the following:
 #   None            only catmap
 #   'comsol'        iterative catmap-comsol
@@ -28,7 +28,7 @@ dflux_comsol=0.01
 grid_factor=100
 mix_scf=0.1
 nphi=None #40
-dphi=0.01
+dphi=0.05
 
 include_ramp_comsol=['PZC','CS'] #,'reactions']
 
@@ -203,7 +203,7 @@ catmap_args['desc_method']='automatic'
 potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 
-phimin=0.0 #-0.5 #-0.7
+phimin=-0.5 #-0.5 #-0.7
 phimax=-2.0
 
 for potential in potentials:

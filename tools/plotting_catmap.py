@@ -235,6 +235,7 @@ ax1=plt.subplot('211')
 ax1m=ax1.twinx()
 ax2=plt.subplot('212')
 
+colors_rc={}
 for arg in args.file: #sys.argv[1:]:
     k+=1
     results_folder=arg+'/catmap_output'
@@ -249,7 +250,6 @@ for arg in args.file: #sys.argv[1:]:
     
     ax1.set_title('Polarization')
     searchedfile=[s for s in glob(arg+'/catmap_input/*/*.mkm') if 'template' not in s]
-    print arg,searchedfile
     try:
         mkm_file = sorted( searchedfile, key = lambda file: os.path.getctime(file))[-1]
         print('Reading model = {}'.format(mkm_file))
@@ -327,9 +327,12 @@ for arg in args.file: #sys.argv[1:]:
         #    symbol='o'
         if 'etp' in arg:
             symbol=''
-        else:
+        elif 'w_tp' in arg:
             symbol='o'
             msize=3
+        else:
+            symbol='*'
+            msize=4
         if j_log_plot:
             func=ax1.semilogy
         else:
@@ -343,7 +346,9 @@ for arg in args.file: #sys.argv[1:]:
         else:
             func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,ms=msize)
         for sp2 in pdata_rc[sp]:
-            color_rc=next(colors)
+            if sp2 not in colors_rc:
+                colors_rc[sp2]=next(colors)
+            color_rc=colors_rc[sp2]
             ax1m.plot(xrc[sp2][skip:]+0.059*pH,yrc[sp2][skip:],':',color=color_rc,lw=1.5,label=sp2)
             ax1m.annotate(sp2,xy=(xrc[sp2][len(xrc[sp2][skip:])/3],yrc[sp2][len(xrc[sp2][skip:])/3]),color=color_rc,fontsize=12)
         if args.scale=='SHE':
@@ -493,7 +498,6 @@ for pH in set(all_pH):
                 system=systems,scale=args.scale,only_points=True,\
                 take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color,fit_tafel=fit_tafel)
         else:
-            print 'TEST',pH
             for i,p in enumerate(all_prods):
                 if p=='CH$_4$':
                     all_prods[i]='C$_1$'
