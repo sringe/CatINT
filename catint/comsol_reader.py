@@ -175,20 +175,22 @@ class Reader():
                             if 'H+' in self.tp.species:
                                 if sp=='H+':
                                     if float(lss)<0:
-                                        self.tp.logger.warning('|    | CS | COMSOL returned negative proton concentrations, pH cannot be evaluated.')
+                                        self.tp.logger.warning('|    | CS | COMSOL returned negative proton concentrations = {}, pH cannot be evaluated.'.format(float(lss)/1000.))
                                         self.tp.logger.warning('|    | CS | Do not update pH here to enable futher calculation.')
                                     else:
                                         if update_last:
                                             self.tp.system['surface_pH']=-np.log10(float(lss)/1000.) #+self.tp.system['bulk_pH']
+                                            self.tp.logger.info('|    | CS | Updating surface pH {} -> {}'.format(lss,self.tp.system['surface_pH']))
                                         self.tp.alldata[alldata_inx]['system']['surface_pH']=-np.log10(float(lss)/1000.)
                             elif 'OH-' in self.tp.species:
                                 if sp=='OH-':
                                     if float(lss)<0:
-                                        self.tp.logger.warning('|    | CS | COMSOL returned negative hydroxide concentrations, pH cannot be evaluated.')
+                                        self.tp.logger.warning('|    | CS | COMSOL returned negative hydroxide concentrations = {} M, pH cannot be evaluated.'.format(float(lss)/1000.))
                                         self.tp.logger.warning('|    | CS | Do not update pH here to enable futher calculation.')
                                     else:
                                         if update_last:
                                             self.tp.system['surface_pH']=14+np.log10(float(lss)/1000.)
+                                            self.tp.logger.info('|    | CS | Updating surface pH {} -> {}'.format(lss,self.tp.system['surface_pH']))
                                         self.tp.alldata[alldata_inx]['system']['surface_pH']=14+np.log10(float(lss)/1000.)
                         if update_last:
                             if geo=='domain':

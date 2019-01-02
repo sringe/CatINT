@@ -49,7 +49,6 @@ if args.title is None:
 if args.name is None:
     args.name='catmap_fig'
 
-print args.products
 color_pH={
     '3.0':'C5',
     '6.0':'C1',
@@ -136,7 +135,6 @@ def read_data(files,header=False,dtype='species'):
             inx=int(arg2.split('/')[-1].split('_')[2].split('.')[0])
             #get all product names in which this step plays a role
             names=[]
-            print 'checking inx = ',inx
             for sp in model.rxn_mechanisms:
                 indices=model.rxn_mechanisms[sp]
                 if inx in indices:
@@ -288,7 +286,14 @@ for arg in args.file: #sys.argv[1:]:
     #READ CURRENT DENSITIES
     pdata,dummy=read_data(glob(results_folder+'/*/j_*'))
     if args.ratecontrol:
-        pdata_rc,dummy=read_data(glob(results_folder+'/*/rc_*'))
+        rc_files=glob(results_folder+'/*/rc_*')
+        if len(rc_files)>0:
+            ratecontrol=True
+            pdata_rc,dummy=read_data(rc_files)
+        else:
+            ratecontrol=False
+    else:
+        ratecontrol=False
     if args.elemrates:
         pdata_elem,label_elem=read_data(glob(results_folder+'/*/jelem*'),header=True,dtype='elem')
     cdata,dummy=read_data(glob(results_folder+'/*/cov*'),dtype='cov')
@@ -297,7 +302,7 @@ for arg in args.file: #sys.argv[1:]:
             continue
         x=pdata[sp][:,0]
         y=pdata[sp][:,1]
-        if args.ratecontrol:
+        if ratecontrol:
             xrc={}
             yrc={}
             for sp2 in pdata_rc[sp]:
@@ -345,12 +350,13 @@ for arg in args.file: #sys.argv[1:]:
             func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,label=sp,ms=msize) #,label=arg.split('/')[-1])
         else:
             func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,ms=msize)
-        for sp2 in pdata_rc[sp]:
-            if sp2 not in colors_rc:
-                colors_rc[sp2]=next(colors)
-            color_rc=colors_rc[sp2]
-            ax1m.plot(xrc[sp2][skip:]+0.059*pH,yrc[sp2][skip:],':',color=color_rc,lw=1.5,label=sp2)
-            ax1m.annotate(sp2,xy=(xrc[sp2][len(xrc[sp2][skip:])/3],yrc[sp2][len(xrc[sp2][skip:])/3]),color=color_rc,fontsize=12)
+        if ratecontrol:
+            for sp2 in pdata_rc[sp]:
+                if sp2 not in colors_rc:
+                    colors_rc[sp2]=next(colors)
+                color_rc=colors_rc[sp2]
+                ax1m.plot(xrc[sp2][skip:]+0.059*pH,yrc[sp2][skip:],':',color=color_rc,lw=1.5,label=sp2)
+                ax1m.annotate(sp2,xy=(xrc[sp2][len(xrc[sp2][skip:])/3],yrc[sp2][len(xrc[sp2][skip:])/3]),color=color_rc,fontsize=12)
         if args.scale=='SHE':
             pH=pHtmp
     if args.elemrates:
@@ -412,7 +418,6 @@ for arg in args.file: #sys.argv[1:]:
             msize=3
         #if isp==len(cdata)-1:
         #    symbol='o'
-        print 'the color',k,sp,color
         #linestyle=next(linestyles)
         if args.scale=='SHE':
             pHtmp=pH
@@ -454,7 +459,6 @@ if args.products is not None:
     all_prods=[name_to_cm(a) for a in args.products]
 else:
     all_prods=[name_to_cm(a) for a in all_prods]
-print all_prods
 if 'pc-Au' in systems:
     fit_tafel=True
 else:
@@ -475,15 +479,15 @@ for pH in set(all_pH):
             exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['13.0'],\
                 system=systems,scale=args.scale,only_points=True,\
                 take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
-        elif pH == 6.8 or pH == 7.0:
+        elif pH == 6.8 or pH == 7.0 or pH == 7.2:
             #exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
             #    system=systems,scale=args.scale,only_points=True,\
             #    take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
             only_points=True
             fit_tafel=True
             #wuttig
-            refs=['jaramillo'] #,'wuttig']
-            exp.plot_data(reference=refs,ax=ax1,species=all_prods,pH=['6.8'],\
+            refs=['jaramillo'] #,'dunwell'] #,'wuttig']
+            exp.plot_data(reference=refs,ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
                 system=systems,scale=args.scale,only_points=only_points,\
                 take_log=j_log_plot,marker=symbol,legend=show_legend,msize=5,color=color,fit_tafel=fit_tafel)
             fit_tafel=False

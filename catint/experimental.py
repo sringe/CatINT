@@ -526,7 +526,6 @@ class EXPDATA():
                         skip=skip_dict[name]
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
-                           # sys.exit()
                             linestyle=next(linestyles)
                             if marker is None:
                                 symbol=next(symbols)
@@ -765,6 +764,7 @@ class EXPDATA():
 
                     if isref('dunwell'):
                         DATA=self.DATA_du
+                        color='r'
                         name=','.join(DATA.label[1].split(',')[1:])
                         skip=skip_dict[name]
                         spp=s2i(species,DATA,pH=cpH)

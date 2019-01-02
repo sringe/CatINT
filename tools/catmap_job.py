@@ -52,7 +52,7 @@ ax = fig.add_subplot(111)
 #ax.set_ylim([-0.5,2.5])
 fig.savefig('FED'+j+'.png')
 
-#vm = analyze.VectorMap(model)
+vm = analyze.VectorMap(model)
 ##vm.plot_variable = 'rate'
 ##vm.descriptor_labels = ['U vs. SHE (V)']
 ##vm.log_scale = False
@@ -68,13 +68,13 @@ fig.savefig('FED'+j+'.png')
 #fig = vm.plot(save=False)
 #fig.savefig('rate.pdf')
 #
-##vm.plot_variable = 'production_rate'
-##vm.descriptor_labels = ['U vs. SHE (V)']
-##vm.log_scale = True
-##vm.min = -10 #1e-10
-##vm.max = 6 #1e6
-##fig = vm.plot(save=False)
-##fig.savefig('production_rate'+j+'.png')
+vm.plot_variable = 'production_rate'
+vm.descriptor_labels = ['U vs. SHE (V)']
+vm.log_scale = True
+vm.min = 1e-4 #1e-10
+vm.max = 1e12 #1e6
+fig = vm.plot(save=False)
+fig.savefig('production_rate'+j+'.png')
 #vm.descriptor_labels = ['U vs. SHE (V)']
 #vm.plot_variable = 'production_rate'
 #vm.log_scale = True

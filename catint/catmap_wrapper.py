@@ -101,6 +101,7 @@ class CatMAP():
         else:
             self.delta_desc=0.05
 
+
     def run(self):
         desc_keys=[key for key in self.tp.descriptors]
         desc_val=[self.tp.system[key] for key in self.tp.descriptors]
@@ -495,7 +496,9 @@ class CatMAP():
 
         i=0
         replaced_species=[]
-        self.tp.logger.debug('Diffusion drop passed to CatMAP is {} V'.format(self.tp.system['potential'][0]))
+        self.tp.logger.debug('|    | CM | in | Diffusion drop passed to CatMAP is {} V'.format(self.tp.system['potential'][0]))
+        for sp in self.tp.species:
+            self.tp.logger.info('|    | CM | in | c(x=0) of {} = {} M'.format(sp,self.tp.species[sp]['surface_concentration']))
         for line in open(self.catmap_model):
             i+=1
             if line.lstrip().startswith('#'):
@@ -512,10 +515,11 @@ class CatMAP():
             if line.strip().startswith('field'):
                 #replace_line(self.catmap_model,i-1,'field = '+str(self.tp.system['efield'][0]*1e-10*self.tp.system['epsilon']/self.tp.system['Stern epsilon']))
                 replace_line(self.catmap_model,i-1,'field = '+str(self.tp.system['Stern_efield']*1e-10))
-            #if line.strip().startswith('sigma'):
-            #    #replace_line(self.catmap_model,i-1,'field = '+str(self.tp.system['efield'][0]*1e-10*self.tp.system['epsilon']/self.tp.system['Stern epsilon']))
-            #    replace_line(self.catmap_model,i-1,'sigma_input = '+str(((self.tp.system['phiM']-self.tp.system['phiPZC'])-self.tp.system['surface_potential'])*self.tp.system['Stern capacitance']))
+            if self.tp.system['charging_scheme'] == 'comsol' and line.strip().startswith('sigma'):
+                #replace_line(self.catmap_model,i-1,'field = '+str(self.tp.system['efield'][0]*1e-10*self.tp.system['epsilon']/self.tp.system['Stern epsilon']))
+                replace_line(self.catmap_model,i-1,'sigma_input = '+str(((self.tp.system['phiM']-self.tp.system['phiPZC'])-self.tp.system['surface_potential'])*self.tp.system['Stern capacitance']))
             if line.strip().startswith('voltage_diff_drop') and self.tp.system['potential drop']=='Stern':
+                self.tp.logger.info('|    | CM | in | Running catmap with voltage drop = {}'.format(self.tp.system['phiM']-self.tp.system['potential'][0]))
                 replace_line(self.catmap_model,i-1,'voltage_diff_drop = '+str(self.tp.system['potential'][0])) #potential drop']))
             for sp in self.tp.species:
                 sp_cm=self.species_to_catmap(sp)
@@ -524,7 +528,7 @@ class CatMAP():
                     #shortly check if concentrations are very negative, stop if they are:
                     if self.tp.species[sp]['surface_concentration']<-1.:
                         self.tp.logger.warning('|    | CM | Surface concentration of {} is more negative than 1e-3 mol/L, stopping to be safe.'.format(sp))
-#                        sys.exit()
+                        sys.exit()
                     if sp in ['OH-','H+']:
                         activity=1 #this is irrelevant, since it will be controlled by the pH
                     else:
@@ -553,6 +557,7 @@ class CatMAP():
             sol=re.findall('pH[ ]*=[ ]*\d',line)
             if len(sol)>0:
                 replace_line(self.catmap_model,i-1,'pH = '+str(self.tp.system['surface_pH'])+'')
+                self.tp.logger.debug('|    | CM | surface pH = {}'.format(self.tp.system['surface_pH']))
 #                replace_line(self.catmap_model,i-1,'pH = '+str(max(self.tp.system['pH']))+'')
         for sp in self.tp.species:
             if sp not in replaced_species and sp not in self.tp.system['exclude species'] and sp not in self.tp.electrolyte_list:

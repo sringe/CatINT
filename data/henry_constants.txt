@@ -9,3 +9,4 @@ carbon_dioxide  CO2     3.3e-4          2400
 nitrogen        N2      6.4e-6          1600
 hydrogen        H2      7.8e-6          530
 ammonia         NH3     5.9e-1          4200
+oxygen          O2      1.2e-5          1700
