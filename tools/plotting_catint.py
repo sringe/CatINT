@@ -25,9 +25,13 @@ parser.add_argument('--prop',help='property to be plotted',nargs='+')
 parser.add_argument('--desc',help='value of descriptor at which to plot property, nearest point is taken',nargs='+')
 parser.add_argument('--norm',help='normalize electrode current density by RF',action='store_true')
 parser.add_argument('--scale',help='RHE or SHE')
+parser.add_argument('--xfixed',help='x values at which to plot some quantities, called by "pH_at_x"',nargs='+')
 args = parser.parse_args()
 
 #args.desc=float(args.desc)
+
+if args.xfixed is not None:
+    args.xfixed=[float(xx) for xx in args.xfixed]
 
 exp=EXPDATA()
 
@@ -186,6 +190,9 @@ def settings(ax,prop,d_sel):
     elif prop=='surface_pH':
         xlabel='Voltage vs. '+args.scale+' (V)'
         ylabel='Surface pH'
+    elif prop=='pH_at_x':
+        xlabel='Voltage vs. '+args.scale+' (V)'
+        ylabel='pH at x nm' #'+str(xfixed*1e9)+' nm'
     elif prop=='pKw':
         xlabel=r'x ($\AA$)'
         ylabel=r'pKw'
@@ -220,6 +227,12 @@ def settings(ax,prop,d_sel):
     elif prop=='surface_potential':
         xlabel='Voltage vs. '+args.scale+' (V)'
         ylabel=r'$\phi^\ddagger$ (V)'
+    elif prop=='surface_charge_density':
+        xlabel='Voltage vs. '+args.scale+' (V)'
+        ylabel=r'$\sigma$ ($\mu$C/cm$^2$)'
+    elif prop=='overpotential_dunwell':
+        xlabel='Voltage vs. '+args.scale+' (V)'
+        ylabel=r'$\eta_c$ ($V$)'
     elif prop=='Potential_drop':
         xlabel='Voltage vs. '+args.scale+' (V)'
         ylabel=r'$\phi^\mathrm{M}-\phi^\ddagger$ (V)'
@@ -258,7 +271,7 @@ def plot(prop):
                     min_d=abs(d-float(desc))
                     d_sel_inx=i
                     d_sel=d
-        if prop not in tp.alldata[0]['system'] and prop not in tp.alldata[0]['species'][[sp for sp in tp.alldata[0]['species']][0]]:
+        if prop not in tp.alldata[0]['system'] and prop not in tp.alldata[0]['species'][[sp for sp in tp.alldata[0]['species']][0]] and prop not in ['surface_charge_density','overpotential_dunwell','pH_at_x']:
             return
         xlabel,ylabel=settings(ax,prop,d_sel)
         ax.set_xlabel(xlabel)
@@ -330,14 +343,36 @@ def plot(prop):
             #system
             x=tp.descriptors['phiM']
             #plot vs. RHE
+            x_she=x
             if args.scale=='RHE':
                 x=[xx+0.0592*tp.system['bulk_pH'] for xx in x]
             else:
                 x=[xx for xx in x]
-            y=[tp.alldata[i]['system'][prop] for i in range(len(x))]
+            if prop=='surface_charge_density':
+                #calculate surface charge density from surface potential
+                y=[tp.system['Stern capacitance']*(x_she[i]-tp.alldata[i]['system']['surface_potential']-tp.system['phiPZC']) for i in range(len(x))]
+            elif prop=='pH_at_x':
+                for xfixed in args.xfixed:
+                    print xfixed,type(xfixed)
+                    d=np.inf
+                    for ix,xx in enumerate(xmesh):
+                        if d>abs(xx-xfixed):
+                            d=abs(xx-xfixed)
+                            inx=ix
+                    y=np.array([tp.alldata[i]['system']['pH'][inx] for i in range(len(x))])
+                    ax.plot(x,y,ls+m,label='at '+str(xfixed*1e9)+' nm')
+            elif prop=='overpotential_dunwell':
+                yco2_surf=np.array([tp.alldata[i]['species']['CO2']['surface_concentration'] for i in range(len(x))])
+                yh_surf=1e-14/np.array([tp.alldata[i]['species']['OH-']['surface_concentration'] for i in range(len(x))])
+                yco2_bulk=np.array([tp.species['CO2']['bulk_concentration'] for i in range(len(x))])
+                yh_bulk=1e-14/np.array([tp.species['OH-']['bulk_concentration'] for i in range(len(x))])
+                y=2.3*unit_R*unit_T/unit_F*np.log(yco2_bulk*yh_bulk/yco2_surf/yh_surf)
+            else:
+                y=[tp.alldata[i]['system'][prop] for i in range(len(x))]
             if prop in ['Stern_efield']:
                 y=[yy*1e-10 for yy in y]
-            ax.plot(x,y,ls+m,color='k')
+            if not prop=='pH_at_x':
+                ax.plot(x,y,ls+m,color='k')
 
 for iif,f in enumerate(args.file):
     print 'Working on folder ',f

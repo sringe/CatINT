@@ -10,9 +10,9 @@ from catint.comsol_reader import Reader
 import numpy as np
 from units import *
 from read_data import read_data
-from extrapolate_surface_conc import extrapolate
+from tools.extrapolate_surface_conc import extrapolate
 
-transport_mode='comsol' #None #extrapolate'
+transport_mode=None #comsol' #' #None #extrapolate'
 #can be one of the following:
 #   None            only catmap
 #   'comsol'        iterative catmap-comsol
@@ -99,7 +99,8 @@ system=\
     'init_folder':init_folder,
     'potential drop':'Stern', #either Stern or full
     'Stern capacitance': 30, #std: 20, Journal of Electroanalytical Chemistry 414 (1996) 209-220
-    'Stern epsilon':2 #value or Booth
+    'Stern epsilon':2, #value or Booth
+    'charging_scheme':'input' #input' #comsol' #which scheme to use for charging: comsol or input
     }
 ###########################################################################
 
@@ -203,7 +204,7 @@ catmap_args['desc_method']='automatic'
 potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 
-phimin=-0.5 #-0.5 #-0.7
+phimin=-0.5
 phimax=-2.0
 
 for potential in potentials:

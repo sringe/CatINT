@@ -70,14 +70,21 @@ class extrapolate():
             elif ads == 'OH-':
                 p0=[3.,-3.,-0.5,-7.5]
             if ads in ['K+','CO','OH-']: #,'CO']:
-                coeff, var_matrix = curve_fit(exponential, x,y, p0=p0)
-                #coeff=p0
-                if ads in ['CO','OH-']:
-                    p0=list(coeff)+[0.1,0.5]
-                    coeff, var_matrix = curve_fit(exponential_poly2, x,y, p0=p0)
-                    self.extrapol_func_list[ads]=[coeff,exponential_poly2_v2]
-                else:
-                    self.extrapol_func_list[ads]=[coeff,exponential_v2]
+                try:
+                    coeff, var_matrix = curve_fit(exponential, x,y, p0=p0)
+                    #coeff=p0
+                    if ads in ['CO','OH-']:
+                        p0=list(coeff)+[0.1,0.5]
+                        coeff, var_matrix = curve_fit(exponential_poly2, x,y, p0=p0)
+                        self.extrapol_func_list[ads]=[coeff,exponential_poly2_v2]
+                    else:
+                        self.extrapol_func_list[ads]=[coeff,exponential_v2]
+                except:
+                    print 'Optimal parameters not found for ',ads
+                    print 'performing polynomial fit'
+                    z=np.polyfit(x,y,2)
+                    flambda=lambda x,c: np.poly1d(c)(x)
+                    self.extrapol_func_list[ads]=[z,flambda]
             else:
                 #if ads in ['OH-']:
                 #    d=np.array([[xx,yy] for xx,yy in zip(x,y) if xx<-0.7])

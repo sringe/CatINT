@@ -295,7 +295,7 @@ class Calculator():
         desc1_val=self.tp.system[desc_keys[0]]
         desc2_val=self.tp.system[desc_keys[1]]
         alldata_inx=self.tp.alldata_names.index([desc1_val,desc2_val])
-        while scf_accuracy>self.tau_scf:
+        while scf_accuracy>self.tau_scf or any([self.tp.species[sp]['surface_concentration']<0.0 for sp in self.tp.species]):
             istep+=1
             #evaluate how the accuracy during the last 50 steps, if it does not significantly decrease, reduce the mixing factor
             if istep-step_to_check>40: # and abs(accuracies[-2]-accuracies[-1])>1e-1:
@@ -305,23 +305,40 @@ class Calculator():
                 step_to_check=istep
             self.tp.logger.info('| CI | -- | Solving transport step {}. Current accuracy in current density = {} mA/cm^2'.format(istep,scf_accuracy))
 
+
             #linear mixing
             if istep>2:
                 #mix fluxes
                 for sp in self.tp.species:
 #                    self.tp.species[sp]['flux']=self.mix_scf*self.tp.species[sp]['flux']+(1.-self.mix_scf)*fl_old[sp]
-                    self.tp.species[sp]['surface_concentration']=self.mix_scf*self.tp.species[sp]['surface_concentration']+\
+                    if self.tp.species[sp]['surface_concentration']<0.0:
+                        self.tp.logger.warning('| CI | -- | Negative {} concentration detected = {} M. Take from previous step.'.format(sp,self.tp.species[sp]['surface_concentration']/1000.))
+                        self.tp.species[sp]['surface_concentration']=sc_old[sp]
+                    else:
+                        self.tp.species[sp]['surface_concentration']=self.mix_scf*self.tp.species[sp]['surface_concentration']+\
                             (1.-self.mix_scf)*sc_old[sp]
                     self.tp.alldata[alldata_inx]['species'][sp]['surface_concentration']=self.tp.species[sp]['surface_concentration']
+            else:
+                #still check if we have negative concentrations, and if we do, set them to a small value
+                for sp in self.tp.species:
+                    if self.tp.species[sp]['surface_concentration']<0.0:
+                        self.tp.logger.warning('| CI | -- | Negative {} concentraiton = {} M, setting to 1e-20 M'.format(sp,self.tp.species[sp]['surface_concentration']/1000.))
+                        self.tp.species[sp]['surface_concentration']=1e-20
             #update surface pH
             if 'H+' in self.tp.species:
                 lss=self.tp.species['H+']['surface_concentration']
-                self.tp.system['surface_pH']=-np.log10(float(lss)/1000.)
-                self.tp.alldata[alldata_inx]['system']['surface_pH']=-np.log10(float(lss)/1000.)
+                if float(lss)>0.0:
+                    self.tp.system['surface_pH']=-np.log10(float(lss)/1000.)
+                    self.tp.alldata[alldata_inx]['system']['surface_pH']=-np.log10(float(lss)/1000.)
+                else:
+                    self.tp.logger.warning('| CI | -- | Negative H+ concentrations = {} M, do not update surface pH'.format(float(lss/1000.)))
             elif 'OH-' in self.tp.species:
                 lss=self.tp.species['OH-']['surface_concentration']
-                self.tp.system['surface_pH']=14+np.log10(float(lss)/1000.)
-                self.tp.alldata[alldata_inx]['system']['surface_pH']=14+np.log10(float(lss)/1000.)
+                if float(lss)>0.0:
+                    self.tp.system['surface_pH']=14+np.log10(float(lss)/1000.)
+                    self.tp.alldata[alldata_inx]['system']['surface_pH']=14+np.log10(float(lss)/1000.)
+                else:
+                    self.tp.logger.warning('| CI | -- | Negative OH- concentrations = {} M, do not update surface pH'.format(float(lss/1000.)))
 
             #for linear mixing, safe all surface_concentrations
             sc_old={}

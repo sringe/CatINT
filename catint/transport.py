@@ -161,6 +161,13 @@ class Transport(object):
                 'RF',                      #roughness factor
                 'potential drop',           #Potential drop, either Stern or full
                 'Stern_efield', #electric field in Stern layer
+                'charging_scheme', #the charging scheme that determines the surface charge density
+                #used to calculate the energy surface charge density relation. 
+                # = "input":
+                #by defining sigma in the catmap input file as a list of polynomial coefficients or
+                #a float or file name (x and y columns of sigma-voltage relation)
+                # = "comsol"
+                #uses transport model to evaluate sigma
                 'Stern_potential', #electrostatic potential at the OHP (outside of Stern layer)
                 'init_folder' #put here a comsol_results folder from which to initialize the calculation
                 ]
@@ -209,6 +216,7 @@ class Transport(object):
                 'field dependence':None,
                 'init_folder':None,
                 'Stern_efield':0.0,
+                'charging_scheme':'comsol', #comsol or input
                 'Stern_potential':0.0,
                 'potential drop':'Stern'}
         if system is None:
@@ -523,8 +531,6 @@ class Transport(object):
             for e in electrode_reactions:
                 a=electrode_reactions[e]['reaction']
                 for r in sum([aa.split(' + ') for aa in a.split('->')],[]):
-                    print 'e',e
-                    print 'r',r
                     rx=re.findall('([a-zA-Z]{1,10}[a-zA-Z-+0-9]+)',r.strip())[0]
                     reacting_species.append(rx)
                     if rx not in self.species and rx not in self.system['exclude species']:
@@ -542,7 +548,6 @@ class Transport(object):
                 for p in tp_ref_data['electrolyte_reactions'][e]:
                     a=tp_ref_data['electrolyte_reactions'][e][p]['reaction']
                     for r in sum([aa.split(' + ') for aa in a.split('->')],[]):
-                        print e,p,r
                         rx=re.findall('([a-zA-Z]{1,10}[a-zA-Z-+0-9]+)',r.strip())[0]
                         electrolyte_species.append(rx)
                         if rx not in self.species and rx not in self.system['exclude species']:
@@ -697,6 +702,18 @@ class Transport(object):
 
 
         #finally add the remaining concentration for which charge neutrality was requested:
+        charge_neutrality=False
+        for sp in self.species:
+            if 'bulk_concentration' in self.species[sp] and self.species[sp]['bulk_concentration']=='charge_neutrality':
+                charge_neutrality=True
+        if charge_neutrality:
+            #we need to round all concentrations so that we do not get a finite charge density in the bulk
+            for sp in self.species:
+                if type(self.species[sp]['bulk_concentration'])!=str:
+                    newconc=round(self.species[sp]['bulk_concentration'],8)
+                    if newconc!=self.species[sp]['bulk_concentration']:
+                        self.logger.warning('Rounded concentration of species {} to 8 decimal numbers, new concentration = {}'.format(sp,newconc))
+                        self.species[sp]['bulk_concentration']=newconc
         count=0
         for sp in self.species:
             if 'bulk_concentration' in self.species[sp] and self.species[sp]['bulk_concentration']=='charge_neutrality':
@@ -711,12 +728,16 @@ class Transport(object):
             self.logger.error('| CI | -- | Only a single species can be evaluated by charge neutrality')
             sys.exit()
 
+
         #check if all concentrations were provided as input
         for sp in self.species:
             if 'bulk_concentration' not in self.species[sp]:
                 self.logger.warning('| CI | -- | No bulk_concentration provided for species {}, setting it to zero'.format(sp))
                 self.species[sp]['bulk_concentration']=0.0
-                
+
+        self.logger.info('| CI | -- | Updated species bulk concentrations')
+        for sp2 in self.species:
+            self.logger.info('| CI | -- | {} = {} mol/L'.format(sp2,self.species[sp2]['bulk_concentration']))
 
     def initialize_comsol(self,comsol_args):
         """
