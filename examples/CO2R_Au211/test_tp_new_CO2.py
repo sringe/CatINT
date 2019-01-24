@@ -1,6 +1,8 @@
 import sys
-sys.path.insert(0,'/scratch/users/sringe/transport/catint2')
-sys.path.insert(0,'/scratch/users/sringe/transport/catmap')
+#sys.path.insert(0,'/scratch/users/sringe/transport/catint')
+#sys.path.insert(0,'/scratch/users/sringe/transport/catmap')
+import os
+sys.path.insert(0,os.getenv("HOME")+'/software/catmap')
 from shutil import copyfile as copy
 from catint.transport import Transport
 from catint.calculator import Calculator
@@ -12,7 +14,7 @@ from units import *
 from read_data import read_data
 from tools.extrapolate_surface_conc import extrapolate
 
-transport_mode=None #comsol' #' #None #extrapolate'
+transport_mode=None #'comsol' #' #None #extrapolate'
 #can be one of the following:
 #   None            only catmap
 #   'comsol'        iterative catmap-comsol
@@ -47,7 +49,7 @@ include_protons=False
 #put here a results folder with which the surface concentrations should be initialized
 init_folder=None #'try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0/comsol_results_id000_0006_0001' #None #'try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0/comsol_results_id000_0011_0001'
 #put here a catmap-comsol transport calculation which is used to extrapolate transport to other potentials
-extrapol_folder=['try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0'] #None #['try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0'] #try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0']
+extrapol_folder=['try10_w_tp_cdl_comsol_CH_25_pzc_0.16_eps6_beta_0.5_Ga_0.0_hbondcorr'] #try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0'] #None #['try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0'] #try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0']
 #None #['try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0','try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0_2'] #try7_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0','try7_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0_2']
 
 
@@ -94,13 +96,13 @@ system=\
     'migration': True,
     'electrode reactions': True,
     'electrolyte reactions': use_elreac, #False,
-    'phiPZC': 0.2, #ModernAspects of Electrochemistry Books/, value in water
+    'phiPZC': 0.16, #ModernAspects of Electrochemistry Books/, value in water
     'bulk_pH':pH_i,
     'init_folder':init_folder,
     'potential drop':'Stern', #either Stern or full
     'Stern capacitance': 30, #std: 20, Journal of Electroanalytical Chemistry 414 (1996) 209-220
     'Stern epsilon':2, #value or Booth
-    'charging_scheme':'input' #input' #comsol' #which scheme to use for charging: comsol or input
+    'charging_scheme':'input' #comsol' #input' #input' #comsol' #which scheme to use for charging: comsol or input
     }
 ###########################################################################
 
@@ -201,79 +203,81 @@ catmap_args['min_desc_delta']=min_desc_delta
 catmap_args['max_desc_delta']=max_desc_delta
 catmap_args['desc_method']='automatic'
 
-potentials=[-1.0] #,-0.75,-0.5,-0.25,0.0]
 results=[]
 
-phimin=-0.5
+phimin=-0.5 #1.0 #0.5
 phimax=-2.0
 
-for potential in potentials:
-    if nphi is not None:
-        descriptors={'phiM':list(np.linspace(phimin,phimax,nphi))} #-0.0592*6.8,-2.0,nphi))}
-    elif dphi is not None:
-        descriptors={'phiM':list(np.linspace(phimin,phimax,-(phimax-phimin)/dphi+1))}
-    system['phiM']=potential
-
-    #'potential','gradient','robin'
-    pb_bound={
-    #        'potential': {'wall':'zeta'},
-    #        'gradient': {'bulk':0.0}}
-        'potential':{'bulk':0.0},
-        'wall':system['phiM']}
+if nphi is not None:
+    descriptors={'phiM':list(np.linspace(phimin,phimax,nphi))} #-0.0592*6.8,-2.0,nphi))}
+elif dphi is not None:
+    descriptors={'phiM':list(np.linspace(phimin,phimax,-(phimax-phimin)/dphi+1))}
 
 
-    ###########################################################################
-    #SETUP AND RUN
-    ###########################################################################
-    if nobuffer:
-        tp=Transport(
-            species=species,
-            electrode_reactions=electrode_reactions,
-            system=system,
-            pb_bound=pb_bound,
-            comsol_args=comsol_args,
-            catmap_args=catmap_args,
-            model_name='CO2R',
-            descriptors=descriptors,
-            nx=nx)
-    else:
-        tp=Transport(
-            species=species,
-            electrode_reactions=electrode_reactions,
-            electrolyte_reactions=electrolyte_reactions,
-            system=system,
-            pb_bound=pb_bound,
-            catmap_args=catmap_args,
-            comsol_args=comsol_args,
-            model_name='CO2R',
-            descriptors=descriptors,
-            nx=nx)
-    
-    
-    tp.set_calculator('comsol') #odespy') #--bdf')
+system['phiM']=descriptors['phiM'][0]
 
-    
-    if transport_mode != 'comsol':
-        cm=CatMAP(transport=tp,model_name='CO2R')
+#'potential','gradient','robin'
+pb_bound={
+#        'potential': {'wall':'zeta'},
+#        'gradient': {'bulk':0.0}}
+    'potential':{'bulk':0.0},
+    'wall':system['phiM']}
+
+
+###########################################################################
+#SETUP AND RUN
+###########################################################################
+if nobuffer:
+    tp=Transport(
+        species=species,
+        electrode_reactions=electrode_reactions,
+        system=system,
+        pb_bound=pb_bound,
+        comsol_args=comsol_args,
+        catmap_args=catmap_args,
+        model_name='CO2R',
+        descriptors=descriptors,
+        nx=nx)
+else:
+    tp=Transport(
+        species=species,
+        electrode_reactions=electrode_reactions,
+        electrolyte_reactions=electrolyte_reactions,
+        system=system,
+        pb_bound=pb_bound,
+        catmap_args=catmap_args,
+        comsol_args=comsol_args,
+        model_name='CO2R',
+        descriptors=descriptors,
+        nx=nx)
+
+
+tp.set_calculator('comsol') #odespy') #--bdf')
+
+
+if transport_mode != 'comsol':
+    cm=CatMAP(transport=tp,model_name='CO2R')
+    if transport_mode=='extrapolate':
+        #for extrapolation of transport to high overpotential regime
+        if transport_mode == 'extrapolate':
+            extra=extrapolate(tp=tp,extrapol_folder=extrapol_folder)
+            extra.plot()
+    for pot in descriptors['phiM']:
+        print '!!! now running pot = '+str(pot)
+        tp.system['phiM']=pot
+        if transport_mode is None:
+            tp.descriptors['phiM']=[pot]
         if transport_mode=='extrapolate':
-            #for extrapolation of transport to high overpotential regime
-            if transport_mode == 'extrapolate':
-                extra=extrapolate(tp=tp,extrapol_folder=extrapol_folder)
-                #extra.plot()
-        for pot in descriptors['phiM']:
-            print '!!! now running pot = '+str(pot)
-            tp.system['phiM']=pot
-            if transport_mode=='extrapolate':
-                #set the surface concentrations according to extrapolated functions
-                for sp in tp.species:
-                    tp.species[sp]['surface_concentration']=10**extra.extrapol_func[sp](pot)
-                #set voltage drop (= phi-phi0) according to extrapolated function
-                tp.system['potential']=[extra.extrapol_func['voltage_diff_drop'](pot)]
-                tp.system['surface_pH']=extra.extrapol_func['surface_pH'](pot) #lambda x: extra.extrapol_func['OH-'](pot)-3.+14.
-            cm.run()
-    else:
-        c=Calculator(transport=tp,tau_scf=tau_scf,ntout=1,dt=1e-1,tmax=10,mix_scf=mix_scf)
-        c.run()
+            #set the surface concentrations according to extrapolated functions
+            for sp in tp.species:
+                tp.species[sp]['surface_concentration']=10**extra.extrapol_func[sp](pot)
+            #set voltage drop (= phi-phi0) according to extrapolated function
+            tp.system['potential']=[extra.extrapol_func['voltage_diff_drop'](pot)]
+            tp.system['surface_pH']=extra.extrapol_func['surface_pH'](pot) #lambda x: extra.extrapol_func['OH-'](pot)-3.+14.
+        cm.run()
+else:
+    c=Calculator(transport=tp,tau_scf=tau_scf,ntout=1,dt=1e-1,tmax=10,mix_scf=mix_scf)
+    c.run()
 #        tp.save() #saves all data to pickle files to enable restart or plotting later
     
 #    p=Plot(transport=tp)

@@ -491,9 +491,9 @@ for pH in set(all_pH):
                 system=systems,scale=args.scale,only_points=only_points,\
                 take_log=j_log_plot,marker=symbol,legend=show_legend,msize=5,color=color,fit_tafel=fit_tafel)
             fit_tafel=False
-            exp.plot_data(reference=refs,ax=ax1,species=all_prods,pH=['3.0'],\
-                system=systems,scale=args.scale,only_points=only_points,\
-                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=5,color=color,fit_tafel=fit_tafel)
+#            exp.plot_data(reference=refs,ax=ax1,species=all_prods,pH=['3.0'],\
+#                system=systems,scale=args.scale,only_points=only_points,\
+#                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=5,color=color,fit_tafel=fit_tafel)
         elif pH == 3.0: #6.8 or pH == 7.0:
             #exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
             #    system=systems,scale=args.scale,only_points=True,\

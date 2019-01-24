@@ -11,6 +11,7 @@ from itertools import cycle
 import sys
 from units import *
 import re
+from scipy.interpolate import UnivariateSpline
 
 from catint.experimental import EXPDATA
 import argparse
@@ -271,7 +272,7 @@ def plot(prop):
                     min_d=abs(d-float(desc))
                     d_sel_inx=i
                     d_sel=d
-        if prop not in tp.alldata[0]['system'] and prop not in tp.alldata[0]['species'][[sp for sp in tp.alldata[0]['species']][0]] and prop not in ['surface_charge_density','overpotential_dunwell','pH_at_x']:
+        if prop not in tp.alldata[0]['system'] and prop not in tp.alldata[0]['species'][[sp for sp in tp.alldata[0]['species']][0]] and prop not in ['surface_charge_density','overpotential_dunwell','pH_at_x','capacitance']:
             return
         xlabel,ylabel=settings(ax,prop,d_sel)
         ax.set_xlabel(xlabel)
@@ -351,6 +352,19 @@ def plot(prop):
             if prop=='surface_charge_density':
                 #calculate surface charge density from surface potential
                 y=[tp.system['Stern capacitance']*(x_she[i]-tp.alldata[i]['system']['surface_potential']-tp.system['phiPZC']) for i in range(len(x))]
+            elif prop=='capacitance':
+                #plot the double layer capacitance
+                #1) calculate surface charge density from surface potential
+                y=[tp.system['Stern capacitance']*(x_she[i]-tp.alldata[i]['system']['surface_potential']-tp.system['phiPZC']) for i in range(len(x))]
+                #2) spline sigma vs. v
+                data=np.array(sorted([[xx,yy] for xx,yy in zip(x,y)]))
+                x=data[:,0]
+                y=data[:,1]
+                print x,y
+                spl=UnivariateSpline(x,y,k=4,s=0)
+                #3) calculate double layer capacitance from derivative
+                spl_deriv=spl.derivative()
+                y=[spl_deriv(xx) for xx in x]
             elif prop=='pH_at_x':
                 for xfixed in args.xfixed:
                     print xfixed,type(xfixed)

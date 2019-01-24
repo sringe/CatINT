@@ -229,7 +229,7 @@ class EXPDATA():
         #if skip:
         #    V=V[skip:]
         #    J=J[skip:]
-        res=np.array([[vv,jj] for vv,jj in zip(V,J) if vv>-1.0])
+        res=np.array([[vv,jj] for vv,jj in zip(V,J) if vv>-0.68])
         V=res[:,0]
         J=res[:,1]
         #A = array([V, ones(len(V))])
@@ -425,7 +425,7 @@ class EXPDATA():
                                       'Acetate':0,\
                                       'propol':0}
                     if 'pc-Au' in label and 'pH = 3.0' in label:
-                        skip_dict[label]={'CO': 3}
+                        skip_dict[label]={'CO': 5}
                     elif 'pc-Au' in label and 'pH = 6.8' in label:
                         skip_dict[label]={'CO': 0}
                 elif 'Kanan' in label:
