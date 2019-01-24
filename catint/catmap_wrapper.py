@@ -512,6 +512,9 @@ class CatMAP():
             if line.strip().startswith('bulk_ph'):
                 replace_line(self.catmap_model,i-1,'bulk_ph = '+str(self.tp.system['bulk_pH']))
                 continue
+            if line.strip().startswith('Upzc'):
+                replace_line(self.catmap_model,i-1,'Upzc = '+str(self.tp.system['phiPZC']))
+                continue
             if line.strip().startswith('field'):
                 #replace_line(self.catmap_model,i-1,'field = '+str(self.tp.system['efield'][0]*1e-10*self.tp.system['epsilon']/self.tp.system['Stern epsilon']))
                 replace_line(self.catmap_model,i-1,'field = '+str(self.tp.system['Stern_efield']*1e-10))
@@ -543,6 +546,9 @@ class CatMAP():
             if desc_method=='descriptor_range':
                 if 'descriptor_range' in line:
                     replace_line(self.catmap_model,i-1,'descriptor_ranges = [['+str(min_desc)+','+str(max_desc)+'],['+str(desc_val[1])+','+str(desc_val[1])+']]')
+                if line.startswith('descriptors'):
+                    #this line should not exist if descriptor_range is used
+                    replace_line(self.catmap_model,i-1,'')
                 if line.strip().startswith('resolution'):
                     replace_line(self.catmap_model,i-1,'resolution = ['+str(n_desc)+', 1]') #descriptor_names= [\''+desc_1+'\', \''+desc_2+'\']')
             elif desc_method=='single_point':

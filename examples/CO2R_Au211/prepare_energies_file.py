@@ -3,15 +3,21 @@ import numpy as np
 from my_io import replace_at_string
 from units import Rydberg
 
-#free_en_corrs={'CO2_g':0.33,'CO_g':0.0,'H2_g':0.0,'H2O_g':0.0}
-free_en_corrs={'CO2_g':0.33,'CO_g':0.0,'H2_g':0.0,'H2O_g':0.0} #09}
+co_gas_correction=0.0
 
-abinitio_energies = {
-         'CO_gas': -46.04587566*Rydberg+free_en_corrs['CO_g'],
-         'H2_gas': -2.42121318*Rydberg+free_en_corrs['H2_g'],
-         'CO2_gas': -80.15782693*Rydberg+free_en_corrs['CO2_g'],
-         'H2O_gas': -36.47522813*Rydberg+free_en_corrs['H2O_g'],
-         }
+#free_en_corrs={'CO2_g':0.33,'CO_g':0.0,'H2_g':0.0,'H2O_g':0.0}
+free_en_corrs={'CO2_g':0.45,'CO_g':0.0,'H2_g':0.0,'H2O_g':0.0} #09}
+#free_en_corrs={'CO2_g':0.41,'CO_g':-0.18,'H2_g':0.09,'H2O_g':-0.21} #09}
+
+#beef
+#abinitio_energies = {
+#         'CO_gas': -46.04587566*Rydberg+free_en_corrs['CO_g'],
+#         'H2_gas': -2.42121318*Rydberg+free_en_corrs['H2_g'],
+#         'CO2_gas': -80.15782693*Rydberg+free_en_corrs['CO2_g'],
+#         'H2O_gas': -36.47522813*Rydberg+free_en_corrs['H2O_g'],
+#         }
+
+abinitio_energies={'CO_gas':-45.61372421*Rydberg+free_en_corrs['CO_g']+co_gas_correction,'H2_gas':-2.35720879*Rydberg+free_en_corrs['H2_g'],'CO2_gas':-79.42951519*Rydberg+free_en_corrs['CO2_g'],'H2O_gas':-36.11827578*Rydberg+free_en_corrs['H2O_g']}
 
 abinitio_energies['H']=abinitio_energies['H2_gas']/2.
 abinitio_energies['O']=abinitio_energies['H2O_gas']-abinitio_energies['H2_gas']
@@ -61,6 +67,12 @@ sigma_params={\
     }}
 
 sigma_params=sigma_params[surface]
+
+#new explicit-implicit model
+sigma_params['CO2']=[-8.93106433e-04,  2.58627576e-02,  1.14691529e+00] #[-0.00188943, -0.03172613, 0.41581459] #-0.00180161, -0.02689825, 0.48135954000000003]
+sigma_params['COOH']=[-1.15225255e-04,  2.67094987e-03,  7.34789698e-01] #[-1.1112531e-05, 0.00333941362, 0.732777859] #-1.1112531e-05, 0.00333941362, 0.732777859]
+sigma_params['CO']=[-9.11793749e-05,  4.30663723e-03,  4.91072027e-01] #[0.0018451327711406771, 0.03420296578328402, -0.45936375172574206] #0.00218647, 0.04507817, -0.3058627089720931]
+
 
 #assume same sigma dependence of transition state as COOH
 sigma_params[ts+'_t']=[]

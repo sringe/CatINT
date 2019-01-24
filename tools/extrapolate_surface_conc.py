@@ -65,8 +65,8 @@ class extrapolate():
             ax1.plot(x,y,'x',color=color)
             if ads == 'K+':
                 p0=[0.1,-3.,-0.5,0.4] #,0.6,0.5,0.0,-0.2]
-            elif ads == 'CO':
-                p0=[3.,-3.,-0.5,-7.5]
+#            elif ads == 'CO':
+#                p0=[3.,-3.,-0.5,-7.5]
             elif ads == 'OH-':
                 p0=[3.,-3.,-0.5,-7.5]
             if ads in ['K+','CO','OH-']: #,'CO']:
