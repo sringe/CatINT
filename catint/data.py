@@ -10,8 +10,8 @@ tp_ref_data={\
     {
         'buffer-base':      {   'reaction':            'CO2 + OH- <-> HCO3-',
                             #PURE WATER, Emerson
-                            'constant':             43750.0,                                #Gupta:  44400.0 
-                            'rates':                [7.0,16e-5]},                           #Gupta:  [5.93,13.4e-5]
+                            'constant':             44400.0, #Emerson: 43750.0,                                #Gupta:  44400.0, here the value calculated from rates k1/k-1
+                            'rates':                [5.93,0.00013355855855855855]}, #Emerson: [7.0,16e-5]},                           #Gupta:  [5.93,13.4e-5]
                             #salinity S=35, Schulz2006
 #                             'constant':             22966.014418, #Schulz2006, m^3/mol
 #                             'rates':                [2.23,9.71e-5]}, #Schulz2006
@@ -19,7 +19,7 @@ tp_ref_data={\
         'buffer-base2':     {   'reaction':            'HCO3- + OH- <-> CO32- + H2O', 
                             #PURE WATER ???? Gupta
                             'constant':              4.66,
-                            'rates':                [1.0e5,21459.2274]},
+                            'rates':                [1.0e5,21459.227467811157]},
                             #salinity S=35, Schulz2006
 #                             'constant':             19.60784, #Schulz2006, m^3/mol
 #                             'rates':                [6e6,306000]}, #Schulz2006
@@ -36,8 +36,8 @@ tp_ref_data={\
     ##############################################################################################################
         'buffer-acid':      {   'reaction':            'CO2 + H2O <-> HCO3- + H+', 
                             #PURE WATER, Emerson
-                            'constant':             0.000445,                               #Gupta:  0.000444 
-                             'rates':               [3.7e-2,8.3333]},                       #
+                            'constant':             0.000444, #rson: 0.000445,                               #Gupta:  0.000444 
+                             'rates':               [3.7e-2,83.33333333333333]}, #k-1 calculated from constant and k1
                             #salinity S=35, Schulz2006
 #                             'constant':             0.00138951310,
 #                             'rates':               [3.71e-2,26.7]},
@@ -45,8 +45,10 @@ tp_ref_data={\
         'buffer-acid2':     {   'reaction':             'HCO3- <-> CO32- + H+',
                             #PURE WATER, Millero1997
                             #'constant':              4.79e-8,
-                            'constant':             3.5317025629468759e-07,              #https://www.iaea.org/ocean-acidification/act7/Guide%20best%20practices%20low%20res.pdf
-                            'rates':                [59.44,1.68304093e8]},                  #assuming Schulz2006 for hin-reactio !!!!!!!NOT SALINITY CORRECTED!!!!!!!
+#                            'constant':             3.5317025629468759e-07,              #https://www.iaea.org/ocean-acidification/act7/Guide%20best%20practices%20low%20res.pdf
+                            'constant':             4.66e-8,                            #calculated from basic reaction using pKw value
+#                            'rates':                [59.44,1.68304093e8]},                  #assuming Schulz2006 for hin-reactio !!!!!!!NOT SALINITY CORRECTED!!!!!!!
+                            'rates':                [59.44,1275536480.6866953]},                  #assuming Schulz2006 for hin-reactio !!!!!!!NOT SALINITY CORRECTED!!!!!!!
 ##                            'rates':                [59.44,12.409e8]},                  #assuming Schulz2006 for hin-reaction !!!!!!!NOT SALINITY CORRECTED!!!!!!!
                             #salinity S=35, Schulz2006
 #                            'constant':             1.1888e-06,                            #Emerson: 1.0715e-6

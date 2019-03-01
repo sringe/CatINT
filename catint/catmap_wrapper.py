@@ -498,7 +498,7 @@ class CatMAP():
         replaced_species=[]
         self.tp.logger.debug('|    | CM | in | Diffusion drop passed to CatMAP is {} V'.format(self.tp.system['potential'][0]))
         for sp in self.tp.species:
-            self.tp.logger.info('|    | CM | in | c(x=0) of {} = {} M'.format(sp,self.tp.species[sp]['surface_concentration']))
+            self.tp.logger.info('|    | CM | in | c(x=0) of {} = {} M'.format(sp,self.tp.species[sp]['surface_concentration']/1000.))
         for line in open(self.catmap_model):
             i+=1
             if line.lstrip().startswith('#'):
@@ -535,10 +535,19 @@ class CatMAP():
                     if sp in ['OH-','H+']:
                         activity=1 #this is irrelevant, since it will be controlled by the pH
                     else:
-                        activity=self.tp.species[sp]['surface_concentration']/(self.tp.species[sp]['Henry constant']*self.tp.system['pressure']) #self.tp.species[sp]['bulk_concentration']
+                        #activity=self.tp.species[sp]['surface_concentration']/self.tp.system['reference_gas_concentration'] #/(self.tp.species[sp]['Henry constant']*self.tp.system['pressure']) #self.tp.species[sp]['bulk_concentration']
+                        activity=self.tp.species[sp]['surface_concentration']/self.tp.species[sp]['Henry constant'] #*self.tp.system['pressure']) #self.tp.species[sp]['bulk_concentration']
                     self.tp.logger.debug('|    | CM | a_{}(x=0) = {}'.format(sp,activity))
                     replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':"+str(max(0.,activity))+"}")
                     replaced_species.append(sp)
+            #set pressure for water
+            #originally, this should be 0.035 bar, because this corresponds to the partial pressure of water in the gas phase
+            #   at equilibrium, we have mu_l=mu_g=mu_g^0+RTln(P/RT), where P is the partial pressure of water. since the reference pressure
+            #   is 1 bar, we have delta mu_l = delta mu_g^0 + RTln(P/Pref), with Pref=1bar, so effectively we just need to multiply all rates
+            #   with the vapor pressure of water
+            #problem is only, there is a bug in catmap, in the process when setting the OH- energy equal to H2O + H+ where the H2O energy
+            #   does not include the pressure change! this means we are better off directly correcting the energy of water and set the activity
+            #   to 1 here
             sp_cm='H2O'
             sol=re.findall('species_definitions\[\''+sp_cm+'_g\'\].*{\'pressure\':.*}',line)
             if len(sol)>0:
@@ -615,8 +624,9 @@ class CatMAP():
                 nprod=1
                 nel=1
 
-            rates=data_ref[np.argsort(data_ref[:, 0])][:,1]*self.tp.system['active site density']
-            current_densities=rates*nel*unit_F/nprod/10.
+            rates=data_ref[np.argsort(data_ref[:, 0])][:,1]*self.tp.system['active site density'] #rate in [mol/m^2/s]
+            current_densities=rates*nel*unit_F/nprod #current density in [A/m^2]
+            current_densities/=10. #convert A/m^2 to mA/cm^2
 #            currents=self.convert_TOF(data_ref[np.argsort(data_ref[:, 0])][:,1])
             pol_file=self.output_folder+'/j_'+name.split('_')[0]+'.tsv'
             np.savetxt(pol_file, np.array([voltages,current_densities]).T)
@@ -728,23 +738,16 @@ class CatMAP():
         data.cons_names = model.output_labels['consumption_rate']
         data.turnover_frequency_names = model.output_labels['turnover_frequency']
         data.rate_control_names=model.output_labels['rate_control']
-        print data.rate_control_names
 
         production_rate_map = np.array(a['production_rate_map'])
         consumption_rate_map = np.array(a['consumption_rate_map'])
         turnover_frequency_map = np.array(a['turnover_frequency_map'])
-        print 'turnover_frequency_map'
-        print turnover_frequency_map
         rate_control_map=np.array(a['rate_control_map'])
-        print 'rc_map'
-        print rate_control_map
 
         production_rate_mpf = production_rate_map[:,1]
         consumption_rate_mpf = consumption_rate_map[:,1]
         turnover_frequency_mpf = turnover_frequency_map[:,1]
         rate_control_mpf = rate_control_map[:,1]
-        print 'rc_mpf'
-        print rate_control_mpf
 
         data.production_rate = np.zeros((len(production_rate_mpf),len(data.prod_names)))
         data.consumption_rate = np.zeros((len(consumption_rate_mpf),len(data.cons_names)))

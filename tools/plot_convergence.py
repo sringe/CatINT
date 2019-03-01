@@ -48,14 +48,15 @@ for arg in sys.argv[1:]:
         i+=1
  #       if i>0:
  #           break
+        color=next(colors)
         ax1.semilogy(acc,'-o',color=color,label=str(phis[i]))
     ax1.legend()
     i=-1
     for cur in curs:
         i+=1
         print [key for key in cur]
-#        if i>0:
-#            break
+        if i!=len(curs)-1:
+            continue
         for key in cur:
             ax2.semilogy([abs(a) for a in cur[key]],'-o',label=key+','+str(phis[i]))
     ax2.legend()
