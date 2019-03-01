@@ -1,8 +1,22 @@
-import sys
+#!/usr/bin/env python
+#SBATCH -p iric,owners
+#SBATCH --exclusive
+#SBATCH --job-name=CO2R_Au_catint
+#SBATCH -o opt_relax.log
+#SBATCH -e err_relax.log
+#SBATCH --ntasks-per-node=16
+#SBATCH --nodes=1
+#SBATCH --time=0:10:00
+#SBATCH --qos=normal
+#SBATCH --mem-per-cpu=4000
+#SBATCH -x sh-30-36,sh-114-05
 #sys.path.insert(0,'/scratch/users/sringe/transport/catint')
 #sys.path.insert(0,'/scratch/users/sringe/transport/catmap')
+
+import sys
 import os
-sys.path.insert(0,os.getenv("HOME")+'/software/catmap')
+sys.path.insert(0,'/scratch/users/sringe/software/catmap') #os.getenv("HOME")+'/software/catmap')
+sys.path.insert(0,'/scratch/users/sringe/software/CatINT') #os.getenv("HOME")+'/software/catmap')
 from shutil import copyfile as copy
 from catint.transport import Transport
 from catint.calculator import Calculator
@@ -91,7 +105,7 @@ electrode_reactions={
 system=\
     {
     'temperature':  298,     #K
-    'pressure':     1.,      #atm
+    'pressure':     1.013,      #bar
     'water viscosity':  8.90e-004, #Pa*s at 25C
     #calculate the electrolyte viscosity. This will be used to rescale the diffusion coefficients
     #according to Einstein-Stokes relation: D_in_electrolyte = D_in_water * mu0/mu
@@ -107,7 +121,7 @@ system=\
     'potential drop':'Stern', #either Stern or full
     'Stern capacitance': 25., #std: 20, Journal of Electroanalytical Chemistry 414 (1996) 209-220
     'Stern epsilon':2, #value or Booth
-    'charging_scheme':'comsol'#comsol' #comsol' #input' #input' #comsol' #which scheme to use for charging: comsol or input
+    'charging_scheme':'input'#comsol' #comsol' #input' #input' #comsol' #which scheme to use for charging: comsol or input
     }
 
 if transport_mode is None:
@@ -118,7 +132,7 @@ if transport_mode is None:
 #READ DATA FILE
 ###########################################################################
 
-data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
+#data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
 
 OHm_i=10**(pH_i-14.)*1000.0
 Hm_i=10**(-pH_i)*1000.0
@@ -143,10 +157,10 @@ species=\
     #                      'MPB_radius':         6.62e-10},
     'CO2':              {'bulk_concentration':   'Henry'},
     'OH-':              {'bulk_concentration':   OHm_i},
+    'H2':               {'bulk_concentration':   0.0},
     #'H+':               {'bulk_concentration':  Hm_i},
 #    'HCO3-':            {'bulk_concentration':  0.1*1000.},
     'CO':               {'bulk_concentration':0.0},
-    'H2':               {'bulk_concentration':0.0},
 #    'CO2':              {}
     }
 
@@ -169,7 +183,9 @@ comsol_args['parameter']['e0']=['1[C]','electronic charge']
 
 #A=8.969**2 (100 surface area for BEEF-vdW); 3/(A*(1e-10)**2)/unit_NA
 #system['active site density']=6.192732166188528e-06# active site density for 100 assuming that active sites occupy 1/3. of the lattice
-system['active site density']=7.945669684926957e-07 #4.1612542339231805e-07
+A=8.969**2*(1e-10)**2 #area of 100 surface in m^2
+rho_act=9./A/unit_NA*0.09/3.
+system['active site density']=rho_act #7.945669684926957e-07 #4.1612542339231805e-07
 
 comsol_args['parameter']['RF']=[RF,'Roughness Factor']
 comsol_args['parameter']['grid_factor_domain']=[str(grid_factor_domain),'Grid factor']
@@ -190,7 +206,7 @@ comsol_args['solver_settings']['ramp']['dramp']=dflux_comsol
 species['CO']['flux']='catmap' #CO_rate
 species['CO2']['flux']='catmap' #CO2_rate
 
-boundary_thickness=7.93E-05 #in m
+boundary_thickness=8.E-05 #in m
 
 #if not nobuffer:
 #    visc=viscosity(species['HCO3-']['bulk_concentration']/10**3), #Pa*s at 25C of KHCO3 solution
