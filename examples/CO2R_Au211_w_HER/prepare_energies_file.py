@@ -17,7 +17,7 @@ Pvap=kT*np.exp((DeltaG-kT*np.log(1/rho_l))/(kT))*PaToatm
 #np.log(Pvap/kT)/kT/[1/m^3])*kT
 Gen=0.0257*np.log(3.1690*1000./1e5)
 free_en_corrs={'CO2_g':0.33,'CO_g':0.0,'H2_g':0.09,'H2O_g':Gen,\
-        'CO2_t':0.25*1.5,'COOH_t':0.25,'CO_t':-0.1}
+        'CO2_t':0.25*1.5,'COOH_t':0.25,'CO_t':0.0,'H_t':0.0}
 #free_en_corrs['CO_g']=free_en_corrs['CO2_g']-0.33
 #free_en_corrs={'CO2_g':0.45,'CO_g':0.0,'H2_g':0.0,'H2O_g':0.0} #09}
 #free_en_corrs={'CO2_g':0.41,'CO_g':-0.18,'H2_g':0.09,'H2O_g':-0.21} #09}
@@ -51,6 +51,7 @@ for a in abinitio_energies:
 
 surface='Au-fcc211'
 ts='COOH-H2O-ele'
+ts2='H2O-ele'
 
 zero_field=False
 
@@ -113,12 +114,19 @@ sigma_params['COOH_t']=[-2.30004216e-04,-1.03411773e-03,  3.44172799e-01] #BEEF-
 #sigma_params['CO_t']=[-1.89106972e-04, -9.42574086e-03,  3.87255672e-01] #BEEF-vdW, surfpar, 211
 sigma_params['CO_t']=[-1.02922269e-04,  1.97610024e-03,  5.04130607e-01] #BEEF-vdW, surfpar, 100
 
+sigma_params['H_t']=[0.,0.,-2.27]
+
 #assume same sigma dependence of transition state as COOH
 sigma_params[ts+'_t']=[]
 for val in sigma_params['COOH_t']:
     sigma_params[ts+'_t'].append(val)
 #COOH to CO barrier at 0 V vs. SHE
-sigma_params[ts+'_t'][-1]=0.0 #0.4
+sigma_params[ts+'_t'][-1]=0.4 #0.4
+sigma_params[ts2+'_t']=[]
+for val in sigma_params['H_t']:
+    sigma_params[ts2+'_t'].append(val)
+#COOH to CO barrier at 0 V vs. SHE
+sigma_params[ts2+'_t'][-1]=0.4 #0.4
 if zero_field:
     for s in sigma_params:
         sigma_params[s][0]=0.0
@@ -156,7 +164,9 @@ raw_energies={
         'COOH_t':sigma_params['COOH_t'][-1]+free_en_corrs['COOH_t']-free_en_corrs['CO2_g']-free_en_corrs['H2_g']/2.,
         'CO_t':sigma_params['CO_t'][-1]+free_en_corrs['CO_t']+free_en_corrs['H2O_g']-free_en_corrs['CO2_g']-free_en_corrs['H2_g'],
         'CO2_t':sigma_params['CO2_t'][-1]+free_en_corrs['CO2_t']-free_en_corrs['CO2_g'],
+        'H_t':sigma_params['H_t'][-1]+free_en_corrs['H_t']-free_en_corrs['H2_g']/2.,
         ts+'_t':sigma_params[ts+'_t'][-1],
+        ts2+'_t':sigma_params[ts2+'_t'][-1],
         }
 print raw_energies
 print sigma_params['CO2_t'][-1],free_en_corrs['CO2_g']
@@ -173,6 +183,7 @@ for key in list(set(raw_energies.keys()+vibrations.keys())):
         elif len(sigma_params[key])==2:
             replace_str=\
                 ['species_definitions[\''+key+'\'][\'sigma_params\']=[{},{}]'.format(sigma_params[key][0],sigma_params[key][1])]
+        print 'replacing',search_str,' with ',replace_str
         replace_at_string(search_str,'catmap_CO2R_template.mkm',replace_str)
 
     #2nd work on energies file

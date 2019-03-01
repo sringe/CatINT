@@ -1,8 +1,22 @@
-import sys
+#!/usr/bin/env python
+#SBATCH -p iric,owners
+#SBATCH --exclusive
+#SBATCH --job-name=CO2R_Au_catint
+#SBATCH -o opt_relax.log
+#SBATCH -e err_relax.log
+#SBATCH --ntasks-per-node=16
+#SBATCH --nodes=1
+#SBATCH --time=0:10:00
+#SBATCH --qos=normal
+#SBATCH --mem-per-cpu=4000
+#SBATCH -x sh-30-36,sh-114-05
 #sys.path.insert(0,'/scratch/users/sringe/transport/catint')
 #sys.path.insert(0,'/scratch/users/sringe/transport/catmap')
+
+import sys
 import os
-sys.path.insert(0,os.getenv("HOME")+'/software/catmap')
+sys.path.insert(0,'/scratch/users/sringe/software/catmap') #os.getenv("HOME")+'/software/catmap')
+sys.path.insert(0,'/scratch/users/sringe/software/CatINT') #os.getenv("HOME")+'/software/catmap')
 from shutil import copyfile as copy
 from catint.transport import Transport
 from catint.calculator import Calculator
@@ -20,7 +34,7 @@ transport_mode='comsol'
 #   'comsol'        iterative catmap-comsol
 #   'extrapolate'  use extrapolated log(c_surface) -> potential curves and run pure catmap with these
 
-pH_i=7.3
+pH_i=6.8
 nobuffer=False #True #False #True #False #True #False #True 
 
 initialize_from=None #'try11_w_tp_cdl_comsol_CH_30_eps6_beta_0.5_Ga_0.0_hbondcorr'
@@ -107,7 +121,7 @@ system=\
     'potential drop':'Stern', #either Stern or full
     'Stern capacitance': 25., #std: 20, Journal of Electroanalytical Chemistry 414 (1996) 209-220
     'Stern epsilon':2, #value or Booth
-    'charging_scheme':'comsol'#comsol' #comsol' #input' #input' #comsol' #which scheme to use for charging: comsol or input
+    'charging_scheme':'input'#comsol' #comsol' #input' #input' #comsol' #which scheme to use for charging: comsol or input
     }
 
 if transport_mode is None:
@@ -118,7 +132,7 @@ if transport_mode is None:
 #READ DATA FILE
 ###########################################################################
 
-data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
+#data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
 
 OHm_i=10**(pH_i-14.)*1000.0
 Hm_i=10**(-pH_i)*1000.0
