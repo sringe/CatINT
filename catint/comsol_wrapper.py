@@ -116,7 +116,7 @@ class Comsol():
         file_name=self.results_folder+'/comsol_run.out'
         for line in open(file_name,'r'):
 #            if 'Not all parameter steps returned.' in line:
-            if 'Failed to find a solution for all parameters' in line:
+            if 'Failed to find a solution for all parameters' in line or 'Failed to find a solution for the initial parameter' in line:
                 error=True
         return error
 

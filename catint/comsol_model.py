@@ -1110,10 +1110,11 @@ class Model():
                 #metal potential should work just fine
                 PZC_init=self.tp.system['phiM']
                 if self.comsol_args['solver_settings']['solver_sequence']=='tds_elstat':
-                    self.set("phiPZC", '(-0.8+PZC_factor)[V]', "Metal PZC Potential")
+                    #self.set("phiPZC", '('+str(self.tp.system('phiPZC')-1.)+'+PZC_factor)[V]', "Metal PZC Potential")
+                    self.set("phiPZC", '('+str(PZC_init)+'+PZC_factor*('+str(self.tp.system['phiPZC'])+'-'+str(PZC_init)+'))[V]', "Metal PZC Potential")
                 else:
-                    self.set("phiPZC", '(-0.8+flux_factor)[V]', "Metal PZC Potential")
-#                self.set("phiPZC", '('+str(PZC_init)+'+flux_factor*('+str(self.tp.system['phiPZC'])+'-'+str(PZC_init)+'))[V]', "Metal PZC Potential")
+                    #self.set("phiPZC", '(-0.8+flux_factor)[V]', "Metal PZC Potential")
+                    self.set("phiPZC", '('+str(PZC_init)+'+flux_factor*('+str(self.tp.system['phiPZC'])+'-'+str(PZC_init)+'))[V]', "Metal PZC Potential")
             else:
                 self.set("phiPZC", str(self.tp.system['phiPZC'])+'[V]', "Metal PZC Potential")
             self.set("lambdaD", str(self.tp.debye_length)+'[m]', "Debye length")

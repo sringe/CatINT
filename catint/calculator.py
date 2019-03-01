@@ -28,6 +28,7 @@ from io import sync_mpi,reduce_dict_mpi
 from comsol_wrapper import Comsol
 from catmap_wrapper import CatMAP
 from comsol_reader import Reader
+from io import read_all
 
 #import mpi if available
 use_mpi=False
@@ -239,6 +240,24 @@ class Calculator():
         if use_mpi:
             self.tp.comm.Barrier()
 
+    def initialize_surface_concentrations_from_file(self,fname,desc):
+        """
+        Purpose:
+            Sometimes we observe convergence to a wrong solution in particular when fluxes are very small
+            Fluxes of reactants can then have the wrong sign
+            We can parse here a catint folder with surface concentrations to initialize
+            !!!
+            The restart file has to use the same descriptor list!
+            !!!
+        """
+        read_all(self.tp,fname,only=['alldata'])
+        desc_inx=self.tp.descriptors['phiM'].index(desc)
+        for sp in self.tp.species:
+            self.tp.species[sp]['surface_concentration']=self.tp.alldata[desc_inx]['species'][sp]['surface_concentration']
+        self.tp.logger.info('| CI | -- | Re-Initialized surface concentrations:')
+        for sp in self.tp.species:
+            self.tp.logger.info('| CI | -- | {}: {} mol/L'.format(sp,self.tp.species[sp]['surface_concentration']/1000.))
+
     def evaluate_accuracy(self,par,par_old,kind='relative'):
         #evaluate accuracy relative or absolute
         #automatic takes first the relative error, but if absolute error
@@ -347,15 +366,15 @@ class Calculator():
 
             #1) Microkinetic Model: CatMAP
             if istep==1:
-                self.tp.logger.debug('| CI | -- | Electrode Fluxes:')
+                self.tp.logger.info('| CI | -- | Electrode Fluxes:')
                 for sp in self.tp.species:
-                    self.tp.logger.debug('| CI | -- | {}: {}'.format(sp,self.tp.species[sp]['flux']))
+                    self.tp.logger.info('| CI | -- | {}: {}'.format(sp,self.tp.species[sp]['flux']))
 
             #run catmap. the fluxes will be updated automatically
             self.catmap.run()
-            self.tp.logger.debug('| CI | -- | Electrode Fluxes:')
+            self.tp.logger.info('| CI | -- | Electrode Fluxes:')
             for sp in self.tp.species:
-                self.tp.logger.debug('| CI | -- | {}: {}'.format(sp,self.tp.species[sp]['flux']))
+                self.tp.logger.info('| CI | -- | {}: {}'.format(sp,self.tp.species[sp]['flux']))
 
             #2) Transport: COMSOL
 
@@ -394,13 +413,49 @@ class Calculator():
                 return True
             else:
                 return False
+        def err_in_flux():
+            error=False
+            for name in self.tp.electrode_reactions:
+                for educt in self.tp.electrode_reactions[name]['reaction'][0]:
+                    if educt in self.tp.system['exclude species'] and educt not in ['H+','OH-']:
+                        continue
+                    sign=self.tp.species[educt]['flux']/abs(self.tp.species[educt]['flux'])
+                    if sign!=-1:
+                        error=True
+                for prod in self.tp.electrode_reactions[name]['reaction'][1]:
+                    if prod in self.tp.system['exclude species'] and prod not in ['H+','OH-']:
+                        continue
+                    sign=self.tp.species[prod]['flux']/abs(self.tp.species[prod]['flux'])
+                    if sign!=1:
+                        error=True
+            return error
+        def change_flux_sign():
+            done=[]
+            for name in self.tp.electrode_reactions:
+                for educt in self.tp.electrode_reactions[name]['reaction'][0]:
+                    if educt in self.tp.system['exclude species'] or educt in done:
+                        continue
+                    self.tp.species[educt]['flux']*=(-1.)
+                    done+=[educt]
+                for prod in self.tp.electrode_reactions[name]['reaction'][1]:
+                    if prod in self.tp.system['exclude species'] or prod in done:
+                        continue
+                    self.tp.species[prod]['flux']*=(-1.)
+                    done+=[prod]
+        #check for positive flux of reactant
+        err_flux=err_in_flux()
+        if err_flux:
+            self.tp.logger.warning('|    | CS | Flux of reactant is positive. This can lead to negative concentrations and unphysical results. If this is due to a wrong equilibrium potential, try to change this and rerun. Otherwise we will try here to converge the equations to a different solution by reinitializing the fluxes with the correct signs')
+            change_flux_sign()
+            self.tp.logger.warning('| CI | -- | !!! Changed sign of Electrode Fluxes:')
+            for sp in self.tp.species:
+                self.tp.logger.warning('| CI | -- | {}: {}'.format(sp,self.tp.species[sp]['flux']))
         #start with a single comsol calculation
         self.comsol.run(label=label)
         #check error
         error=self.comsol.check_error()
         #check for nan
         nan=nan_in_surface()
-        was_nan=False
         #save the grid_factor and dflux before changing them in the loop
         grid_factor=float(self.tp.comsol_args['parameter']['grid_factor'][0])
         dramp=self.tp.comsol_args['solver_settings']['ramp']['dramp']
@@ -409,7 +464,6 @@ class Calculator():
         nruns=0
         while nan or error:
             nruns+=1
-            was_nan=True
             #rerun comsol with finer mesh
             if nan:
                 self.tp.logger.warning('|    | CS | NaN appeared in surface_concentrations, rerunning COMSOL with slower ramping'+\
@@ -469,7 +523,7 @@ class Calculator():
             error=self.comsol.check_error()
 
             if nan:
-                self.tp.logger.debug('Surface Concentrations:')
+                self.tp.logger.debug('| CI | -- | !!! NaN in Surface Concentrations:')
                 for sp in self.tp.species:
                     self.tp.logger.debug('  {}: {} mol/L'.format(sp,self.tp.species[sp]['surface_concentration']/1000.))
 

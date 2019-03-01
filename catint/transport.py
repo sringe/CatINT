@@ -250,7 +250,7 @@ class Transport(object):
         self.logger.info('| CI | -- | '+'Excluding {} from PNP transport. They will also not participate in reactions (activity = 1)'.format(self.system['exclude species']))
 
         #initialize species.
-        self.initialize_species(electrolyte_reactions,electrode_reactions)
+        electrolyte_reactions=self.initialize_species(electrolyte_reactions,electrode_reactions)
 
         self.nspecies=len(self.species)
 
@@ -539,11 +539,23 @@ class Transport(object):
         if electrolyte_reactions is not None:
             electrolyte_species=[]
             constraints=None
+            #read in data from dictionaries
             for ie,e in enumerate(electrolyte_reactions):
                 if type(e)==dict and 'constraints' in e:
                     constraints=electrolyte_reactions[ie]['constraints']
+                    del electrolyte_reactions[ie]['constraints']
+                    continue
+                if type(e)==dict and 'additional_cell_reactions' in e:
+                    #this is to ignore reaction for bulk initialization, if the reaction is included in the equations anyways
+                    additional_electrolyte_reactions=electrolyte_reactions[ie]['additional_cell_reactions']
+                    del electrolyte_reactions[ie]['additional_cell_reactions']
+                    continue
+            #delete the dictionaries
+            for ie,e in enumerate(electrolyte_reactions):
+                if type(e)==dict:
                     del electrolyte_reactions[ie]
                     continue
+            print electrolyte_reactions
             for ie,e in enumerate(electrolyte_reactions):
                 for p in tp_ref_data['electrolyte_reactions'][e]:
                     a=tp_ref_data['electrolyte_reactions'][e][p]['reaction']
@@ -653,11 +665,13 @@ class Transport(object):
                         self.logger.error('| CI | -- | More than 4 unknowns in the buffer concentrations are not implemented yet')
                         sys.exit()
 
+                    sp_grep_str='([a-zA-Z]{0,10}[a-zA-Z-+0-9]+)'
+                    #([a-zA-Z]{1,10}[a-zA-Z-+0-9]+)
                     for e in electrolyte_reactions:
                         for p in tp_ref_data['electrolyte_reactions'][e]:
                             a=tp_ref_data['electrolyte_reactions'][e][p]['reaction']
-                            educts=[re.findall('([a-zA-Z]{1,10}[a-zA-Z-+0-9]+)',b.strip())[0] for b in a.split('->')[0].split(' + ')]
-                            products=[re.findall('([a-zA-Z]{1,10}[a-zA-Z-0-9]+)',b.strip())[0] for b in a.split('->')[1].split(' + ')]
+                            educts=[re.findall(sp_grep_str,b.strip())[0] for b in a.split('->')[0].split(' + ')]
+                            products=[re.findall(sp_grep_str,b.strip())[0] for b in a.split('->')[1].split(' + ')]
                             #equilibrium constant
                             K=tp_ref_data['electrolyte_reactions'][e][p]['constant']
                             #evaluate products:
@@ -700,6 +714,8 @@ class Transport(object):
                 for i in range(len(unknowns)):
                     self.species[unknowns[i]]['bulk_concentration'] = a[i]
 
+        #add the reactions which are not needed for initializing bulk concentrations but only for the dynamics
+        electrolyte_reactions.append(additional_electrolyte_reactions)
 
         #finally add the remaining concentration for which charge neutrality was requested:
         charge_neutrality=False
@@ -737,7 +753,14 @@ class Transport(object):
 
         self.logger.info('| CI | -- | Updated species bulk concentrations')
         for sp2 in self.species:
-            self.logger.info('| CI | -- | {} = {} mol/L'.format(sp2,self.species[sp2]['bulk_concentration']))
+            self.logger.info('| CI | -- | {} = {} mol/L'.format(sp2,self.species[sp2]['bulk_concentration']/1000.))
+
+        #reference gas phase concentration
+        #this is the reference concentration of species (in mol/m^3) of an ideal gas at 1 bar reference pressure
+        #(1 bar is the reference pressure set by ase/catmap)
+        self.system['reference_gas_concentration']=10**5/unit_R/unit_T
+
+        return electrolyte_reactions
 
     def initialize_comsol(self,comsol_args):
         """

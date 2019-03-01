@@ -163,7 +163,7 @@ fig=plt.figure(figsize=(4.6*n_row,3.2*n_col))
 prop_inx={}
 ax_list=[]
 for i,p in enumerate(args.prop):
-    ax_list.append(fig.add_subplot(str(n_col)+str(n_row)+str(i+1)))
+    ax_list.append(fig.add_subplot(n_col,n_row,i+1)) #str(n_row)+str(i+1)))
     prop_inx[p]=i
 
 def settings(ax,prop,d_sel):
@@ -272,23 +272,29 @@ def plot(prop):
                     min_d=abs(d-float(desc))
                     d_sel_inx=i
                     d_sel=d
-        if prop not in tp.alldata[0]['system'] and prop not in tp.alldata[0]['species'][[sp for sp in tp.alldata[0]['species']][0]] and prop not in ['surface_charge_density','overpotential_dunwell','pH_at_x','capacitance']:
+        if prop not in tp.alldata[0]['system'] and prop not in tp.alldata[0]['species'][[sp for sp in tp.alldata[0]['species']][0]] and prop not in ['surface_charge_density','overpotential_dunwell','pH_at_x','capacitance','pKw']:
             return
         xlabel,ylabel=settings(ax,prop,d_sel)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
+        print 'current prop',prop
         if prop in ['concentration','pKw']:
             #x: xmesh
             #species
             x=xmesh
             if prop=='pKw':
                 color=next(colors)
+                if 'H+' not in tp.alldata[d_sel_inx]['species']:
+                    continue
                 y=[a*b for a,b in zip(tp.alldata[d_sel_inx]['species']['H+']['concentration'],tp.alldata[d_sel_inx]['species']['OH-']['concentration'])]
                 y=[-np.log10(yy/1000./1000.) for yy in y]
-                ax.semilogx(x,y,ls+m,color=color,label='water diss')
+                print 'this is y',y
+                ax.semilogx(x,y,ls+m,color=color,label='water diss (log)')
+                ax2=ax.twiny()
+                ax2.plot(x,y,ls+m,color='0.5',alpha=0.5,label='water diss')
             else:
                 if prop=='concentration':
-                    func=ax.loglog
+                    func=ax.loglog #semilogx #loglog
                 else:
                     func=ax.semilogx
                 for sp in tp.species:
@@ -351,7 +357,14 @@ def plot(prop):
                 x=[xx for xx in x]
             if prop=='surface_charge_density':
                 #calculate surface charge density from surface potential
-                y=[tp.system['Stern capacitance']*(x_she[i]-tp.alldata[i]['system']['surface_potential']-tp.system['phiPZC']) for i in range(len(x))]
+                if tp.system['charging_scheme']=='comsol':
+                    y=[tp.system['Stern capacitance']*(x_she[i]-tp.alldata[i]['system']['surface_potential']-tp.system['phiPZC']) for i in range(len(x))]
+                elif tp.system['charging_scheme']=='input':
+                    #read the 'sigma_input' entry from catmap input file
+                    if sigma_input_str.strip().split('=')[-1].startswith('['):
+                        sigma_input=[float(sis) for sis in sigma_input_str.strip().split('=')[-1].strip('[').strip(']').split(',')]
+                    p=np.poly1d(sigma_input)
+                    y=[p(x_she[i]) for i in range(len(x_she))]
             elif prop=='capacitance':
                 #plot the double layer capacitance
                 #1) calculate surface charge density from surface potential
@@ -361,10 +374,13 @@ def plot(prop):
                 x=data[:,0]
                 y=data[:,1]
                 print x,y
-                spl=UnivariateSpline(x,y,k=4,s=0)
-                #3) calculate double layer capacitance from derivative
-                spl_deriv=spl.derivative()
-                y=[spl_deriv(xx) for xx in x]
+                try:
+                    spl=UnivariateSpline(x,y,k=2,s=0)
+                    #3) calculate double layer capacitance from derivative
+                    spl_deriv=spl.derivative()
+                    y=[spl_deriv(xx) for xx in x]
+                except:
+                    y=x
             elif prop=='pH_at_x':
                 for xfixed in args.xfixed:
                     print xfixed,type(xfixed)
@@ -399,6 +415,11 @@ for iif,f in enumerate(args.file):
             n_conv+=1
     tp.descriptors['phiM']=tp.descriptors['phiM'][:n_conv]
     tp.alldata=tp.alldata[:n_conv]
+    #read sigma_input, if charging_scheme is defined in catmap input file
+    if tp.system['charging_scheme']=='input':
+        for line in open(glob(f+'/catmap_input/desc*/catmap_CO2R.mkm')[0],'r'):
+            if line.strip().startswith('sigma_input'):
+                sigma_input_str=line
 #    sys.exit()
 #    print tp.alldata[0]['system']['potential']
     ls=next(linestyles)

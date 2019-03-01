@@ -30,7 +30,7 @@ educt='CO2' #CO2 or CO
 nx=200
 dflux_comsol=0.01
 grid_factor=100
-mix_scf=0.1
+mix_scf=0.02
 nphi=None #40
 dphi=0.05
 phimin=-0.5 #1.0 #0.5
@@ -66,7 +66,7 @@ if nobuffer:
 #REACTIONS
 ###########################################################################
 if use_elreac:
-    electrolyte_reactions=['bicarbonate-base']
+    electrolyte_reactions=['bicarbonate-base','water-diss',{'additional_cell_reactions':'bicarbonate-acid'}] #,{'ignore_for_bulk_init':['bicarbonate-acid']}]
     if include_protons:
         electrolyte_reactions+=['bicarbonate-acid','water-diss']
 
@@ -107,7 +107,7 @@ system=\
     'potential drop':'Stern', #either Stern or full
     'Stern capacitance': 25, #std: 20, Journal of Electroanalytical Chemistry 414 (1996) 209-220
     'Stern epsilon':2, #value or Booth
-    'charging_scheme':'comsol' #input' #comsol' #input' #comsol' #input' #input' #comsol' #which scheme to use for charging: comsol or input
+    'charging_scheme':'comsol' #comsol' #input' #input' #comsol' #which scheme to use for charging: comsol or input
     }
 
 if transport_mode is None:
@@ -122,8 +122,8 @@ data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
 
 OHm_i=10**(pH_i-14.)*1000.0
 Hm_i=10**(-pH_i)*1000.0
-if not include_protons:
-    Hm_i=0.0
+#if not include_protons:
+#    Hm_i=0.0
 
 ###########################################################################
 

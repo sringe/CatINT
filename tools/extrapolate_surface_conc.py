@@ -39,6 +39,7 @@ class extrapolate():
 
         self.extrapol_func_list={}
         def exponential(x,*p):
+            print 'in exponential',p
             A,b,c,d=p #,d,e,f=p
             return A*np.tanh(b*(x-c))+d #*np.log(b*(x+c))+d+e*(x-f)
         def exponential_poly2(x,*p):
@@ -63,14 +64,17 @@ class extrapolate():
             y=self.extrapol_data[ads][:,1]
             y=np.log10(y)
             ax1.plot(x,y,'x',color=color)
-            if ads == 'K+':
+            if ads == 'K+' or ads==['CO32-']:
                 p0=[0.1,-3.,-0.5,0.4] #,0.6,0.5,0.0,-0.2]
 #            elif ads == 'CO':
 #                p0=[3.,-3.,-0.5,-7.5]
             elif ads == 'OH-':
                 p0=[3.,-3.,-0.5,-7.5]
-            if ads in ['K+','CO','OH-']: #,'CO']:
+            if ads in ['K+','OH-']: #,'CO']:
+                print 'before exponential here',ads,p0
+                coeff, var_matrix = curve_fit(exponential, x,y, p0=p0)
                 try:
+                    print 'before exponential there',ads,p0
                     coeff, var_matrix = curve_fit(exponential, x,y, p0=p0)
                     #coeff=p0
                     if ads in ['CO','OH-']:
@@ -85,6 +89,11 @@ class extrapolate():
                     z=np.polyfit(x,y,2)
                     flambda=lambda x,c: np.poly1d(c)(x)
                     self.extrapol_func_list[ads]=[z,flambda]
+            elif ads in ['CO32-']:
+                print 'p0 before',p0
+                coeff, var_matrix = curve_fit(exponential, x,y, p0=p0)
+                print 'coeff after',coeff
+                self.extrapol_func_list[ads]=[coeff,exponential]
             else:
                 #if ads in ['OH-']:
                 #    d=np.array([[xx,yy] for xx,yy in zip(x,y) if xx<-0.7])

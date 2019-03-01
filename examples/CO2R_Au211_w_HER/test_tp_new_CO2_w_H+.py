@@ -14,7 +14,7 @@ from units import *
 from read_data import read_data
 from tools.extrapolate_surface_conc import extrapolate
 
-transport_mode='comsol' #' #None #extrapolate'
+transport_mode='comsol'
 #can be one of the following:
 #   None            only catmap
 #   'comsol'        iterative catmap-comsol
@@ -30,10 +30,10 @@ educt='CO2' #CO2 or CO
 nx=200
 dflux_comsol=0.01
 grid_factor=100
-mix_scf=0.1
+mix_scf=0.02
 nphi=None #40
 dphi=0.05
-phimin=-0.5 #1.0 #0.5
+phimin=-0.5 #-0.5 #1.0 #0.5
 phimax=-2.0
 
 
@@ -54,7 +54,7 @@ include_protons=False
 #put here a results folder with which the surface concentrations should be initialized
 init_folder=None #'try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0/comsol_results_id000_0006_0001' #None #'try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0/comsol_results_id000_0011_0001'
 #put here a catmap-comsol transport calculation which is used to extrapolate transport to other potentials
-extrapol_folder=['try10_w_tp_cdl_comsol_CH_25_pzc_0.16_eps6_beta_0.5_Ga_0.0_hbondcorr'] #try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0'] #None #['try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0'] #try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0']
+extrapol_folder=['try18_w_tp_cdl_comsol_CH_25_eps6_beta_0.5_Ga_0.0_G_CO2_+0.125_hbondcorr_doublebondcorr_PZC_0.16_w_H+_w_buffer-acid'] #try10_w_tp_cdl_comsol_CH_25_pzc_0.16_eps6_beta_0.5_Ga_0.0_hbondcorr'] #try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0'] #None #['try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0'] #try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0']
 #None #['try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0','try8_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0_2'] #try7_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0','try7_w_tp_cdl_au111_eps6_beta_0.5_Ga_0.0_2']
 
 
@@ -66,14 +66,14 @@ if nobuffer:
 #REACTIONS
 ###########################################################################
 if use_elreac:
-    electrolyte_reactions=['bicarbonate-base']
+    electrolyte_reactions=['bicarbonate-base','water-diss',{'additional_cell_reactions':'bicarbonate-acid'}] #,{'ignore_for_bulk_init':['bicarbonate-acid']}]
     if include_protons:
         electrolyte_reactions+=['bicarbonate-acid','water-diss']
 
 electrode_reactions={
     #'H2':           {   'reaction':            '2 H2O + 2 e- -> H2 + 2 OH-'},
     #'H2':           {   'reaction':             '2 HCO3- + 2 e- -> H2 + 2 CO32-'},
-#    'H2':           {   'reaction':            '2 H2O + 2 e- -> H2 + 2 OH-'},
+    'H2':           {   'reaction':            '2 H2O + 2 e- -> H2 + 2 OH-'},
     'CO':           {   'reaction':             'CO2 + H2O + 2 e- -> CO + 2 OH-'},
 #    'CH4':          {   'reaction':            'CO2 + 6 H2O + 8 e- -> CH4 + 8 OH-'},
 #    'CH3CH2OH':     {   'reaction':            '2 CO2 + 9 H2O + 12 e- -> CH3CH2OH + 12 OH-'},
@@ -105,9 +105,9 @@ system=\
     'bulk_pH':pH_i,
     'init_folder':init_folder,
     'potential drop':'Stern', #either Stern or full
-    'Stern capacitance': 25, #std: 20, Journal of Electroanalytical Chemistry 414 (1996) 209-220
+    'Stern capacitance': 25., #std: 20, Journal of Electroanalytical Chemistry 414 (1996) 209-220
     'Stern epsilon':2, #value or Booth
-    'charging_scheme':'comsol' #input' #comsol' #input' #comsol' #input' #input' #comsol' #which scheme to use for charging: comsol or input
+    'charging_scheme':'comsol'#comsol' #comsol' #input' #input' #comsol' #which scheme to use for charging: comsol or input
     }
 
 if transport_mode is None:
@@ -122,8 +122,8 @@ data_fluxes,boundary_thickness,viscosity,bic_i=read_data()
 
 OHm_i=10**(pH_i-14.)*1000.0
 Hm_i=10**(-pH_i)*1000.0
-if not include_protons:
-    Hm_i=0.0
+#if not include_protons:
+#    Hm_i=0.0
 
 ###########################################################################
 
@@ -146,6 +146,7 @@ species=\
     #'H+':               {'bulk_concentration':  Hm_i},
 #    'HCO3-':            {'bulk_concentration':  0.1*1000.},
     'CO':               {'bulk_concentration':0.0},
+    'H2':               {'bulk_concentration':0.0},
 #    'CO2':              {}
     }
 
@@ -166,6 +167,8 @@ comsol_args={}
 comsol_args['parameter']={}
 comsol_args['parameter']['e0']=['1[C]','electronic charge']
 
+#A=8.969**2 (100 surface area for BEEF-vdW); 3/(A*(1e-10)**2)/unit_NA
+#system['active site density']=6.192732166188528e-06# active site density for 100 assuming that active sites occupy 1/3. of the lattice
 system['active site density']=7.945669684926957e-07 #4.1612542339231805e-07
 
 comsol_args['parameter']['RF']=[RF,'Roughness Factor']

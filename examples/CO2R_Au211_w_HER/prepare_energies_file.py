@@ -17,7 +17,7 @@ Pvap=kT*np.exp((DeltaG-kT*np.log(1/rho_l))/(kT))*PaToatm
 #np.log(Pvap/kT)/kT/[1/m^3])*kT
 Gen=0.0257*np.log(3.1690*1000./1e5)
 free_en_corrs={'CO2_g':0.33,'CO_g':0.0,'H2_g':0.09,'H2O_g':Gen,\
-        'CO2_t':0.25*1.5,'COOH_t':0.25,'CO_t':0.0}
+        'CO2_t':0.25*1.5,'COOH_t':0.25,'CO_t':-0.1}
 #free_en_corrs['CO_g']=free_en_corrs['CO2_g']-0.33
 #free_en_corrs={'CO2_g':0.45,'CO_g':0.0,'H2_g':0.0,'H2O_g':0.0} #09}
 #free_en_corrs={'CO2_g':0.41,'CO_g':-0.18,'H2_g':0.09,'H2O_g':-0.21} #09}
@@ -118,7 +118,7 @@ sigma_params[ts+'_t']=[]
 for val in sigma_params['COOH_t']:
     sigma_params[ts+'_t'].append(val)
 #COOH to CO barrier at 0 V vs. SHE
-sigma_params[ts+'_t'][-1]=0.4 #0.4
+sigma_params[ts+'_t'][-1]=0.0 #0.4
 if zero_field:
     for s in sigma_params:
         sigma_params[s][0]=0.0
