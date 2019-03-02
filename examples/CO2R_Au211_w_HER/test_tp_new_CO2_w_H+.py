@@ -25,10 +25,10 @@ from catint.catmap_wrapper import CatMAP
 from catint.comsol_reader import Reader
 import numpy as np
 from units import *
-from read_data import read_data
+#from read_data import read_data
 from tools.extrapolate_surface_conc import extrapolate
 
-transport_mode='comsol'
+transport_mode=None #'comsol'
 #can be one of the following:
 #   None            only catmap
 #   'comsol'        iterative catmap-comsol
@@ -121,7 +121,7 @@ system=\
     'potential drop':'Stern', #either Stern or full
     'Stern capacitance': 25., #std: 20, Journal of Electroanalytical Chemistry 414 (1996) 209-220
     'Stern epsilon':2, #value or Booth
-    'charging_scheme':'input'#comsol' #comsol' #input' #input' #comsol' #which scheme to use for charging: comsol or input
+    'charging_scheme':'comsol' #comsol' #input' #input' #comsol' #which scheme to use for charging: comsol or input
     }
 
 if transport_mode is None:

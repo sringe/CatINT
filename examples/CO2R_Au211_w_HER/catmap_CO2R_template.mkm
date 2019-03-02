@@ -12,8 +12,10 @@ rxn_expressions = [
     'COOH*_t + H2O_g + ele_g <-> COOH-H2O-ele_t <-> CO*_t + H2O_g + OH_g + *_t; beta=0.5', #3
     'CO*_t <-> CO_g + *_t',	                      #4
     #'H2_g <-> H2_g',                              #5
-    'H2O_g + ele_g + *_t <-> H2O-ele_t <-> H_t + OH_g' #5?
-    'H2O_g + H_t + ele_g <-> H2_g + OH_g' #5?
+    'H2O_g + ele_g + *_t <-> H2O-ele_t <-> H_t + OH_g; beta=0.5', #5?
+    'H_g + ele_g + *_t <-> H-ele_t <-> H_t; beta=0.5', #5?
+    'H2O_g + H_t + ele_g <-> H2_g + OH_g + *_t' #5?
+    'H_g + H_t + ele_g <-> H2_g + *_t' #5?
 ]
 
 rxn_expressions_names=[str(i) for i in range(len(rxn_expressions))]
@@ -34,6 +36,7 @@ species_definitions['H2_g'] = {'pressure':1.0}
 species_definitions['CO2_g'] = {'pressure':0.0}
 species_definitions['CO_g'] = {'pressure':0.0}
 species_definitions['OH_g'] = {'pressure':0.0}
+species_definitions['H_g'] = {'pressure':0.0}
 
 
 species_definitions['t'] = {'site_names': ['211'], 'total':1.0}
@@ -63,6 +66,7 @@ max_bisections = 3
 rxn_mechanisms = {
 	'CO2R': [1, 2, 3, 4],
 }
+
 
 for sp in ['CO2_t', 'COOH_t','COOH-H2O-ele_t']:
 	species_definitions[sp] = {'n_sites':2}
@@ -94,11 +98,15 @@ sigma_input='/Users/sringe/software/catint/examples/CO2R_Au211/try18_w_tp_cdl_co
 
 species_definitions['CO2_t']['sigma_params']=[-0.000217559621,0.0230636099,0.565804645]
 species_definitions['CO_t']={}
+species_definitions['H2O-ele_t']={}
+species_definitions['H-ele_t']={}
+species_definitions['H_t']={}
 species_definitions['CO_t']['sigma_params']=[-0.000102922269,0.00197610024,0.504130607]
 species_definitions['COOH_t']['sigma_params']=[-0.000230004216,-0.00103411773,0.344172799]
 species_definitions['COOH-H2O-ele_t']['sigma_params']=[-0.000230004216,-0.00103411773,0.4]
-species_definitions['H2O-ele_t']['sigma_params']=[0.0,0.0,0.4]
-species_definitions['H_t']['sigma_params']=[0.0,0.0,-2.27]
+species_definitions['H2O-ele_t']['sigma_params']=[0.0,0.0,1.2]
+species_definitions['H-ele_t']['sigma_params']=[0.0,0.0,1.2]
+species_definitions['H_t']['sigma_params']=[0.0,0.0,0.4]
 
 
 #############################################

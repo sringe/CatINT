@@ -9,5 +9,6 @@ Au	211	COOH	0.219172799	fcc	[102.25, 172.05, 242.65, 265.55, 303.45, 520.8, 646.
 Au	211	CO	-0.004579473505678194	fcc	[129.65, 155.55, 189.8, 227.5, 2073.25]	[]	my ads calcs
 Au	211	CO2	0.610804645	fcc	[136.85, 183.6, 212.95, 250.7, 306.0, 510.55, 562.25, 1176.05, 1889.85]	[]	my ads calcs
 Au	211	COOH-H2O-ele	0.4	fcc	[]	[]	my ads calcs
-Au	211	H	-2.315	fcc	[]	[]	my ads calcs
-Au	211	H2O-ele	0.4	fcc	[]	[]	my ads calcs
+Au	211	H	0.355	fcc	[]	[]	my ads calcs
+Au	211	H2O-ele	1.2	fcc	[]	[]	my ads calcs
+Au	211	H-ele	1.2	fcc	[]	[]	my ads calcs

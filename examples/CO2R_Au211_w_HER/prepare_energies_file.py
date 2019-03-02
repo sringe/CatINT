@@ -52,6 +52,7 @@ for a in abinitio_energies:
 surface='Au-fcc211'
 ts='COOH-H2O-ele'
 ts2='H2O-ele'
+ts3='H-ele'
 
 zero_field=False
 
@@ -114,7 +115,7 @@ sigma_params['COOH_t']=[-2.30004216e-04,-1.03411773e-03,  3.44172799e-01] #BEEF-
 #sigma_params['CO_t']=[-1.89106972e-04, -9.42574086e-03,  3.87255672e-01] #BEEF-vdW, surfpar, 211
 sigma_params['CO_t']=[-1.02922269e-04,  1.97610024e-03,  5.04130607e-01] #BEEF-vdW, surfpar, 100
 
-sigma_params['H_t']=[0.,0.,-2.27]
+sigma_params['H_t']=[0.,0.,0.4]
 
 #assume same sigma dependence of transition state as COOH
 sigma_params[ts+'_t']=[]
@@ -126,7 +127,12 @@ sigma_params[ts2+'_t']=[]
 for val in sigma_params['H_t']:
     sigma_params[ts2+'_t'].append(val)
 #COOH to CO barrier at 0 V vs. SHE
-sigma_params[ts2+'_t'][-1]=0.4 #0.4
+sigma_params[ts2+'_t'][-1]=1.2 #0.4
+sigma_params[ts3+'_t']=[]
+for val in sigma_params['H_t']:
+    sigma_params[ts3+'_t'].append(val)
+#COOH to CO barrier at 0 V vs. SHE
+sigma_params[ts3+'_t'][-1]=1.2 #0.4
 if zero_field:
     for s in sigma_params:
         sigma_params[s][0]=0.0
@@ -167,6 +173,7 @@ raw_energies={
         'H_t':sigma_params['H_t'][-1]+free_en_corrs['H_t']-free_en_corrs['H2_g']/2.,
         ts+'_t':sigma_params[ts+'_t'][-1],
         ts2+'_t':sigma_params[ts2+'_t'][-1],
+        ts3+'_t':sigma_params[ts3+'_t'][-1],
         }
 print raw_energies
 print sigma_params['CO2_t'][-1],free_en_corrs['CO2_g']

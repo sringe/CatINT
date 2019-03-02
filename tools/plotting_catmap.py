@@ -279,7 +279,6 @@ for arg in args.file: #sys.argv[1:]:
     symbol_pH[pH]=symbol
     if color_pH is not None:
         color=color_pH[str(pH)]
-
 #    if args.scale=='SHE':
 #        pH=0.
 
@@ -326,7 +325,7 @@ for arg in args.file: #sys.argv[1:]:
             eps=int(sol[0])
         else:
             eps=6.0
-        color=color_eps[eps]
+#        color=color_eps[eps]
         #symbol=''
         #if isp==len(pdata)-1:
         #    symbol='o'
@@ -463,7 +462,7 @@ if 'pc-Au' in systems:
     fit_tafel=True
 else:
     fit_tafel=False
-for pH in set(all_pH):
+for pH in set(all_pH+[7.2,6.8]):
     if args.expdata:
         symbol=None #symbol_pH[pH]
         if args.color=='pH':
@@ -487,7 +486,7 @@ for pH in set(all_pH):
             fit_tafel=True
             #wuttig
             refs=['jaramillo'] #,'dunwell'] #,'wuttig']
-            exp.plot_data(reference=refs,ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
+            exp.plot_data(reference=refs,ax=ax1,species=all_prods,pH=[str(pH)],\
                 system=systems,scale=args.scale,only_points=only_points,\
                 take_log=j_log_plot,marker=symbol,legend=show_legend,msize=5,color=color,fit_tafel=fit_tafel)
             fit_tafel=False
