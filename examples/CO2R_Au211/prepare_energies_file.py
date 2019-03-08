@@ -118,7 +118,7 @@ sigma_params[ts+'_t']=[]
 for val in sigma_params['COOH_t']:
     sigma_params[ts+'_t'].append(val)
 #COOH to CO barrier at 0 V vs. SHE
-sigma_params[ts+'_t'][-1]=0.4 #0.4
+sigma_params[ts+'_t'][-1]=0.9 #0.4
 if zero_field:
     for s in sigma_params:
         sigma_params[s][0]=0.0

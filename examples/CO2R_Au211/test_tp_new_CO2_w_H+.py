@@ -6,7 +6,7 @@
 #SBATCH -e err_relax.log
 #SBATCH --ntasks-per-node=16
 #SBATCH --nodes=1
-#SBATCH --time=0:10:00
+#SBATCH --time=4:00:00
 #SBATCH --qos=normal
 #SBATCH --mem-per-cpu=4000
 #SBATCH -x sh-30-36,sh-114-05
@@ -34,7 +34,10 @@ transport_mode='comsol'
 #   'comsol'        iterative catmap-comsol
 #   'extrapolate'  use extrapolated log(c_surface) -> potential curves and run pure catmap with these
 
-pH_i=6.8
+pH_i=7.3
+
+rho_act_factor=1./3.
+
 nobuffer=False #True #False #True #False #True #False #True 
 
 initialize_from=None #'try11_w_tp_cdl_comsol_CH_30_eps6_beta_0.5_Ga_0.0_hbondcorr'
@@ -46,14 +49,14 @@ dflux_comsol=0.01
 grid_factor=100
 mix_scf=0.02
 nphi=None #40
-dphi=0.05
+dphi=0.02
 phimin=-0.5 #-0.5 #1.0 #0.5
 phimax=-2.0
 
 
 include_ramp_comsol=['PZC','CS'] #,'reactions']
 
-tau_scf=0.03 #1e-4 #0.03, required accuracy of current density
+tau_scf=0.01 #1e-4 #0.03, required accuracy of current density
 
 RF=1
 
@@ -121,7 +124,7 @@ system=\
     'potential drop':'Stern', #either Stern or full
     'Stern capacitance': 25., #std: 20, Journal of Electroanalytical Chemistry 414 (1996) 209-220
     'Stern epsilon':2, #value or Booth
-    'charging_scheme':'input'#comsol' #comsol' #input' #input' #comsol' #which scheme to use for charging: comsol or input
+    'charging_scheme':'comsol' #comsol' #input' #input' #comsol' #which scheme to use for charging: comsol or input
     }
 
 if transport_mode is None:
@@ -183,7 +186,7 @@ comsol_args['parameter']['e0']=['1[C]','electronic charge']
 #A=8.969**2 (100 surface area for BEEF-vdW); 3/(A*(1e-10)**2)/unit_NA
 #system['active site density']=6.192732166188528e-06# active site density for 100 assuming that active sites occupy 1/3. of the lattice
 A=8.969**2*(1e-10)**2 #area of 100 surface in m^2
-rho_act=9./A/unit_NA*0.09/3.
+rho_act=9./A/unit_NA*0.09/3.*rho_act_factor
 system['active site density']=rho_act #7.945669684926957e-07 #4.1612542339231805e-07
 
 comsol_args['parameter']['RF']=[RF,'Roughness Factor']

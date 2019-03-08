@@ -74,6 +74,7 @@ for sp in ['CO2_t', 'COOH_t','COOH-H2O-ele_t']:
 #species_definitions['COOH-H2O-ele_t']['field_params']=[0.16,0.22*2.]
 
 Upzc = 0.16
+extrapolated_potential = Upzc
 
 #eps=6
 #sigma input can be a list of polynomial parameters of sigma-potential curve or file or single value
@@ -95,7 +96,7 @@ species_definitions['CO2_t']['sigma_params']=[-0.000217559621,0.0230636099,0.565
 species_definitions['CO_t']={}
 species_definitions['CO_t']['sigma_params']=[-0.000102922269,0.00197610024,0.504130607]
 species_definitions['COOH_t']['sigma_params']=[-0.000230004216,-0.00103411773,0.344172799]
-species_definitions['COOH-H2O-ele_t']['sigma_params']=[-0.000230004216,-0.00103411773,0.4]
+species_definitions['COOH-H2O-ele_t']['sigma_params']=[-0.000230004216,-0.00103411773,0.9]
 
 
 #############################################
