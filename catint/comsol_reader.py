@@ -3,7 +3,7 @@ import re
 import numpy as np
 from units import *
 from scipy.optimize import fsolve,basinhopping
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 class Reader():
     def __init__(self,transport=None,outputs=[],comsol_args={},\
