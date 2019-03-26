@@ -15,7 +15,7 @@
 
 import sys
 import os
-sys.path.insert(0,'/scratch/users/sringe/software/catmap') #os.getenv("HOME")+'/software/catmap')
+sys.path.insert(0,'/home/users/sringe/software/catmap') #os.getenv("HOME")+'/software/catmap')
 sys.path.insert(0,'/scratch/users/sringe/software/CatINT') #os.getenv("HOME")+'/software/catmap')
 from shutil import copyfile as copy
 from catint.transport import Transport
@@ -34,9 +34,10 @@ transport_mode='comsol'
 #   'comsol'        iterative catmap-comsol
 #   'extrapolate'  use extrapolated log(c_surface) -> potential curves and run pure catmap with these
 
-pH_i=7.3
+pH_i=6.8
 
-rho_act_factor=1./3.
+rho_act_factor=1./2.*3.2 #1./2.
+bt_factor=1. #3.
 
 nobuffer=False #True #False #True #False #True #False #True 
 
@@ -49,14 +50,14 @@ dflux_comsol=0.01
 grid_factor=100
 mix_scf=0.02
 nphi=None #40
-dphi=0.02
+dphi=0.01
 phimin=-0.5 #-0.5 #1.0 #0.5
 phimax=-2.0
 
 
 include_ramp_comsol=['PZC','CS'] #,'reactions']
 
-tau_scf=0.01 #1e-4 #0.03, required accuracy of current density
+tau_scf=0.008 #1e-4 #0.03, required accuracy of current density
 
 RF=1
 
@@ -151,9 +152,9 @@ Hm_i=10**(-pH_i)*1000.0
 
 species=\
     {
-    'K+':             {'bulk_concentration':   'charge_neutrality',\
-                        'MPB_radius':           2*4.1e-10},
-    #'Cl-':            {'bulk_concentration':    (1.45-0.09)*1000.},
+    'K+':             {'bulk_concentration':   'charge_neutrality', #1.0*1000,
+                        'MPB_radius':           2*4.1e-10}, #4.1e-10},
+#    'Cl-':            {'bulk_concentration':    'charge_neutrality'},
     #'HCO3-':            {'bulk_concentration':  91.0944666093},
     #'CO32-':            {'bulk_concentration':  0.0267841528009},
     #'K+':               {'bulk_concentration':  91.1480980107,\
@@ -208,7 +209,7 @@ comsol_args['solver_settings']['ramp']['dramp']=dflux_comsol
 species['CO']['flux']='catmap' #CO_rate
 species['CO2']['flux']='catmap' #CO2_rate
 
-boundary_thickness=8.E-05 #in m
+boundary_thickness=8.E-05*bt_factor #in m
 
 #if not nobuffer:
 #    visc=viscosity(species['HCO3-']['bulk_concentration']/10**3), #Pa*s at 25C of KHCO3 solution

@@ -537,6 +537,8 @@ class CatMAP():
                     else:
                         #activity=self.tp.species[sp]['surface_concentration']/self.tp.system['reference_gas_concentration'] #/(self.tp.species[sp]['Henry constant']*self.tp.system['pressure']) #self.tp.species[sp]['bulk_concentration']
                         activity=self.tp.species[sp]['surface_concentration']/self.tp.species[sp]['Henry constant'] #*self.tp.system['pressure']) #self.tp.species[sp]['bulk_concentration']
+                        #need to multiply with activity coefficient
+                        activity*=self.tp.species[sp]['surface_activity_coefficient']
                     self.tp.logger.debug('|    | CM | a_{}(x=0) = {}'.format(sp,activity))
                     replace_line(self.catmap_model,i-1,"species_definitions['"+sp_cm+"_g'] = {'pressure':"+str(max(0.,activity))+"}")
                     replaced_species.append(sp)
@@ -843,6 +845,8 @@ class CatMAP():
 
     def species_to_catmap(self,sp):
         species=self.tp.species[sp]['symbol']
+        if 'catmap_symbol' in self.tp.species[sp]:
+            species=self.tp.species[sp]['catmap_symbol']
         species=species.replace('^','')
         species=species.replace('_','')
         if species=='H+':

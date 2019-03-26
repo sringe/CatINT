@@ -17,7 +17,7 @@ Pvap=kT*np.exp((DeltaG-kT*np.log(1/rho_l))/(kT))*PaToatm
 #np.log(Pvap/kT)/kT/[1/m^3])*kT
 Gen=0.0257*np.log(3.1690*1000./1e5)
 free_en_corrs={'CO2_g':0.33,'CO_g':0.0,'H2_g':0.09,'H2O_g':Gen,\
-        'CO2_t':0.25*1.5,'COOH_t':0.25,'CO_t':0.0}
+        'CO2_t':0.25*2.,'COOH_t':0.25,'CO_t':0.1} #CO +0.1 because h bond interaction reduces it again, but we do not want to account for that
 #free_en_corrs['CO_g']=free_en_corrs['CO2_g']-0.33
 #free_en_corrs={'CO2_g':0.45,'CO_g':0.0,'H2_g':0.0,'H2O_g':0.0} #09}
 #free_en_corrs={'CO2_g':0.41,'CO_g':-0.18,'H2_g':0.09,'H2O_g':-0.21} #09}

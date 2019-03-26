@@ -136,7 +136,7 @@ class Transport(object):
         ##############################################
         
         #all the possible keys:
-        species_keys=['bulk_concentration', 'diffusion', 'name', 'symbol', 'flux','current density','flux-equation','MPB_radius']
+        species_keys=['bulk_concentration', 'diffusion', 'name', 'symbol', 'flux','current density','flux-equation','MPB_radius','catmap_symbol','Henry constant']
         system_keys=[
                 'phiM',                     #V
                 'Stern capacitance',        #microF/cm^2
@@ -286,6 +286,17 @@ class Transport(object):
             if not 'surface_concentration' in self.species[sp]:
                 self.species[sp]['surface_concentration']=self.species[sp]['bulk_concentration']
 
+        #determine activity coefficients from surface concentrations using GMPB model
+        phi_zero=0.
+        for sp in self.species:
+            if 'MPB_radius' in self.species[sp]:
+                phi_zero+=self.species[sp]['MPB_radius']**3*self.species[sp]['surface_concentration']*unit_NA
+        for sp in self.species:
+            self.species[sp]['surface_activity_coefficient']=1./(1.-phi_zero)
+
+        self.logger.info('| CI | -- | '+'Initial liquid phase activity coefficients are...')
+        for sp in self.species:
+            self.logger.info('| CI | -- | {} {}'.format(sp,self.species[sp]['surface_activity_coefficient']))
 
 
         self.eps = self.system['epsilon']*unit_eps0 #1.1e11 #*unit_eps0
