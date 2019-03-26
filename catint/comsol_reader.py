@@ -33,7 +33,8 @@ class Reader():
                 species_var=True
             else:
                 species_var=False
-            self.read_single_file(results_folder=self.results_folder,output=toutput,species_var=species_var)
+            alldata_inx=self.read_single_file(results_folder=self.results_folder,output=toutput,species_var=species_var)
+        self.postprocess(alldata_inx)
 
     def cs_to_ci(self,var_name):
         """maps COMSOL argument names to CATINT argument names"""
@@ -49,6 +50,41 @@ class Reader():
             return 'charge_density'
         else:
             return var_name
+
+    def postprocess(self,alldata_inx):
+        #LAST BUT NOT LEAST: CALCULATE SOME PROPERTIES FROM THE OBTAINED ONES
+
+        #update activity coefficients from concentrations
+        phi_zero=np.zeros(len(self.tp.species[self.tp.species.keys()[0]]['concentration']))
+        for sp in self.tp.species:
+            if 'MPB_radius' in self.tp.species[sp]:
+                phi_zero+=self.tp.species[sp]['MPB_radius']**3*np.array(self.tp.species[sp]['concentration'])*unit_NA
+            if self.tp.species[sp]['concentration'][0]!=self.tp.species[sp]['surface_concentration']:
+                self.tp.logger.warning('Something  is wrong here, surface concentration is not 0th element of concentration array! Quitting.')
+                sys.exit()
+        gamma=1./(1.-phi_zero)
+        for sp in self.tp.species:
+            self.tp.species[sp]['surface_activity_coefficient']=gamma[0]
+            self.tp.species[sp]['activity_coefficient']=gamma
+        #update surface pH
+        self.tp.system['surface_pH']-=np.log10(gamma[0])
+        #update current pH and alldata-pH
+        if self.comsol_args['par_name']!='flux_factor':
+            #update all values
+            for ijj in range(len(self.tp.alldata)):
+                for sp in self.tp.species:
+                    self.tp.alldata[iij]['species'][sp]['surface_activity_coefficient']=gamma[0]
+                    self.tp.alldata[iij]['species'][sp]['activity_coefficient']=gamma
+                self.tp.alldata[iij]['system']['surface_pH']-=np.log10(gamma[0])
+                self.tp.alldata[iij]['system']['pH']-=np.log10(gamma)
+        else:
+            #update only last
+            for sp in self.tp.species:
+                self.tp.alldata[alldata_inx]['species'][sp]['surface_activity_coefficient']=gamma[0]
+                self.tp.alldata[alldata_inx]['species'][sp]['activity_coefficient']=gamma
+            self.tp.alldata[alldata_inx]['system']['surface_pH']-=np.log10(gamma[0])
+            self.tp.alldata[alldata_inx]['system']['pH']-=np.log10(gamma)
+            self.tp.alldata[alldata_inx]['system']['activity_coefficient']=gamma
 
     def read_single_file(self,results_folder='',output='',species_var=True):
         """
@@ -288,3 +324,4 @@ class Reader():
             self.tp.xmax=max(xmesh)
             self.tp.nx=len(xmesh)
             self.tp.dx=self.tp.xmax/self.tp.nx
+        return alldata_inx
