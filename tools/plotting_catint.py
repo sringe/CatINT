@@ -35,6 +35,7 @@ if args.xfixed is not None:
     args.xfixed=[float(xx) for xx in args.xfixed]
 
 exp=EXPDATA()
+color_species={}
 
 if args.scale is None:
     args.scale='RHE'
@@ -153,7 +154,7 @@ tp=Transport(only_plot=True)
 l=len(args.prop)
 #round to divisible of 2
 l=int( 2 * round( l / 2. ))
-n_row=l/2 #int(np.ceil(np.sqrt(l)))
+n_row=l/3 #int(np.ceil(np.sqrt(l)))
 if n_row==0:
     n_row=1
 n_col=l/n_row
@@ -243,13 +244,29 @@ def settings(ax,prop,d_sel):
     elif prop=='Stern_epsilon_func':
         xlabel='Voltage vs. '+args.scale+' (V)'
         ylabel=r'$\varepsilon_\mathrm{S}$'
+    elif prop=='activity':
+        xlabel=r'x ($\AA$)'
+        ylabel='$a_i = \gamma_i c_i$/(1 M)'
+        if args.scale=='RHE':
+            label+=r' at $\phi_M$ = {} V'.format(round(d_sel+0.0592*tp.system['bulk_pH'],3))
+        else:
+            label+=r' at $\phi_M$ = {} V'.format(round(d_sel,3))
+    elif prop=='surface_activity':
+        xlabel='Voltage vs. '+args.scale+' (V)'
+        ylabel='$a_i(x=0) = \gamma_i(x=0) c_i(x=0)$/(1 M)'
+    elif prop=='surface_activity_coefficient':
+        xlabel='Voltage vs. '+args.scale+' (V)'
+        ylabel='$\gamma_i(x=0)'
+    elif 'concentration' in prop and 'at_x' in prop:
+        xlabel='Voltage vs. '+args.scale+' (V)'
+        ylabel=r'$c_\mathrm{'+prop.split('_')[2]+'}$ at x nm (M)'
     else:
         xlabel=''
         ylabel=''
     ax.set_title(label)
     return xlabel,ylabel
 
-def plot(prop):
+def plot(prop,color=None):
     """create a plot of the property of interest"""
     inx=prop_inx[prop]
     ax=ax_list[inx]
@@ -261,53 +278,71 @@ def plot(prop):
     for desc in desc_iter:
         #reset colors
         a=''
-        while a!=c_list[-1]:
-            a=next(colors)
+        #while a!=c_list[-1]:
+        #    a=next(colors)
+        #color=a
+        if color is None:
+            color=next(colors)
+        else:
+            color=color
         m=next(markerstyles)
         d_sel=None
-        if prop not in ['electrode_current_density','electrode_flux','surface_pH','surface_concentration']:
+        if prop not in ['electrode_current_density','electrode_flux','surface_pH','surface_concentration','reaction_rate','surface_activity','surface_activity_coefficient']:
             min_d=np.inf
             for i,d in enumerate(tp.descriptors['phiM']):
                 if abs(d-float(desc))<min_d:
                     min_d=abs(d-float(desc))
                     d_sel_inx=i
                     d_sel=d
-        if prop not in tp.alldata[0]['system'] and prop not in tp.alldata[0]['species'][[sp for sp in tp.alldata[0]['species']][0]] and prop not in ['surface_charge_density','overpotential_dunwell','pH_at_x','capacitance','pKw']:
+        if prop not in tp.alldata[0]['system'] and prop not in tp.alldata[0]['species'][[sp for sp in tp.alldata[0]['species']][0]] and (prop not in ['surface_charge_density','overpotential_dunwell','pH_at_x','capacitance','pKw','reaction_rate','Keq_buffer','surface_activity','surface_activity_coefficient','activity'] and not ('concentration' in prop and 'at_x' in prop)):
             return
         xlabel,ylabel=settings(ax,prop,d_sel)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         print 'current prop',prop
-        if prop in ['concentration','pKw']:
+        if prop in ['concentration','pKw','activity','activity_coefficient']:
             #x: xmesh
             #species
             x=xmesh
             if prop=='pKw':
-                color=next(colors)
                 if 'H+' not in tp.alldata[d_sel_inx]['species']:
                     continue
-                y=[a*b for a,b in zip(tp.alldata[d_sel_inx]['species']['H+']['concentration'],tp.alldata[d_sel_inx]['species']['OH-']['concentration'])]
+                if 'activity_coefficient' not in tp.alldata[d_sel_inx]['species']['OH-']:
+                    continue
+                y=[ca*ga*cb*gb for ca,ga,cb,gb in zip(tp.alldata[d_sel_inx]['species']['H+']['concentration'],tp.alldata[d_sel_inx]['species']['H+']['activity_coefficient'],tp.alldata[d_sel_inx]['species']['OH-']['concentration'],tp.alldata[d_sel_inx]['species']['OH-']['activity_coefficient'])]
                 y=[-np.log10(yy/1000./1000.) for yy in y]
-                print 'this is y',y
                 ax.semilogx(x,y,ls+m,color=color,label='water diss (log)')
                 ax2=ax.twiny()
                 ax2.plot(x,y,ls+m,color='0.5',alpha=0.5,label='water diss')
             else:
-                if prop=='concentration':
-                    func=ax.loglog #semilogx #loglog
+                if prop in ['concentration','activity','activity_coefficient']:
+                    func=ax.loglog #semilogy#plot #semilogx #loglog #semilogx #loglog
+                    #func=ax.semilogy
+                    #func=ax.plot
                 else:
                     func=ax.semilogx
                 for sp in tp.species:
-                    color=next(colors)
+                    if sp not in color_species:
+                        ccolor=next(colors)
+                        color_species[sp]=ccolor
+                    else:
+                        ccolor=color_species[sp]
                     print d_sel_inx,'species',sp,prop
-                    y=tp.alldata[d_sel_inx]['species'][sp][prop]
+                    if prop=='activity':
+                        propread='concentration'
+                    else:
+                        propread=prop
+                    y=tp.alldata[d_sel_inx]['species'][sp][propread]
+                    if prop=='activity':
+                        if 'activity_coefficient' not in tp.alldata[d_sel_inx]['species'][sp]:
+                            continue
+                        y=[a*b for a,b in zip(tp.alldata[d_sel_inx]['species'][sp]['concentration'],tp.alldata[d_sel_inx]['species'][sp]['activity_coefficient'])]
                     y=[yy/1000. for yy in y]
-                    func(x,y,ls+m,color=color,label=sp)
+                    func(x,y,ls+m,color=ccolor,label=sp)
 #                    ax.plot(x,y,ls+m,color=color,label=sp)
-        elif prop in ['electrode_current_density','electrode_flux','surface_concentration']:
+        elif prop in ['electrode_current_density','electrode_flux','surface_concentration','reaction_rate','Keq_buffer','surface_activity_coefficient','surface_activity']:
             #x: descriptors
             #species 
-            color=next(colors)
             x=tp.descriptors['phiM']
             #plot vs. RHE
             if args.scale=='RHE':
@@ -315,23 +350,85 @@ def plot(prop):
             else:
                 x=[xx for xx in x]
             for sp in tp.species:
-                if sp not in tp.electrode_reactions and prop!='surface_concentration':
+                if sp not in tp.electrode_reactions and prop not in ['surface_concentration','surface_activity_coefficient','surface_activity']:
                     continue
-                color=next(colors)
-                y=[tp.alldata[i]['species'][sp][prop] for i in range(len(x))]
-                if args.norm and prop=='electrode_current_density':
+                if sp not in color_species:
+                    ccolor=next(colors)
+                    color_species[sp]=ccolor
+                else:
+                    ccolor=color_species[sp]
+                if prop=='reaction_rate':
+                    propread='electrode_current_density'
+                elif prop=='surface_activity':
+                    propread='surface_concentration'
+                elif prop=='Keq_buffer':
+                    propread='surface_concentration'
+                else:
+                    propread=prop
+                if propread in tp.alldata[0]['species'][sp]:
+                    y=[tp.alldata[i]['species'][sp][propread] for i in range(len(x))]
+                else:
+                    print propread,'not found in all data, current keys = ',tp.alldata[0]['species'][sp].keys()
+                    print 'skipping'
+                    continue
+                if args.norm and (prop=='electrode_current_density' or prop=='reaction_rate'):
                     RF=tp.system['RF']
                     y=[yy/RF for yy in y]
+                    sp_diff='CO2' #HCO3- or CO2
+                    #get index at certain x position
+                    xfixed=0.#2e-10
+                    d=np.inf
+                    for ix,xx in enumerate(xmesh):
+                        if d>abs(xx-xfixed):
+                            d=abs(xx-xfixed)
+                            inx=ix
+                    #
+                    #plot also transport limited current
+                    ct=tp.alldata[i]['species'][sp_diff]['concentration'][:inx+3]
+                    dc_dx=(ct[inx+1]-ct[inx])/(x[inx+1]-x[inx])
+#                    dc_dt_2=(ct[2]-2*ct[1]+ct[0])/(x[1]-x[0])**2 #dc/dt
+                    i=-dc_dx*tp.species[sp_diff]['diffusion'] #flux in mol/m^2/s
+                    nel=2.
+                    nprod=1.
+                    j=i*nel*unit_F/nprod/10. #current density in mA/cm^2
+                    print 'slope',dc_dx,j
+                    print 'limiting current = {}'.format(j)
+                    ax.axhline(j,color='0.5')
                     func=ax.semilogy
+                    if prop=='electrode_current_density':
+                        func(x,y,ls+m,color=ccolor,label=sp)
+                    elif prop=='reaction_rate':
+                        ax.plot(tp.species['HCO3-']['bulk_concentration']/1000.,[yy for xx,yy in zip(x,y) if xx==-0.9][0],'o',color='k')
                 elif prop=='surface_concentration':
                     y=[(yy)/1000. for yy in y]
                     func=ax.semilogy #ax.plot
-                func(x,y,ls+m,color=color,label=sp)
+                    func(x,y,ls+m,color=ccolor,label=sp)
+                elif prop=='surface_activity_coefficient':
+                    #y=[(yy)/1000. for yy in y]
+                    func=ax.semilogy
+                    func(x,y,ls+m,color=ccolor,label=sp)
+                elif prop=='surface_activity':
+                    try:
+                        y=[tp.alldata[i]['species'][sp]['surface_activity_coefficient']*tp.alldata[i]['species'][sp]['surface_concentration'] for i in range(len(x))]
+                        func=ax.semilogy
+                        func(x,y,ls+m,color=ccolor,label=sp)
+                    except:
+                        pass
                 if prop=='surface_concentration':
                     for xx,yy in zip(x,y):
                         print 'sc',sp,xx,yy
                 #if prop=='electrode_current_density':
                 #    ax=plot_leis_new_data(ax)
+            if prop=='Keq_buffer':
+                hco3=np.array([tp.alldata[i]['species']['HCO3-'][propread] for i in range(len(x))])
+                co2=np.array([tp.alldata[i]['species']['CO2'][propread] for i in range(len(x))])
+                co3=np.array([tp.alldata[i]['species']['CO32-'][propread] for i in range(len(x))])
+                oh=np.array([tp.alldata[i]['species']['OH-'][propread] for i in range(len(x))])
+                h=np.array([tp.alldata[i]['species']['H+'][propread] for i in range(len(x))])
+#                y=[(yy)/1000. for yy in y]
+                func=ax.semilogy
+                func(x,hco3/(oh*co2),'-')
+                ax.axhline(44400.0)
         elif prop in ['pH','potential','efield','charge_density','pKa']:
             #x: xmesh
             #system
@@ -343,8 +440,8 @@ def plot(prop):
                 y=[yy*1e-10 for yy in y]
             #if prop=='pKa':
                 #y=[-(14.5-8.49)/19.8*rho_c/unit_F/1000.+14.5 for rho_c in tp.alldata[d_sel_inx]['system']['charge_density']]
-                
-            ax.semilogx(x,y,ls+m,color='k')
+            func=ax.semilogx #plot
+            func(x,y,a+m,color=color) #next(colors))
         else:
             #x: descriptors
             #system
@@ -381,9 +478,19 @@ def plot(prop):
                     y=[spl_deriv(xx) for xx in x]
                 except:
                     y=x
+            elif 'concentration' in prop and 'at_x' in prop:
+                sp=prop.split('_')[1]
+                for xfixed in args.xfixed:
+                    d=np.inf
+                    for ix,xx in enumerate(xmesh):
+                        if d>abs(xx-xfixed):
+                            d=abs(xx-xfixed)
+                            inx=ix
+                    sp='HCO3-' #K+'
+                    y=np.array([tp.alldata[i]['species'][sp]['concentration'][inx]/1000. for i in range(len(x))])
+                    ax.plot(x,y,ls+m,label='at '+str(xfixed*1e9)+' nm')
             elif prop=='pH_at_x':
                 for xfixed in args.xfixed:
-                    print xfixed,type(xfixed)
                     d=np.inf
                     for ix,xx in enumerate(xmesh):
                         if d>abs(xx-xfixed):
@@ -402,10 +509,12 @@ def plot(prop):
             if prop in ['Stern_efield']:
                 y=[yy*1e-10 for yy in y]
             if not prop=='pH_at_x':
-                ax.plot(x,y,ls+m,color='k')
+                ax.plot(x,y,ls+m,color=color)
+
 
 for iif,f in enumerate(args.file):
     print 'Working on folder ',f
+    color=next(colors)
     read_all(tp,f,only=['alldata','species','system','xmesh','descriptors','electrode_reactions'])
     #check how many real datapoints we actually have:
     n_conv=0
@@ -428,7 +537,7 @@ for iif,f in enumerate(args.file):
         a=next(markerstyles)
     for p in args.prop:
         print('Plotting {}'.format(p))
-        plot(p)
+        plot(p,color=color)
 for ax in ax_list:
     ax.legend(prop={'size': 6})
 plt.tight_layout()
