@@ -103,6 +103,7 @@ class EXPDATA():
 #            func=bf.plot
         func=bf.semilogy
         markers=cycle(['o','*','x','d'])
+        filled=cycle(['filled','none'])
         symbols=self.symbols
         print 'the list of data',list_of_data
         for j in list_of_data: #[1,3,5,7,9,11,13]:
@@ -172,7 +173,11 @@ class EXPDATA():
             #    tafel_fitting(voltage,current)
             if not fit>2:
 #                plt.figure()
-                func(voltage, current, color=self.color[n], linestyle=linestyle_2, marker = cmarker, markersize=msize,label=DATA.label[j],lw=lw,ls=ls,zorder=1e6)  #linestyle = ':',
+                mfc=next(filled)
+                if cmarker=='*':
+                    func(voltage, current, color=self.color[n], linestyle=linestyle_2, marker = cmarker, markersize=12,label=DATA.label[j],lw=lw,ls=ls,zorder=1e6) #,mfc='none')# facecolors=next(filled))  #linestyle = ':',
+                else:
+                    func(voltage, current, color=self.color[n], linestyle=linestyle_2, marker = cmarker, markersize=msize,label=DATA.label[j],lw=lw,ls=ls,zorder=1e6)
 #                plt.show()
 #                sys.exit()
             if fit_tafel:

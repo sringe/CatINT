@@ -6,6 +6,7 @@ from subprocess import call
 from io import replace_line,insert_line,mpi_make_dir
 from glob import glob
 import sys
+sys.path.insert(0,'/scratch/users/sringe/software/catmap')
 import pickle
 from catmap.model import ReactionModel
 from catmap import analyze

@@ -1,18 +1,3 @@
-#!/usr/bin/env python
-#SBATCH -p iric,owners
-#SBATCH --exclusive
-#SBATCH --job-name=CO2R_Au_catint
-#SBATCH -o opt_relax.log
-#SBATCH -e err_relax.log
-#SBATCH --ntasks-per-node=16
-#SBATCH --nodes=1
-#SBATCH --time=4:00:00
-#SBATCH --qos=normal
-#SBATCH --mem-per-cpu=4000
-#SBATCH -x sh-30-36,sh-114-05
-#sys.path.insert(0,'/scratch/users/sringe/transport/catint')
-#sys.path.insert(0,'/scratch/users/sringe/transport/catmap')
-
 import sys
 import os
 sys.path.insert(0,'/home/users/sringe/software/catmap') #os.getenv("HOME")+'/software/catmap')
@@ -36,7 +21,7 @@ transport_mode='comsol'
 
 pH_i=6.8
 
-rho_act_factor=1./2.*3.2 #1./2.
+rho_act_factor=1./2.*3.2*100.
 bt_factor=1. #3.
 
 nobuffer=False #True #False #True #False #True #False #True 
@@ -160,10 +145,13 @@ species=\
     #'K+':               {'bulk_concentration':  91.1480980107,\
     #                      'MPB_radius':         6.62e-10},
     'CO2':              {'bulk_concentration':   'Henry'},
+#                        'MPB_radius':   2*2e-10},
     'OH-':              {'bulk_concentration':   OHm_i},
+#                        'MPB_radius':   2*2e-10},
     #'H+':               {'bulk_concentration':  Hm_i},
 #    'HCO3-':            {'bulk_concentration':  0.1*1000.},
-    'CO':               {'bulk_concentration':0.0},
+    'CO':               {'bulk_concentration':0.0}
+#                        'MPB_radius':   2*2e-10},
 #    'CO2':              {}
     }
 
@@ -172,6 +160,7 @@ if include_protons:
     species.update(\
     {
     'H+':               {'bulk_concentration':   Hm_i}
+#                        'MPB_radius':   2*2e-10}
     })
 
 ###########################################################################
@@ -189,7 +178,6 @@ comsol_args['parameter']['e0']=['1[C]','electronic charge']
 A=8.969**2*(1e-10)**2 #area of 100 surface in m^2
 rho_act=9./A/unit_NA*0.09/3.*rho_act_factor
 system['active site density']=rho_act #7.945669684926957e-07 #4.1612542339231805e-07
-
 comsol_args['parameter']['RF']=[RF,'Roughness Factor']
 comsol_args['parameter']['grid_factor_domain']=[str(grid_factor_domain),'Grid factor']
 comsol_args['parameter']['grid_factor_bound']=[str(grid_factor_bound),'Grid factor']

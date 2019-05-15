@@ -84,12 +84,12 @@ extrapolated_potential = Upzc
 #   -6.43429907]
 
 #au111
-sigma_input=[1.17037299,  10.47845915,   37.42574169,  65.47833594,  50.81865663,  -0.84928822, -22.98285916,  -2.69586594,  11.15659054,  26.10633278,  -16.47016134]
+#sigma_input=[1.17037299,  10.47845915,   37.42574169,  65.47833594,  50.81865663,  -0.84928822, -22.98285916,  -2.69586594,  11.15659054,  26.10633278,  -16.47016134]
 
 #sigma_input=['CH',20.]
 #sigma_input='/Users/sringe/software/catint/examples/CO2R_Au211/try11_w_tp_cdl_comsol_CH_30_eps6_beta_0.5_Ga_0.0_hbondcorr/sigma_v.txt'
 #w/ protons and CH=25:
-#sigma_input='/Users/sringe/software/catint/examples/CO2R_Au211/try18_w_tp_cdl_comsol_CH_25_eps6_beta_0.5_Ga_0.0_G_CO2_+0.125_hbondcorr_doublebondcorr_PZC_0.16_w_H+_w_buffer-acid/charging_for_wo_tp.txt'
+sigma_input='/Users/sringe/software/catint/examples/CO2R_Au211/try18_w_tp_cdl_comsol_CH_25_eps6_beta_0.5_Ga_0.0_G_CO2_+0.125_hbondcorr_doublebondcorr_PZC_0.16_w_H+_w_buffer-acid/charging_for_wo_tp.txt'
 #sigma_input='/Users/sringe/software/catint/examples/CO2R_Au211/pc-au_PZC_0.16_CH_20.txt' #pc-au_PZC_0.16_CH_25.txt'
 
 species_definitions['CO2_t']['sigma_params']=[-0.000217559621,0.0230636099,0.565804645]

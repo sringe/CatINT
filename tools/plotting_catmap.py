@@ -421,10 +421,11 @@ for arg in args.file: #sys.argv[1:]:
         if args.scale=='SHE':
             pHtmp=pH
             pH=0
+        func=ax2.semilogy
         if k==0:
-            ax2.plot(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,label=sp,lw=lw,ms=msize)
+            func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,label=sp,lw=lw,ms=msize)
         else:
-            ax2.plot(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,lw=lw,ms=msize)
+            func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,lw=lw,ms=msize)
         if args.scale=='SHE':
             pH=pHtmp
     if show_legend:
