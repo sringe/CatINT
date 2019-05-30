@@ -19,10 +19,10 @@ transport_mode='comsol'
 #   'comsol'        iterative catmap-comsol
 #   'extrapolate'  use extrapolated log(c_surface) -> potential curves and run pure catmap with these
 
-pH_i=6.8
+pH_i=6.8 #3
 
-rho_act_factor=1./2.*3.2*100.
-bt_factor=1. #3.
+rho_act_factor=1./2.*3.2/10.#*100#*5 #*100.
+bt_factor=1.
 
 nobuffer=False #True #False #True #False #True #False #True 
 
@@ -35,14 +35,14 @@ dflux_comsol=0.01
 grid_factor=100
 mix_scf=0.02
 nphi=None #40
-dphi=0.01
-phimin=-0.5 #-0.5 #1.0 #0.5
+dphi=0.01 #0.008 #0.01
+phimin=-0.5 #-0.5 #-0.5 #-0.5 #1.0 #0.5
 phimax=-2.0
 
 
 include_ramp_comsol=['PZC','CS'] #,'reactions']
 
-tau_scf=0.008 #1e-4 #0.03, required accuracy of current density
+tau_scf=0.008# 0.005 #0.008 #1e-4 #0.03, required accuracy of current density
 
 RF=1
 
@@ -108,7 +108,7 @@ system=\
     'bulk_pH':pH_i,
     'init_folder':init_folder,
     'potential drop':'Stern', #either Stern or full
-    'Stern capacitance': 25., #std: 20, Journal of Electroanalytical Chemistry 414 (1996) 209-220
+    'Stern capacitance': 20., #std: 20, Journal of Electroanalytical Chemistry 414 (1996) 209-220
     'Stern epsilon':2, #value or Booth
     'charging_scheme':'comsol' #comsol' #input' #input' #comsol' #which scheme to use for charging: comsol or input
     }
@@ -138,7 +138,7 @@ Hm_i=10**(-pH_i)*1000.0
 species=\
     {
     'K+':             {'bulk_concentration':   'charge_neutrality', #1.0*1000,
-                        'MPB_radius':           2*4.1e-10}, #4.1e-10},
+                        'MPB_radius':           2*3.5e-10}, #4.1e-10},
 #    'Cl-':            {'bulk_concentration':    'charge_neutrality'},
     #'HCO3-':            {'bulk_concentration':  91.0944666093},
     #'CO32-':            {'bulk_concentration':  0.0267841528009},
@@ -177,6 +177,7 @@ comsol_args['parameter']['e0']=['1[C]','electronic charge']
 #system['active site density']=6.192732166188528e-06# active site density for 100 assuming that active sites occupy 1/3. of the lattice
 A=8.969**2*(1e-10)**2 #area of 100 surface in m^2
 rho_act=9./A/unit_NA*0.09/3.*rho_act_factor
+rho_act=9.608695652173912e-05/unit_NA*(1e10)**2
 system['active site density']=rho_act #7.945669684926957e-07 #4.1612542339231805e-07
 comsol_args['parameter']['RF']=[RF,'Roughness Factor']
 comsol_args['parameter']['grid_factor_domain']=[str(grid_factor_domain),'Grid factor']

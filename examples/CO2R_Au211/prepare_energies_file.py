@@ -17,7 +17,7 @@ Pvap=kT*np.exp((DeltaG-kT*np.log(1/rho_l))/(kT))*PaToatm
 #np.log(Pvap/kT)/kT/[1/m^3])*kT
 Gen=0.0257*np.log(3.1690*1000./1e5)
 free_en_corrs={'CO2_g':0.33,'CO_g':0.0,'H2_g':0.09,'H2O_g':Gen,\
-        'CO2_t':0.25*2.,'COOH_t':0.25,'CO_t':0.1} #CO +0.1 because h bond interaction reduces it again, but we do not want to account for that
+        'CO2_t':0.25*1.,'COOH_t':0.25,'CO_t':0.1} #CO +0.1 because h bond interaction reduces it again, but we do not want to account for that
 #free_en_corrs['CO_g']=free_en_corrs['CO2_g']-0.33
 #free_en_corrs={'CO2_g':0.45,'CO_g':0.0,'H2_g':0.0,'H2O_g':0.0} #09}
 #free_en_corrs={'CO2_g':0.41,'CO_g':-0.18,'H2_g':0.09,'H2O_g':-0.21} #09}
@@ -97,28 +97,28 @@ sigma_params=sigma_params[surface]
 #sigma_params['CO2_t']=[0.05118888,1.9795144707714756] #explicit (linear fit)
 #sigma_params['CO2_t']=[-0.0004612829823,0.00855365031,1.102204236] #old (wrong) params that gave the correct slope
 
-#sigma_params['CO2_t']=[-2.86600929e-04,  2.97720125e-02,  7.37600203e-01] #BEEF-vdW, surfpar, 211
-sigma_params['CO2_t']=[-2.17559621e-04,  2.30636099e-02,  5.65804645e-01] #BEEF-vdW, surfpar, 100
+sigma_params['CO2_t']=[-2.86600929e-04,  2.97720125e-02,  7.37600203e-01] #BEEF-vdW, surfpar, 211
+#sigma_params['CO2_t']=[-2.17559621e-04,  2.30636099e-02,  5.65804645e-01] #BEEF-vdW, surfpar, 100
 
 #sigma_params['COOH_t']=-0.000115225255, 0.00267094987, 0.1635177832156014 #implicit-explicit
 #sigma_params['COOH_t']=[0.000115225255, 0.00267094987, 0.7347896980000002] #implicit
 
-#sigma_params['COOH_t']=[-9.02956820e-05,  2.26896383e-03,  2.53214079e-01] #BEEF-vdW, surfpar, 211
-sigma_params['COOH_t']=[-2.30004216e-04,-1.03411773e-03,  3.44172799e-01] #BEEF-vdW, surfpar, 100
+sigma_params['COOH_t']=[-9.02956820e-05,  2.26896383e-03,  2.53214079e-01] #BEEF-vdW, surfpar, 211
+#sigma_params['COOH_t']=[-2.30004216e-04,-1.03411773e-03,  3.44172799e-01] #BEEF-vdW, surfpar, 100
 
 #sigma_params['CO_t']=[-9.11793749e-05, 0.00430663723, -0.19944434712717363] #implicit-explicit
 #sigma_params['CO_t']=[0.002525766808954512, 0.07345291335810258, -0.08036375172574228] #explicit (polynomial fit)
 #sigma_params['CO_t']=[-9.11793749e-05, 0.00430663723, 0.49107202699999997] #implicit
 
-#sigma_params['CO_t']=[-1.89106972e-04, -9.42574086e-03,  3.87255672e-01] #BEEF-vdW, surfpar, 211
-sigma_params['CO_t']=[-1.02922269e-04,  1.97610024e-03,  5.04130607e-01] #BEEF-vdW, surfpar, 100
+sigma_params['CO_t']=[-1.89106972e-04, -9.42574086e-03,  3.87255672e-01] #BEEF-vdW, surfpar, 211
+#sigma_params['CO_t']=[-1.02922269e-04,  1.97610024e-03,  5.04130607e-01] #BEEF-vdW, surfpar, 100
 
 #assume same sigma dependence of transition state as COOH
 sigma_params[ts+'_t']=[]
 for val in sigma_params['COOH_t']:
     sigma_params[ts+'_t'].append(val)
 #COOH to CO barrier at 0 V vs. SHE
-sigma_params[ts+'_t'][-1]=0.9 #0.4
+sigma_params[ts+'_t'][-1]=1.25 #0.4
 if zero_field:
     for s in sigma_params:
         sigma_params[s][0]=0.0
