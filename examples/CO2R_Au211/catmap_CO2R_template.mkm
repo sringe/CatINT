@@ -92,11 +92,11 @@ extrapolated_potential = Upzc
 sigma_input='/Users/sringe/software/catint/examples/CO2R_Au211/try18_w_tp_cdl_comsol_CH_25_eps6_beta_0.5_Ga_0.0_G_CO2_+0.125_hbondcorr_doublebondcorr_PZC_0.16_w_H+_w_buffer-acid/charging_for_wo_tp.txt'
 #sigma_input='/Users/sringe/software/catint/examples/CO2R_Au211/pc-au_PZC_0.16_CH_20.txt' #pc-au_PZC_0.16_CH_25.txt'
 
-species_definitions['CO2_t']['sigma_params']=[-0.000217559621,0.0230636099,0.565804645]
+species_definitions['CO2_t']['sigma_params']=[-0.000286600929,0.0297720125,0.737600203]
 species_definitions['CO_t']={}
-species_definitions['CO_t']['sigma_params']=[-0.000102922269,0.00197610024,0.504130607]
-species_definitions['COOH_t']['sigma_params']=[-0.000230004216,-0.00103411773,0.344172799]
-species_definitions['COOH-H2O-ele_t']['sigma_params']=[-0.000230004216,-0.00103411773,0.9]
+species_definitions['CO_t']['sigma_params']=[-0.000189106972,-0.00942574086,0.387255672]
+species_definitions['COOH_t']['sigma_params']=[-9.0295682e-05,0.00226896383,0.253214079]
+species_definitions['COOH-H2O-ele_t']['sigma_params']=[-9.0295682e-05,0.00226896383,1.25]
 
 
 #############################################
