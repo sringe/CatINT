@@ -6,3 +6,10 @@ Welcome to CatINT’s documentation!
 
   installation
   topics/index
+
+  Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
