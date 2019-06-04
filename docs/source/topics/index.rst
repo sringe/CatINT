@@ -4,5 +4,4 @@ Topics
 .. toctree::
   :maxdepth: 2
 
-  installation
-  topics/index
+  electrochemistry
