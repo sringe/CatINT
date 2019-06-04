@@ -1,4 +1,4 @@
-Topics
+Welcome to CatINT’s documentation!
 =======
 
 .. toctree::

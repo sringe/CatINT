@@ -4,4 +4,5 @@ Topics
 .. toctree::
   :maxdepth: 2
 
-  electrochemistry
+  comsol
+  flux_definition
