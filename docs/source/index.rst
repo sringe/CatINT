@@ -8,7 +8,10 @@ Welcome to CatINT's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+
+   installation
+   topics/index
+   examples/index
 
 
 
