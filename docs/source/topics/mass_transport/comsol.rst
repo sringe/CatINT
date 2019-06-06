@@ -1,4 +1,4 @@
-``COMSOL``
+Using ``COMSOL`` within CatiNT
 ==========
 
 There is a range of predefined COMSOL variables which will be written by

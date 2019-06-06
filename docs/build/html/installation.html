@@ -15,7 +15,9 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Topics" href="topics/index.html" />
+    <link rel="prev" title="Welcome to CatINT’s documentation!" href="index.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -23,6 +25,12 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="topics/index.html" title="Topics"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to CatINT’s documentation!"
+             accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">CatINT 1.0 documentation</a> &#187;</li> 
       </ul>
     </div>  
@@ -34,59 +42,35 @@
             
   <div class="section" id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
-<p>CatMAP is currently in alpha testing and thus only can only be installed from
-source via GitHub. The code runs directly from source, so it can be “installed”
-by cloning the GitHub repository. Before installing make sure that the required
-dependencies are installed:</p>
+<p>CatINT is a program package which combines mass transport simulations with micro-
+kinetic modeling. Installing CatINT requires:</p>
 <ul class="simple">
 <li>python 2.5 or greater</li>
 <li>numpy</li>
 <li>scipy</li>
 <li>matplotlib</li>
-<li>mpmath</li>
-<li>ase</li>
-<li>gmpy (optional - gives 2-3x speedup)</li>
+<li>tables</li>
+<li>logging</li>
 </ul>
-<p>You can check that the dependencies are installed by starting a
-python session and importing them:</p>
-<div class="code sh highlight-default notranslate"><div class="highlight"><pre><span></span>bash $ python Python &gt;2.5 (....)
-Type &quot;help&quot;, &quot;copyright&quot;, &quot;credits&quot; or &quot;license&quot; for more information.
-&gt;&gt;&gt;import mpmath
-&gt;&gt;&gt;import matplotlib
-&gt;&gt;&gt;import numpy
-&gt;&gt;&gt;import scipy
-&gt;&gt;&gt;import ase
-&gt;&gt;&gt;import gmpy
+<p>After installing all dependencies, you can install CatINT into a folder $CATINT
+via:</p>
+<div class="code bash highlight-default notranslate"><div class="highlight"><pre><span></span>$ mkdir $CATINT
+$ cd $CATINT
+$ git clone git@github.com:sringe/CatINT.git
 </pre></div>
 </div>
-<p>After ensuring that you have the dependencies, change to the
-directory where you want the CatMAP source to be installed (we will
-call it $CATMAP):</p>
-<div class="code bash highlight-default notranslate"><div class="highlight"><pre><span></span>$ cd $CATMAP
-$ git clone https://github.com/SUNCAT-Center/catmap.git
+<p>As usual update your $PYTHONPATH variable with the $CATINT folder location and
+verify that everything worked by importing the central transport module of
+CatINT:</p>
+<div class="code highlight-default notranslate"><div class="highlight"><pre><span></span>$ python &gt;&gt;&gt;from catint import transport
 </pre></div>
 </div>
-<p>This will clone the
-repository into a directory called “catmap”. Next, you need to add
-the location of the CatMAP source code to the $PYTHONPATH
-environment variable so that python knows where to find it:</p>
-<p>BASH:</p>
-<div class="code bash highlight-default notranslate"><div class="highlight"><pre><span></span>bash $ export PYTHONPATH=$CATMAP/catmap:$PYTHONPATH
-</pre></div>
-</div>
-<p>CSHELL:</p>
-<div class="code csh highlight-default notranslate"><div class="highlight"><pre><span></span>$ setenv PYTHONPATH=$CATMAP/catmap:$PYTHONPATH
-</pre></div>
-</div>
-<p>You can verify that everything went smoothly by importing the
-CatMAP module:</p>
-<div class="code highlight-default notranslate"><div class="highlight"><pre><span></span>$ python &gt;&gt;&gt;import catmap
-</pre></div>
-</div>
+<p>For installing CatMAP, please see <a class="reference external" href="https://catmap.readthedocs.io/en/latest/installation.html">https://catmap.readthedocs.io/en/latest/installation.html</a>.</p>
+<p>For installing COMSOL ®, please see www.comsol.de. CatiNT writes a java input file
+for COMSOL ® which is then compiled and executed. The COMSOL ® executable location
+needs to be updated in $CATINT/catint/comsol_wrapper.py so that CatINT finds it.</p>
 <p>Documentation (this wiki) is located in the catmap/docs folder, and
-is available online at <a class="reference external" href="http://catmap.readthedocs.org/">http://catmap.readthedocs.org/</a>.
-The best place to start learning how to use the code is the
-<span class="xref std std-doc">tutorials/index</span>.</p>
+is available online at <a class="reference external" href="http://catint.readthedocs.org/">http://catint.readthedocs.org/</a>.</p>
 </div>
 
 
@@ -95,6 +79,12 @@ The best place to start learning how to use the code is the
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to CatINT’s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="topics/index.html"
+                        title="next chapter">Topics</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -124,6 +114,12 @@ The best place to start learning how to use the code is the
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="topics/index.html" title="Topics"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to CatINT’s documentation!"
+             >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">CatINT 1.0 documentation</a> &#187;</li> 
       </ul>
     </div>

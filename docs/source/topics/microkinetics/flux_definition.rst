@@ -1,4 +1,4 @@
-Definition of Kinetics
+Defining fluxes
 ======================
 
 Fixed species fluxes

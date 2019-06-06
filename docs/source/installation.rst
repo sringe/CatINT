@@ -1,67 +1,41 @@
 Installation
 ============
 
-CatMAP is currently in alpha testing and thus only can only be installed from
-source via GitHub. The code runs directly from source, so it can be "installed"
-by cloning the GitHub repository. Before installing make sure that the required
-dependencies are installed:
+.. |rtm| unicode:: U+00AE .. registered trademark sign .. 
+
+CatINT is a program package which combines mass transport simulations with micro-
+kinetic modeling. Installing CatINT requires:
 
 - python 2.5 or greater
-- numpy 
+- numpy
 - scipy
-- matplotlib 
-- mpmath 
-- ase
-- gmpy (optional - gives 2-3x speedup)
+- matplotlib
+- tables
+- logging
+.. - (os, sys, re, shutil, math, glob, imp, itertools, collections, subprocess)
 
-You can check that the dependencies are installed by starting a
-python session and importing them:
-
-.. code:: sh
-
-    bash $ python Python >2.5 (....) 
-    Type "help", "copyright", "credits" or "license" for more information.  
-    >>>import mpmath
-    >>>import matplotlib 
-    >>>import numpy 
-    >>>import scipy 
-    >>>import ase
-    >>>import gmpy
-
-After ensuring that you have the dependencies, change to the
-directory where you want the CatMAP source to be installed (we will
-call it $CATMAP): 
-
-.. code:: bash
-    
-    $ cd $CATMAP 
-    $ git clone https://github.com/SUNCAT-Center/catmap.git
-
-This will clone the
-repository into a directory called "catmap". Next, you need to add
-the location of the CatMAP source code to the $PYTHONPATH
-environment variable so that python knows where to find it:
-
-BASH: 
+After installing all dependencies, you can install CatINT into a folder $CATINT
+via:
 
 .. code:: bash
 
-    bash $ export PYTHONPATH=$CATMAP/catmap:$PYTHONPATH
+    $ mkdir $CATINT
+    $ cd $CATINT
+    $ git clone git@github.com:sringe/CatINT.git
 
-CSHELL: 
-
-.. code:: csh
-
-    $ setenv PYTHONPATH=$CATMAP/catmap:$PYTHONPATH
-
-You can verify that everything went smoothly by importing the
-CatMAP module:
+As usual update your $PYTHONPATH variable with the $CATINT folder location and
+verify that everything worked by importing the central transport module of
+CatINT:
 
 .. code::
 
-    $ python >>>import catmap
+    $ python >>>from catint import transport
+
+For installing CatMAP, please see https://catmap.readthedocs.io/en/latest/installation.html.
+
+For installing COMSOL |rtm|, please see www.comsol.de. CatiNT writes a java input file
+for COMSOL |rtm| which is then compiled and executed. The COMSOL |rtm| executable location
+needs to be updated in $CATINT/catint/comsol_wrapper.py so that CatINT finds it.
 
 Documentation (this wiki) is located in the catmap/docs folder, and
-is available online at http://catmap.readthedocs.org/.
-The best place to start learning how to use the code is the
-:doc:`tutorials/index`.
+is available online at http://catint.readthedocs.org/.

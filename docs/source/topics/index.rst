@@ -4,5 +4,6 @@ Topics
 .. toctree::
   :maxdepth: 2
 
-  comsol
-  flux_definition
+  general_usage/index
+  microkinetics/index
+  mass_transport/index
