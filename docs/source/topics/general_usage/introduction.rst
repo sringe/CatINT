@@ -14,7 +14,7 @@ Mass transport (currently only 1D) is implemented via
 
 The general procedure is shown the following figure:
 
-.. figure:: ../_static/catint_scheme.png
+.. figure:: ../../_static/catint_scheme.png
   :align: center
 
 Documentation (this wiki) is located in the catint/docs folder, and
