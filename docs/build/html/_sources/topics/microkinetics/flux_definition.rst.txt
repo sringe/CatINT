@@ -1,3 +1,5 @@
+.. _flux-definition:
+
 Defining fluxes
 ======================
 

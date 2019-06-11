@@ -1,0 +1,241 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>CO2 reduction at polycrystalline Au &#8212; CatINT 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Topics" href="../topics/index.html" />
+    <link rel="prev" title="Tutorials" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../topics/index.html" title="Topics"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Tutorials"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">CatINT 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Tutorials</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="co2-reduction-at-polycrystalline-au">
+<h1>CO2 reduction at polycrystalline Au<a class="headerlink" href="#co2-reduction-at-polycrystalline-au" title="Permalink to this headline">¶</a></h1>
+<p>This tutorial explains how a typical coupled mass transport - microkinetics simulation can be initialized and run. It is based on the publication Ringe <em>et al.</em>, submitted to <em>Nat. Catal.</em>, <strong>2019</strong>.</p>
+<div class="section" id="creation-of-the-catint-input-file">
+<h2>Creation of the <code class="docutils literal notranslate"><span class="pre">CatINT</span></code> input file<a class="headerlink" href="#creation-of-the-catint-input-file" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="import">
+<h3>Import<a class="headerlink" href="#import" title="Permalink to this headline">¶</a></h3>
+<p>We start with the creation of the <code class="docutils literal notranslate"><span class="pre">CatINT</span></code> python input file and import the main transport class and the calculator:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">catint.transport</span> <span class="k">import</span> <span class="n">Transport</span>
+<span class="kn">from</span> <span class="nn">catint.calculator</span> <span class="k">import</span> <span class="n">Calculator</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="system-settings">
+<h3>System Settings<a class="headerlink" href="#system-settings" title="Permalink to this headline">¶</a></h3>
+<p>First, we define the system reaction conditions:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pH</span> <span class="o">=</span> <span class="mf">6.8</span>
+<span class="n">system</span><span class="o">=</span>\
+    <span class="p">{</span>
+    <span class="c1">#ENVIRONMENTAL CONDITIONS</span>
+    <span class="s1">&#39;temperature&#39;</span><span class="p">:</span>  <span class="mi">298</span><span class="p">,</span>         <span class="c1">#K</span>
+    <span class="s1">&#39;pressure&#39;</span><span class="p">:</span>     <span class="mf">1.013</span><span class="p">,</span>       <span class="c1">#bar</span>
+    <span class="s1">&#39;bulk_pH&#39;</span><span class="p">:</span> <span class="n">pH</span><span class="p">,</span>
+    <span class="c1">#ELECTROSTATICS</span>
+    <span class="s1">&#39;epsilon&#39;</span><span class="p">:</span> <span class="mf">78.36</span><span class="p">,</span>            <span class="c1">#eps_0</span>
+    <span class="s1">&#39;migration&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="c1">#REACTIONS</span>
+    <span class="s1">&#39;electrode reactions&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="s1">&#39;electrolyte reactions&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="c1">#CHARGING</span>
+    <span class="s1">&#39;charging_scheme&#39;</span><span class="p">:</span><span class="s1">&#39;comsol&#39;</span>
+    <span class="s1">&#39;phiPZC&#39;</span><span class="p">:</span> <span class="mf">0.16</span><span class="p">,</span>              <span class="c1">#V vs. SHE</span>
+    <span class="s1">&#39;Stern capacitance&#39;</span><span class="p">:</span> <span class="mf">20.</span><span class="p">,</span>    <span class="c1">#micro F/cm2</span>
+    <span class="c1">#KINETICS</span>
+    <span class="s1">&#39;potential drop&#39;</span><span class="p">:</span><span class="s1">&#39;Stern&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;active_site_density&#39;</span><span class="p">:</span> <span class="mf">9.61</span><span class="o">-</span><span class="mi">05</span><span class="o">/</span><span class="n">unit_NA</span><span class="o">*</span><span class="p">(</span><span class="mf">1e10</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="c1">#mol sites/m^2</span>
+    <span class="c1">#INITIALIZATION</span>
+   <span class="c1"># &#39;init_folder&#39;:init_folder,</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">temperature</span></code> and <code class="docutils literal notranslate"><span class="pre">pressure</span></code> are important for the finite temperature free energy corrections that are applied in <code class="docutils literal notranslate"><span class="pre">CatMAP</span></code>, but the temperature also enters the mass transport equations. The <code class="docutils literal notranslate"><span class="pre">pH</span></code> should be adjusted to the reaction conditions. <code class="docutils literal notranslate"><span class="pre">epsilon</span></code> is the bulk dielectric constant that enters the mass transport equations. <code class="docutils literal notranslate"><span class="pre">migration</span></code> turns the migrational motion of species on or off. Further, electrode and electrolyte reactions can be turned on or off. The charging of the surface is controlled via the <code class="docutils literal notranslate"><span class="pre">charging_scheme</span></code> tag. Currently, <code class="docutils literal notranslate"><span class="pre">CatINT</span></code> supports different methods to define a surface charge density - potential relation <span class="math notranslate nohighlight">\(\sigma(\phi^\mathrm{M})\)</span> which is used to evaluate potential-dependent free energies:</p>
+<ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">'comsol'</span></code>:  Get the relation from <code class="docutils literal notranslate"><span class="pre">COMSOL</span></code> directly via the electrostatics defined there.</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">'input'</span></code>:     Define a relation manually. This enables to take the charging relation directly from the <code class="docutils literal notranslate"><span class="pre">CatMAP</span></code> input file. There, currently different ways are supported:</dt>
+<dd><ul class="first last">
+<li><code class="docutils literal notranslate"><span class="pre">sigma_input=['CH',20.]</span></code>. Define surface charge density via :math: <cite>sigma=C_H (phi^mathrm{M}-phi^mathrm{PZC})</cite>, where math: <cite>C_H</cite> is a capacitance.</li>
+<li><code class="docutils literal notranslate"><span class="pre">sigma_input='file.txt'</span></code>: Define surface charge density from  <span class="math notranslate nohighlight">\(\sigma(\phi^\mathrm{M})\)</span> relation given in file name. The discrete data in the file is interpolated</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p>For the electrostatics within the mass transport (PNP equations), the <cite>Stern capacitance</cite> (also called gap capacitance) is needed to define the Robin boundary condition. The same is valid for the PZC which is given on an SHE scale. The <cite>potential drop</cite> defines how to calculate the driving electrochemical potential in <code class="docutils literal notranslate"><span class="pre">CatMAP</span></code>, i.e. if a Frumkin correction is considered or not. If <code class="docutils literal notranslate"><span class="pre">'potential_drop':'Stern'</span></code> is selected a Frumkin correction is applied, so that the driving potential drop is :math: <cite>phi^mathrm{M}-phi^ddagger</cite> with :math: <cite>phi^ddagger</cite> is the potential at the reaction plane.</p>
+<p>Finally <code class="docutils literal notranslate"><span class="pre">CatINT</span></code> supports to initialize a run form a previous one by using the <code class="docutils literal notranslate"><span class="pre">init_folder</span></code> tag.</p>
+</div>
+<div class="section" id="electrolyte-reactions">
+<h3>Electrolyte Reactions<a class="headerlink" href="#electrolyte-reactions" title="Permalink to this headline">¶</a></h3>
+<p>We define electrolyte reactions which should be included in the mass transport. Currently <code class="docutils literal notranslate"><span class="pre">CatINT</span></code> supports multiple buffer reactions which are defined in the <code class="docutils literal notranslate"><span class="pre">catint/data.py</span></code> file. Here we include bicarbonate buffer reactions both using water and protons as donors (acidic and alkaline conditions) as well as the water self dissociation equilibria</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">electrolyte_reactions</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bicarbonate-base&#39;</span><span class="p">,</span><span class="s1">&#39;water-diss&#39;</span><span class="p">,{</span><span class="s1">&#39;additional_cell_reactions&#39;</span><span class="p">:</span><span class="s1">&#39;bicarbonate-acid&#39;</span><span class="p">}]</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">CatINT</span></code> evaluates concentrations at the boundary layer based on these buffer equilibria reactions. Since the acidic buffer reactions are already contained in the combination of alkaline and water dissociation, they are included as <code class="docutils literal notranslate"><span class="pre">additional_cell_reactions</span></code>, meaning that they are active during the mass transport simulation, but not used for initializing the concentrations.</p>
+</div>
+<div class="section" id="electrode-reactions">
+<h3>Electrode Reactions<a class="headerlink" href="#electrode-reactions" title="Permalink to this headline">¶</a></h3>
+<p>Now it is time to think about the reactions at the electrode, the electrochemical reactions. In our case, we consider the reduction of CO2 with water as a proton donor, which is defined as:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">electrode_reactions</span><span class="o">=</span><span class="p">{</span>
+    <span class="s1">&#39;CO&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;reaction&#39;</span><span class="p">:</span> <span class="s1">&#39;CO2 + H2O + 2 e- -&gt; CO + 2 OH-&#39;</span><span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="species-definitions">
+<h3>Species Definitions<a class="headerlink" href="#species-definitions" title="Permalink to this headline">¶</a></h3>
+<p>After defining the reactions, we need to also think about all species that our system, we define them as a dictionary:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">species</span><span class="o">=</span>\
+    <span class="p">{</span>
+    <span class="s1">&#39;K+&#39;</span><span class="p">:</span>               <span class="p">{</span><span class="s1">&#39;bulk_concentration&#39;</span><span class="p">:</span>   <span class="s1">&#39;charge_neutrality&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;MPB_radius&#39;</span><span class="p">:</span>           <span class="mi">2</span><span class="o">*</span><span class="mf">3.5e-10</span><span class="p">},},</span>
+    <span class="s1">&#39;CO2&#39;</span><span class="p">:</span>              <span class="p">{</span><span class="s1">&#39;bulk_concentration&#39;</span><span class="p">:</span>   <span class="s1">&#39;Henry&#39;</span><span class="p">},</span>
+    <span class="s1">&#39;OH-&#39;</span><span class="p">:</span>              <span class="p">{</span><span class="s1">&#39;bulk_concentration&#39;</span><span class="p">:</span>   <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">pH</span><span class="o">-</span><span class="mf">14.</span><span class="p">)</span><span class="o">*</span><span class="mf">1000.0</span><span class="p">},</span> <span class="c1">#mol/m^3</span>
+    <span class="s1">&#39;CO&#39;</span><span class="p">:</span>               <span class="p">{</span><span class="s1">&#39;bulk_concentration&#39;</span><span class="p">:</span>   <span class="mf">0.0</span><span class="p">}</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+<p>All species that are part of the electrolyte reactions are already automatically added to the species dictionary in <code class="docutils literal notranslate"><span class="pre">CatINT</span></code>. All other species have to be added here. Charges are automatically assigned according to the species name. We add potassium cations which should neutralize all anions so that the system is charge neutral in the bulk solution (boundary layer). We chose a <code class="docutils literal notranslate"><span class="pre">MPB_radius</span></code> of 3.5 Angstrom which is important since the negative electrode potental dramatically increases the potassium concentrations. We then define the CO2 concentration at the boundary layer to be given by Henry’s law which will use the pressure defined in system settings and the Henry constant in <code class="docutils literal notranslate"><span class="pre">data/henry_constants.txt</span></code> to evaluate the equilibrium CO2 concentration. The buffer component concentrations are now evaluated using the equilibrium buffer equations and must not be specified. It is also possible though to specify a buffer concentration and let <code class="docutils literal notranslate"><span class="pre">CatINT</span></code> calculate the CO2 concentration via the buffer equations. Finally, we set the concentration of hydroxide anions according to the pH (proton concentration are automatically evaluated using the water dissociation equilibrium). All concentrations are given in :math: <cite>mathrm{mol}/mathrm{m}^3</cite>.</p>
+</div>
+<div class="section" id="additional-comsol-variables">
+<h3>Additional COMSOL variables<a class="headerlink" href="#additional-comsol-variables" title="Permalink to this headline">¶</a></h3>
+<p>We can define COMSOL variables and parse them to CatINT via the <code class="docutils literal notranslate"><span class="pre">comsol_args</span></code> tag:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">comsol_args</span><span class="o">=</span><span class="p">{}</span>
+<span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;parameter&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">{}</span>
+<span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;parameter&#39;</span><span class="p">][</span><span class="s1">&#39;grid_factor_domain&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span><span class="s1">&#39;Grid factor&#39;</span><span class="p">]</span>
+<span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;parameter&#39;</span><span class="p">][</span><span class="s1">&#39;grid_factor_bound&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="mi">200</span><span class="p">),</span><span class="s1">&#39;Grid factor&#39;</span><span class="p">]</span>
+<span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;solver_settings&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">{}</span>
+<span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;solver_settings&#39;</span><span class="p">][</span><span class="s1">&#39;direct&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">{}</span>
+<span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;solver_settings&#39;</span><span class="p">][</span><span class="s1">&#39;direct&#39;</span><span class="p">][</span><span class="s1">&#39;nliniterrefine&#39;</span><span class="p">]</span><span class="o">=</span><span class="kc">True</span>
+<span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;solver_settings&#39;</span><span class="p">][</span><span class="s1">&#39;ramp&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">{}</span>
+<span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;solver_settings&#39;</span><span class="p">][</span><span class="s1">&#39;ramp&#39;</span><span class="p">][</span><span class="s1">&#39;names&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;PZC&#39;</span><span class="p">,</span><span class="s1">&#39;CS&#39;</span><span class="p">]</span>
+<span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;solver_settings&#39;</span><span class="p">][</span><span class="s1">&#39;ramp&#39;</span><span class="p">][</span><span class="s1">&#39;dramp&#39;</span><span class="p">]</span><span class="o">=</span><span class="mf">0.01</span>
+
+<span class="c1">#SOLVER SEQUENCE</span>
+<span class="c1">#comsol_args[&#39;solver_settings&#39;][&#39;solver_sequence&#39;]=&#39;tds_elstat&#39;</span>
+<span class="c1">#OTHER PARAMETER</span>
+<span class="c1">#comsol_args[&#39;parameter&#39;][&#39;RF&#39;]=[1,&#39;Roughness Factor&#39;]</span>
+</pre></div>
+</div>
+<p>This is in particular useful for modifying numerical solver settings. In our case, we first define a <code class="docutils literal notranslate"><span class="pre">grid_factor</span></code> which tells comsol about the minimal finite element mesh width. A higher factor means a finer mesh and the mesh can be defined for the domain and boundary separately. Parameter definitions always a list of two entries, the value parsed as a string and the name or description inside COMSOL. Some more specific numerical parameters can be edited and changed here to help convergence. In particular, the <code class="docutils literal notranslate"><span class="pre">'ramp'</span></code> flag enables to slowly ramp non-linearitis in the equations, in our case it slowly ramps up te PZC an the Helmholtz/Stern/gap capacitance which can be useful if the systems has a PZC far from the initial potential to be evaluated. A flux ramping is always applied and controlled by the <cite>‘dramp’</cite> flag which defines the interval in which the fluxes are ramped from 0 to 100 %. Additional possible settings involve the definition of solver sequences to improve convergence (e.g. first solving electrostatics only, then the coupled mass transport/electrostatic problem). Also, it is possible to define a roughness factor which multiplies all fluxes by a constant.</p>
+</div>
+<div class="section" id="flux-definition">
+<h3>Flux definition<a class="headerlink" href="#flux-definition" title="Permalink to this headline">¶</a></h3>
+<p>Now it is time to define how fluxes are evaluated within the <code class="docutils literal notranslate"><span class="pre">CatINT</span></code> model. In our case, we will use <code class="docutils literal notranslate"><span class="pre">CatMAP</span></code> to define fluxes but multiple options are available (cf. <a class="reference internal" href="../topics/microkinetics/flux_definition.html#flux-definition"><span class="std std-ref">Defining fluxes</span></a>).</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">species</span><span class="p">[</span><span class="s1">&#39;CO&#39;</span><span class="p">][</span><span class="s1">&#39;flux&#39;</span><span class="p">]</span><span class="o">=</span><span class="s1">&#39;catmap&#39;</span> <span class="c1">#CO production rate</span>
+<span class="n">species</span><span class="p">[</span><span class="s1">&#39;CO2&#39;</span><span class="p">][</span><span class="s1">&#39;flux&#39;</span><span class="p">]</span><span class="o">=</span><span class="s1">&#39;catmap&#39;</span> <span class="c1">#CO2 consumption rate</span>
+</pre></div>
+</div>
+<p>This is the text of the section.</p>
+<p>It refers to the section itself, see <a class="reference internal" href="../topics/microkinetics/flux_definition.html#flux-definition"><span class="std std-ref">Defining fluxes</span></a>.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">CO2 reduction at polycrystalline Au</a><ul>
+<li><a class="reference internal" href="#creation-of-the-catint-input-file">Creation of the <code class="docutils literal notranslate"><span class="pre">CatINT</span></code> input file</a><ul>
+<li><a class="reference internal" href="#import">Import</a></li>
+<li><a class="reference internal" href="#system-settings">System Settings</a></li>
+<li><a class="reference internal" href="#electrolyte-reactions">Electrolyte Reactions</a></li>
+<li><a class="reference internal" href="#electrode-reactions">Electrode Reactions</a></li>
+<li><a class="reference internal" href="#species-definitions">Species Definitions</a></li>
+<li><a class="reference internal" href="#additional-comsol-variables">Additional COMSOL variables</a></li>
+<li><a class="reference internal" href="#flux-definition">Flux definition</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Tutorials</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../topics/index.html"
+                        title="next chapter">Topics</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/tutorials/co2r_au.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../topics/index.html" title="Topics"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Tutorials"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">CatINT 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Tutorials</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Stefan Ringe.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.9.
+    </div>
+  </body>
+</html>
