@@ -1,0 +1,153 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Analysis tools &#8212; CatINT 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Defining fluxes" href="flux_definition.html" />
+    <link rel="prev" title="Topics" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="flux_definition.html" title="Defining fluxes"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Topics"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">CatINT 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Topics</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="analysis-tools">
+<span id="analysis"></span><h1>Analysis tools<a class="headerlink" href="#analysis-tools" title="Permalink to this headline">¶</a></h1>
+<p>In general, <code class="docutils literal notranslate"><span class="pre">CatINT</span></code> includes two main tools for analyzing the results of the simulation:</p>
+<ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">$CATINT/tools/plotting_catint.py</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">$CATINT/tools/plotting_catmap.py</span></code></li>
+</ul>
+<div class="section" id="plotting-catmap-py">
+<h2><code class="docutils literal notranslate"><span class="pre">plotting_catmap.py</span></code><a class="headerlink" href="#plotting-catmap-py" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">$CATINT/tools/plotting_catmap.py</span></code> reads the results from the <code class="docutils literal notranslate"><span class="pre">catmap_output</span></code> folder and plots the current densities, coverages and degree of rate control. It supports also the comparison with experimental data, that is contained in the <code class="docutils literal notranslate"><span class="pre">$CATINT/data/[reaction]/CSV</span></code> folder.</p>
+</div>
+<div class="section" id="plotting-catint-py">
+<h2><code class="docutils literal notranslate"><span class="pre">plotting_catint.py</span></code><a class="headerlink" href="#plotting-catint-py" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">$CATINT/tools/plotting_catint.py</span></code> reads the results from the <code class="docutils literal notranslate"><span class="pre">comsol_results_?</span></code> folder and plots all desired variables. Currently, <code class="docutils literal notranslate"><span class="pre">CatINT</span></code> supports a range of variables to be plotted. In general, for a variable named <code class="docutils literal notranslate"><span class="pre">surface_[variable]</span></code>, the variable is plotted at the reaction plane  at a potential specified via <code class="docutils literal notranslate"><span class="pre">--desc</span></code> (maps to closest actually calculated potential). In all other cases, the variable is just plotted as a function of space (x):</p>
+<ul class="simple">
+<li><dl class="first docutils">
+<dt>properties (<code class="docutils literal notranslate"><span class="pre">--prop</span></code>) supporting reaction plane (prepend <code class="docutils literal notranslate"><span class="pre">surface_</span></code>) and spatial plot:</dt>
+<dd><ul class="first last">
+<li><code class="docutils literal notranslate"><span class="pre">concentration</span></code>: Concentrations of all species</li>
+<li><code class="docutils literal notranslate"><span class="pre">activity</span></code>: Activities of all species</li>
+<li><code class="docutils literal notranslate"><span class="pre">activity_coefficient</span></code>: Activity coefficients of all species</li>
+<li><code class="docutils literal notranslate"><span class="pre">efield</span></code>: Electric field</li>
+<li><code class="docutils literal notranslate"><span class="pre">potential</span></code>: Electrostatic potential</li>
+<li><code class="docutils literal notranslate"><span class="pre">charge_density</span></code>: Charge density</li>
+<li><code class="docutils literal notranslate"><span class="pre">pH</span></code>: pH calculated using the proton activity (if in species list, otherwise the hydroxide activity)</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Other supported properties are:</dt>
+<dd><ul class="first last">
+<li><code class="docutils literal notranslate"><span class="pre">electrode_current_density</span></code>: Partial current density of all products, should give the same results as the plotting of the <code class="docutils literal notranslate"><span class="pre">catmap_output</span></code> data using the <code class="docutils literal notranslate"><span class="pre">$CATINT/tools/plotting_catmap.py</span></code> script</li>
+<li><code class="docutils literal notranslate"><span class="pre">pKw</span></code>: The water self-dissociation product at the reaction plane as a function of potential</li>
+<li><code class="docutils literal notranslate"><span class="pre">concentration_at_x:</span> <span class="pre">Plot</span> <span class="pre">the</span> <span class="pre">concentrations</span> <span class="pre">of</span> <span class="pre">species</span> <span class="pre">at</span> <span class="pre">a</span> <span class="pre">specified</span> <span class="pre">distance</span> <span class="pre">x</span> <span class="pre">(specified</span> <span class="pre">using</span> <span class="pre">``--xfixed</span></code>)</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Also remember to set the potential scale correctly by specifying <code class="docutils literal notranslate"><span class="pre">--scale</span> <span class="pre">RHE/SHE</span></code>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Analysis tools</a><ul>
+<li><a class="reference internal" href="#plotting-catmap-py"><code class="docutils literal notranslate"><span class="pre">plotting_catmap.py</span></code></a></li>
+<li><a class="reference internal" href="#plotting-catint-py"><code class="docutils literal notranslate"><span class="pre">plotting_catint.py</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Topics</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="flux_definition.html"
+                        title="next chapter">Defining fluxes</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/topics/analysis.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="flux_definition.html" title="Defining fluxes"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Topics"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">CatINT 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Topics</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Stefan Ringe.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.9.
+    </div>
+  </body>
+</html>
