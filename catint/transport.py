@@ -814,7 +814,7 @@ class Transport(object):
 
         #COMSOL Treatment of descriptors
         #if the descriptor is the potential, we can use it internally in COMSOL
-        #as a parametric sweep. this kills to birds with a single shot, since
+        #as a parametric sweep. this kills two birds with a single shot, since
         #slowly turning on the potential is like turning on the flux, but at the 
         #same time evaluates the potential dependence of the current density, so
         #we do not need to recompile COMSOL for every potential value

@@ -10,6 +10,7 @@ import re
 from itertools import cycle
 from units import *
 from scipy.interpolate import UnivariateSpline
+import math
 
 import sys
 import csv
@@ -95,25 +96,55 @@ class EXPDATA():
         DATA.data = np.delete(DATA.data,0,0) # delete header
         return DATA
 
-    def plot_stuff(self,list_of_data,DATA,fit,joinlines, skip={}, ax=None,voltage_mode='previous',take_log=False,\
-            linestyle=None,symbol=None,convert=None,fit_tafel=False,legend=False,msize=12,color=None,lw=1,fs=14,ls=None,marker=None):
+    def plot_stuff(self,**kwargs):
+        """"
+        possible kwargs:
+            list_of_data,DATA,fit,joinlines, skip={}, ax=None,voltage_mode='previous',take_log=False,\
+            linestyle=None,symbol=None,convert=None,fit_tafel=False,legend=False,msize=12,color=None,lw=1,fs=14,ls=None,marker=None,\
+            color_mode='species'):
+        """
         #if voltage_mode='previous' take previous point before list_of_data as voltages, if 'first', take first column for all data
         #if fit=0 Tafel, fit=1 poly, fit=2 poly no points
         #fit_tafel: New tafel fitting based on error estimation due to curvature
+        kwargs['linestyle']='-'
+        kwargs['symbol']='o'
+        def assign(key):
+            if key in kwargs:
+                return kwargs[key]
+            else:
+                return None
+        list_of_data=assign('list_of_data')
+        DATA=assign('DATA')
+        fit=assign('fit')
+        joinlines=assign('joinlines')
+        skip=assign('skip')
+        ax=assign('ax')
+        voltage_mode=assign('voltage_mode')
+        take_log=assign('take_log')
+        linestyle=assign('linestyle')
+        symbol=assign('symbol')
+        convert=assign('convert')
+        fit_tafel=assign('fit_tafel')
+        legend=assign('legend')
+        msize=assign('msize')
+        color=assign('color')
+        lw=assign('lw')
+        fs=assign('fs')
+        ls=assign('ls')
+        marker=assign('marker')
+        color_mode=assign('color_mode')
+
         n=0
-        if ax is not None:
-            bf=ax
-        else:
-            bf=plt
+        if ax is None:
+            ax=plt
 #        if take_log:
 #            func=bf.semilogy
 #        else:
 #            func=bf.plot
-        func=bf.semilogy
+        func=ax.semilogy
         markers=cycle(['o','*','x','d'])
         filled=cycle(['filled','none'])
         symbols=self.symbols
-        print 'the list of data',list_of_data
         for j in list_of_data: #[1,3,5,7,9,11,13]:
             if symbol is not None: #and j==0:
                 cmarker=symbol
@@ -121,13 +152,13 @@ class EXPDATA():
             #    cmarker=next(symbols)
             voltage=[]
             current=[]
-            for k in range(0,len(DATA.data[:,j-1])):
+            for l in range(0,len(DATA.data[:,j-1])):
                 try:
-                    current.append(float(DATA.data[k,j]))
+                    current.append(float(DATA.data[l,j]))
                     if voltage_mode=='previous':
-                        voltage.append(float(DATA.data[k,j-1]))
+                        voltage.append(float(DATA.data[l,j-1]))
                     elif voltage_mode=='first':
-                        voltage.append(float(DATA.data[k,0]))
+                        voltage.append(float(DATA.data[l,0]))
                     else:
                         print 'Invalid voltage_mode'
                 except ValueError:
@@ -149,7 +180,7 @@ class EXPDATA():
                 if joinlines:
                     linestyle=":"
             if color is None:
-                self.color[n]=self.get_color(DATA.label[j])
+                self.color[n]=self.get_color(DATA.label[j],mode=color_mode)
             else:
                 self.color[n]=color
             val=re.findall('pH[ ]*=[ ]*([0-9.]+)',DATA.label[j])
@@ -199,7 +230,7 @@ class EXPDATA():
                         if sk in species:
                             skip_val=skip[sk]
                     if fit==1:
-                        self.plot_tafel(bf,voltage,current,self.color[n],skip_val,linestyle=linestyle,take_log=take_log,lw=lw,fs=fs,ls=ls)
+                        self.plot_tafel(ax,voltage,current,self.color[n],skip_val,linestyle=linestyle,take_log=take_log,lw=lw,fs=fs,ls=ls)
                     if fit>1:
                         V=voltage
                         J=current
@@ -212,7 +243,6 @@ class EXPDATA():
                         a=a[a[:,0].argsort()]
                         V=a[:,0]
                         J=a[:,1]
-                        print V,J
                         J=np.log10(J)
                         spl=UnivariateSpline(V,J,k=3,s=1)
                         p=lambda x: 10**spl(x)
@@ -224,7 +254,6 @@ class EXPDATA():
                         if fit>2:
                             func(xfine,p(xfine),linestyle=linestyle,color=linecol,label=DATA.label[j],lw=lw,ls=ls) #,zorder=1e7)
                         else:
-#                            print 'LS',ls
                             func(xfine,p(xfine),color=linecol,lw=lw,ls=ls)
                             
             n=n+1   
@@ -232,28 +261,20 @@ class EXPDATA():
         #plt.ylim((-3,1))
         #plt.xlim((-1.4,-1.05))
         if legend:
-            leg = ax.legend(loc=1, 
-                  ncol=1, fontsize=8, numpoints=1) #, fancybox=True, shadow=False, loc='upper center', bbox_to_anchor=(0.5, 1.05))
+            leg = ax.legend(loc='lower left',
+                  ncol=1, fontsize=6, numpoints=1) #, fancybox=True, shadow=False, loc='upper center', bbox_to_anchor=(0.5, 1.05))
             for line,text in zip(leg.get_lines(), leg.get_texts()):
                 text.set_color(line.get_color())
     
     def plot_tafel(self,ax,V,J,linecol,skip=0,linestyle='-',take_log=True,lw=1,fs=11,ls=None):
-        # fit lines
-#        if take_log:
         J=np.log10(J)
         data=[V,J]
         data=map(list,zip(*data))
         data=np.array(data)
-        #print 'before',data
-        #data=sorted(data,key=lambda l:l[1], reverse=True)
-        #data=np.array(data)
-        #print 'after',data
         data.view(data.dtype.str+','+data.dtype.str).sort(order=['f0'], axis=0)
         V=data[:,0]
         J=data[:,1]
-        print V,J
         if skip:
-            print skip,len(V),len(J)
             if type(skip)==list:
                 Vs=[V[skip[0]:skip[1]],V[skip[1]:]]
                 Js=[J[skip[0]:skip[1]],V[skip[1]:]]
@@ -263,37 +284,34 @@ class EXPDATA():
         else:
             Vs=[V]
             Js=[J]
-        for V,J in zip(Vs,Js):
-            print 'plotting',V,J
-            #res=np.array([[vv,jj] for vv,jj in zip(V,J) if vv>-0.68])
-            #res=np.array([[vv,jj] for vv,jj in zip(V,J) if vv>-0.68])i
-
-            ###
-            #res=np.array([[vv,jj] for vv,jj in zip(V,J) if vv>-0.68-0.0592*6.8])
-            #V=res[:,0]
-            #J=res[:,1]
-            ###
-
-            #A = array([V, ones(len(V))])
-            #w = linalg.lstsq(A.T,J )[0]
-            #line_tafel = w[0]*np.array(V)+w[1]
-            #tafel_slope = 1000/w[0]
+        for cV,cJ in zip(Vs,Js):
+            if len(cV)==0 or len(cJ)==0:
+                print 'WARNING: skipping all data in Tafel slope plot'
+                continue
+            #remove all NaN
+            A=np.array([[vv,jj] for vv,jj in zip(cV,cJ) if (not math.isnan(vv) and not math.isnan(jj))])
+            if len(A)>0:
+                V,J=A.T
+            else:
+                continue
+            #fit data
             p=np.polyfit(V,J,1)
             z=np.poly1d(p)
+            #tafel slope
             tafel_slope=-1000./p[0]
-            #if 300<tafel_slope<500:
-            #    return ax
             minV=min(V)
             maxV=max(V)
             dV=maxV-minV
             Vf=np.linspace(minV-dV/4.,maxV+dV/3.,1000)
             ax.semilogy(Vf,10**z(Vf),color=linecol, linestyle=linestyle,lw=lw)
-            ax.text(V[0]+0.2,10**(z(V[0])-1),str(int(tafel_slope))+'mV/dec', color=linecol, fontsize=fs)  #
+            an=ax.annotate(str(int(tafel_slope))+'mV/dec',xy=(V[0]+0.2,10**(z(V[0])-1)),color=linecol, fontsize=fs)
+            an.draggable()
         return ax
     
     def plot_data(self,ax=None,reference=['all'],species=['all'],pH=['all'],ci_bic=['all'],scale='RHE',reaction='all',\
             system=['all'],coloring='species',fit_tafel=False,only_points=False,\
-            take_log=True,marker=None,legend=False,msize=None,color=None,lw=1,ls=None):
+            take_log=True,marker=None,legend=False,msize=None,color=None,lw=1,ls=None,\
+            color_mode='species'):
         """
         ----------------------------------------------------------------------
         Wrapper to plot any data set of interest
@@ -312,8 +330,8 @@ class EXPDATA():
         legend: if true, plot legend
         msize: force size of markers
         color: force color of plot (otherwise colored by product)
+        color_mode: either color the data by species ('species') or data set ('dataset')
         """
-    
         global voltage_all
         global current_all
         global filter_reaction
@@ -333,6 +351,10 @@ class EXPDATA():
         c1_list=['CH$_4$','MeOH','CH$_3$OH'] #,'HCOO','MeOH','CH$_3$OH'] #,'C$_1$']
         c2_list=['C$_2$H$_4$','CH$_3$COO','EtOH','CH$_2$CH$_2$','C$_2$H$_6$','MeCHO','GlycAld','AcetAld','EtGlyci']
         c2p_list=c2_list+['n-PrOH','PrOH','AllylAlc','Acetone']
+        more_prods=['CO','H$_2$']
+        #contains all products
+        all_prods=c1_list+c2_list+c2p_list+more_prods
+
         species_reduced=[]
         for sp in species:
             if not ('C1' in species and sp in c1_list) and not ('C2' in species and sp in c2_list) and not ('C2+' in species and sp in c2p_list)\
@@ -434,59 +456,35 @@ class EXPDATA():
     
     #    data_labels=[','.join(a.label[1].split(',')[1:]) for a in [self.DATA_ss_01,self.DATA_ss_005,self.DATA_ss_02,self.DATA_ss_005_FE,self.DATA_ss_01_FE,self.DATA_ss_02_FE,self.DATA_jr,self.DATA_kr,self.DATA_lr,self.DATA_h2s,self.DATA_hr,self.DATA_hs,self.DATA_]]
         data_labels=[','.join(a.label[1].split(',')[1:]) for a in [self.DATA_ss_01,self.DATA_ss_005,self.DATA_ss_02,self.DATA_ss_005_FE,self.DATA_ss_01_FE,self.DATA_ss_02_FE,self.DATA_jr,self.DATA_jr_NF,self.DATA_jr_NC,self.DATA_kr,self.DATA_kau,self.DATA_lr,self.DATA_lr_NF,self.DATA_lr_HER,self.DATA_h2s,self.DATA_hau,self.DATA_hr,self.DATA_hs,self.DATA_wr_NW,self.DATA_wr_NW_all,self.DATA_wu,self.DATA_du,self.DATA_du2,self.DATA_cas,self.DATA_cas2]]
-    
-    
-    
-    
+
+        #basic settings applied to each experimental data set for plotting
+        kwargs_base={'ax':ax,'take_log':take_log,'fit_tafel':fit_tafel,'legend':legend,'msize':msize,'lw':lw,'ls':ls,'marker':marker,'joinlines':0,'color_mode':color_mode}
+
         for cpH in pH:
             skip_dict={}
             for label in data_labels:
-                if 'Hori' in label:
-                    #skip_dict[label]={'HCOO':   5,\
-                    #                  'CO':     9,\
-                    #                  'H$_2$':  10}
-                    skip_dict[label]={'HCOO':   0,\
-                                      'CO':     0,\
-                                      'H$_2$':  0}
-                elif 'Wang' in label:
-                    skip_dict[label]={'C$_2$H$_4$': 0}
-                elif 'Jaramillo' in label:
-                    #skip_dict[label]={'HCOO':   6,\
-                    #                  'CH$_4$': 2,\
-                    #                  'H$_2$':  5,\
-                    #                  'C$_2$H$_4$':3,\
-                    #                  'EtOH':3,\
-                    #                  'Acetate':0,\
-                    #                  'propol':0}
-                    skip_dict[label]={'HCOO':   0,\
-                                      'CH$_4$': 0,\
-                                      'H$_2$':  0,\
-                                      'C$_2$H$_4$':0,\
-                                      'EtOH':0,\
-                                      'Acetate':0,\
-                                      'propol':0}
+                #initialize with 0
+                skip_dict[label]={}
+                for prod in all_prods:
+                    skip_dict[label][prod]=0
+
                     if 'pc-Au' in label and 'pH = 3.0' in label:
-                        skip_dict[label]={'CO': 5}
+                        skip_dict[label]['CO']=5
                     elif 'pc-Au' in label and 'pH = 6.8' in label:
-                        skip_dict[label]={'CO': 6}
-                elif 'Dunwell' in label:
+                        skip_dict[label]['CO']=6
+                if 'Dunwell' in label:
                     if 'pc-Au' in label and 'pH = 7.3' in label:
-                        skip_dict[label]={'CO': [0,7]}
+                        skip_dict[label]['CO']=[0,7]
                 elif 'Kanan' in label:
-                    skip_dict[label]={'HCOO':   9,\
-                                      'CO':     10,\
-                                      'H$_2$':     9,\
-                                      'C$_2$H$_4$':2,\
-                                      'C$_2$H$_6$':3}
-                elif 'Wuttig' in label or 'Dunwell' in label:
-                    skip_dict[label]={}
+                    skip_dict[label]['HCOO']=9
+                    skip_dict[label]['CO']=10
+                    skip_dict[label]['H$_2$']=9
+                    skip_dict[label]['C$_2$H$_4$']=2
+                    skip_dict[label]['C$_2$H$_6$']=3
+                elif 'Hori' in label:
+                    skip_dict[label]['CO']=17
                 elif 'Strasser' in label:
-                    skip_dict[label]={'HCOO':   0,\
-                                      'CO':     8}
-            if abs(float(cpH)-13)<1e-5:
-                for label in data_labels:
-                    if 'Jaramillo' in label:
-                        skip_dict[label]['CH$_4$']=0
+                    skip_dict[label]['CO']=8
             for bic in ci_bic:
                 if isref('strasser'):
                     if bic in ['0.1','all']:
@@ -496,6 +494,8 @@ class EXPDATA():
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
                             linestyle=next(linestyles)
+                            if color_mode=='dataset':
+                                color=next(colors)
                             if marker is None:
                                 symbol=next(symbols)
                             else:
@@ -705,15 +705,25 @@ class EXPDATA():
                         skip=skip_dict[name]
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
-                            linestyle=next(linestyles)
-                            symbol=next(symbols)
-                            if scale=='SHE':
-                                self.plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,\
-                                    voltage_mode='previous',take_log=True,fit_tafel=fit_tafel,legend=legend,ax=ax,msize=msize,color=color,lw=lw,ls=ls,marker=marker)
-                            elif scale=='RHE':
-                                self.plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,\
-                                    voltage_mode='previous',take_log=True,convert='SHE_TO_RHE',fit_tafel=fit_tafel,legend=legend,\
-                                    msize=msize,ax=ax,color=color,lw=lw,ls=ls,marker=marker)
+                            #linestyle=next(linestyles)
+                            #symbol=next(symbols)
+                            #if scale=='SHE':
+                            #    self.plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,\
+                            #        voltage_mode='previous',take_log=True,fit_tafel=fit_tafel,legend=legend,ax=ax,msize=msize,color=color,lw=lw,ls=ls,marker=marker)
+                            #elif scale=='RHE':
+                            #    self.plot_stuff(spp,DATA,fit,0,skip,linestyle=linestyle,symbol=symbol,\
+                            #        voltage_mode='previous',take_log=True,convert='SHE_TO_RHE',fit_tafel=fit_tafel,legend=legend,\
+                            #        msize=msize,ax=ax,color=color,lw=lw,ls=ls,marker=marker)
+                            kwargs=kwargs_base.copy()
+                            if scale=='RHE':
+                                kwargs['convert']='SHE_TO_RHE'
+                            elif scale=='SHE':
+                                kwargs['convert']=None
+                            kwargs['list_of_data']=spp
+                            kwargs['voltage_mode']='previous'
+                            kwargs['DATA']=DATA
+                            kwargs['skip']=skip
+                            self.plot_stuff(**kwargs)
                         #DATA=self.DATA_cas2
                         #name=','.join(DATA.label[1].split(',')[1:])
                         #skip=skip_dict[name]
@@ -775,17 +785,17 @@ class EXPDATA():
                         skip=skip_dict[name]
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
-                            linestyle=next(linestyles)
-                            if marker is None:
-                                symbol=next(symbols)
-                            else:
-                                symbol=marker
+                            kwargs=kwargs_base.copy()
                             if scale=='RHE':
-                                self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='previous',take_log=False,linestyle=linestyle,symbol=symbol,\
-                                    convert='SHE_TO_RHE',fit_tafel=fit_tafel,legend=legend,msize=msize,color=color,lw=lw,ls=ls,marker=marker) #,skip=4) #
+                                kwargs['convert']='SHE_TO_RHE'
                             elif scale=='SHE':
-                                self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='previous',take_log=False,linestyle=linestyle,symbol=symbol,\
-                                    fit_tafel=fit_tafel,legend=legend,msize=msize,color=color,lw=lw,ls=ls,marker=marker) #,skip=4) #
+                                kwargs['convert']=None
+                            kwargs['list_of_data']=spp
+                            kwargs['voltage_mode']='previous'
+                            kwargs['DATA']=DATA
+                            kwargs['skip']=skip
+                            kwargs['take_log']=False
+                            self.plot_stuff(**kwargs)
     
                         if scale=='RHE':
                             DATA=self.DATA_hr
@@ -810,38 +820,36 @@ class EXPDATA():
                         skip=skip_dict[name]
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
-                            linestyle=next(linestyles)
-                            if marker is None:
-                                symbol=next(symbols)
-                            else:
-                                symbol=marker
+                            kwargs=kwargs_base.copy()
                             if scale=='RHE':
-                                self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='first',take_log=False,linestyle=linestyle,\
-                                    symbol=symbol,convert='SHE_TO_RHE',fit_tafel=fit_tafel,legend=legend,msize=msize,color=color,lw=lw,ls=ls,marker=marker)
+                                kwargs['convert']='SHE_TO_RHE'
                             elif scale=='SHE':
-                                self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='first',take_log=False,linestyle=linestyle,\
-                                    symbol=symbol,fit_tafel=fit_tafel,legend=legend,msize=msize,color=color,lw=lw,ls=ls,marker=marker)
+                                kwargs['convert']=None
+                            kwargs['list_of_data']=spp
+                            kwargs['voltage_mode']='first'
+                            kwargs['DATA']=DATA
+                            kwargs['skip']=skip
+                            kwargs['take_log']=False
+                            self.plot_stuff(**kwargs)
 
                     if isref('dunwell'):
                         DATA=self.DATA_du
-                        color='r'
                         name=','.join(DATA.label[1].split(',')[1:])
                         skip=skip_dict[name]
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
-                            linestyle=next(linestyles)
-                            if marker is None:
-                                symbol=next(symbols)
-                            else:
-                                symbol=marker
+                            kwargs=kwargs_base.copy()
                             if scale=='RHE':
-                                self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='first',take_log=False,linestyle=linestyle,\
-                                    symbol=symbol,fit_tafel=fit_tafel,legend=legend,msize=msize,color=color,lw=lw,ls=ls,marker=marker)
+                                kwargs['convert']=None
                             elif scale=='SHE':
-                                self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='first',take_log=False,linestyle=linestyle,\
-                                    symbol=symbol,convert='RHE_TO_SHE',fit_tafel=fit_tafel,legend=legend,msize=msize,color=color,lw=lw,ls=ls,marker=marker)
+                                kwargs['convert']='RHE_TO_SHE'
+                            kwargs['list_of_data']=spp
+                            kwargs['voltage_mode']='first'
+                            kwargs['DATA']=DATA
+                            kwargs['skip']=skip
+                            kwargs['take_log']=False
+                            self.plot_stuff(**kwargs)
                         DATA=self.DATA_du2
-                        color='r'
                         name=','.join(DATA.label[1].split(',')[1:])
                         skip=skip_dict[name]
                         spp=s2i(species,DATA,pH=cpH)
@@ -857,7 +865,6 @@ class EXPDATA():
                             elif scale=='SHE':
                                 self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='first',take_log=False,linestyle=linestyle,\
                                     symbol=symbol,convert='RHE_TO_SHE',fit_tafel=fit_tafel,legend=legend,msize=msize,color=color,lw=lw,ls=ls,marker=marker)
-                        
 
                     if isref('kanan'):
                         DATA=self.DATA_kr
@@ -881,42 +888,59 @@ class EXPDATA():
                         skip=skip_dict[name]
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
-                            linestyle=next(linestyles)
-                            if marker is None:
-                                symbol=next(symbols)
-                            else:
-                                symbol=marker
+                            kwargs=kwargs_base.copy()
                             if scale=='RHE':
-                                self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='previous',take_log=take_log,linestyle=linestyle,\
-                                    symbol=symbol,fit_tafel=fit_tafel,legend=legend,msize=msize,color=color,lw=lw,ls=ls,marker=marker)
+                                kwargs['convert']=None
                             elif scale=='SHE':
-                                self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,voltage_mode='previous',take_log=take_log,linestyle=linestyle,\
-                                    symbol=symbol,convert='RHE_TO_SHE',fit_tafel=fit_tafel,legend=legend,msize=msize,color=color,lw=lw,ls=ls,marker=marker)
-    
-    
-#        plt.xlim([-2,1])
-#        plt.ylim([-6,2])
-#        plt.show()
-    def get_color(self,species):
-        species=species.strip()
-        color=None #'k'
-        if any([species.startswith(a) for a in ['n-PrOH','C$_{2+}$']]):
-            color='lightblue'
-        elif any([species.startswith(a) for a in ['CH3CH2OH','C$_2$H$_4$','CH$_3$COO','etol','C2','EtOH','C$_{2+}$','C$_2$']]):
-            color='r'
-        elif any([species.startswith(a) for a in ['CH$_4$','C$_1$','CH4','C1']]):
-            color='orange'
-        elif any([species.startswith(a) for a in ['HCOO','HCOO-','HCOOH']]):
-            color='b'
-        elif any([species.startswith(a) for a in ['H$_2','H2']]):
-            color='k'
-        elif any([species.startswith(a) for a in ['CO2','CO$_2$']]):
-            color='darkred'
-        elif species.startswith('COOH'):
-            color='g'
-        elif species.startswith('CO'):
-            color='olive'
-        else:
-            pass
+                                kwargs['convert']='RHE_TO_SHE'
+                            kwargs['DATA']=DATA
+                            kwargs['list_of_data']=spp
+                            kwargs['voltage_mode']='previous'
+                            kwargs['skip']=skip
+                            self.plot_stuff(**kwargs)
+
+    def get_color(self,species,mode='species'):
+        """
+        mode='species':
+            define color associated with a particular species
+        mode='dataset':
+            define color for each dataset
+        """
+        if mode=='species':
+            species=species.strip()
+            color=None #'k'
+            if any([species.startswith(a) for a in ['n-PrOH','C$_{2+}$']]):
+                color='lightblue'
+            elif any([species.startswith(a) for a in ['CH3CH2OH','C$_2$H$_4$','CH$_3$COO','etol','C2','EtOH','C$_{2+}$','C$_2$']]):
+                color='r'
+            elif any([species.startswith(a) for a in ['CH$_4$','C$_1$','CH4','C1']]):
+                color='orange'
+            elif any([species.startswith(a) for a in ['HCOO','HCOO-','HCOOH']]):
+                color='b'
+            elif any([species.startswith(a) for a in ['H$_2','H2']]):
+                color='k'
+            elif any([species.startswith(a) for a in ['CO2','CO$_2$']]):
+                color='darkred'
+            elif species.startswith('COOH'):
+                color='g'
+            elif species.startswith('CO'):
+                color='olive'
+            else:
+                pass
+        elif mode=='dataset':
+            species=species.strip()
+            if 'Dunwell' in species:
+                color='C0'
+            elif 'Wuttig' in species:
+                color='C1'
+            elif 'Jaramillo' in species:
+                color='C2'
+            elif 'Hori' in species:
+                color='C3'
+            elif 'Kanan' in species:
+                color='C4'
+            else:
+                print('No color assigned for this dataset, add it in experimental.get_color')
+        print species,mode
         return color
                 #color[n]='dark red'

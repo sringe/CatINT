@@ -64,6 +64,8 @@
     <span class="s1">&#39;temperature&#39;</span><span class="p">:</span>  <span class="mi">298</span><span class="p">,</span>         <span class="c1">#K</span>
     <span class="s1">&#39;pressure&#39;</span><span class="p">:</span>     <span class="mf">1.013</span><span class="p">,</span>       <span class="c1">#bar</span>
     <span class="s1">&#39;bulk_pH&#39;</span><span class="p">:</span> <span class="n">pH</span><span class="p">,</span>
+    <span class="c1">#MASS TRANSPORT</span>
+    <span class="s1">&#39;boundary thickness&#39;</span><span class="p">:</span> <span class="mf">8.E-05</span> <span class="c1">#m</span>
     <span class="c1">#ELECTROSTATICS</span>
     <span class="s1">&#39;epsilon&#39;</span><span class="p">:</span> <span class="mf">78.36</span><span class="p">,</span>            <span class="c1">#eps_0</span>
     <span class="s1">&#39;migration&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
@@ -82,7 +84,7 @@
     <span class="p">}</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">temperature</span></code> and <code class="docutils literal notranslate"><span class="pre">pressure</span></code> are important for the finite temperature free energy corrections that are applied in <code class="docutils literal notranslate"><span class="pre">CatMAP</span></code>, but the temperature also enters the mass transport equations. The <code class="docutils literal notranslate"><span class="pre">pH</span></code> should be adjusted to the reaction conditions. <code class="docutils literal notranslate"><span class="pre">epsilon</span></code> is the bulk dielectric constant that enters the mass transport equations. <code class="docutils literal notranslate"><span class="pre">migration</span></code> turns the migrational motion of species on or off. Further, electrode and electrolyte reactions can be turned on or off. The charging of the surface is controlled via the <code class="docutils literal notranslate"><span class="pre">charging_scheme</span></code> tag. Currently, <code class="docutils literal notranslate"><span class="pre">CatINT</span></code> supports different methods to define a surface charge density - potential relation <span class="math notranslate nohighlight">\(\sigma(\phi^\mathrm{M})\)</span> which is used to evaluate potential-dependent free energies:</p>
+<p><code class="docutils literal notranslate"><span class="pre">temperature</span></code> and <code class="docutils literal notranslate"><span class="pre">pressure</span></code> are important for the finite temperature free energy corrections that are applied in <code class="docutils literal notranslate"><span class="pre">CatMAP</span></code>, but the temperature also enters the mass transport equations. The <code class="docutils literal notranslate"><span class="pre">pH</span></code> should be adjusted to the reaction conditions. <cite>boundary thickness`</cite> refers to the boundary thickness which defines the cell dimensions. <code class="docutils literal notranslate"><span class="pre">epsilon</span></code> is the bulk dielectric constant that enters the mass transport equations. <code class="docutils literal notranslate"><span class="pre">migration</span></code> turns the migrational motion of species on or off. Further, electrode and electrolyte reactions can be turned on or off. The charging of the surface is controlled via the <code class="docutils literal notranslate"><span class="pre">charging_scheme</span></code> tag. Currently, <code class="docutils literal notranslate"><span class="pre">CatINT</span></code> supports different methods to define a surface charge density - potential relation <span class="math notranslate nohighlight">\(\sigma(\phi^\mathrm{M})\)</span> which is used to evaluate potential-dependent free energies:</p>
 <ul class="simple">
 <li><code class="docutils literal notranslate"><span class="pre">'comsol'</span></code>:  Get the relation from <code class="docutils literal notranslate"><span class="pre">COMSOL</span></code> directly via the electrostatics defined there.</li>
 <li><dl class="first docutils">
@@ -130,19 +132,45 @@
 </div>
 <p>All species that are part of the electrolyte reactions are already automatically added to the species dictionary in <code class="docutils literal notranslate"><span class="pre">CatINT</span></code>. All other species have to be added here. Charges are automatically assigned according to the species name. We add potassium cations which should neutralize all anions so that the system is charge neutral in the bulk solution (boundary layer). We chose a <code class="docutils literal notranslate"><span class="pre">MPB_radius</span></code> of 3.5 Angstrom which is important since the negative electrode potental dramatically increases the potassium concentrations. We then define the CO2 concentration at the boundary layer to be given by Henry’s law which will use the pressure defined in system settings and the Henry constant in <code class="docutils literal notranslate"><span class="pre">data/henry_constants.txt</span></code> to evaluate the equilibrium CO2 concentration. The buffer component concentrations are now evaluated using the equilibrium buffer equations and must not be specified. It is also possible though to specify a buffer concentration and let <code class="docutils literal notranslate"><span class="pre">CatINT</span></code> calculate the CO2 concentration via the buffer equations. Finally, we set the concentration of hydroxide anions according to the pH (proton concentration are automatically evaluated using the water dissociation equilibrium). All concentrations are given in :math: <cite>mathrm{mol}/mathrm{m}^3</cite>.</p>
 </div>
-<div class="section" id="additional-comsol-variables">
-<h3>Additional COMSOL variables<a class="headerlink" href="#additional-comsol-variables" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="descriptors">
+<h3>Descriptors<a class="headerlink" href="#descriptors" title="Permalink to this headline">¶</a></h3>
+<p>In a common application, <code class="docutils literal notranslate"><span class="pre">CatINT</span></code> calculations should be run for a specified parameter range. In this example, we want to simulate a polarization curve, our parameter or descriptor is therefore the electrode potential, we define it like this:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">phimin</span><span class="o">=-</span><span class="mf">0.5</span>
+<span class="n">phimax</span><span class="o">=-</span><span class="mf">2.0</span>
+<span class="n">descriptors</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;phiM&#39;</span><span class="p">:</span><span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">phimin</span><span class="p">,</span><span class="n">phimax</span><span class="p">,</span><span class="o">-</span><span class="p">(</span><span class="n">phimax</span><span class="o">-</span><span class="n">phimin</span><span class="p">)</span><span class="o">/</span><span class="n">dphi</span><span class="o">+</span><span class="mi">1</span><span class="p">))}</span>
+</pre></div>
+</div>
+<p>Currently <code class="docutils literal notranslate"><span class="pre">CatINT</span></code> supports only the potential as descriptor, others could be implemented, if needed. The <code class="docutils literal notranslate"><span class="pre">CatINT</span></code> calculator iterates over the descriptor list and solves the coupled mass transport – microkinetics model at each potential.</p>
+</div>
+<div class="section" id="comsol-arguments">
+<h3>COMSOL arguments<a class="headerlink" href="#comsol-arguments" title="Permalink to this headline">¶</a></h3>
+<p>There are a couple of predefined <code class="docutils literal notranslate"><span class="pre">COMSOL</span></code> arguments which are saved in the <code class="docutils literal notranslate"><span class="pre">transport.comsol_args</span></code> dictionary. One important one is</p>
+<p><code class="docutils literal notranslate"><span class="pre">desc_method</span></code> defines if/how to treat descriptors as parameter sweeps in <code class="docutils literal notranslate"><span class="pre">COMSOL</span></code>:
+- <code class="docutils literal notranslate"><span class="pre">internal</span></code>: descriptor given here will be used for iterating internally in comsol. If this selected descriptor is not the potential this could lead to convergence problems!
+- <code class="docutils literal notranslate"><span class="pre">internal-reinit</span></code>: at each parameter set, the solutions are reinitialized (default)
+- <code class="docutils literal notranslate"><span class="pre">internal-cont</span></code>: the solution of the previous parameter set is used to initialize the next
+- <code class="docutils literal notranslate"><span class="pre">external</span></code>: parameters are updated within this comsol.py routine and comsol is recompiled and relaunched for each new parameter set.</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;par_name&#39;</span><span class="p">]</span>
+<span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;par_values&#39;</span><span class="p">]</span>
+<span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;par_method&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">par_name</span></code> selects a parameter from self.descriptors to use as parameter sweep, <code class="docutils literal notranslate"><span class="pre">par_values</span></code> lists the value of this parameter.</p>
 <p>We can define COMSOL variables and parse them to CatINT via the <code class="docutils literal notranslate"><span class="pre">comsol_args</span></code> tag:</p>
 <div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">comsol_args</span><span class="o">=</span><span class="p">{}</span>
+<span class="c1">#parameter</span>
 <span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;parameter&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">{}</span>
 <span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;parameter&#39;</span><span class="p">][</span><span class="s1">&#39;grid_factor_domain&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span><span class="s1">&#39;Grid factor&#39;</span><span class="p">]</span>
 <span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;parameter&#39;</span><span class="p">][</span><span class="s1">&#39;grid_factor_bound&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="mi">200</span><span class="p">),</span><span class="s1">&#39;Grid factor&#39;</span><span class="p">]</span>
+<span class="c1">#solver_settings</span>
 <span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;solver_settings&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">{}</span>
 <span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;solver_settings&#39;</span><span class="p">][</span><span class="s1">&#39;direct&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">{}</span>
 <span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;solver_settings&#39;</span><span class="p">][</span><span class="s1">&#39;direct&#39;</span><span class="p">][</span><span class="s1">&#39;nliniterrefine&#39;</span><span class="p">]</span><span class="o">=</span><span class="kc">True</span>
 <span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;solver_settings&#39;</span><span class="p">][</span><span class="s1">&#39;ramp&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">{}</span>
 <span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;solver_settings&#39;</span><span class="p">][</span><span class="s1">&#39;ramp&#39;</span><span class="p">][</span><span class="s1">&#39;names&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;PZC&#39;</span><span class="p">,</span><span class="s1">&#39;CS&#39;</span><span class="p">]</span>
 <span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;solver_settings&#39;</span><span class="p">][</span><span class="s1">&#39;ramp&#39;</span><span class="p">][</span><span class="s1">&#39;dramp&#39;</span><span class="p">]</span><span class="o">=</span><span class="mf">0.01</span>
+<span class="c1">#par_method</span>
+<span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;par_method&#39;</span><span class="p">]</span><span class="o">=</span><span class="s1">&#39;internal&#39;</span>
 
 <span class="c1">#SOLVER SEQUENCE</span>
 <span class="c1">#comsol_args[&#39;solver_settings&#39;][&#39;solver_sequence&#39;]=&#39;tds_elstat&#39;</span>
@@ -150,7 +178,23 @@
 <span class="c1">#comsol_args[&#39;parameter&#39;][&#39;RF&#39;]=[1,&#39;Roughness Factor&#39;]</span>
 </pre></div>
 </div>
-<p>This is in particular useful for modifying numerical solver settings. In our case, we first define a <code class="docutils literal notranslate"><span class="pre">grid_factor</span></code> which tells comsol about the minimal finite element mesh width. A higher factor means a finer mesh and the mesh can be defined for the domain and boundary separately. Parameter definitions always a list of two entries, the value parsed as a string and the name or description inside COMSOL. Some more specific numerical parameters can be edited and changed here to help convergence. In particular, the <code class="docutils literal notranslate"><span class="pre">'ramp'</span></code> flag enables to slowly ramp non-linearitis in the equations, in our case it slowly ramps up te PZC an the Helmholtz/Stern/gap capacitance which can be useful if the systems has a PZC far from the initial potential to be evaluated. A flux ramping is always applied and controlled by the <cite>‘dramp’</cite> flag which defines the interval in which the fluxes are ramped from 0 to 100 %. Additional possible settings involve the definition of solver sequences to improve convergence (e.g. first solving electrostatics only, then the coupled mass transport/electrostatic problem). Also, it is possible to define a roughness factor which multiplies all fluxes by a constant.</p>
+<p>This is in particular useful for modifying numerical solver settings. In our case, we first define a <code class="docutils literal notranslate"><span class="pre">grid_factor</span></code> which tells comsol about the minimal finite element mesh width. A higher factor means a finer mesh and the mesh can be defined for the domain and boundary separately. Parameter definitions always a list of two entries, the value parsed as a string and the name or description inside COMSOL. Some more specific numerical parameters can be edited and changed here to help convergence. In particular, the <code class="docutils literal notranslate"><span class="pre">'ramp'</span></code> flag enables to slowly ramp non-linearitis in the equations, in our case it slowly ramps up te PZC an the Helmholtz/Stern/gap capacitance which can be useful if the systems has a PZC far from the initial potential to be evaluated. A flux ramping is always applied and controlled by the <cite>‘dramp’</cite> flag which defines the interval in which the fluxes are ramped from 0 to 100 %.  Additional possible settings involve the definition of solver sequences to improve convergence (e.g. first solving electrostatics only, then the coupled mass transport/electrostatic problem). Also, it is possible to define a roughness factor which multiplies all fluxes by a constant.</p>
+<p><code class="docutils literal notranslate"><span class="pre">par_method</span></code> is an additional flag which defines how the parameter space is sampled. In case <code class="docutils literal notranslate"><span class="pre">internal</span></code> is selected, COMSOL uses internal looping over the parameter space which is given by the flux ramping. If <code class="docutils literal notranslate"><span class="pre">external</span></code> is selected instead, <code class="docutils literal notranslate"><span class="pre">COMSOL</span></code> calculations are performed for the descriptor list defined above.</p>
+</div>
+<div class="section" id="catmap-arguments">
+<h3><code class="docutils literal notranslate"><span class="pre">CatMAP</span></code> arguments<a class="headerlink" href="#catmap-arguments" title="Permalink to this headline">¶</a></h3>
+<p>Some additional arguments can be parsed to the <code class="docutils literal notranslate"><span class="pre">CatMAP</span></code> calculator:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">catmap_args</span><span class="o">=</span><span class="p">{}</span>
+<span class="c1">#CATMAP DESCRIPTOR RAMPING</span>
+<span class="n">catmap_args</span><span class="p">[</span><span class="s1">&#39;desc_method&#39;</span><span class="p">]</span><span class="o">=</span><span class="s1">&#39;automatic&#39;</span>
+<span class="c1">#catmap_args[&#39;min_desc&#39;]=0.0</span>
+<span class="n">catmap_args</span><span class="p">[</span><span class="s1">&#39;min_desc_delta&#39;</span><span class="p">]</span><span class="o">=</span><span class="mf">0.2</span>
+<span class="n">catmap_args</span><span class="p">[</span><span class="s1">&#39;max_desc_delta&#39;</span><span class="p">]</span><span class="o">=</span><span class="mf">0.2</span>
+<span class="c1">#INTERACTIONS</span>
+<span class="n">catmap_args</span><span class="p">[</span><span class="s1">&#39;n_inter&#39;</span><span class="p">]</span><span class="o">=</span><span class="s1">&#39;automatic&#39;</span>
+</pre></div>
+</div>
+<p>In a regular <code class="docutils literal notranslate"><span class="pre">CatMAP</span></code>-<code class="docutils literal notranslate"><span class="pre">COMSOL</span></code> iteration loop, a single <code class="docutils literal notranslate"><span class="pre">CatMAP</span></code> calculation is required at the descriptor value of choice. This is referred to as <code class="docutils literal notranslate"><span class="pre">desc_method='single_point'</span></code>. Sometimes, however, some potential values are hard to converge and it is better to provide <code class="docutils literal notranslate"><span class="pre">CatMAP</span></code> with a range of potentials. <code class="docutils literal notranslate"><span class="pre">CatMAP</span></code> will then try to find stable starting points and solve for all potentials and <code class="docutils literal notranslate"><span class="pre">CatINT</span></code> selects the potential that was actually needed. This happens if we choose <code class="docutils literal notranslate"><span class="pre">desc_method='automatic'</span></code>. For this case, <code class="docutils literal notranslate"><span class="pre">min_desc</span></code> specifies the minimum descriptor value in the new created list of descriptors. Alternatively, <code class="docutils literal notranslate"><span class="pre">min/max_desc_delta</span></code> can be used to create a new list of descriptors around the current descriptor value. The descriptor range can be also taken from the <code class="docutils literal notranslate"><span class="pre">CatMAP</span></code> input file (<code class="docutils literal notranslate"><span class="pre">desc_method='from_input'</span></code>).</p>
 </div>
 <div class="section" id="flux-definition">
 <h3>Flux definition<a class="headerlink" href="#flux-definition" title="Permalink to this headline">¶</a></h3>
@@ -159,8 +203,6 @@
 <span class="n">species</span><span class="p">[</span><span class="s1">&#39;CO2&#39;</span><span class="p">][</span><span class="s1">&#39;flux&#39;</span><span class="p">]</span><span class="o">=</span><span class="s1">&#39;catmap&#39;</span> <span class="c1">#CO2 consumption rate</span>
 </pre></div>
 </div>
-<p>This is the text of the section.</p>
-<p>It refers to the section itself, see <a class="reference internal" href="../topics/microkinetics/flux_definition.html#flux-definition"><span class="std std-ref">Defining fluxes</span></a>.</p>
 </div>
 </div>
 </div>
@@ -180,7 +222,9 @@
 <li><a class="reference internal" href="#electrolyte-reactions">Electrolyte Reactions</a></li>
 <li><a class="reference internal" href="#electrode-reactions">Electrode Reactions</a></li>
 <li><a class="reference internal" href="#species-definitions">Species Definitions</a></li>
-<li><a class="reference internal" href="#additional-comsol-variables">Additional COMSOL variables</a></li>
+<li><a class="reference internal" href="#descriptors">Descriptors</a></li>
+<li><a class="reference internal" href="#comsol-arguments">COMSOL arguments</a></li>
+<li><a class="reference internal" href="#catmap-arguments"><code class="docutils literal notranslate"><span class="pre">CatMAP</span></code> arguments</a></li>
 <li><a class="reference internal" href="#flux-definition">Flux definition</a></li>
 </ul>
 </li>

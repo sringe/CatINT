@@ -28,6 +28,9 @@ parser.add_argument('--scale',help='RHE (default) or SHE')
 parser.add_argument('--color',help='pH or species (default)')
 parser.add_argument('--title',help='Title of figure')
 parser.add_argument('--name',help='File name of figure')
+parser.add_argument('--fit_tafel',help='If tafel slope should be fitted to experimental data',action="store_true")
+parser.add_argument('--exp_colormode',help='colormode, either color according to species or dataset')
+parser.add_argument('--exp_add_pH',help='parse list of additional pH values for which experimental data should be plotted',nargs='+')
 parser.add_argument('--ratecontrol',help='plot also degree of rate-control',action="store_true")
 
 args = parser.parse_args()
@@ -49,6 +52,12 @@ if args.title is None:
 if args.name is None:
     args.name='catmap_fig'
 
+if args.exp_add_pH is None:
+    args.exp_add_pH=[]
+
+if args.exp_colormode is None:
+    args.exp_colormode='species'
+
 color_pH={
     '3.0':'C5',
     '6.0':'C1',
@@ -63,13 +72,12 @@ color_pH={
     '12.2':'C3',
     '13.0':'C3'}
 
-show_legend=False
+show_legend=True
 
 if args.systems is None:
     systems=['pc-Cu']
 else:
     systems=args.systems
-    args.expdata=True
 
 #first read all variables from one of the mkm files
 
@@ -230,7 +238,8 @@ all_pH=[]
 symbol_pH={}
 
 ax1=plt.subplot('211')
-ax1m=ax1.twinx()
+if args.ratecontrol:
+    ax1m=ax1.twinx()
 ax2=plt.subplot('212')
 
 colors_rc={}
@@ -308,7 +317,7 @@ for arg in args.file: #sys.argv[1:]:
                 xrc[sp2]=pdata_rc[sp][sp2][:,0]
                 yrc[sp2]=pdata_rc[sp][sp2][:,1]
         if args.color=='species':
-            color=exp.get_color(sp)
+            color=exp.get_color(sp,mode='species')
             if color is None and sp in colorlist:
                 color=colorlist[sp]
             elif color is None:
@@ -346,7 +355,7 @@ for arg in args.file: #sys.argv[1:]:
             pHtmp=pH
             pH=0
         if k==0:
-            func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,label=sp,ms=msize) #,label=arg.split('/')[-1])
+            func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,label=sp+', CatINT',ms=msize) #,label=arg.split('/')[-1])
         else:
             func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,ms=msize)
         if ratecontrol:
@@ -459,60 +468,62 @@ if args.products is not None:
     all_prods=[name_to_cm(a) for a in args.products]
 else:
     all_prods=[name_to_cm(a) for a in all_prods]
-if 'pc-Au' in systems:
-    fit_tafel=True
-else:
-    fit_tafel=False
-for pH in set(all_pH+[7.2,6.8]):
+
+for pH in set(all_pH+[float(a) for a in args.exp_add_pH]):
     if args.expdata:
         symbol=None #symbol_pH[pH]
         if args.color=='pH':
             color=color_pH[str(pH)]
         elif args.color=='species':
             color=None
-        if pH == 13:
-            #pure HER
-            exp.plot_data(reference=['jaramillo-her'],ax=ax1,species=all_prods,pH=['13.0'],\
-                system=systems,scale=args.scale,only_points=True,\
-                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
-            #HER + COR
-            exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['13.0'],\
-                system=systems,scale=args.scale,only_points=True,\
-                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
-        elif pH == 6.8 or pH == 7.0 or pH == 7.2:
-            #exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
-            #    system=systems,scale=args.scale,only_points=True,\
-            #    take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
-            only_points=True
-            fit_tafel=True
-            #wuttig
-            refs=['jaramillo'] #,'dunwell'] #,'wuttig']
-            exp.plot_data(reference=refs,ax=ax1,species=all_prods,pH=[str(pH)],\
-                system=systems,scale=args.scale,only_points=only_points,\
-                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=5,color=color,fit_tafel=fit_tafel)
-            fit_tafel=False
-#            exp.plot_data(reference=refs,ax=ax1,species=all_prods,pH=['3.0'],\
+        refs=['all']
+        exp.plot_data(reference=refs,ax=ax1,species=all_prods,pH=[pH],\
+            system=systems,scale=args.scale,only_points=True,\
+            take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color,\
+            fit_tafel=args.fit_tafel,color_mode=args.exp_colormode)
+#        if pH == 13:
+#            #pure HER
+#            exp.plot_data(reference=['jaramillo-her'],ax=ax1,species=all_prods,pH=['13.0'],\
+#                system=systems,scale=args.scale,only_points=True,\
+#                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
+#            #HER + COR
+#            exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['13.0'],\
+#                system=systems,scale=args.scale,only_points=True,\
+#                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
+#        elif pH == 6.8 or pH == 7.0 or pH == 7.2:
+#            #exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
+#            #    system=systems,scale=args.scale,only_points=True,\
+#            #    take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
+#            only_points=True
+#            fit_tafel=True
+#            #wuttig
+#            refs=['jaramillo'] #,'dunwell'] #,'wuttig']
+#            exp.plot_data(reference=refs,ax=ax1,species=all_prods,pH=[str(pH)],\
 #                system=systems,scale=args.scale,only_points=only_points,\
 #                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=5,color=color,fit_tafel=fit_tafel)
-        elif pH == 3.0: #6.8 or pH == 7.0:
-            #exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
-            #    system=systems,scale=args.scale,only_points=True,\
-            #    take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
-            exp.plot_data(reference=['jaramillo','wuttig'],ax=ax1,species=all_prods,pH=['3.0'],\
-                system=systems,scale=args.scale,only_points=True,\
-                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color,fit_tafel=fit_tafel)
-        else:
-            for i,p in enumerate(all_prods):
-                if p=='CH$_4$':
-                    all_prods[i]='C$_1$'
-                elif p=='EtOH':
-                    all_prods
-            exp.plot_data(reference=['hori'],ax=ax1,species=all_prods,pH=[str(pH)],\
-                system=systems,scale=args.scale,only_points=True,\
-                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
-            #exp.plot_data(reference=['strasser'],ax=ax1,species=all_prods,pH=[str(pH)],\
-            #    system=systems,scale=args.scale,only_points=True,\
-            #    take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
+#            fit_tafel=False
+##            exp.plot_data(reference=refs,ax=ax1,species=all_prods,pH=['3.0'],\
+##                system=systems,scale=args.scale,only_points=only_points,\
+##                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=5,color=color,fit_tafel=fit_tafel)
+#        elif pH == 3.0: #6.8 or pH == 7.0:
+#            #exp.plot_data(reference=['hori','jaramillo','wang'],ax=ax1,species=all_prods,pH=['6.8','7.0','7.2'],\
+#            #    system=systems,scale=args.scale,only_points=True,\
+#            #    take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
+#            exp.plot_data(reference=['jaramillo','wuttig'],ax=ax1,species=all_prods,pH=['3.0'],\
+#                system=systems,scale=args.scale,only_points=True,\
+#                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color,fit_tafel=fit_tafel)
+#        else:
+#            for i,p in enumerate(all_prods):
+#                if p=='CH$_4$':
+#                    all_prods[i]='C$_1$'
+#                elif p=='EtOH':
+#                    all_prods
+#            exp.plot_data(reference=['hori'],ax=ax1,species=all_prods,pH=[str(pH)],\
+#                system=systems,scale=args.scale,only_points=True,\
+#                take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
+#            #exp.plot_data(reference=['strasser'],ax=ax1,species=all_prods,pH=[str(pH)],\
+#            #    system=systems,scale=args.scale,only_points=True,\
+#            #    take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
 #ax1=plot_leis_new_data(ax1)
 ax1.set_ylim([1e-5,1e2])
 
@@ -550,23 +561,14 @@ ax1.set_ylim([1e-5,1e2])
 #print 'TESTING',pp
 #ax1.set_title(pp,fontsize=12)
 #ax1.set_title(args.title.replace('_','-').replace('*',''),fontsize=6) #[a+'\n' for a in args.title.split(';')],fontsize=6)
-ax1.set_xlim([-2.0,0.2])
-#ax2.set_xlim([-1.2,-0.4])
-ax2.set_xlim([-2.0,0.2])
-ax1.set_ylim([1e-4,1e11])
-if 'Au' in systems:
-    ax1.set_xlim([-1.9,-0.2])
-    ax2.set_xlim([-1.9,-0.2])
-    ax1.set_ylim([1e-8,1e2])
-#ax1.set_xlim([-1.4,-1.0])
-#ax2.set_xlim([-1.4,-1.0])
 if args.scale=='RHE':
     ax1.set_xlabel(r'Voltage vs. RHE (V)')
     ax2.set_xlabel(r'Voltage vs. RHE (V)')
 else:
     ax1.set_xlabel(r'Voltage vs. SHE (V)')
     ax2.set_xlabel(r'Voltage vs. SHE (V)')
-ax1m.set_ylim([-1.1,1.1])
+ax1.set_ylabel('Current Density (mV/dec)')
+ax2.set_ylabel('Coverage')
 plt.tight_layout()
 print('Saving to {}'.format(args.name+'.pdf'))
 plt.savefig(args.name+'.pdf')# ,dpi=500)

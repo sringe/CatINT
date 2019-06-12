@@ -154,7 +154,8 @@ tp=Transport(only_plot=True)
 l=len(args.prop)
 #round to divisible of 2
 l=int( 2 * round( l / 2. ))
-n_row=l/3 #int(np.ceil(np.sqrt(l)))
+#l=int(l/2.)
+n_row=int(np.ceil(np.sqrt(l)))
 if n_row==0:
     n_row=1
 n_col=l/n_row

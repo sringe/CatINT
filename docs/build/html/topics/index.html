@@ -16,8 +16,8 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Microkinetics" href="microkinetics/index.html" />
-    <link rel="prev" title="Creating the CatINT input file" href="../tutorials/catint_input.html" /> 
+    <link rel="next" title="Analysis tools" href="analysis.html" />
+    <link rel="prev" title="CO2 reduction at polycrystalline Cu" href="../tutorials/co2rr_cu_analytic/catint_input.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -26,10 +26,10 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="microkinetics/index.html" title="Microkinetics"
+          <a href="analysis.html" title="Analysis tools"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="../tutorials/catint_input.html" title="Creating the CatINT input file"
+          <a href="../tutorials/co2rr_cu_analytic/catint_input.html" title="CO2 reduction at polycrystalline Cu"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">CatINT 1.0 documentation</a> &#187;</li> 
       </ul>
@@ -44,13 +44,21 @@
 <h1>Topics<a class="headerlink" href="#topics" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="microkinetics/index.html">Microkinetics</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="microkinetics/flux_definition.html">Defining fluxes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="analysis.html">Analysis tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="analysis.html#plotting-catmap-py"><code class="docutils literal notranslate"><span class="pre">plotting_catmap.py</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="analysis.html#plotting-catint-py"><code class="docutils literal notranslate"><span class="pre">plotting_catint.py</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="mass_transport/index.html">Mass Transport</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="mass_transport/equations.html">Mass Transport – Equations and Theory</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mass_transport/comsol.html">Using <code class="docutils literal notranslate"><span class="pre">COMSOL</span></code> within CatiNT</a></li>
+<li class="toctree-l1"><a class="reference internal" href="flux_definition.html">Defining fluxes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="flux_definition.html#fixed-species-fluxes">Fixed species fluxes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flux_definition.html#rate-equations">Rate-Equations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flux_definition.html#catmap">CatMAP</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="comsol.html">Using <code class="docutils literal notranslate"><span class="pre">COMSOL</span></code> within CatiNT</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="comsol.html#general-comsol-functions">General <code class="docutils literal notranslate"><span class="pre">COMSOL</span></code> Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="comsol.html#species-dependent-variables">Species-Dependent Variables:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="comsol.html#global-variables">Global Variables</a></li>
 </ul>
 </li>
 </ul>
@@ -64,11 +72,11 @@
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="../tutorials/catint_input.html"
-                        title="previous chapter">Creating the CatINT input file</a></p>
+  <p class="topless"><a href="../tutorials/co2rr_cu_analytic/catint_input.html"
+                        title="previous chapter">CO2 reduction at polycrystalline Cu</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="microkinetics/index.html"
-                        title="next chapter">Microkinetics</a></p>
+  <p class="topless"><a href="analysis.html"
+                        title="next chapter">Analysis tools</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -99,10 +107,10 @@
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="microkinetics/index.html" title="Microkinetics"
+          <a href="analysis.html" title="Analysis tools"
              >next</a> |</li>
         <li class="right" >
-          <a href="../tutorials/catint_input.html" title="Creating the CatINT input file"
+          <a href="../tutorials/co2rr_cu_analytic/catint_input.html" title="CO2 reduction at polycrystalline Cu"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">CatINT 1.0 documentation</a> &#187;</li> 
       </ul>
