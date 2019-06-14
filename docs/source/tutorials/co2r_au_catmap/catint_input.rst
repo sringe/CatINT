@@ -11,7 +11,7 @@ We start with the creation of the ``CatINT`` python input file which is containe
     import numpy as np
     from catint.transport import Transport
     from catint.calculator import Calculator
-    from units import unit_NA
+    from catint.units import unit_NA
 
 ``CatINT`` comes with it's own units package.
 
@@ -124,8 +124,9 @@ There are a couple of predefined ``COMSOL`` arguments which are saved in the ``t
     comsol_args={}
     #parameter
     comsol_args['parameter']={}   
-    comsol_args['parameter']['grid_factor_domain']=[str(100),'Grid factor']
-    comsol_args['parameter']['grid_factor_bound']=[str(200),'Grid factor']
+    comsol_args['parameter']['grid_factor']=[str(100),'Grid factor']
+    comsol_args['parameter']['grid_factor_domain']=[str(100),'Grid factor for domain']
+    comsol_args['parameter']['grid_factor_bound']=[str(200),'Grid factor for boundary']
     #solver_settings
     comsol_args['solver_settings']={}
     comsol_args['solver_settings']['direct']={}

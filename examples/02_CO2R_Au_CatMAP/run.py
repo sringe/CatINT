@@ -1,7 +1,7 @@
 import numpy as np
 from catint.transport import Transport
 from catint.calculator import Calculator
-from units import unit_NA
+from catint.units import unit_NA
 
 pH = 6.8
 system=\
@@ -48,6 +48,7 @@ descriptors={'phiM':list(np.linspace(phimin,phimax,-(phimax-phimin)/dphi+1))}
 comsol_args={}
 #parameter
 comsol_args['parameter']={}   
+comsol_args['parameter']['grid_factor']=[str(100),'Grid factor']
 comsol_args['parameter']['grid_factor_domain']=[str(100),'Grid factor']
 comsol_args['parameter']['grid_factor_bound']=[str(200),'Grid factor']
 #solver_settings
