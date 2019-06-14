@@ -44,7 +44,7 @@ First, we define the system reaction conditions:
         'Stern capacitance': 20.,    #micro F/cm2
         #KINETICS
         'potential drop':'Stern',
-        'active site density': 9.61-05/unit_NA*(1e10)**2, #mol sites/m^2
+        'active site density': 9.61e-05/unit_NA*(1e10)**2, #mol sites/m^2
         #INITIALIZATION
        # 'init_folder':init_folder,
         }

@@ -453,6 +453,7 @@ class Model():
             self.s+='    model.sol("sol'+str(i)+'").feature("v1").set("cname", new String[]{\"'+par_name+'\"});\n'
             self.s+='    model.sol("sol'+str(i)+'").feature("v1").set("clist", new String[]{\"'+par_values_str+'\"});\n'
 
+
         def run(self,sol_index):
             self.s+='    model.sol("sol'+str(sol_index)+'").runAll();\n'
 
@@ -785,7 +786,7 @@ class Model():
                                 #continue
                             else:
                                 k2=species_names.index(reactant2)
-                                prod+="cp"+str(k2+1)+"*"
+                                prod+="ap"+str(k2+1)+"*"
                         rates[k]+="-"+prod+"k"+str(jj)+"f"
                         prod=""
                         for reactant2 in reaction['reaction'][1]:
@@ -795,7 +796,7 @@ class Model():
                                 #continue
                             else:
                                 k2=species_names.index(reactant2)
-                                prod+="cp"+str(k2+1)+"*"
+                                prod+="ap"+str(k2+1)+"*"
                         rates[k]+="+"+prod+"k"+str(jj)+"r"
                     #rates of products
                     for reactant in reaction['reaction'][1]:
@@ -813,7 +814,7 @@ class Model():
                                 #continue
                             else:
                                 k2=species_names.index(reactant2)
-                                prod+="cp"+str(k2+1)+"*"
+                                prod+="ap"+str(k2+1)+"*"
                         rates[k]+="+"+prod+"k"+str(jj)+"f"
                         prod=""
                         for reactant2 in reaction['reaction'][1]:
@@ -822,7 +823,7 @@ class Model():
                                 #continue
                             else:
                                 k2=species_names.index(reactant2)
-                                prod+="cp"+str(k2+1)+"*"
+                                prod+="ap"+str(k2+1)+"*"
                         rates[k]+="-"+prod+"k"+str(jj)+"r"
 
                 rates_new=[]
@@ -1019,10 +1020,14 @@ class Model():
                             self.set('tds.u'+str(inx),'-D'+str(inx)+'*phi_zero_grad/(1-phi_zero)','Ion size contribution to ion flux')
                         else:
                             self.set('tds.u'+str(inx),'0.0','Ion size contribution to ion flux')
+                        self.set('ap'+str(inx),'cp'+str(inx)+'*gamma','Activity of species {}'.format(sp))
                     phi_zero+=')'
                     phi_zero_grad+=')'
                     self.set("phi_zero",phi_zero,'Volume fraction of space occupied by ions in MPB Model')
                     self.set("phi_zero_grad",phi_zero_grad,'Gradient of the Volume fraction of space occupied by ions in MPB Model')
+                    self.set('gamma','1./(1.-phi_zero)','Activitity Coefficient')
+                else:
+                    self.set('gamma','1','Activity Coefficient')
                 ##REACTION RATES
                 i=0
                 if self.tp.use_electrolyte_reactions: 

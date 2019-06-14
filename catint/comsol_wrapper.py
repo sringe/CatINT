@@ -28,21 +28,25 @@ class Comsol():
         if not hasattr(self,'exe'):
             if 'bin_path' in self.tp.comsol_args:
                 exe_path=self.tp.comsol_args['bin_path']
+                self.version='??'
             else:
                 #try to find executable
-                s=check_output('locate Multiphysics/bin/comsol',shell=True).split('\n')
-                sr=[ss for ss in s if ss.endswith('comsol')]
-                if len(sr)==1:
-                    exe_path=sr[0]
-                elif len(sr)==0:
-                    self.tp.logger.error('|    | CS | Could not find binary for COMSOL, specify via comsol_args[\'bin_path\']')
-                    sys.exit()
-                elif len(sr)>1:
-                    self.tp.logger.error('|    | CS | More than one binary found for COMSOL, specify via comsol_args[\'bin_path\']')
-                    sys.exit()
+                try:
+                    s=check_output('locate Multiphysics/bin/comsol',shell=True).split('\n')
+                    sr=[ss for ss in s if ss.endswith('comsol')]
+                    if len(sr)==1:
+                        exe_path=sr[0]
+                    elif len(sr)==0:
+                        self.tp.logger.error('|    | CS | Could not find binary for COMSOL, specify via comsol_args[\'bin_path\']')
+                        sys.exit()
+                    elif len(sr)>1:
+                        self.tp.logger.error('|    | CS | More than one binary found for COMSOL, specify via comsol_args[\'bin_path\']')
+                        sys.exit()
+                    self.version=re.findall('COMSOL([0-9a-zA-Z.]+)',exe_path)[0]
+                except:
+                    self.tp.logger.error('|    | CS | Could not find binary for COMSOL, possibly locate did not work or try recreating your locate database. specify via comsol_args[\'bin_path\']')
             self.exe=exe_path
             #get COMSOL version, /Applications/COMSOL53a/Multiphysics/bin/comsol
-            self.version=re.findall('COMSOL([0-9a-zA-Z.]+)',self.exe)[0]
             self.tp.logger.info('|    | CS | Found COMSOL at {}'.format(self.exe))
             self.tp.logger.info('|    | CS | Running COMSOL v{}'.format(self.version))
 #        elif os.path.exists('/share/PI/suncat/COMSOL/comsol53a/multiphysics/bin/comsol'):
