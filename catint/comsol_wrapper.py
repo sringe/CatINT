@@ -9,6 +9,7 @@ from copy import deepcopy
 from comsol_model import Model
 from comsol_reader import Reader
 from shutil import rmtree
+from subprocess import check_output
 import datetime
 import time
 
@@ -23,16 +24,34 @@ class Comsol():
             self.tp=transport #transport object
         ##COMSOL EXE
 
-        if 'bin_path' in self.tp.comsol_args:
-            exe_path=self.tp.comsol_args['bin_path']
-        elif os.path.exists('/share/PI/suncat/COMSOL/comsol53a/multiphysics/bin/comsol'):
-            exe_path='/share/PI/suncat/COMSOL/comsol53a/multiphysics/bin/comsol'
-        else:
-            exe_path='/Applications/COMSOL53a/Multiphysics/bin/comsol'
+
+        if not hasattr(self,'exe'):
+            if 'bin_path' in self.tp.comsol_args:
+                exe_path=self.tp.comsol_args['bin_path']
+            else:
+                #try to find executable
+                s=check_output('locate Multiphysics/bin/comsol',shell=True).split('\n')
+                sr=[ss for ss in s if ss.endswith('comsol')]
+                if len(sr)==1:
+                    exe_path=sr[0]
+                elif len(sr)==0:
+                    self.tp.logger.error('|    | CS | Could not find binary for COMSOL, specify via comsol_args[\'bin_path\']')
+                    sys.exit()
+                elif len(sr)>1:
+                    self.tp.logger.error('|    | CS | More than one binary found for COMSOL, specify via comsol_args[\'bin_path\']')
+                    sys.exit()
+            self.exe=exe_path
+            #get COMSOL version, /Applications/COMSOL53a/Multiphysics/bin/comsol
+            self.version=re.findall('COMSOL([0-9a-zA-Z.]+)',self.exe)[0]
+            self.tp.logger.info('|    | CS | Found COMSOL at {}'.format(self.exe))
+            self.tp.logger.info('|    | CS | Running COMSOL v{}'.format(self.version))
+#        elif os.path.exists('/share/PI/suncat/COMSOL/comsol53a/multiphysics/bin/comsol'):
+#            exe_path='/share/PI/suncat/COMSOL/comsol53a/multiphysics/bin/comsol'
+#        else:
+#            exe_path='/Applications/COMSOL53a/Multiphysics/bin/comsol'
         if not os.path.exists(exe_path):
             self.tp.logger.error('|    | CS | Binary path {} of COMSOL does not exist'.format(exe_path))
         self.tp.path=path
-        self.exe=exe_path
         root=os.getcwd()
         ##RESULTS FOLDER
         self.results_folder_base=root+'/'+self.tp.outputfoldername+'/comsol_results_id'+str(self.tp.mpi_rank).zfill(3)
@@ -98,8 +117,9 @@ class Comsol():
         else:
             self.tp.logger.info('|    | CS | Starting COMSOL.')
 
+
         #recover and continue restart the run, if it failed before starting from the current result
-        call(self.exe+" batch -recoverydir $HOME/.comsol/v53a/recoveries -inputfile "+os.getcwd()+'/'+class_name+' | tee '+self.results_folder+'/comsol_run.out',shell=True)
+        call(self.exe+" batch -recoverydir $HOME/.comsol/v"+self.version+"/recoveries -inputfile "+os.getcwd()+'/'+class_name+' | tee '+self.results_folder+'/comsol_run.out',shell=True)
 
         os.chdir(root)
 
