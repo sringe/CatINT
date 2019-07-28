@@ -83,6 +83,13 @@ class EXPDATA():
 
         self.DATA_cas=self.get_data('CO2R_Au_carlos_SHE.csv')
         self.DATA_cas2=self.get_data('CO2R_Au_carlos_SHE_pH3.csv')
+        self.DATA_snhu=self.get_data('CO2R_Sn_Hu.csv')
+        self.DATA_miyoung=self.get_data('CO2R_Miyoung.csv')
+
+        os.chdir('/'.join(os.path.realpath(__file__).split('/')[:-1])+'/../data/NOR')
+        self.DATA_norchoi=self.get_data('NOR_choi.csv')
+
+
 #        self.DATA_lr2=self.get_data('COR_lei_high_surface_x380_rhe.csv')
         os.chdir(root)
         
@@ -132,6 +139,7 @@ class EXPDATA():
         fs=assign('fs')
         ls=assign('ls')
         marker=assign('marker')
+        print 'cmarker',marker
         color_mode=assign('color_mode')
 
         n=0
@@ -146,8 +154,6 @@ class EXPDATA():
         filled=cycle(['filled','none'])
         symbols=self.symbols
         for j in list_of_data: #[1,3,5,7,9,11,13]:
-            if symbol is not None: #and j==0:
-                cmarker=symbol
             #elif symbol is not None:
             #    cmarker=next(symbols)
             voltage=[]
@@ -190,11 +196,10 @@ class EXPDATA():
                 pH=7.0
                 print('No pH found to convert scales!! Check CSV data labels if pH is included')
                 sys.exit()
-            if symbol is None:
-                cmarker=self.marker[n]
-            if marker is not None:
-                cmarker=marker
-            cmarker=next(markers)
+            print 'marker',self.marker
+            cmarker=marker
+            if cmarker is None:
+                cmarker=next(markers)
             if convert is not None:
                 if convert.split('_')[0]=='RHE':
                     shift=-0.0592*pH
@@ -220,7 +225,6 @@ class EXPDATA():
 #                plt.show()
 #                sys.exit()
             if fit_tafel:
-                fit=1
                 linestyle=':'
             if fit>0:
                 if len(voltage)>1:
@@ -330,7 +334,7 @@ class EXPDATA():
         legend: if true, plot legend
         msize: force size of markers
         color: force color of plot (otherwise colored by product)
-        color_mode: either color the data by species ('species') or data set ('dataset')
+        color_mode: either color the data by species ('species') or research group ('group') or metal surface ('surface')
         """
         global voltage_all
         global current_all
@@ -351,9 +355,11 @@ class EXPDATA():
         c1_list=['CH$_4$','MeOH','CH$_3$OH'] #,'HCOO','MeOH','CH$_3$OH'] #,'C$_1$']
         c2_list=['C$_2$H$_4$','CH$_3$COO','EtOH','CH$_2$CH$_2$','C$_2$H$_6$','MeCHO','GlycAld','AcetAld','EtGlyci']
         c2p_list=c2_list+['n-PrOH','PrOH','AllylAlc','Acetone']
-        more_prods=['CO','H$_2$']
+        more_prods=['CO','H$_2$','HCOO','HCOO-','Formate']
+
+        nor_prods=['NH$_2$OH','N$_2$O','NH$_3$']
         #contains all products
-        all_prods=c1_list+c2_list+c2p_list+more_prods
+        all_prods=c1_list+c2_list+c2p_list+more_prods+nor_prods
 
         species_reduced=[]
         for sp in species:
@@ -455,10 +461,10 @@ class EXPDATA():
         
     
     #    data_labels=[','.join(a.label[1].split(',')[1:]) for a in [self.DATA_ss_01,self.DATA_ss_005,self.DATA_ss_02,self.DATA_ss_005_FE,self.DATA_ss_01_FE,self.DATA_ss_02_FE,self.DATA_jr,self.DATA_kr,self.DATA_lr,self.DATA_h2s,self.DATA_hr,self.DATA_hs,self.DATA_]]
-        data_labels=[','.join(a.label[1].split(',')[1:]) for a in [self.DATA_ss_01,self.DATA_ss_005,self.DATA_ss_02,self.DATA_ss_005_FE,self.DATA_ss_01_FE,self.DATA_ss_02_FE,self.DATA_jr,self.DATA_jr_NF,self.DATA_jr_NC,self.DATA_kr,self.DATA_kau,self.DATA_lr,self.DATA_lr_NF,self.DATA_lr_HER,self.DATA_h2s,self.DATA_hau,self.DATA_hr,self.DATA_hs,self.DATA_wr_NW,self.DATA_wr_NW_all,self.DATA_wu,self.DATA_du,self.DATA_du2,self.DATA_cas,self.DATA_cas2]]
+        data_labels=[','.join(a.label[1].split(',')[1:]) for a in [self.DATA_ss_01,self.DATA_ss_005,self.DATA_ss_02,self.DATA_ss_005_FE,self.DATA_ss_01_FE,self.DATA_ss_02_FE,self.DATA_jr,self.DATA_jr_NF,self.DATA_jr_NC,self.DATA_kr,self.DATA_kau,self.DATA_lr,self.DATA_lr_NF,self.DATA_lr_HER,self.DATA_h2s,self.DATA_hau,self.DATA_hr,self.DATA_hs,self.DATA_wr_NW,self.DATA_wr_NW_all,self.DATA_wu,self.DATA_du,self.DATA_du2,self.DATA_cas,self.DATA_cas2,self.DATA_norchoi,self.DATA_snhu,self.DATA_miyoung]]
 
         #basic settings applied to each experimental data set for plotting
-        kwargs_base={'ax':ax,'take_log':take_log,'fit_tafel':fit_tafel,'legend':legend,'msize':msize,'lw':lw,'ls':ls,'marker':marker,'joinlines':0,'color_mode':color_mode}
+        kwargs_base={'ax':ax,'take_log':take_log,'fit_tafel':fit_tafel,'legend':legend,'msize':msize,'lw':lw,'ls':ls,'marker':marker,'joinlines':0,'color_mode':color_mode,'fit':fit}
 
         for cpH in pH:
             skip_dict={}
@@ -494,7 +500,7 @@ class EXPDATA():
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
                             linestyle=next(linestyles)
-                            if color_mode=='dataset':
+                            if color_mode=='group':
                                 color=next(colors)
                             if marker is None:
                                 symbol=next(symbols)
@@ -832,6 +838,61 @@ class EXPDATA():
                             kwargs['take_log']=False
                             self.plot_stuff(**kwargs)
 
+    
+                    if isref('choi'):
+                        DATA=self.DATA_norchoi
+                        name=','.join(DATA.label[1].split(',')[1:])
+                        skip=skip_dict[name]
+                        spp=s2i(species,DATA,pH=cpH)
+                        if len(spp)>0:
+                            kwargs=kwargs_base.copy()
+                            if scale=='RHE':
+                                kwargs['convert']=None
+                            elif scale=='SHE':
+                                kwargs['convert']='RHE_TO_SHE'
+                            kwargs['list_of_data']=spp
+                            kwargs['voltage_mode']='first'
+                            kwargs['DATA']=DATA
+                            kwargs['skip']=skip
+                            kwargs['take_log']=True
+                            self.plot_stuff(**kwargs)
+
+                    if isref('hu'):
+                        DATA=self.DATA_snhu
+                        name=','.join(DATA.label[1].split(',')[1:])
+                        skip=skip_dict[name]
+                        spp=s2i(species,DATA,pH=cpH)
+                        if len(spp)>0:
+                            kwargs=kwargs_base.copy()
+                            if scale=='RHE':
+                                kwargs['convert']=None
+                            elif scale=='SHE':
+                                kwargs['convert']='RHE_TO_SHE'
+                            kwargs['list_of_data']=spp
+                            kwargs['voltage_mode']='first'
+                            kwargs['DATA']=DATA
+                            kwargs['skip']=skip
+                            kwargs['take_log']=True
+                            self.plot_stuff(**kwargs)
+
+                    if isref('miyoung'):
+                        DATA=self.DATA_miyoung
+                        name=','.join(DATA.label[1].split(',')[1:])
+                        skip=skip_dict[name]
+                        spp=s2i(species,DATA,pH=cpH)
+                        if len(spp)>0:
+                            kwargs=kwargs_base.copy()
+                            if scale=='RHE':
+                                kwargs['convert']='SHE_TO_RHE'
+                            elif scale=='SHE':
+                                kwargs['convert']=None
+                            kwargs['list_of_data']=spp
+                            kwargs['voltage_mode']='previous'
+                            kwargs['DATA']=DATA
+                            kwargs['skip']=skip
+                            kwargs['take_log']=False
+                            self.plot_stuff(**kwargs)
+
                     if isref('dunwell'):
                         DATA=self.DATA_du
                         name=','.join(DATA.label[1].split(',')[1:])
@@ -903,19 +964,21 @@ class EXPDATA():
         """
         mode='species':
             define color associated with a particular species
-        mode='dataset':
-            define color for each dataset
+        mode='group':
+            define color for each research group dataset
+        mode='surface':
+            define color for each investigated surface/catalyst/electrode
         """
         if mode=='species':
             species=species.strip()
             color=None #'k'
             if any([species.startswith(a) for a in ['n-PrOH','C$_{2+}$']]):
                 color='lightblue'
-            elif any([species.startswith(a) for a in ['CH3CH2OH','C$_2$H$_4$','CH$_3$COO','etol','C2','EtOH','C$_{2+}$','C$_2$']]):
+            elif any([species.startswith(a) for a in ['CH3CH2OH','C$_2$H$_4$','CH$_3$COO','etol','C2','EtOH','C$_{2+}$','C$_2$','NH$_2$OH','NH2OH']]):
                 color='r'
-            elif any([species.startswith(a) for a in ['CH$_4$','C$_1$','CH4','C1']]):
+            elif any([species.startswith(a) for a in ['CH$_4$','C$_1$','CH4','C1','N$_2$O','N2O']]):
                 color='orange'
-            elif any([species.startswith(a) for a in ['HCOO','HCOO-','HCOOH']]):
+            elif any([species.startswith(a) for a in ['HCOO','HCOO-','HCOOH','Formate',"NH$_3$",'NH3']]):
                 color='b'
             elif any([species.startswith(a) for a in ['H$_2','H2']]):
                 color='k'
@@ -927,7 +990,26 @@ class EXPDATA():
                 color='olive'
             else:
                 pass
-        elif mode=='dataset':
+        elif mode=='surface':
+            species=species.strip()
+            if 'SnO/C' in species:
+                color='C0'
+            elif 'SnO2/C' in species:
+                color='C1'
+            elif 'SnO-I/C' in species:
+                color='C2'
+            elif 'Sn/C' in species:
+                color='C3'
+            elif 'pc-Au' in species:
+                color='C4'
+            elif 'pc-Ag' in species:
+                color='C5'
+            elif 'pc-Cu' in species:
+                color='C6'
+            else:
+                print('No color assigned for this surface, add it in experimental.get_color')
+                sys.exit
+        elif mode=='group':
             species=species.strip()
             if 'Dunwell' in species:
                 color='C0'
@@ -939,8 +1021,11 @@ class EXPDATA():
                 color='C3'
             elif 'Kanan' in species:
                 color='C4'
+            elif 'Hu' in species:
+                color='C5'
             else:
-                print('No color assigned for this dataset, add it in experimental.get_color')
+                print('No color assigned for this research group, add it in experimental.get_color')
+                sys.exit
         print species,mode
         return color
                 #color[n]='dark red'

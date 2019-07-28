@@ -726,7 +726,10 @@ class Transport(object):
                     self.species[unknowns[i]]['bulk_concentration'] = a[i]
 
         #add the reactions which are not needed for initializing bulk concentrations but only for the dynamics
-        electrolyte_reactions.append(additional_electrolyte_reactions)
+        try:
+            electrolyte_reactions.append(additional_electrolyte_reactions)
+        except:
+            pass
 
         #finally add the remaining concentration for which charge neutrality was requested:
         charge_neutrality=False
