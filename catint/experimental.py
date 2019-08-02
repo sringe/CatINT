@@ -86,6 +86,8 @@ class EXPDATA():
         self.DATA_snhu=self.get_data('CO2R_Sn_Hu.csv')
         self.DATA_miyoung=self.get_data('CO2R_Miyoung.csv')
 
+        self.DATA_bell=self.get_data('CO2R_Ag_Ezra.csv')
+
         os.chdir('/'.join(os.path.realpath(__file__).split('/')[:-1])+'/../data/NOR')
         self.DATA_norchoi=self.get_data('NOR_choi.csv')
 
@@ -461,7 +463,7 @@ class EXPDATA():
         
     
     #    data_labels=[','.join(a.label[1].split(',')[1:]) for a in [self.DATA_ss_01,self.DATA_ss_005,self.DATA_ss_02,self.DATA_ss_005_FE,self.DATA_ss_01_FE,self.DATA_ss_02_FE,self.DATA_jr,self.DATA_kr,self.DATA_lr,self.DATA_h2s,self.DATA_hr,self.DATA_hs,self.DATA_]]
-        data_labels=[','.join(a.label[1].split(',')[1:]) for a in [self.DATA_ss_01,self.DATA_ss_005,self.DATA_ss_02,self.DATA_ss_005_FE,self.DATA_ss_01_FE,self.DATA_ss_02_FE,self.DATA_jr,self.DATA_jr_NF,self.DATA_jr_NC,self.DATA_kr,self.DATA_kau,self.DATA_lr,self.DATA_lr_NF,self.DATA_lr_HER,self.DATA_h2s,self.DATA_hau,self.DATA_hr,self.DATA_hs,self.DATA_wr_NW,self.DATA_wr_NW_all,self.DATA_wu,self.DATA_du,self.DATA_du2,self.DATA_cas,self.DATA_cas2,self.DATA_norchoi,self.DATA_snhu,self.DATA_miyoung]]
+        data_labels=[','.join(a.label[1].split(',')[1:]) for a in [self.DATA_ss_01,self.DATA_ss_005,self.DATA_ss_02,self.DATA_ss_005_FE,self.DATA_ss_01_FE,self.DATA_ss_02_FE,self.DATA_jr,self.DATA_jr_NF,self.DATA_jr_NC,self.DATA_kr,self.DATA_kau,self.DATA_lr,self.DATA_lr_NF,self.DATA_lr_HER,self.DATA_h2s,self.DATA_hau,self.DATA_hr,self.DATA_hs,self.DATA_wr_NW,self.DATA_wr_NW_all,self.DATA_wu,self.DATA_du,self.DATA_du2,self.DATA_cas,self.DATA_cas2,self.DATA_norchoi,self.DATA_snhu,self.DATA_miyoung,self.DATA_bell]]
 
         #basic settings applied to each experimental data set for plotting
         kwargs_base={'ax':ax,'take_log':take_log,'fit_tafel':fit_tafel,'legend':legend,'msize':msize,'lw':lw,'ls':ls,'marker':marker,'joinlines':0,'color_mode':color_mode,'fit':fit}
@@ -893,6 +895,24 @@ class EXPDATA():
                             kwargs['take_log']=False
                             self.plot_stuff(**kwargs)
 
+                    if isref('bell'):
+                        DATA=self.DATA_bell
+                        name=','.join(DATA.label[1].split(',')[1:])
+                        skip=skip_dict[name]
+                        spp=s2i(species,DATA,pH=cpH)
+                        if len(spp)>0:
+                            kwargs=kwargs_base.copy()
+                            if scale=='RHE':
+                                kwargs['convert']='SHE_TO_RHE'
+                            elif scale=='SHE':
+                                kwargs['convert']=None
+                            kwargs['list_of_data']=spp
+                            kwargs['voltage_mode']='previous'
+                            kwargs['DATA']=DATA
+                            kwargs['skip']=skip
+                            kwargs['take_log']=False
+                            self.plot_stuff(**kwargs)
+
                     if isref('dunwell'):
                         DATA=self.DATA_du
                         name=','.join(DATA.label[1].split(',')[1:])
@@ -1006,6 +1026,8 @@ class EXPDATA():
                 color='C5'
             elif 'pc-Cu' in species:
                 color='C6'
+            elif 'Ag' in species:
+                color='C7'
             else:
                 print('No color assigned for this surface, add it in experimental.get_color')
                 sys.exit
@@ -1023,6 +1045,8 @@ class EXPDATA():
                 color='C4'
             elif 'Hu' in species:
                 color='C5'
+            elif 'Bell' in species:
+                color='C6'
             else:
                 print('No color assigned for this research group, add it in experimental.get_color')
                 sys.exit

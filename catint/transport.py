@@ -40,9 +40,10 @@ class Transport(object):
     def __init__(self, species=None,electrode_reactions=None,electrolyte_reactions=None,\
             system=None,pb_bound=None,nx=100,\
             descriptors=None,model_name=None,\
-            comsol_args={},catmap_args={},only_plot=False):
+            comsol_args={},catmap_args={},only_plot=False,resultsdir=None):
         """
         only_plot   only initialize transport without creating folders
+        resultsdir     working directory where to save all outputs
         """
         if only_plot:
             return
@@ -71,19 +72,28 @@ class Transport(object):
             self.model_name='catint'
         else:
             self.model_name=model_name
-        self.outputfoldername=self.model_name+'_results' #folder where all results will be saved with the self.save function
+        root=os.getcwd()
+        if resultsdir is None:
+            resultsdir=root
+        if not os.path.exists(resultsdir):
+            os.makedirs(resultsdir)
+        self.outputfoldername=resultsdir+'/'+self.model_name+'_results'
+
         self.inputfilename=sys.argv[0] #the input file
 
         if rank==0:
             if not os.path.exists(self.outputfoldername):
                 os.makedirs(self.outputfoldername)
             else:
-                existing_files=sorted([f for f in os.listdir('.') if re.search(self.outputfoldername+'_[0-9]+', f)])
+                print 'list of dirs',os.listdir(resultsdir)
+                existing_files=sorted([f for f in os.listdir(resultsdir) if re.search(self.model_name+'_results_[0-9]+', f)])
+                print existing_files,self.model_name+'_[0-9]+'
                 if len(existing_files)>0: #self.outputfoldername.split('_')[-1].isdigit():
                     number=int(existing_files[-1].split('_')[-1])+1
                 else:
                     number=2
                 self.outputfoldername='_'.join(sum([[self.outputfoldername],[str(number).zfill(4)]],[]))
+                print 'makeing dir',self.outputfoldername
                 os.makedirs(self.outputfoldername)
             self.logfilename=self.outputfoldername+'/transport.log' # the log file
         else:

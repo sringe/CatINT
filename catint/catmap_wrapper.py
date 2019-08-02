@@ -118,7 +118,7 @@ class CatMAP():
 
         #go to output folder and run catmap there
         root=os.getcwd()
-        os.chdir(root+'/'+self.input_folder)
+        os.chdir(self.input_folder)
 
         #setting up the mkm files
         mkm_template_file=root+'/'+self.model_name+'_template.mkm'
