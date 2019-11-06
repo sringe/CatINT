@@ -47,7 +47,7 @@ ma.include_labels = True
 ma.label_args['size'] = 12
 ma.pressure_correction = False
 ma.coverage_correction = False #True
-fig = ma.plot(save=False, plot_variants = [-0.0592*6.8],method=2)
+fig = ma.plot(save=False, plot_variants = [-0.5],method=2)
 ax = fig.add_subplot(111)
 #ax.set_ylim([-0.5,2.5])
 fig.savefig('FED'+j+'.png')

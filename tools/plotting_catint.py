@@ -229,7 +229,7 @@ def settings(ax,prop,d_sel):
         ylabel=r'$E_{\mathrm{Stern},x}$ (V/\AA)'
     elif prop=='surface_potential':
         xlabel='Voltage vs. '+args.scale+' (V)'
-        ylabel=r'$\phi^\ddagger$ (V)'
+        ylabel=r'phidg (V)'
     elif prop=='surface_charge_density':
         xlabel='Voltage vs. '+args.scale+' (V)'
         ylabel=r'$\sigma$ ($\mu$C/cm$^2$)'

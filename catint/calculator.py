@@ -419,15 +419,17 @@ class Calculator():
                 for educt in self.tp.electrode_reactions[name]['reaction'][0]:
                     if educt in self.tp.system['exclude species'] and educt not in ['H+','OH-']:
                         continue
-                    sign=self.tp.species[educt]['flux']/abs(self.tp.species[educt]['flux'])
-                    if sign!=-1:
-                        error=True
+                    if self.tp.species[educt]['flux']!=0.0:
+                        sign=self.tp.species[educt]['flux']/abs(self.tp.species[educt]['flux'])
+                        if sign!=-1:
+                            error=True
                 for prod in self.tp.electrode_reactions[name]['reaction'][1]:
                     if prod in self.tp.system['exclude species'] and prod not in ['H+','OH-']:
                         continue
-                    sign=self.tp.species[prod]['flux']/abs(self.tp.species[prod]['flux'])
-                    if sign!=1:
-                        error=True
+                    if self.tp.species[prod]['flux']>0.0:
+                        sign=self.tp.species[prod]['flux']/abs(self.tp.species[prod]['flux'])
+                        if sign!=1:
+                            error=True
             return error
         def change_flux_sign():
             done=[]

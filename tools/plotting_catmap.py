@@ -58,6 +58,10 @@ if args.exp_add_pH is None:
 if args.exp_colormode is None:
     args.exp_colormode='species'
 
+
+#if args.products is None:
+#    args.products='all'
+
 color_pH={
     '3.0':'C5',
     '6.0':'C1',
@@ -114,7 +118,6 @@ symbols={
         }
 
 
-products=['CO','CH4','CH3CH2OH','H2','HCOOH']
 
 def plot_leis_new_data(ax):
     #data=np.loadtxt('her_pcCu_lei.csv')
@@ -287,7 +290,10 @@ for arg in args.file: #sys.argv[1:]:
     all_pH.append(pH)
     symbol_pH[pH]=symbol
     if color_pH is not None:
-        color=color_pH[str(pH)]
+        try:
+            color=color_pH[str(pH)]
+        except:
+            color='k'
 #    if args.scale=='SHE':
 #        pH=0.
 
@@ -305,8 +311,9 @@ for arg in args.file: #sys.argv[1:]:
     if args.elemrates:
         pdata_elem,label_elem=read_data(glob(results_folder+'/*/jelem*'),header=True,dtype='elem')
     cdata,dummy=read_data(glob(results_folder+'/*/cov*'),dtype='cov')
+    cov_data=[]
     for isp,sp in enumerate(pdata):
-        if sp not in products:
+        if args.products is not None and sp not in args.products:
             continue
         x=pdata[sp][:,0]
         y=pdata[sp][:,1]
@@ -435,8 +442,14 @@ for arg in args.file: #sys.argv[1:]:
             func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,label=sp,lw=lw,ms=msize)
         else:
             func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,lw=lw,ms=msize)
+        cov_data.append([x[skip:]+0.059*pH,y[skip:]])
         if args.scale=='SHE':
             pH=pHtmp
+    cov_data=np.array(cov_data)
+    x=cov_data[0,0,:]
+    y=np.sum(cov_data[:,1,:],axis=0)
+    func(x,1-y,linestyle+symbol,color='0.5',ms=msize,lw=lw,label='*')
+    #sys.exit()
     if show_legend:
         ax1.legend(fontsize=10)
 #    data=np.loadtxt('data.txt')

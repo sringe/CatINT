@@ -763,8 +763,8 @@ class CatMAP():
             for j in range(0,len(data.prod_names)):
                 float_rate = float(production_rate_mpf[i][j])
                 data.production_rate[i][j]=float_rate
-        for i in range(0,len(production_rate_mpf)):
-            for j in range(0,len(data.prod_names)):
+        for i in range(0,len(consumption_rate_mpf)):
+            for j in range(0,len(data.cons_names)):
                 float_rate = float(consumption_rate_mpf[i][j])
                 data.consumption_rate[i][j]=float_rate
 #                float_rate = float(turnover_frequency_mpf[i][j])
