@@ -245,7 +245,7 @@ class CatMAP():
                     self.tp.logger.error('|    | CM | Running on discrete descriptor space did not help, CatMAP did not converge. Try to increase descriptor space manually.')
 
                 desc_method=None
-
+                
                 if not self.use_interactions or (self.use_interactions and ii==0):
                     self.tp.logger.error('|    | CM | Unexpected end of CatMAP even though interactions_strength = 0, check error files for hints.')
 
@@ -535,6 +535,8 @@ class CatMAP():
                         sys.exit()
                     if sp in ['OH-','H+']:
                         activity=1 #this is irrelevant, since it will be controlled by the pH
+                    elif not self.tp.system['use_activities']:
+                        activity=self.tp.species[sp]['surface_concentration']/1000.
                     else:
                         #activity=self.tp.species[sp]['surface_concentration']/self.tp.system['reference_gas_concentration'] #/(self.tp.species[sp]['Henry constant']*self.tp.system['pressure']) #self.tp.species[sp]['bulk_concentration']
                         activity=self.tp.species[sp]['surface_concentration']/self.tp.species[sp]['Henry constant'] #*self.tp.system['pressure']) #self.tp.species[sp]['bulk_concentration']

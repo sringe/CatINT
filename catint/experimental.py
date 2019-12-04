@@ -23,7 +23,7 @@ class Object(object):
 
 class EXPDATA():
     def __init__(self):
-
+        itafel=0
         font = {'family' : 'serif',
                 'serif':['Times'],
                  'size'   : 16}
@@ -273,6 +273,7 @@ class EXPDATA():
                 text.set_color(line.get_color())
     
     def plot_tafel(self,ax,V,J,linecol,skip=0,linestyle='-',take_log=True,lw=1,fs=11,ls=None):
+        itafel+=5.
         J=np.log10(J)
         data=[V,J]
         data=map(list,zip(*data))
@@ -310,7 +311,7 @@ class EXPDATA():
             dV=maxV-minV
             Vf=np.linspace(minV-dV/4.,maxV+dV/3.,1000)
             ax.semilogy(Vf,10**z(Vf),color=linecol, linestyle=linestyle,lw=lw)
-            an=ax.annotate(str(int(tafel_slope))+'mV/dec',xy=(V[0]+0.2,10**(z(V[0])-1)),color=linecol, fontsize=fs)
+            an=ax.annotate(str(int(tafel_slope))+'mV/dec',xy=(V[0]+0.2+itafel,10**(z(V[0])-1)),color=linecol, fontsize=fs)
             an.draggable()
         return ax
     

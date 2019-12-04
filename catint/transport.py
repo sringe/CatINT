@@ -172,6 +172,7 @@ class Transport(object):
                 'potential drop',           #Potential drop, either Stern or full
                 'Stern_efield', #electric field in Stern layer
                 'charging_scheme', #the charging scheme that determines the surface charge density
+                'use_activities',
                 #used to calculate the energy surface charge density relation. 
                 # = "input":
                 #by defining sigma in the catmap input file as a list of polynomial coefficients or
@@ -227,6 +228,7 @@ class Transport(object):
                 'init_folder':None,
                 'Stern_efield':0.0,
                 'charging_scheme':'comsol', #comsol or input
+                'use_activities':True, #use activities for catmap rates or not (if transport is used, this should always be true)
                 'Stern_potential':0.0,
                 'potential drop':'Stern'}
         if system is None:

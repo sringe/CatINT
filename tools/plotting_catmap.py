@@ -538,7 +538,8 @@ for pH in set(all_pH+[float(a) for a in args.exp_add_pH]):
 #            #    system=systems,scale=args.scale,only_points=True,\
 #            #    take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
 #ax1=plot_leis_new_data(ax1)
-ax1.set_ylim([1e-5,1e2])
+ax1.set_ylim([1e-4,1e1])
+ax1.set_xlim([-1.2,0.0])
 
 #def name_to_title(name):
 #    if name=='CHO-H2O-ele*_t':
@@ -580,7 +581,7 @@ if args.scale=='RHE':
 else:
     ax1.set_xlabel(r'Voltage vs. SHE (V)')
     ax2.set_xlabel(r'Voltage vs. SHE (V)')
-ax1.set_ylabel('Current Density (mV/dec)')
+ax1.set_ylabel('Current Density (mA/cm$^2$)')
 ax2.set_ylabel('Coverage')
 plt.tight_layout()
 print('Saving to {}'.format(args.name+'.pdf'))
