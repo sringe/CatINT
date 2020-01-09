@@ -8,10 +8,12 @@ We first analyze the results, by using the ``$CATINT/tools/plotting_catmap.py`` 
 
 .. code:: python
 
-    python $CATINT/tools/plotting_catmap.py --file CO2R_results --expdata --scale SHE \
+    python $CATINT/tools/plotting_catmap.py --file CO2R_results --scale SHE --expdata\
         --product CO --exp_add_pH 7.2 --system pc-Au --fit_tafel --exp_colormode dataset
 
-The command plots the current density and coverages of the calculation. ``--expdata`` also plots all experimental that is available in the ``$CATINT/data/CO2R/CSV`` folder. The experimental data is filtered with respect to the simulated pH. Data for different pH values can also be plotted using the ``--exp_add_pH`` argument. ``--system`` specifies the system for which experimental data will be searched for, ``--product`` filters the product for which experimental partial current densites should be plotted. ``--exp_colormode`` defines how to color the experimental data curves, the possible options are ``'dataset'`` (color with respect to data set/reference) and ``'species'`` (color with respect to species). ``--fit_tafel`` fits a Tafel line to experimental points selected in the ``skip_dict`` dictionary in the ``$CATINT/catint/experimental.py`` file. The resulting figure is: 
+The command plots the current density and coverages of the calculation. Experimental data can be added, if placed into the ``$CATINT/data/CO2R/CSV`` folder in the form of CSV files folder in the form of CSV files (here we use the digitized and original data of various references which is not publically available). In case experimental data has been placed into the folder, the ``$CATINT/catint/experimental.py`` file also needs to be modified, so that this data is considered. Then the data can be plotted by invoking the above command using also the ``--expdata`` keyword. The experimental data is filtered with respect to the simulated pH. Data for different pH values can also be plotted using the ``--exp_add_pH`` argument. ``--system`` specifies the system for which experimental data will be searched for, ``--product`` filters the product for which experimental partial current densites should be plotted. ``--exp_colormode`` defines how to color the experimental data curves, the possible options are ``'dataset'`` (color with respect to data set/reference) and ``'species'`` (color with respect to species). ``--fit_tafel`` fits a Tafel line to experimental points selected in the ``skip_dict`` dictionary in the ``$CATINT/catint/experimental.py`` file. In case no experimental data is available, just remove all the keywords referring to the experimental data.
+
+The resulting figure (including experimental data) is: 
 
 .. figure:: ../../_static/co2r_au_catmap.png
   :align: center
