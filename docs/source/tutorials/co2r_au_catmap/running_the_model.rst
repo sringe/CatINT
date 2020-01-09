@@ -1,7 +1,7 @@
 Running the model
 -----------------
 
-Running the model, requires also to set-up a ``CatMAP`` mkm file and energeties txt file, see https://catmap.readthedocs.io/en/latest/ for details. Having created the ``CatINT`` input file ``run.py`` and the ``CatMAP`` files ``co2r.mkm`` and ``co2r.txt``, we can simply run ``CatINT`` via
+Running the model, requires also to set-up a ``CatMAP`` mkm file and txt file containing all energies, see https://catmap.readthedocs.io/en/latest/ for details. Having created the ``CatINT`` input file ``run.py`` and the ``CatMAP`` files ``co2r.mkm`` and ``co2r.txt``, we can simply run ``CatINT`` via
 
 .. code:: python
 
