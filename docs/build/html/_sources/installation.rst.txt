@@ -3,6 +3,9 @@ Installation
 
 .. |rtm| unicode:: U+00AE .. registered trademark sign .. 
 
+Installing CatINT
+~~~~~~~~~~~~~~~~~
+
 CatINT is a program package which combines mass transport simulations with micro-
 kinetic modeling. Installing CatINT requires:
 
@@ -31,11 +34,21 @@ CatINT:
 
     $ python >>>from catint import transport
 
+Installing CatMAP
+~~~~~~~~~~~~~~~~~
+
 For installing CatMAP, please see https://catmap.readthedocs.io/en/latest/installation.html.
+
+For running CatMAP with CatINT, it is required to download the version from https://github.com/sringe/catmap-1.git, which enables the Frumkin voltage corrections and surface charge corrections of energetics which are not yet contained in the main repository.
+
+Installing COMSOL
+~~~~~~~~~~~~~~~~~
 
 For installing COMSOL |rtm|, please see www.comsol.de. CatiNT writes a java input file
 for COMSOL |rtm| which is then compiled and executed. The COMSOL |rtm| executable location
-needs to be updated in $CATINT/catint/comsol_wrapper.py so that CatINT finds it.
+is automatically searched for. However, if this fails, or the executable is out of reach for 
+the ```locate``` linux command, specify the path of the executable manually in the ```tp.comsol_args['bin_path']```
+variable (where ```tp``` is  an instance of the ```Transport``` class).
 
 Documentation (this wiki) is located in the catmap/docs folder, and
 is available online at http://catint.readthedocs.org/.

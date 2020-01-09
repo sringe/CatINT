@@ -50,8 +50,10 @@
 <div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">catint.transport</span> <span class="k">import</span> <span class="n">Transport</span>
 <span class="kn">from</span> <span class="nn">catint.calculator</span> <span class="k">import</span> <span class="n">Calculator</span>
+<span class="kn">from</span> <span class="nn">catint.units</span> <span class="k">import</span> <span class="n">unit_NA</span>
 </pre></div>
 </div>
+<p><code class="docutils literal notranslate"><span class="pre">CatINT</span></code> comes with it’s own units package.</p>
 </div>
 <div class="section" id="system-settings">
 <h2>System Settings<a class="headerlink" href="#system-settings" title="Permalink to this headline">¶</a></h2>
@@ -64,7 +66,7 @@
     <span class="s1">&#39;pressure&#39;</span><span class="p">:</span>     <span class="mf">1.013</span><span class="p">,</span>       <span class="c1">#bar</span>
     <span class="s1">&#39;bulk_pH&#39;</span><span class="p">:</span> <span class="n">pH</span><span class="p">,</span>
     <span class="c1">#MASS TRANSPORT</span>
-    <span class="s1">&#39;boundary thickness&#39;</span><span class="p">:</span> <span class="mf">8.E-05</span> <span class="c1">#m</span>
+    <span class="s1">&#39;boundary thickness&#39;</span><span class="p">:</span> <span class="mf">8.E-05</span><span class="p">,</span> <span class="c1">#m</span>
     <span class="c1">#ELECTROSTATICS</span>
     <span class="s1">&#39;epsilon&#39;</span><span class="p">:</span> <span class="mf">78.36</span><span class="p">,</span>            <span class="c1">#eps_0</span>
     <span class="s1">&#39;migration&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
@@ -72,13 +74,13 @@
     <span class="s1">&#39;electrode reactions&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
     <span class="s1">&#39;electrolyte reactions&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
     <span class="c1">#CHARGING</span>
-    <span class="s1">&#39;charging_scheme&#39;</span><span class="p">:</span><span class="s1">&#39;comsol&#39;</span>
+    <span class="s1">&#39;charging_scheme&#39;</span><span class="p">:</span><span class="s1">&#39;comsol&#39;</span><span class="p">,</span>
     <span class="s1">&#39;phiM&#39;</span><span class="p">:</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span>
     <span class="s1">&#39;phiPZC&#39;</span><span class="p">:</span> <span class="mf">0.16</span><span class="p">,</span>              <span class="c1">#V vs. SHE</span>
     <span class="s1">&#39;Stern capacitance&#39;</span><span class="p">:</span> <span class="mf">20.</span><span class="p">,</span>    <span class="c1">#micro F/cm2</span>
     <span class="c1">#KINETICS</span>
     <span class="s1">&#39;potential drop&#39;</span><span class="p">:</span><span class="s1">&#39;Stern&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;active_site_density&#39;</span><span class="p">:</span> <span class="mf">9.61</span><span class="o">-</span><span class="mi">05</span><span class="o">/</span><span class="n">unit_NA</span><span class="o">*</span><span class="p">(</span><span class="mf">1e10</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="c1">#mol sites/m^2</span>
+    <span class="s1">&#39;active site density&#39;</span><span class="p">:</span> <span class="mf">9.61e-05</span><span class="o">/</span><span class="n">unit_NA</span><span class="o">*</span><span class="p">(</span><span class="mf">1e10</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="c1">#mol sites/m^2</span>
     <span class="c1">#INITIALIZATION</span>
    <span class="c1"># &#39;init_folder&#39;:init_folder,</span>
     <span class="p">}</span>
@@ -123,7 +125,7 @@
 <div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">species</span><span class="o">=</span>\
     <span class="p">{</span>
     <span class="s1">&#39;K+&#39;</span><span class="p">:</span>               <span class="p">{</span><span class="s1">&#39;bulk_concentration&#39;</span><span class="p">:</span>   <span class="s1">&#39;charge_neutrality&#39;</span><span class="p">,</span>
-                         <span class="s1">&#39;MPB_radius&#39;</span><span class="p">:</span>           <span class="mi">2</span><span class="o">*</span><span class="mf">3.5e-10</span><span class="p">},},</span>
+                         <span class="s1">&#39;MPB_radius&#39;</span><span class="p">:</span>           <span class="mi">2</span><span class="o">*</span><span class="mf">3.5e-10</span><span class="p">},</span>
     <span class="s1">&#39;CO2&#39;</span><span class="p">:</span>              <span class="p">{</span><span class="s1">&#39;bulk_concentration&#39;</span><span class="p">:</span>   <span class="s1">&#39;Henry&#39;</span><span class="p">},</span>
     <span class="s1">&#39;OH-&#39;</span><span class="p">:</span>              <span class="p">{</span><span class="s1">&#39;bulk_concentration&#39;</span><span class="p">:</span>   <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">pH</span><span class="o">-</span><span class="mf">14.</span><span class="p">)</span><span class="o">*</span><span class="mf">1000.0</span><span class="p">},</span> <span class="c1">#mol/m^3</span>
     <span class="s1">&#39;CO&#39;</span><span class="p">:</span>               <span class="p">{</span><span class="s1">&#39;bulk_concentration&#39;</span><span class="p">:</span>   <span class="mf">0.0</span><span class="p">}</span>
@@ -149,8 +151,9 @@
 <div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">comsol_args</span><span class="o">=</span><span class="p">{}</span>
 <span class="c1">#parameter</span>
 <span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;parameter&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">{}</span>
-<span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;parameter&#39;</span><span class="p">][</span><span class="s1">&#39;grid_factor_domain&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span><span class="s1">&#39;Grid factor&#39;</span><span class="p">]</span>
-<span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;parameter&#39;</span><span class="p">][</span><span class="s1">&#39;grid_factor_bound&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="mi">200</span><span class="p">),</span><span class="s1">&#39;Grid factor&#39;</span><span class="p">]</span>
+<span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;parameter&#39;</span><span class="p">][</span><span class="s1">&#39;grid_factor&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span><span class="s1">&#39;Grid factor&#39;</span><span class="p">]</span>
+<span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;parameter&#39;</span><span class="p">][</span><span class="s1">&#39;grid_factor_domain&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span><span class="s1">&#39;Grid factor for domain&#39;</span><span class="p">]</span>
+<span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;parameter&#39;</span><span class="p">][</span><span class="s1">&#39;grid_factor_bound&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="mi">200</span><span class="p">),</span><span class="s1">&#39;Grid factor for boundary&#39;</span><span class="p">]</span>
 <span class="c1">#solver_settings</span>
 <span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;solver_settings&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">{}</span>
 <span class="n">comsol_args</span><span class="p">[</span><span class="s1">&#39;solver_settings&#39;</span><span class="p">][</span><span class="s1">&#39;direct&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">{}</span>

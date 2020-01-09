@@ -16,7 +16,7 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Topics" href="topics/index.html" />
+    <link rel="next" title="General Usage and Information" href="general.html" />
     <link rel="prev" title="Welcome to CatINT’s documentation!" href="index.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
@@ -26,7 +26,7 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="topics/index.html" title="Topics"
+          <a href="general.html" title="General Usage and Information"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Welcome to CatINT’s documentation!"
@@ -42,6 +42,8 @@
             
   <div class="section" id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="installing-catint">
+<h2>Installing CatINT<a class="headerlink" href="#installing-catint" title="Permalink to this headline">¶</a></h2>
 <p>CatINT is a program package which combines mass transport simulations with micro-
 kinetic modeling. Installing CatINT requires:</p>
 <ul class="simple">
@@ -65,12 +67,22 @@ CatINT:</p>
 <div class="code highlight-default notranslate"><div class="highlight"><pre><span></span>$ python &gt;&gt;&gt;from catint import transport
 </pre></div>
 </div>
+</div>
+<div class="section" id="installing-catmap">
+<h2>Installing CatMAP<a class="headerlink" href="#installing-catmap" title="Permalink to this headline">¶</a></h2>
 <p>For installing CatMAP, please see <a class="reference external" href="https://catmap.readthedocs.io/en/latest/installation.html">https://catmap.readthedocs.io/en/latest/installation.html</a>.</p>
+<p>For running CatMAP with CatINT, it is required to download the version from <a class="reference external" href="https://github.com/sringe/catmap-1.git">https://github.com/sringe/catmap-1.git</a>, which enables the Frumkin voltage corrections and surface charge corrections of energetics which are not yet contained in the main repository.</p>
+</div>
+<div class="section" id="installing-comsol">
+<h2>Installing COMSOL<a class="headerlink" href="#installing-comsol" title="Permalink to this headline">¶</a></h2>
 <p>For installing COMSOL ®, please see www.comsol.de. CatiNT writes a java input file
 for COMSOL ® which is then compiled and executed. The COMSOL ® executable location
-needs to be updated in $CATINT/catint/comsol_wrapper.py so that CatINT finds it.</p>
+is automatically searched for. However, if this fails, or the executable is out of reach for
+the <code class="docutils literal notranslate"><span class="pre">`locate`</span></code> linux command, specify the path of the executable manually in the <code class="docutils literal notranslate"><span class="pre">`tp.comsol_args['bin_path']`</span></code>
+variable (where <code class="docutils literal notranslate"><span class="pre">`tp`</span></code> is  an instance of the <code class="docutils literal notranslate"><span class="pre">`Transport`</span></code> class).</p>
 <p>Documentation (this wiki) is located in the catmap/docs folder, and
 is available online at <a class="reference external" href="http://catint.readthedocs.org/">http://catint.readthedocs.org/</a>.</p>
+</div>
 </div>
 
 
@@ -79,12 +91,22 @@ is available online at <a class="reference external" href="http://catint.readthe
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Installation</a><ul>
+<li><a class="reference internal" href="#installing-catint">Installing CatINT</a></li>
+<li><a class="reference internal" href="#installing-catmap">Installing CatMAP</a></li>
+<li><a class="reference internal" href="#installing-comsol">Installing COMSOL</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="index.html"
                         title="previous chapter">Welcome to CatINT’s documentation!</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="topics/index.html"
-                        title="next chapter">Topics</a></p>
+  <p class="topless"><a href="general.html"
+                        title="next chapter">General Usage and Information</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -115,7 +137,7 @@ is available online at <a class="reference external" href="http://catint.readthe
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="topics/index.html" title="Topics"
+          <a href="general.html" title="General Usage and Information"
              >next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Welcome to CatINT’s documentation!"
