@@ -15,7 +15,7 @@ The command plots the current density and coverages of the calculation. Experime
 
 The resulting figure (including experimental data) is: 
 
-.. figure:: ../../../_static/co2r_au_catmap.png
+.. figure:: ../../_static/co2r_au_catmap.png
   :align: center
   :scale: 80 %
 
@@ -32,7 +32,7 @@ In order to analyze the rate-limiting step, we plot the rate control analysis us
 
 The resulting figure is:
 
-.. figure:: ../../../_static/co2r_au_catmap_rc.png
+.. figure:: ../../_static/co2r_au_catmap_rc.png
   :align: center
   :scale: 80 %
 
