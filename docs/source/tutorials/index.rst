@@ -10,3 +10,12 @@ Tutorials
 .. figure:: ../../_static/logo.png
   :align: center
   :scale: 80 %
+
+.. figure:: ../../_static/catint_scheme.png
+  :align: center
+  :scale: 80 %
+
+
+.. figure:: ../../_static/co2r_au_catint.png
+  :align: center
+  :scale: 80 %
