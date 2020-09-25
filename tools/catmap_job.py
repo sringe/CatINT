@@ -28,7 +28,7 @@ with open(mkm_file,'w') as f:
     f.write(mkm_text)
 print 'Reading',mkm_file
 model = ReactionModel(setup_file = mkm_file)
-model.output_variables+=['production_rate', 'free_energy', 'selectivity', 'interacting_energy']
+model.output_variables+=['production_rate', 'free_energy', 'selectivity', 'interacting_energy','coverage','rate_control']
 model.run()
 
 ma = analyze.MechanismAnalysis(model)
@@ -83,14 +83,21 @@ fig.savefig('production_rate'+j+'.png')
 #fig = vm.plot(save=False)
 #fig.savefig('production_rate.pdf')
 #
-#vm = analyze.VectorMap(model)
-#vm.log_scale = False
-#vm.plot_variable = 'coverage'
-#vm.descriptor_labels = ['coverage (ML)']
-#vm.min = 0
-#vm.max = 1
-#fig = vm.plot(save=False)
-#fig.savefig('coverage'+j+'.png')
+vm = analyze.VectorMap(model)
+vm.log_scale = False
+vm.plot_variable = 'coverage'
+vm.descriptor_labels = ['coverage (ML)']
+vm.min = 0
+vm.max = 1
+fig = vm.plot(save=False)
+fig.savefig('coverage'+j+'.png')
 #
+mm = analyze.MatrixMap(model)
+mm.plot_variable = 'rate_control'
+mm.log_scale = False
+mm.min = -2
+mm.max = 2
+fig = mm.plot(save=False)
+fig.savefig('rate_control.png')
 #
 #

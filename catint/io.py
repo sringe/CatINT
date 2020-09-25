@@ -6,6 +6,7 @@ import logging
 import imp
 import re
 from glob import glob
+from functools import reduce
 
 #import mpi if available
 use_mpi=False
@@ -63,7 +64,7 @@ def reglob(path, exp, invert=False):
             sol=re.findall(exp,f)
             if len(sol)==0:
                 res.append(f)
-    print 'checking res',res
+    print('checking res',res)
 #    if invert is False:
 #        res = [f for f in os.listdir(path) if m.search(f)]
 #    else:
@@ -95,7 +96,7 @@ def add_to_dict(self,append,*expr):
     end=text.find(')',begin)
     text=[name.strip()+append for name in text[begin:end].split(',')]
     text=text[1:]
-    data_dict=dict(zip(text,expr))
+    data_dict=dict(list(zip(text,expr)))
     if not hasattr(self,'data_dict'):
         self.data_dict={}
     self.data_dict.update(data_dict)
@@ -130,7 +131,7 @@ def read_all(tp,fname,only=None):
             setattr(tp,only,value)
 
 def print_diff(dictname,varname,missing):
-    print('  DIFF -- {} key of {} is missing in model {}'.format(varname,dictname,missing))
+    print(('  DIFF -- {} key of {} is missing in model {}'.format(varname,dictname,missing)))
 
 def mpi_make_dir(folder):
     """this function blocks all processors inspite of the rank==0 processor from processing until rank==0 has created the folder"""

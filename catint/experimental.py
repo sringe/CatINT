@@ -650,6 +650,7 @@ class EXPDATA():
 
 
                     if isref('jaramillo'):
+<<<<<<< Updated upstream
                         DATA=self.DATA_jr
                         name=','.join(DATA.label[1].split(',')[1:])
                         skip=skip_dict[name]
@@ -730,6 +731,25 @@ class EXPDATA():
                             kwargs['skip']=skip
                             kwargs['take_log']=True
                             self.plot_stuff(**kwargs)
+=======
+                        for DATA in [self.DATA_jr,self.DATA_lr,self.DATA_lr_NF,self.DATA_jr_NF,self.DATA_jr_NC]:
+                            name=','.join(DATA.label[1].split(',')[1:])
+                            skip=skip_dict[name]
+                            spp=s2i(species,DATA,pH=cpH)
+                            if len(spp)>0:
+                                kwargs=kwargs_base.copy()
+                                if scale=='RHE':
+                                    kwargs['convert']=None
+                                elif scale=='SHE':
+                                    kwargs['convert']='RHE_TO_SHE'
+                                kwargs['list_of_data']=spp
+                                kwargs['voltage_mode']='first'
+                                kwargs['DATA']=DATA
+                                kwargs['skip']=skip
+                                kwargs['take_log']=True
+                                self.plot_stuff(**kwargs)
+
+>>>>>>> Stashed changes
                         DATA=self.DATA_cas
                         name=','.join(DATA.label[1].split(',')[1:])
                         skip=skip_dict[name]
@@ -829,23 +849,26 @@ class EXPDATA():
                             kwargs['skip']=skip
                             kwargs['take_log']=False
                             self.plot_stuff(**kwargs)
-    
+
                         if scale=='RHE':
                             DATA=self.DATA_hr
-                            name=','.join(DATA.label[1].split(',')[1:])
-                            skip=skip_dict[name]
                         elif scale=='SHE':
                             DATA=self.DATA_hs
-                            name=','.join(DATA.label[1].split(',')[1:])
-                            skip=skip_dict[name]
+                        name=','.join(DATA.label[1].split(',')[1:])
+                        skip=skip_dict[name]
                         spp=s2i(species,DATA,pH=cpH)
                         if len(spp)>0:
-                            linestyle=next(linestyles)
-                            if marker is None:
-                                symbol=next(symbols)
-                            else:
-                                symbol=marker
-                            self.plot_stuff(spp,DATA,fit,0,skip,ax=ax,linestyle=linestyle,symbol=symbol,fit_tafel=fit_tafel,legend=legend,msize=msize,color=color,lw=lw,ls=ls,marker=marker)
+                            kwargs=kwargs_base.copy()
+                            if scale=='RHE':
+                                kwargs['convert']='SHE_TO_RHE'
+                            elif scale=='SHE':
+                                kwargs['convert']=None
+                            kwargs['list_of_data']=spp
+                            kwargs['voltage_mode']='previous'
+                            kwargs['DATA']=DATA
+                            kwargs['skip']=skip
+                            kwargs['take_log']=False
+                            self.plot_stuff(**kwargs)
     
                     if isref('wuttig'):
                         DATA=self.DATA_wu
@@ -1097,9 +1120,12 @@ class EXPDATA():
             else:
                 print('No color assigned for this research group, add it in experimental.get_color')
                 sys.exit
+<<<<<<< Updated upstream
         else:
             print('No color_mode like {}'.format(mode))
             sys.exit()
+=======
+>>>>>>> Stashed changes
         print(species,mode)
         return color
                 #color[n]='dark red'

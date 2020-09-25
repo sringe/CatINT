@@ -1,3 +1,5 @@
+import matplotlib
+#matplotlib.use('TKAgg', force=True)
 import re
 from tabulate import tabulate
 import os
@@ -32,8 +34,19 @@ parser.add_argument('--fit_tafel',help='If tafel slope should be fitted to exper
 parser.add_argument('--exp_colormode',help='colormode, either color according to species or dataset')
 parser.add_argument('--exp_add_pH',help='parse list of additional pH values for which experimental data should be plotted',nargs='+')
 parser.add_argument('--ratecontrol',help='plot also degree of rate-control',action="store_true")
+parser.add_argument('--exp_refs',help='which references to include',nargs='+')
 
 args = parser.parse_args()
+ratecontrol=False
+def name_to_cm(name):
+    if name=='H2':
+        return 'H$_2$'
+    elif name in ['CH4','CH$_4$']:
+        return 'CH$_4$'# 1-sum'
+    elif name in ['EtOH','CH3CH2OH','CH2CH2']:
+        return 'C2-sum'
+    else:
+        return name
 
 msize=8
 lw=2
@@ -141,7 +154,8 @@ def read_data(files,header=False,dtype='species'):
         #product selection
         if (dtype == 'species' and args.products is not None) or (dtype=='cov' and args.coverages is not None):
             ads=arg2.split('/')[-1].split('_')[1].split('.')[0]
-            if (dtype=='species' and ads not in products) or (dtype=='cov' and ads not in args.coverages):
+#            if (dtype=='species' and ads not in products) or (dtype=='cov' and ads not in args.coverages):
+            if (dtype=='species' and (ads not in args.products and name_to_cm(ads) not in args.products) ) or (dtype=='cov' and ads not in args.coverages):
                 continue
         print arg2
         if dtype=='elem' and args.products is not None:
@@ -325,7 +339,8 @@ for arg in args.file: #sys.argv[1:]:
     cdata,dummy=read_data(glob(results_folder+'/*/cov*'),dtype='cov')
     cov_data=[]
     for isp,sp in enumerate(pdata):
-        if args.products is not None and sp not in products:
+#        if args.products is not None and sp not in products:
+        if args.products is not None and (sp not in args.products and name_to_cm(sp) not in args.products):
             continue
         x=pdata[sp][:,0]
         y=pdata[sp][:,1]
@@ -486,15 +501,6 @@ for arg in args.file: #sys.argv[1:]:
     if True: #show_legend:
         ax2.legend(fontsize=8,ncol=2)
 all_prods=['H$_2$','CO','CH$_4$','EtOH'] #'C2-sum','HCOOH']
-def name_to_cm(name):
-    if name=='H2':
-        return 'H$_2$'
-    elif name in ['CH4','CH$_4$']:
-        return 'CH$_4$'# 1-sum'
-    elif name in ['EtOH','CH3CH2OH','CH2CH2']:
-        return 'C2-sum'
-    else:
-        return name
 if args.products is not None:
     all_prods=[name_to_cm(a) for a in args.products]
 else:
@@ -509,8 +515,11 @@ for pH in set(all_pH+[float(a) for a in args.exp_add_pH]):
             color=color_pH[str(pH)]
         elif args.color=='species':
             color=None
-        refs=['all'] #jaramillo'] #['all']
-        exp.plot_data(reference=refs,ax=ax1,species=all_prods,pH=[pH],\
+        if args.exp_refs is not None:
+            refs=args.exp_refs
+        else:
+            refs=['all']
+        exp.plot_data(reference=refs,ax=ax1,species=all_prods,pH=[pH,pH+1,pH+2,pH-1,pH-2],\
             system=systems,scale=args.scale,only_points=True,\
             take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color,\
             fit_tafel=args.fit_tafel,color_mode=args.exp_colormode,plot_mode='partial_current')
