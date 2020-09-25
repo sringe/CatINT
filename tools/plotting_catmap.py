@@ -91,7 +91,7 @@ exp=EXPDATA()
 
 j_log_plot=True
 
-fig=plt.figure(figsize=(5, 7))
+fig=plt.figure(figsize=(8, 7))
 #fig=plt.figure(figsize=(3, 5))
 
 colorlist={}
@@ -117,7 +117,8 @@ symbols={
         'CHO':'2'
         }
 
-
+products=['CH3CH2OH' if x=='C2+-sum' else x for x in args.products]
+products=['CH3CH2OH' if x=='C2-sum' else x for x in products]
 
 def plot_leis_new_data(ax):
     #data=np.loadtxt('her_pcCu_lei.csv')
@@ -134,13 +135,15 @@ def read_data(files,header=False,dtype='species'):
     iarg=-1
     labels=[]
     for arg2 in files:
+        ratecontrol=False
         iarg+=1
         header_txt=None
         #product selection
         if (dtype == 'species' and args.products is not None) or (dtype=='cov' and args.coverages is not None):
             ads=arg2.split('/')[-1].split('_')[1].split('.')[0]
-            if (dtype=='species' and ads not in args.products) or (dtype=='cov' and ads not in args.coverages):
+            if (dtype=='species' and ads not in products) or (dtype=='cov' and ads not in args.coverages):
                 continue
+        print arg2
         if dtype=='elem' and args.products is not None:
             #elementary reaction index of current datafile
             inx=int(arg2.split('/')[-1].split('_')[2].split('.')[0])
@@ -151,7 +154,7 @@ def read_data(files,header=False,dtype='species'):
                 if inx in indices:
                     names.append(sp.split('_')[0])
             #check if the desired product is any of these 
-            if not any([n in args.products for n in names]):
+            if not any([n in products for n in names]):
                 continue
             else:
                 tmp=model.rxn_expressions[inx-1].split('<->')
@@ -240,10 +243,11 @@ k=-1
 all_pH=[]
 symbol_pH={}
 
-ax1=plt.subplot('211')
+ax1=plt.subplot('311')
 if args.ratecontrol:
     ax1m=ax1.twinx()
-ax2=plt.subplot('212')
+ax2=plt.subplot('312')
+ax3=plt.subplot('313')
 
 colors_rc={}
 for arg in args.file: #sys.argv[1:]:
@@ -256,18 +260,26 @@ for arg in args.file: #sys.argv[1:]:
     else:
         linestyle='-'
     symbol=next(symbols)
-    
+    root=os.getcwd()
     
     ax1.set_title('Polarization')
     searchedfile=[s for s in glob(arg+'/catmap_input/*/*.mkm') if 'template' not in s]
     try:
         mkm_file = sorted( searchedfile, key = lambda file: os.path.getctime(file))[-1]
+        mkm_path='/'.join(mkm_file.split('/')[:-1])
+        mkm_filename = mkm_file.split('/')[-1]
+        os.chdir(mkm_path)
         print('Reading model = {}'.format(mkm_file))
-        model = ReactionModel(setup_file = mkm_file)
+        model = ReactionModel(setup_file = mkm_filename)
+        os.chdir(root)
     except NameError:
         mkm_file = sorted( searchedfile, key = lambda file: os.path.getctime(file))[-3]
+        mkm_path='/'.join(mkm_file.split('/')[:-1])
+        mkm_filename = mkm_file.split('/')[-1]
+        os.chdir(mkm_path)
         print('Reading model = {}'.format(mkm_file))
         model = ReactionModel(setup_file = mkm_file)
+        os.chdir(root)
     #try to read pH from catmap input file:
     if args.pH is None:
         try:
@@ -313,7 +325,7 @@ for arg in args.file: #sys.argv[1:]:
     cdata,dummy=read_data(glob(results_folder+'/*/cov*'),dtype='cov')
     cov_data=[]
     for isp,sp in enumerate(pdata):
-        if args.products is not None and sp not in args.products:
+        if args.products is not None and sp not in products:
             continue
         x=pdata[sp][:,0]
         y=pdata[sp][:,1]
@@ -353,6 +365,7 @@ for arg in args.file: #sys.argv[1:]:
         else:
             symbol='*'
             msize=4
+        symbol=''
         if j_log_plot:
             func=ax1.semilogy
         else:
@@ -365,6 +378,11 @@ for arg in args.file: #sys.argv[1:]:
             func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,label=sp+', CatINT',ms=msize) #,label=arg.split('/')[-1])
         else:
             func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,ms=msize)
+        yfe=y/sum([np.array(pdata[sp3][:,1]) for sp3 in pdata.keys()])
+        if k==0:
+            ax3.plot(x[skip:]+0.059*pH,yfe[skip:],linestyle+symbol,color=color,label=sp+', CatINT',ms=msize) #,label=arg.split('/')[-1])
+        else:
+            ax3.plot(x[skip:]+0.059*pH,yfe[skip:],linestyle+symbol,color=color,ms=msize)
         if ratecontrol:
             for sp2 in pdata_rc[sp]:
                 if sp2 not in colors_rc:
@@ -437,7 +455,7 @@ for arg in args.file: #sys.argv[1:]:
         if args.scale=='SHE':
             pHtmp=pH
             pH=0
-        func=ax2.semilogy
+        func=ax2.plot #semilogy
         if k==0:
             func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,label=sp,lw=lw,ms=msize)
         else:
@@ -482,6 +500,8 @@ if args.products is not None:
 else:
     all_prods=[name_to_cm(a) for a in all_prods]
 
+#systems.append('pc-Cu-0.2Ni')
+
 for pH in set(all_pH+[float(a) for a in args.exp_add_pH]):
     if args.expdata:
         symbol=None #symbol_pH[pH]
@@ -489,11 +509,15 @@ for pH in set(all_pH+[float(a) for a in args.exp_add_pH]):
             color=color_pH[str(pH)]
         elif args.color=='species':
             color=None
-        refs=['all']
+        refs=['all'] #jaramillo'] #['all']
         exp.plot_data(reference=refs,ax=ax1,species=all_prods,pH=[pH],\
             system=systems,scale=args.scale,only_points=True,\
             take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color,\
-            fit_tafel=args.fit_tafel,color_mode=args.exp_colormode)
+            fit_tafel=args.fit_tafel,color_mode=args.exp_colormode,plot_mode='partial_current')
+        exp.plot_data(reference=refs,ax=ax3,species=all_prods,pH=[pH],\
+            system=systems,scale=args.scale,only_points=True,\
+            take_log=False,marker=symbol,legend=show_legend,msize=3,color=color,\
+            fit_tafel=args.fit_tafel,color_mode=args.exp_colormode,plot_mode='faradaic_efficiency')
 #        if pH == 13:
 #            #pure HER
 #            exp.plot_data(reference=['jaramillo-her'],ax=ax1,species=all_prods,pH=['13.0'],\
@@ -538,8 +562,9 @@ for pH in set(all_pH+[float(a) for a in args.exp_add_pH]):
 #            #    system=systems,scale=args.scale,only_points=True,\
 #            #    take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color)
 #ax1=plot_leis_new_data(ax1)
-ax1.set_ylim([1e-4,1e1])
-ax1.set_xlim([-1.2,0.0])
+ax1.set_ylim([1e-3,1e4])
+for ax in [ax1,ax2,ax3]:
+    ax.set_xlim([-1.6,-0.3])
 
 #def name_to_title(name):
 #    if name=='CHO-H2O-ele*_t':
