@@ -157,7 +157,7 @@ def read_data(files,header=False,dtype='species'):
 #            if (dtype=='species' and ads not in products) or (dtype=='cov' and ads not in args.coverages):
             if (dtype=='species' and (ads not in args.products and name_to_cm(ads) not in args.products) ) or (dtype=='cov' and ads not in args.coverages):
                 continue
-        print arg2
+        print(arg2)
         if dtype=='elem' and args.products is not None:
             #elementary reaction index of current datafile
             inx=int(arg2.split('/')[-1].split('_')[2].split('.')[0])
@@ -283,7 +283,7 @@ for arg in args.file: #sys.argv[1:]:
         mkm_path='/'.join(mkm_file.split('/')[:-1])
         mkm_filename = mkm_file.split('/')[-1]
         os.chdir(mkm_path)
-        print('Reading model = {}'.format(mkm_file))
+        print(('Reading model = {}'.format(mkm_file)))
         model = ReactionModel(setup_file = mkm_filename)
         os.chdir(root)
     except NameError:
@@ -291,13 +291,13 @@ for arg in args.file: #sys.argv[1:]:
         mkm_path='/'.join(mkm_file.split('/')[:-1])
         mkm_filename = mkm_file.split('/')[-1]
         os.chdir(mkm_path)
-        print('Reading model = {}'.format(mkm_file))
+        print(('Reading model = {}'.format(mkm_file)))
         model = ReactionModel(setup_file = mkm_file)
         os.chdir(root)
     #try to read pH from catmap input file:
     if args.pH is None:
         try:
-            print('Reading pH from bulk_ph = {}'.format(model.bulk_ph))
+            print(('Reading pH from bulk_ph = {}'.format(model.bulk_ph)))
             pH=model.bulk_ph
         except:
             print('Could not find bulk pH, please specify at input')
@@ -312,7 +312,7 @@ for arg in args.file: #sys.argv[1:]:
     #        pH = 7
     else:
         pH=float(args.pH)
-    print('The pH is {}'.format(pH))
+    print(('The pH is {}'.format(pH)))
     all_pH.append(pH)
     symbol_pH[pH]=symbol
     if color_pH is not None:
@@ -393,7 +393,7 @@ for arg in args.file: #sys.argv[1:]:
             func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,label=sp+', CatINT',ms=msize) #,label=arg.split('/')[-1])
         else:
             func(x[skip:]+0.059*pH,y[skip:],linestyle+symbol,color=color,ms=msize)
-        yfe=y/sum([np.array(pdata[sp3][:,1]) for sp3 in pdata.keys()])
+        yfe=y/sum([np.array(pdata[sp3][:,1]) for sp3 in list(pdata.keys())])
         if k==0:
             ax3.plot(x[skip:]+0.059*pH,yfe[skip:],linestyle+symbol,color=color,label=sp+', CatINT',ms=msize) #,label=arg.split('/')[-1])
         else:
@@ -618,7 +618,7 @@ else:
 ax1.set_ylabel('Current Density (mA/cm$^2$)')
 ax2.set_ylabel('Coverage')
 plt.tight_layout()
-print('Saving to {}'.format(args.name+'.pdf'))
+print(('Saving to {}'.format(args.name+'.pdf')))
 plt.savefig(args.name+'.pdf')# ,dpi=500)
     
 plt.show()

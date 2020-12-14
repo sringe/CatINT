@@ -44,7 +44,7 @@ species=\
 phimin=-0.5
 phimax=-2.0
 dphi=0.01
-descriptors={'phiM':list(np.linspace(phimin,phimax,-(phimax-phimin)/dphi+1))}
+descriptors={'phiM':list(np.linspace(phimin,phimax,int(-(phimax-phimin)/dphi+1.)))}
 comsol_args={}
 #parameter
 comsol_args['parameter']={}   

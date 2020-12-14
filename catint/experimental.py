@@ -127,6 +127,7 @@ class EXPDATA():
         list_of_data=assign('list_of_data')
         DATA=assign('DATA')
         fit=assign('fit')
+        species=assign('species')
         joinlines=assign('joinlines')
         skip=assign('skip')
         ax=assign('ax')
@@ -144,7 +145,7 @@ class EXPDATA():
         fs=assign('fs')
         ls=assign('ls')
         marker=assign('marker')
-        print('cmarker',marker)
+        print(('cmarker',marker))
         color_mode=assign('color_mode')
 
         n=0
@@ -168,7 +169,14 @@ class EXPDATA():
                     if plot_mode=='partial_current':
                         current.append(float(DATA.data[l,j]))
                     elif plot_mode=='faradaic_efficiency':
-                        current.append(float(DATA.data[l,j])/float(DATA.data[l,list_of_data[-1]]))
+                        index_total=(j-1)//len(species)*len(species)+1
+                        print(j)
+                        print(index_total) #13
+                        print(list_of_data[-1]) #21
+                        print(len(DATA.data[l,:])) #80
+                        sys.exit()
+                        #list_of_data[-1]
+                        current.append(float(DATA.data[l,j])/float(DATA.data[l,index_total]))
                     if voltage_mode=='previous':
                         voltage.append(float(DATA.data[l,j-1]))
                     elif voltage_mode=='first':
@@ -179,7 +187,7 @@ class EXPDATA():
                     pass
 #            if any(current)<0:
 #                current=[-c for c in current]
-            if not take_log and not plot_mode=='faradaic':
+            if not take_log and not plot_mode=='faradaic_efficiency':
                 current=[10**c for c in current]
             for k in range(0,len(voltage)):
                 voltage_all.append(voltage[k])
@@ -194,7 +202,7 @@ class EXPDATA():
                 if joinlines:
                     linestyle=":"
             if color is None:
-                print('getting',DATA.label[j])
+                print(('getting',DATA.label[j]))
                 self.color[n]=self.get_color(DATA.label[j],mode=color_mode)
             else:
                 self.color[n]=color
@@ -205,7 +213,7 @@ class EXPDATA():
                 pH=7.0
                 print('No pH found to convert scales!! Check CSV data labels if pH is included')
                 sys.exit()
-            print('marker',self.marker)
+            print(('marker',self.marker))
             cmarker=marker
             if cmarker is None:
                 cmarker=next(markers)
@@ -417,8 +425,8 @@ class EXPDATA():
                 if len(found)>0:
                     pH_label=float(found[0])
                 else:
-                    print('No pH given in data file ',DATA.label)
-                    print('This is the line that was searched:',line)
+                    print(('No pH given in data file ',DATA.label))
+                    print(('This is the line that was searched:',line))
                     sys.exit()
                 if abs(pH_label-float(pH))<1e-3:
                     return True
@@ -461,12 +469,13 @@ class EXPDATA():
                 #append total current for plotting
                 for i,h in enumerate(DATA.label):
                     if h.startswith("TOTAL") and anyph(pH,h) and reac(h) and system(h) and i not in heads:
-                        total_count+=1
-                        if total_count>1:
-                            print('Only one system is allowed per csv file, so that only one total current column is contained, so please create a separate csv file for each system')
-                            sys.exit()
+                        #total_count+=1
+                        #if total_count>1:
+                        #    print('Only one system is allowed per csv file, so that only one total current column is contained, so please create a separate csv file for each system')
+                        #    sys.exit()
                         heads+=[i]
-            print('THE HEADS',heads)
+            print(('THE HEADS',heads))
+            sys.exit()
             return heads
     
         linestyles=cycle(['-','-',':','-.'])
@@ -486,7 +495,7 @@ class EXPDATA():
         data_labels=[','.join(a.label[1].split(',')[1:]) for a in [self.DATA_ss_01,self.DATA_ss_005,self.DATA_ss_02,self.DATA_ss_005_FE,self.DATA_ss_01_FE,self.DATA_ss_02_FE,self.DATA_jr,self.DATA_jr_NF,self.DATA_jr_NC,self.DATA_kr,self.DATA_kau,self.DATA_lr,self.DATA_lr_NF,self.DATA_lr_HER,self.DATA_h2s,self.DATA_hau,self.DATA_hr,self.DATA_hs,self.DATA_wr_NW,self.DATA_wr_NW_all,self.DATA_wu,self.DATA_du,self.DATA_du2,self.DATA_cas,self.DATA_cas2,self.DATA_norchoi,self.DATA_snhu,self.DATA_miyoung,self.DATA_bell,self.DATA_jihun]]
 
         #basic settings applied to each experimental data set for plotting
-        kwargs_base={'ax':ax,'take_log':take_log,'fit_tafel':fit_tafel,'legend':legend,'msize':msize,'lw':lw,'ls':ls,'marker':marker,'joinlines':0,'color_mode':color_mode,'fit':fit,'plot_mode':plot_mode}
+        kwargs_base={'ax':ax,'take_log':take_log,'fit_tafel':fit_tafel,'legend':legend,'msize':msize,'lw':lw,'ls':ls,'marker':marker,'joinlines':0,'color_mode':color_mode,'fit':fit,'plot_mode':plot_mode,'species':species}
 
         for cpH in pH:
             skip_dict={}
@@ -650,88 +659,6 @@ class EXPDATA():
 
 
                     if isref('jaramillo'):
-<<<<<<< Updated upstream
-                        DATA=self.DATA_jr
-                        name=','.join(DATA.label[1].split(',')[1:])
-                        skip=skip_dict[name]
-                        spp=s2i(species,DATA,pH=cpH)
-                        if len(spp)>0:
-                            kwargs=kwargs_base.copy()
-                            if scale=='RHE':
-                                kwargs['convert']=None #'SHE_TO_RHE'
-                            elif scale=='SHE':
-                                kwargs['convert']='RHE_TO_SHE'
-                            kwargs['list_of_data']=spp
-                            kwargs['voltage_mode']='first'
-                            kwargs['DATA']=DATA
-                            kwargs['skip']=skip
-                            kwargs['take_log']=True
-                            self.plot_stuff(**kwargs)
-                        DATA=self.DATA_lr
-                        name=','.join(DATA.label[1].split(',')[1:])
-                        skip=skip_dict[name]
-                        spp=s2i(species,DATA,pH=cpH)
-                        if len(spp)>0:
-                            kwargs=kwargs_base.copy()
-                            if scale=='RHE':
-                                kwargs['convert']=None #'SHE_TO_RHE'
-                            elif scale=='SHE':
-                                kwargs['convert']='RHE_TO_SHE'
-                            kwargs['list_of_data']=spp
-                            kwargs['voltage_mode']='first'
-                            kwargs['DATA']=DATA
-                            kwargs['skip']=skip
-                            kwargs['take_log']=True
-                            self.plot_stuff(**kwargs)
-                        DATA=self.DATA_lr_NF
-                        name=','.join(DATA.label[1].split(',')[1:])
-                        skip=skip_dict[name]
-                        spp=s2i(species,DATA,pH=cpH)
-                        if len(spp)>0:
-                            kwargs=kwargs_base.copy()
-                            if scale=='RHE':
-                                kwargs['convert']=None #'SHE_TO_RHE'
-                            elif scale=='SHE':
-                                kwargs['convert']='RHE_TO_SHE'
-                            kwargs['list_of_data']=spp
-                            kwargs['voltage_mode']='first'
-                            kwargs['DATA']=DATA
-                            kwargs['skip']=skip
-                            kwargs['take_log']=True
-                            self.plot_stuff(**kwargs)
-                        DATA=self.DATA_jr_NF
-                        name=','.join(DATA.label[1].split(',')[1:])
-                        skip=skip_dict[name]
-                        spp=s2i(species,DATA,pH=cpH)
-                        if len(spp)>0:
-                            kwargs=kwargs_base.copy()
-                            if scale=='RHE':
-                                kwargs['convert']=None #'SHE_TO_RHE'
-                            elif scale=='SHE':
-                                kwargs['convert']='RHE_TO_SHE'
-                            kwargs['list_of_data']=spp
-                            kwargs['voltage_mode']='first'
-                            kwargs['DATA']=DATA
-                            kwargs['skip']=skip
-                            kwargs['take_log']=True
-                            self.plot_stuff(**kwargs)
-                        DATA=self.DATA_jr_NC
-                        name=','.join(DATA.label[1].split(',')[1:])
-                        skip=skip_dict[name]
-                        spp=s2i(species,DATA,pH=cpH)
-                        if len(spp)>0:
-                            kwargs=kwargs_base.copy()
-                            if scale=='RHE':
-                                kwargs['convert']=None #'SHE_TO_RHE'
-                            elif scale=='SHE':
-                                kwargs['convert']='RHE_TO_SHE'
-                            kwargs['list_of_data']=spp
-                            kwargs['voltage_mode']='first'
-                            kwargs['DATA']=DATA
-                            kwargs['skip']=skip
-                            kwargs['take_log']=True
-                            self.plot_stuff(**kwargs)
-=======
                         for DATA in [self.DATA_jr,self.DATA_lr,self.DATA_lr_NF,self.DATA_jr_NF,self.DATA_jr_NC]:
                             name=','.join(DATA.label[1].split(',')[1:])
                             skip=skip_dict[name]
@@ -749,7 +676,6 @@ class EXPDATA():
                                 kwargs['take_log']=True
                                 self.plot_stuff(**kwargs)
 
->>>>>>> Stashed changes
                         DATA=self.DATA_cas
                         name=','.join(DATA.label[1].split(',')[1:])
                         skip=skip_dict[name]
@@ -1120,12 +1046,9 @@ class EXPDATA():
             else:
                 print('No color assigned for this research group, add it in experimental.get_color')
                 sys.exit
-<<<<<<< Updated upstream
         else:
-            print('No color_mode like {}'.format(mode))
+            print(('No color_mode like {}'.format(mode)))
             sys.exit()
-=======
->>>>>>> Stashed changes
-        print(species,mode)
+        print((species,mode))
         return color
                 #color[n]='dark red'

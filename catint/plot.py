@@ -1,13 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from itertools import cycle
-from units import *
+from .units import *
 import sys
 from matplotlib import colors as mcolors
 import matplotlib.gridspec as gridspec
 import matplotlib.ticker as mtick
 import os
-from io import read_all
+from .io import read_all
 
 class Plot():
 

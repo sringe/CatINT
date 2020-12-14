@@ -64,7 +64,7 @@ def reglob(path, exp, invert=False):
             sol=re.findall(exp,f)
             if len(sol)==0:
                 res.append(f)
-    print('checking res',res)
+    print(('checking res',res))
 #    if invert is False:
 #        res = [f for f in os.listdir(path) if m.search(f)]
 #    else:
