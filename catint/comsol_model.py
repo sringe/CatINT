@@ -139,7 +139,7 @@ class Model():
             unit_str=""
             name_str=""
             if type(var_name)==str:
-                for sp,i in zip(self.tp.species,range(len(self.tp.species))):
+                for sp,i in zip(self.tp.species,list(range(len(self.tp.species)))):
                     c_str+="\""+var_name+str(i+1)+"\""
                     unit_str+="\""+unit_name+"\""
                     name_str+="\""+label+" "+self.tp.species[sp]['name']+"\""

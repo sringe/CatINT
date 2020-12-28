@@ -1,9 +1,9 @@
 import re
-from units import *
+from .units import *
 import numpy as np
 import os
 from subprocess import call
-from catint_io import replace_line,insert_line,mpi_make_dir
+from .catint_io import replace_line,insert_line,mpi_make_dir
 from glob import glob
 import sys
 sys.path.insert(0,'/scratch/users/sringe/software/catmap')
@@ -318,8 +318,8 @@ class CatMAP():
                 #self.tp.logger.info('-- checking --')
                 #self.tp.logger.info(model.interaction_function(cvg,energies,eps_vector,model.thermodynamics.adsorbate_interactions.interaction_response_function,False,False))
                 #self.tp.logger.info('-- end checking --')
-                self.tp.logger.info(tabulate(zip(model.output_labels['interacting_energy'],\
-                        energies),\
+                self.tp.logger.info(tabulate(list(zip(model.output_labels['interacting_energy'],\
+                        energies)),\
                         headers=['species','energy']))
                 #self.tp.logger.info(tabulate(zip(model.output_labels['interacting_energy'],\
                 #        model.interaction_function(cvg,energies,eps_vector,\
@@ -600,8 +600,8 @@ class CatMAP():
         for sp in self.tp.species:
             self.tp.species[sp]['flux']=0.0
         #get reaction mechanism
-        mechanisms = model.rxn_mechanisms.values()
-        mechanisms_names = model.rxn_mechanisms.keys()
+        mechanisms = list(model.rxn_mechanisms.values())
+        mechanisms_names = list(model.rxn_mechanisms.keys())
         for sp in self.tp.species: #prod in self.tp.electrode_reactions:
             ###############
             #1) the TOF's save them as fluxes for the individual species

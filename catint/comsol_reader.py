@@ -1,7 +1,7 @@
 #Reads all the COMSOL output
 import re
 import numpy as np
-from units import *
+from .units import *
 from scipy.optimize import fsolve,basinhopping
 #import matplotlib.pyplot as plt
 
@@ -55,7 +55,7 @@ class Reader():
         #LAST BUT NOT LEAST: CALCULATE SOME PROPERTIES FROM THE OBTAINED ONES
 
         #update activity coefficients from concentrations
-        phi_zero=np.zeros(len(self.tp.species[self.tp.species.keys()[0]]['concentration']))
+        phi_zero=np.zeros(len(self.tp.species[list(self.tp.species.keys())[0]]['concentration']))
         for sp in self.tp.species:
             if 'MPB_radius' in self.tp.species[sp]:
                 phi_zero+=self.tp.species[sp]['MPB_radius']**3*np.array(self.tp.species[sp]['concentration'])*unit_NA
@@ -132,7 +132,7 @@ class Reader():
                 break
         if self.comsol_args['par_name']=='flux_factor':
             #get the current values of the two descriptors
-            desc_keys=self.tp.descriptors.keys()
+            desc_keys=list(self.tp.descriptors.keys())
             desc1_val=self.tp.system[desc_keys[0]]
             desc2_val=self.tp.system[desc_keys[1]]
             #get the index:
@@ -313,7 +313,7 @@ class Reader():
                     par_names=re.findall('@\s?([a-zA-Z0-9]+)',line)
                     par_values=re.findall('[a-zA-Z0-9]+\s?=\s?(-?\d+.?\d*)',line)
                     par_values_list=sorted(list(set([float(v) for v in set(par_values)])))
-                variable_names,variable_units=map(list, zip(*a))
+                variable_names,variable_units=list(map(list, list(zip(*a))))
                 initialized=True
             if not line.startswith('% Description'):
                 continue

@@ -17,19 +17,17 @@ from scipy import interpolate
 import numpy as np
 #import matplotlib.pyplot as plt
 #from ase import units
-from units import *
+from .units import *
 import sys
 from copy import deepcopy
 import os
 import math
 from copy import deepcopy
 import imp
-sys.path+=['/home/users/ringe/software/CatINT/catint']
-print(sys.path)
-from comsol_wrapper import Comsol
-from catmap_wrapper import CatMAP
-from comsol_reader import Reader
-from catint_io import read_all,sync_mpi,reduce_dict_mpi
+from .comsol_wrapper import Comsol
+from .catmap_wrapper import CatMAP
+from .comsol_reader import Reader
+from .catint_io import read_all,sync_mpi,reduce_dict_mpi
 
 #import mpi if available
 use_mpi=False
@@ -311,7 +309,7 @@ class Calculator():
                 self.tp.logger.debug('| CI | -- | ci(x=0)_{} = {} M'.format(sp,self.tp.species[sp]['surface_concentration']/1000.))
 
         accuracies=[]
-        desc_keys=self.tp.descriptors.keys()
+        desc_keys=list(self.tp.descriptors.keys())
         desc1_val=self.tp.system[desc_keys[0]]
         desc2_val=self.tp.system[desc_keys[1]]
         alldata_inx=self.tp.alldata_names.index([desc1_val,desc2_val])

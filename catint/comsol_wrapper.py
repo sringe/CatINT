@@ -1,13 +1,13 @@
 #Comsol class of transport model
-from units import *
+from .units import *
 import numpy as np
 import os
 from subprocess import call
 import re 
 from shutil import copyfile as copy
 from copy import deepcopy
-from comsol_model import Model
-from comsol_reader import Reader
+from .comsol_model import Model
+from .comsol_reader import Reader
 from shutil import rmtree
 from subprocess import check_output
 import datetime
