@@ -7,7 +7,7 @@ import scipy.integrate as integrate
 import numpy as np
 #import matplotlib.pyplot as plt
 #from ase import units
-from units import *
+from .units import *
 from itertools import cycle
 import sys
 from copy import deepcopy
@@ -15,12 +15,12 @@ import collections
 import logging
 import os
 import re
-from io import sync_mpi,save_all #,MPIFileHandler
+from .catint_io import sync_mpi,save_all #,MPIFileHandler
 import subprocess
 from glob import glob
 from shutil import copy
 import imp
-from data import tp_ref_data
+from .data import tp_ref_data
 from scipy.optimize import fsolve
 import math
 
@@ -85,15 +85,15 @@ class Transport(object):
             if not os.path.exists(self.outputfoldername):
                 os.makedirs(self.outputfoldername)
             else:
-                print 'list of dirs',os.listdir(resultsdir)
+                print('list of dirs',os.listdir(resultsdir))
                 existing_files=sorted([f for f in os.listdir(resultsdir) if re.search(self.model_name+'_results_[0-9]+', f)])
-                print existing_files,self.model_name+'_[0-9]+'
+                print(existing_files,self.model_name+'_[0-9]+')
                 if len(existing_files)>0: #self.outputfoldername.split('_')[-1].isdigit():
                     number=int(existing_files[-1].split('_')[-1])+1
                 else:
                     number=2
                 self.outputfoldername='_'.join(sum([[self.outputfoldername],[str(number).zfill(4)]],[]))
-                print 'makeing dir',self.outputfoldername
+                print('makeing dir',self.outputfoldername)
                 os.makedirs(self.outputfoldername)
             self.logfilename=self.outputfoldername+'/transport.log' # the log file
         else:
@@ -520,7 +520,7 @@ class Transport(object):
         self.initialize_descriptors(descriptors)
 
         if hasattr(self,'descriptors') and use_mpi:
-            ntasks=np.prod(map(len,[self.descriptors[key] for key in self.descriptors]))
+            ntasks=np.prod(list(map(len,[self.descriptors[key] for key in self.descriptors])))
         else:
             ntasks=1
         if size!=ntasks and use_mpi:
@@ -578,7 +578,7 @@ class Transport(object):
                 if type(e)==dict:
                     del electrolyte_reactions[ie]
                     continue
-            print electrolyte_reactions
+            print(electrolyte_reactions)
             for ie,e in enumerate(electrolyte_reactions):
                 for p in tp_ref_data['electrolyte_reactions'][e]:
                     a=tp_ref_data['electrolyte_reactions'][e][p]['reaction']
@@ -1458,13 +1458,13 @@ class Transport(object):
         def allocate_fluxes(array_in,array_out):
             for key1_raw in array_in:
                 if key1_raw=='all':
-                    keys1=map(str,range(self.nspecies))
+                    keys1=list(map(str,list(range(self.nspecies))))
                 else:
                     keys1=[str(key1_raw)]
                 for key1 in keys1:
                     for key2_raw in array_in[key1_raw]:
                         if key2_raw=='all':
-                            keys2=map(str,range(2))
+                            keys2=list(map(str,list(range(2))))
                         else:
                             keys2=[key_to_index(key2_raw)]
                         for key2 in keys2:

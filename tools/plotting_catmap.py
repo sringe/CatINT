@@ -1,3 +1,6 @@
+#
+#ex: python ../../tools/plotting_catmap.py --file CO2R_results_0024 --scale RHE --products H2 CH4 CH3CH2OH --expdata
+#
 import matplotlib
 #matplotlib.use('TKAgg', force=True)
 import re
@@ -7,13 +10,13 @@ import matplotlib.pyplot as plt
 from itertools import cycle
 import sys
 #sys.path.insert(0,'/scratch/users/sringe/transport/CatINT')
-sys.path.insert(0,'/scratch/users/sringe/transport/catmap')
-sys.path.insert(0,'/scratch/users/sringe/transport/catint2')
+#sys.path.insert(0,'/scratch/users/sringe/transport/catmap')
+#sys.path.insert(0,'/scratch/users/sringe/transport/catint2')
 import numpy as np
 from glob import glob
 from catint.experimental import EXPDATA
 from matplotlib import rc
-from catint.io import reglob
+from catint.catint_io import reglob
 import argparse
 from catmap import ReactionModel
 
@@ -51,7 +54,7 @@ def name_to_cm(name):
 msize=8
 lw=2
 
-skip=1
+skip=0
 
 if args.scale is None:
     args.scale='RHE'
@@ -130,8 +133,9 @@ symbols={
         'CHO':'2'
         }
 
-products=['CH3CH2OH' if x=='C2+-sum' else x for x in args.products]
-products=['CH3CH2OH' if x=='C2-sum' else x for x in products]
+if args.products is not None:
+    products=['CH3CH2OH' if x=='C2+-sum' else x for x in args.products]
+    products=['CH3CH2OH' if x=='C2-sum' else x for x in products]
 
 def plot_leis_new_data(ax):
     #data=np.loadtxt('her_pcCu_lei.csv')
@@ -147,8 +151,9 @@ def read_data(files,header=False,dtype='species'):
     pdata={}
     iarg=-1
     labels=[]
+    isratecontrol=False
     for arg2 in files:
-        ratecontrol=False
+        ratecontrol_inner=False
         iarg+=1
         header_txt=None
         #product selection
@@ -157,7 +162,6 @@ def read_data(files,header=False,dtype='species'):
 #            if (dtype=='species' and ads not in products) or (dtype=='cov' and ads not in args.coverages):
             if (dtype=='species' and (ads not in args.products and name_to_cm(ads) not in args.products) ) or (dtype=='cov' and ads not in args.coverages):
                 continue
-        print arg2
         if dtype=='elem' and args.products is not None:
             #elementary reaction index of current datafile
             inx=int(arg2.split('/')[-1].split('_')[2].split('.')[0])
@@ -216,29 +220,30 @@ def read_data(files,header=False,dtype='species'):
             y=data[1]
         species=arg2.split('/')[-1].split('_')[1].split('.')[0]
         if args.ratecontrol and len(arg2.split('/')[-1].split('_'))>2:
-            ratecontrol=True
+            ratecontrol_inner=True
+            isratecontrol=True
         else:
-            ratecontrol=False
-        if ratecontrol:
+            ratecontrol_inner=False
+        if ratecontrol_inner:
             species2=arg2.split('/')[-1].split('_')[2].split('.')[0]
         if species not in pdata:
-            if not ratecontrol:
+            if not ratecontrol_inner:
                 pdata[species]=[]
             else:
                 pdata[species]={}
-        if ratecontrol and species2 not in pdata[species]:
+        if ratecontrol_inner and species2 not in pdata[species]:
             pdata[species][species2]=[]
         if len(np.shape(data))>1:
-            if not ratecontrol:
+            if not ratecontrol_inner:
                 pdata[species].append([x[0],y[0]])
             else:
                 pdata[species][species2].append([x[0],y[0]])
         else:
-            if not ratecontrol:
+            if not ratecontrol_inner:
                 pdata[species].append([x,y])
             else:
                 pdata[species][species2].append([x,y])
-    if not ratecontrol:
+    if not isratecontrol:
         for sp in pdata:
             pdata[sp].sort(key=lambda x: x[0])
             pdata[sp]=np.array(pdata[sp])
@@ -380,7 +385,7 @@ for arg in args.file: #sys.argv[1:]:
         else:
             symbol='*'
             msize=4
-        symbol=''
+#        symbol='o'
         if j_log_plot:
             func=ax1.semilogy
         else:
@@ -403,6 +408,8 @@ for arg in args.file: #sys.argv[1:]:
                 if sp2 not in colors_rc:
                     colors_rc[sp2]=next(colors)
                 color_rc=colors_rc[sp2]
+                if max(yrc[sp2][skip:])<0.05:
+                    continue
                 ax1m.plot(xrc[sp2][skip:]+0.059*pH,yrc[sp2][skip:],':',color=color_rc,lw=1.5,label=sp2)
                 ax1m.annotate(sp2,xy=(xrc[sp2][len(xrc[sp2][skip:])/3],yrc[sp2][len(xrc[sp2][skip:])/3]),color=color_rc,fontsize=12)
         if args.scale=='SHE':
@@ -519,7 +526,8 @@ for pH in set(all_pH+[float(a) for a in args.exp_add_pH]):
             refs=args.exp_refs
         else:
             refs=['all']
-        exp.plot_data(reference=refs,ax=ax1,species=all_prods,pH=[pH,pH+1,pH+2,pH-1,pH-2],\
+        exp.plot_data(reference=refs,ax=ax1,species=all_prods,pH=[pH],\
+                #[pH,pH+1,pH+2,pH-1,pH-2],\
             system=systems,scale=args.scale,only_points=True,\
             take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color,\
             fit_tafel=args.fit_tafel,color_mode=args.exp_colormode,plot_mode='partial_current')
@@ -615,8 +623,12 @@ if args.scale=='RHE':
 else:
     ax1.set_xlabel(r'Voltage vs. SHE (V)')
     ax2.set_xlabel(r'Voltage vs. SHE (V)')
+if args.ratecontrol:
+    ax1m.legend()
 ax1.set_ylabel('Current Density (mA/cm$^2$)')
 ax2.set_ylabel('Coverage')
+ax2.legend()
+ax3.legend()
 plt.tight_layout()
 print('Saving to {}'.format(args.name+'.pdf'))
 plt.savefig(args.name+'.pdf')# ,dpi=500)

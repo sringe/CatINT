@@ -158,7 +158,7 @@ class EXPDATA():
         markers=cycle(['o','*','x','d'])
         filled=cycle(['filled','none'])
         symbols=self.symbols
-        for j in list_of_data[:-1]: #[1,3,5,7,9,11,13]:
+        for j in list_of_data: #[1,3,5,7,9,11,13]:
             #elif symbol is not None:
             #    cmarker=next(symbols)
             voltage=[]
@@ -650,88 +650,6 @@ class EXPDATA():
 
 
                     if isref('jaramillo'):
-<<<<<<< Updated upstream
-                        DATA=self.DATA_jr
-                        name=','.join(DATA.label[1].split(',')[1:])
-                        skip=skip_dict[name]
-                        spp=s2i(species,DATA,pH=cpH)
-                        if len(spp)>0:
-                            kwargs=kwargs_base.copy()
-                            if scale=='RHE':
-                                kwargs['convert']=None #'SHE_TO_RHE'
-                            elif scale=='SHE':
-                                kwargs['convert']='RHE_TO_SHE'
-                            kwargs['list_of_data']=spp
-                            kwargs['voltage_mode']='first'
-                            kwargs['DATA']=DATA
-                            kwargs['skip']=skip
-                            kwargs['take_log']=True
-                            self.plot_stuff(**kwargs)
-                        DATA=self.DATA_lr
-                        name=','.join(DATA.label[1].split(',')[1:])
-                        skip=skip_dict[name]
-                        spp=s2i(species,DATA,pH=cpH)
-                        if len(spp)>0:
-                            kwargs=kwargs_base.copy()
-                            if scale=='RHE':
-                                kwargs['convert']=None #'SHE_TO_RHE'
-                            elif scale=='SHE':
-                                kwargs['convert']='RHE_TO_SHE'
-                            kwargs['list_of_data']=spp
-                            kwargs['voltage_mode']='first'
-                            kwargs['DATA']=DATA
-                            kwargs['skip']=skip
-                            kwargs['take_log']=True
-                            self.plot_stuff(**kwargs)
-                        DATA=self.DATA_lr_NF
-                        name=','.join(DATA.label[1].split(',')[1:])
-                        skip=skip_dict[name]
-                        spp=s2i(species,DATA,pH=cpH)
-                        if len(spp)>0:
-                            kwargs=kwargs_base.copy()
-                            if scale=='RHE':
-                                kwargs['convert']=None #'SHE_TO_RHE'
-                            elif scale=='SHE':
-                                kwargs['convert']='RHE_TO_SHE'
-                            kwargs['list_of_data']=spp
-                            kwargs['voltage_mode']='first'
-                            kwargs['DATA']=DATA
-                            kwargs['skip']=skip
-                            kwargs['take_log']=True
-                            self.plot_stuff(**kwargs)
-                        DATA=self.DATA_jr_NF
-                        name=','.join(DATA.label[1].split(',')[1:])
-                        skip=skip_dict[name]
-                        spp=s2i(species,DATA,pH=cpH)
-                        if len(spp)>0:
-                            kwargs=kwargs_base.copy()
-                            if scale=='RHE':
-                                kwargs['convert']=None #'SHE_TO_RHE'
-                            elif scale=='SHE':
-                                kwargs['convert']='RHE_TO_SHE'
-                            kwargs['list_of_data']=spp
-                            kwargs['voltage_mode']='first'
-                            kwargs['DATA']=DATA
-                            kwargs['skip']=skip
-                            kwargs['take_log']=True
-                            self.plot_stuff(**kwargs)
-                        DATA=self.DATA_jr_NC
-                        name=','.join(DATA.label[1].split(',')[1:])
-                        skip=skip_dict[name]
-                        spp=s2i(species,DATA,pH=cpH)
-                        if len(spp)>0:
-                            kwargs=kwargs_base.copy()
-                            if scale=='RHE':
-                                kwargs['convert']=None #'SHE_TO_RHE'
-                            elif scale=='SHE':
-                                kwargs['convert']='RHE_TO_SHE'
-                            kwargs['list_of_data']=spp
-                            kwargs['voltage_mode']='first'
-                            kwargs['DATA']=DATA
-                            kwargs['skip']=skip
-                            kwargs['take_log']=True
-                            self.plot_stuff(**kwargs)
-=======
                         for DATA in [self.DATA_jr,self.DATA_lr,self.DATA_lr_NF,self.DATA_jr_NF,self.DATA_jr_NC]:
                             name=','.join(DATA.label[1].split(',')[1:])
                             skip=skip_dict[name]
@@ -749,7 +667,6 @@ class EXPDATA():
                                 kwargs['take_log']=True
                                 self.plot_stuff(**kwargs)
 
->>>>>>> Stashed changes
                         DATA=self.DATA_cas
                         name=','.join(DATA.label[1].split(',')[1:])
                         skip=skip_dict[name]
@@ -1120,12 +1037,9 @@ class EXPDATA():
             else:
                 print('No color assigned for this research group, add it in experimental.get_color')
                 sys.exit
-<<<<<<< Updated upstream
         else:
             print('No color_mode like {}'.format(mode))
             sys.exit()
-=======
->>>>>>> Stashed changes
         print(species,mode)
         return color
                 #color[n]='dark red'
