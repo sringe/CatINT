@@ -159,7 +159,7 @@ class EXPDATA():
         markers=cycle(['o','*','x','d'])
         filled=cycle(['filled','none'])
         symbols=self.symbols
-        for j in list_of_data[:-1]: #[1,3,5,7,9,11,13]:
+        for j in list_of_data: #[1,3,5,7,9,11,13]:
             #elif symbol is not None:
             #    cmarker=next(symbols)
             voltage=[]
@@ -1049,6 +1049,6 @@ class EXPDATA():
         else:
             print(('No color_mode like {}'.format(mode)))
             sys.exit()
-        print((species,mode))
+        print(species,mode)
         return color
                 #color[n]='dark red'

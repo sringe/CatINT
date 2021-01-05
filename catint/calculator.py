@@ -24,11 +24,10 @@ import os
 import math
 from copy import deepcopy
 import imp
-from .io import sync_mpi,reduce_dict_mpi
 from .comsol_wrapper import Comsol
 from .catmap_wrapper import CatMAP
 from .comsol_reader import Reader
-from .io import read_all
+from .catint_io import read_all,sync_mpi,reduce_dict_mpi
 
 #import mpi if available
 use_mpi=False

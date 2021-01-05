@@ -3,7 +3,7 @@ from .units import *
 import numpy as np
 import os
 from subprocess import call
-from .io import replace_line,insert_line,mpi_make_dir
+from .catint_io import replace_line,insert_line,mpi_make_dir
 from glob import glob
 import sys
 sys.path.insert(0,'/scratch/users/sringe/software/catmap')
@@ -723,7 +723,7 @@ class CatMAP():
 
 
     def get_data(self,pickle_file,model):
-        a = pickle.load(open(pickle_file))
+        a = pickle.load(open(pickle_file,'rb'))
         data = Object()
         #COVERAGES
         data.coverage_names = model.output_labels['coverage']

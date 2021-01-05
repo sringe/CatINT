@@ -7,7 +7,7 @@ from matplotlib import colors as mcolors
 import matplotlib.gridspec as gridspec
 import matplotlib.ticker as mtick
 import os
-from .io import read_all
+from .catint_io import read_all
 
 class Plot():
 

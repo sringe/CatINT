@@ -15,7 +15,7 @@ import collections
 import logging
 import os
 import re
-from .io import sync_mpi,save_all #,MPIFileHandler
+from .catint_io import sync_mpi,save_all #,MPIFileHandler
 import subprocess
 from glob import glob
 from shutil import copy
@@ -85,15 +85,25 @@ class Transport(object):
             if not os.path.exists(self.outputfoldername):
                 os.makedirs(self.outputfoldername)
             else:
+<<<<<<< HEAD
+                print('list of dirs',os.listdir(resultsdir))
+                existing_files=sorted([f for f in os.listdir(resultsdir) if re.search(self.model_name+'_results_[0-9]+', f)])
+                print(existing_files,self.model_name+'_[0-9]+')
+=======
                 print(('list of dirs',os.listdir(resultsdir)))
                 existing_files=sorted([f for f in os.listdir(resultsdir) if re.search(self.model_name+'_results_[0-9]+', f)])
                 print((existing_files,self.model_name+'_[0-9]+'))
+>>>>>>> 3e022f0a822c5fbd1bee49497e0eccbfb22c65df
                 if len(existing_files)>0: #self.outputfoldername.split('_')[-1].isdigit():
                     number=int(existing_files[-1].split('_')[-1])+1
                 else:
                     number=2
                 self.outputfoldername='_'.join(sum([[self.outputfoldername],[str(number).zfill(4)]],[]))
+<<<<<<< HEAD
+                print('makeing dir',self.outputfoldername)
+=======
                 print(('makeing dir',self.outputfoldername))
+>>>>>>> 3e022f0a822c5fbd1bee49497e0eccbfb22c65df
                 os.makedirs(self.outputfoldername)
             self.logfilename=self.outputfoldername+'/transport.log' # the log file
         else:
