@@ -33,7 +33,7 @@ In order to analyze the rate-limiting step, we plot the rate control analysis us
 
 The resulting figure is:
 
-.. figure:: /docs/source/_static/co2r_au_catmap_rc.png
+.. figure:: ../../_static/co2r_au_catmap_rc.png
   :align: center
   :scale: 80 %
 
@@ -52,7 +52,7 @@ Transport properties are plotted using the ``$CATINT/tools/plotting_catint.py`` 
 
 The resulting figure shows the species concentrations, potential and activities as a function of x at -0.9 V vs. SHE, as well as the pH as a function of potential:
 
-.. figure:: /docs/source/_static/co2r_au_catmap_rc.png
+.. figure:: ../../_static/co2r_au_catmap_rc.png
   :align: center
   :scale: 80 %
 
