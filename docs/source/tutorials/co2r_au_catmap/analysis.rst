@@ -15,7 +15,7 @@ The command plots the current density and coverages of the calculation. Experime
 
 The resulting figure (including experimental data) is: 
 
-.. figure:: /_static/co2r_au_catmap.png
+.. figure:: _static/co2r_au_catmap.png
   :maxdepth: 2
   :align: center
   :scale: 80 %
