@@ -15,7 +15,7 @@ The command plots the current density and coverages of the calculation. Experime
 
 The resulting figure (including experimental data) is: 
 
-.. figure:: /docs/source/tutorials/co2r_au_catmap/_static/co2r_au_catmap.png
+.. figure:: /docs/source/_static/co2r_au_catmap.png
   :align: center
   :scale: 80 %
 
@@ -33,7 +33,7 @@ In order to analyze the rate-limiting step, we plot the rate control analysis us
 
 The resulting figure is:
 
-.. figure:: ../../_static/co2r_au_catmap_rc.png
+.. figure:: /docs/source/_static/co2r_au_catmap_rc.png
   :align: center
   :scale: 80 %
 
@@ -52,7 +52,7 @@ Transport properties are plotted using the ``$CATINT/tools/plotting_catint.py`` 
 
 The resulting figure shows the species concentrations, potential and activities as a function of x at -0.9 V vs. SHE, as well as the pH as a function of potential:
 
-.. figure:: ../../_static/co2r_au_catmap_rc.png
+.. figure:: /docs/source/_static/co2r_au_catmap_rc.png
   :align: center
   :scale: 80 %
 
