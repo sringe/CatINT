@@ -16,8 +16,10 @@ The command plots the current density and coverages of the calculation. Experime
 The resulting figure (including experimental data) is: 
 
 .. figure:: /_static/co2r_au_catmap.png
+  :maxdepth: 2
   :align: center
   :scale: 80 %
+
 
 As seen from the figure, all experimental curves are pretty close to each other and also the Tafel slopes are close. Also the theory predicts the experimental curves reasonably well. 
 
