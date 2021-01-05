@@ -231,8 +231,10 @@ We can also use ``CatINT`` just to run ``CatMAP``. This can be useful for easily
 
    cm=CatMAP(transport=tp,model_name='CO2R')
    for pot in descriptors['phiM']:
-      tp.descriptors['phiM']=[pot]
-      cm.run()
+       tp.system['phiM']=pot
+       tp.descriptors['phiM']=[pot]
+       tp.system['use_activities']=False
+       cm.run()
 
 Mass transport extrapolation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
