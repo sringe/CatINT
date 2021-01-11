@@ -411,7 +411,7 @@ for arg in args.file: #sys.argv[1:]:
                 if max(yrc[sp2][skip:])<0.05:
                     continue
                 ax1m.plot(xrc[sp2][skip:]+0.059*pH,yrc[sp2][skip:],':',color=color_rc,lw=1.5,label=sp2)
-                ax1m.annotate(sp2,xy=(xrc[sp2][len(xrc[sp2][skip:])/3],yrc[sp2][len(xrc[sp2][skip:])/3]),color=color_rc,fontsize=12)
+                ax1m.annotate(sp2,xy=(xrc[sp2][len(xrc[sp2][skip:])//3],yrc[sp2][len(xrc[sp2][skip:])//3]),color=color_rc,fontsize=12)
         if args.scale=='SHE':
             pH=pHtmp
     if args.elemrates:
