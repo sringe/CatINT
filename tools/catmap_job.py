@@ -8,27 +8,31 @@ from catmap.model import ReactionModel
 from string import Template
 import numpy as np
 from glob import glob
+from subprocess import call
 
 if len(sys.argv)>2:
     if sys.argv[-1]=='--cleanup':
         files=glob('*.png')+glob('*.pdf')+glob('*.pkl')+glob('*.log')
         for f in files:
-            os.remove(f)
+#            os.remove(f)
+            call('rm -f '+f,shell=True)
 
 include_rate_control = False
 
 pH = ['0','4','7','10','14']
 i=0
 j = pH[i]
-print 'pH = '+j    
-mkm_template = Template(open('catmap_'+sys.argv[1]+'_template.mkm').read())
-mkm_text = mkm_template.substitute(pH_new = j)
+print('pH = '+j)    
+#mkm_template = Template(open('catmap_'+sys.argv[1]+'_template.mkm').read())
+#mkm_text = mkm_template.substitute(pH_new = j)
 mkm_file = 'catmap_'+sys.argv[1]+'.mkm'
-with open(mkm_file,'w') as f:
-    f.write(mkm_text)
-print 'Reading',mkm_file
+#with open(mkm_file,'w') as f:
+#    f.write(mkm_text)
+#print('Reading',mkm_file)
 model = ReactionModel(setup_file = mkm_file)
-model.output_variables+=['production_rate', 'free_energy', 'selectivity', 'interacting_energy','coverage','rate_control']
+#model.output_variables+=['production_rate', 'free_energy', 'selectivity', 'interacting_energy','coverage','rate_control']
+#model.output_variables+= ['turnover_frequency','production_rate','free_energy','selectivity',
+model.output_variables+= ['turnover_frequency','rate_control']
 model.run()
 
 ma = analyze.MechanismAnalysis(model)
