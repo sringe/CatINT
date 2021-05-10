@@ -19,6 +19,7 @@ The resulting figure (including experimental data) is:
   :align: center
   :scale: 80 %
 
+
 As seen from the figure, all experimental curves are pretty close to each other and also the Tafel slopes are close. Also the theory predicts the experimental curves reasonably well. 
 
 Coverages are shown in the bottom window and indicate no major surface coverage of any species.

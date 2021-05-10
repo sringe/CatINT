@@ -411,7 +411,7 @@ for arg in args.file: #sys.argv[1:]:
                 if max(yrc[sp2][skip:])<0.05:
                     continue
                 ax1m.plot(xrc[sp2][skip:]+0.059*pH,yrc[sp2][skip:],':',color=color_rc,lw=1.5,label=sp2)
-                ax1m.annotate(sp2,xy=(xrc[sp2][len(xrc[sp2][skip:])/3],yrc[sp2][len(xrc[sp2][skip:])/3]),color=color_rc,fontsize=12)
+                ax1m.annotate(sp2,xy=(xrc[sp2][len(xrc[sp2][skip:])//3],yrc[sp2][len(xrc[sp2][skip:])//3]),color=color_rc,fontsize=12)
         if args.scale=='SHE':
             pH=pHtmp
     if args.elemrates:
@@ -531,10 +531,10 @@ for pH in set(all_pH+[float(a) for a in args.exp_add_pH]):
             system=systems,scale=args.scale,only_points=True,\
             take_log=j_log_plot,marker=symbol,legend=show_legend,msize=3,color=color,\
             fit_tafel=args.fit_tafel,color_mode=args.exp_colormode,plot_mode='partial_current')
-        exp.plot_data(reference=refs,ax=ax3,species=all_prods,pH=[pH],\
-            system=systems,scale=args.scale,only_points=True,\
-            take_log=False,marker=symbol,legend=show_legend,msize=3,color=color,\
-            fit_tafel=args.fit_tafel,color_mode=args.exp_colormode,plot_mode='faradaic_efficiency')
+        #exp.plot_data(reference=refs,ax=ax3,species=all_prods,pH=[pH],\
+        #    system=systems,scale=args.scale,only_points=True,\
+        #    take_log=False,marker=symbol,legend=show_legend,msize=3,color=color,\
+        #    fit_tafel=args.fit_tafel,color_mode=args.exp_colormode,plot_mode='faradaic_efficiency')
 #        if pH == 13:
 #            #pure HER
 #            exp.plot_data(reference=['jaramillo-her'],ax=ax1,species=all_prods,pH=['13.0'],\
@@ -632,5 +632,4 @@ ax3.legend()
 plt.tight_layout()
 print(('Saving to {}'.format(args.name+'.pdf')))
 plt.savefig(args.name+'.pdf')# ,dpi=500)
-    
 plt.show()

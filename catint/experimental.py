@@ -213,10 +213,10 @@ class EXPDATA():
                 pH=7.0
                 print('No pH found to convert scales!! Check CSV data labels if pH is included')
                 sys.exit()
-            print(('marker',self.marker))
             cmarker=marker
             if cmarker is None:
                 cmarker=next(markers)
+            print(('marker',cmarker))
             if convert is not None:
                 if convert.split('_')[0]=='RHE':
                     shift=-0.0592*pH
@@ -232,15 +232,14 @@ class EXPDATA():
     
             #if fit_tafel:
             #    tafel_fitting(voltage,current)
+            print('Before plotting {}'.format(fit))
             if not fit>2:
 #                plt.figure()
                 mfc=next(filled)
                 if cmarker=='*':
-                    func(voltage, current, color=self.color[n], linestyle=linestyle_2, marker = cmarker, markersize=12,label=DATA.label[j],lw=lw,ls=ls,zorder=1e6) #,mfc='none')# facecolors=next(filled))  #linestyle = ':',
+                    func(voltage, current, color=self.color[n], linestyle=linestyle_2, marker = cmarker, markersize=12,label=DATA.label[j],lw=lw,zorder=1e6) #,mfc='none')# facecolors=next(filled))  #linestyle = ':',
                 else:
-                    func(voltage, current, color=self.color[n], linestyle=linestyle_2, marker = cmarker, markersize=msize,label=DATA.label[j],lw=lw,ls=ls,zorder=1e6)
-#                plt.show()
-#                sys.exit()
+                    func(voltage, current, color=self.color[n], linestyle=linestyle_2, marker = cmarker, markersize=msize,label=DATA.label[j],lw=lw,zorder=1e6)
             if fit_tafel:
                 linestyle=':'
             if fit>0:
@@ -474,8 +473,6 @@ class EXPDATA():
                         #    print('Only one system is allowed per csv file, so that only one total current column is contained, so please create a separate csv file for each system')
                         #    sys.exit()
                         heads+=[i]
-            print(('THE HEADS',heads))
-            sys.exit()
             return heads
     
         linestyles=cycle(['-','-',':','-.'])
