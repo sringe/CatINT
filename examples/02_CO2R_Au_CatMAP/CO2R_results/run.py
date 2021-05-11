@@ -22,7 +22,7 @@ system=\
     'charging_scheme':'comsol',
     'phiM':-0.5,
     'phiPZC': 0.16,              #V vs. SHE
-    'Stern capacitance': 20.,    #micro FC:m2
+    'Stern capacitance': 20.,    #micro F/cm2
     #KINETICS
     'potential drop':'Stern',
     'active site density': 9.61e-05/unit_NA*(1e10)**2, #mol sites/m^2
@@ -62,7 +62,7 @@ comsol_args['solver_settings']['ramp']['dramp']=0.01
 #par_method
 comsol_args['par_method']='internal'
 
-comsol_args['bin_path']='\"C:/Program Files/COMSOL/COMSOL53/Multiphysics/bin/win64/comsolbatch.exe\"'
+comsol_args['bin_path']='/mnt/c/Program Files/COMSOL/COMSOL53/Multiphysics/bin/win64'
 comsol_args['bin_version']='5.3a'
 
 #SOLVER SEQUENCE
@@ -89,8 +89,7 @@ tp=Transport(
     comsol_args=comsol_args,
     model_name='CO2R',
     descriptors=descriptors,
-    nx=nx,
-    catint_path='C:/Users/aimse/software/CatINT')
+    nx=nx)
 tp.set_calculator('comsol')
 c=Calculator(transport=tp,tau_scf=0.008,ntout=1,dt=1e-1,tmax=10,mix_scf=0.02)
 c.run()

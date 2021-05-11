@@ -37,7 +37,7 @@ use_mpi=False
 
 class Transport(object):
 
-    def __init__(self, species=None,electrode_reactions=None,electrolyte_reactions=None,\
+    def __init__(self, catint_path=None, species=None,electrode_reactions=None,electrolyte_reactions=None,\
             system=None,pb_bound=None,nx=100,\
             descriptors=None,model_name=None,\
             comsol_args={},catmap_args={},only_plot=False,resultsdir=None):
@@ -48,9 +48,9 @@ class Transport(object):
         if only_plot:
             return
 
-        catint_path='/'.join(__file__.split('/')[:-2])
+        if catint_path is None:
+            catint_path='/'.join(__file__.split('/')[:-2])
         self.catint_path=catint_path
-
         #MPI setup
         if use_mpi:
             self.mpi_comm = MPI.COMM_WORLD
@@ -587,7 +587,7 @@ class Transport(object):
             electrolyte_species=set(electrolyte_species)
         #get the diffusion coefficients
         diff={}
-        for line in open(self.catint_path+'/data/diffusion_constants.txt','r'):
+        for line in open(self.catint_path+'/data/diffusion_constants.txt','r',encoding='utf8'):
             if line.startswith('#'):
                 continue
             ls=line.split()
@@ -608,7 +608,7 @@ class Transport(object):
                 self.species[sp]['symbol']=diff[sp][2]
 
         #read Henry's constants
-        for line in open(self.catint_path+'/data/henry_constants.txt','r'):
+        for line in open(self.catint_path+'/data/henry_constants.txt','r',encoding='utf8'):
             if not line.startswith('#'):
                 ls=line.split()
                 if ls[1] in self.species:
@@ -802,7 +802,7 @@ class Transport(object):
                 solver_sequence particular solver sequence
         """
         comsol_keys=['outputs','boundary_variables','global_variables','global_equations','parameter','bin_path',\
-            'par_name','par_values','par_method','desc_method','model_type','solver','studies','solver_settings']
+            'par_name','par_values','par_method','desc_method','model_type','solver','studies','solver_settings','bin_version']
 
         #tp_dilute_species or porous_electrode
         if 'model_type' not in comsol_args:

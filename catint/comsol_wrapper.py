@@ -25,7 +25,6 @@ class Comsol():
             self.tp=transport #transport object
         ##COMSOL EXE
 
-
         if not hasattr(self,'exe'):
             if 'bin_path' in self.tp.comsol_args:
                 exe_path=self.tp.comsol_args['bin_path']
@@ -70,7 +69,7 @@ class Comsol():
                             self.version=None
                     except:
                         self.tp.logger.error('|    | CS | Could not find binary for COMSOL, possibly locate did not work or try recreating your locate database. specify via comsol_args[\'bin_path\']')
-                self.exe=exe_path
+            self.exe=exe_path
             #get COMSOL version, /Applications/COMSOL53a/Multiphysics/bin/comsol
             self.tp.logger.info('|    | CS | Found COMSOL at {}'.format(self.exe))
             self.tp.logger.info('|    | CS | Running COMSOL v{}'.format(self.version))
@@ -171,7 +170,7 @@ class Comsol():
     def check_error(self):
         error=False
         file_name=self.results_folder+'/comsol_run.out'
-        for line in open(file_name,'r'):
+        for line in open(file_name.replace('\\\\','\\').replace('\\','/'),'r'):
 #            if 'Not all parameter steps returned.' in line:
             if 'Failed to find a solution for all parameters' in line or 'Failed to find a solution for the initial parameter' in line:
                 error=True
