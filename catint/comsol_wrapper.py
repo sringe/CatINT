@@ -9,9 +9,10 @@ from copy import deepcopy
 from .comsol_model import Model
 from .comsol_reader import Reader
 from shutil import rmtree
-from subprocess import check_output
+from subprocess import check_output,Popen,PIPE
 import datetime
 import time
+import sys
 
 class Comsol():
     """This class does all operations need to write input files for comsol and read output"""
@@ -28,27 +29,59 @@ class Comsol():
         if not hasattr(self,'exe'):
             if 'bin_path' in self.tp.comsol_args:
                 exe_path=self.tp.comsol_args['bin_path']
-                self.version='??'
+                self.version=self.tp.comsol_args['bin_version']
             else:
                 #try to find executable
                 try:
-                    s=check_output('locate Multiphysics/bin/comsol',shell=True).split('\n')
+                    s=check_output('locate Multiphysics/bin/comsol',shell=True).decode(sys.stdout.encoding).split('\n')
                     sr=[ss for ss in s if ss.endswith('comsol')]
                     if len(sr)==1:
                         exe_path=sr[0]
                     elif len(sr)==0:
-                        self.tp.logger.error('|    | CS | Could not find binary for COMSOL, specify via comsol_args[\'bin_path\']')
-                        sys.exit()
+                        raise LookupError('Could not find any comsol binary, when locating Multiphysics/bin/comsol')
                     elif len(sr)>1:
-                        self.tp.logger.error('|    | CS | More than one binary found for COMSOL, specify via comsol_args[\'bin_path\']')
-                        sys.exit()
+                        raise LookupError('|    | CS | More than one binary found for COMSOL, specify via comsol_args[\'bin_path\']')
                     self.version=re.findall('COMSOL([0-9a-zA-Z.]+)',exe_path)[0]
                 except:
-                    self.tp.logger.error('|    | CS | Could not find binary for COMSOL, possibly locate did not work or try recreating your locate database. specify via comsol_args[\'bin_path\']')
-            self.exe=exe_path
+                    try:
+                        s=check_output('locate multiphysics/bin/comsol',shell=True).decode(sys.stdout.encoding).split('\n')
+                        sr=[ss for ss in s if ss.endswith('comsol')]
+                        if len(sr)==1:
+                            exe_path=sr[0]
+                        elif len(sr)==0:
+                            self.tp.logger.error('|    | CS | Could not find binary for COMSOL, neither by locating Multiphysics/bin/comsol nor by locating multiphysics/bin/comsol, specify via comsol_args[\'bin_path\']')
+                            sys.exit()
+                        elif len(sr)>1:
+                            self.tp.logger.error('|    | CS | More than one binary found for COMSOL, specify via comsol_args[\'bin_path\']')
+                            sys.exit()
+                        sol=re.findall('([0-9]{1,2}.?[0-9]{1,2})',exe_path)
+                        if len(sol)>0:
+                            v=sol[0]
+                            if '.' not in v:
+                                v=v[0]+'.'+v[1:]
+                            if v+'a' in exe_path:
+                                v+='a'
+                            elif v+'b' in exe_path:
+                                v+='b'
+                            elif v+'c' in exe_path:
+                                v+='c'
+                            self.version=v
+                        else:
+                            self.version=None
+                    except:
+                        self.tp.logger.error('|    | CS | Could not find binary for COMSOL, possibly locate did not work or try recreating your locate database. specify via comsol_args[\'bin_path\']')
+                self.exe=exe_path
             #get COMSOL version, /Applications/COMSOL53a/Multiphysics/bin/comsol
             self.tp.logger.info('|    | CS | Found COMSOL at {}'.format(self.exe))
             self.tp.logger.info('|    | CS | Running COMSOL v{}'.format(self.version))
+            if self.version is not None:
+                self.tp.logger.info('|    | CS | Check this version number carefully, because some features/settings in COMSOL might have changed and thus COMSOL might crash or this can lead to convergence issues if convergence settings were changed. CatINT has been tested to run succesfully with COMSOL v5.3a and v5.5')
+            elif self.version is None:
+                self.tp.logger.error('|    | CS | The COMSOl version could not be identified from the executable folder name. Provide it as input to the COMSOl variables manually via comsol_args[\'bin_version\']')
+                sys.exit()
+            #convert version to a float
+            self.tp.comsol_args['bin_version']=float(self.version.replace('a','1').replace('b','2').replace('c','3'))
+
 #        elif os.path.exists('/share/PI/suncat/COMSOL/comsol53a/multiphysics/bin/comsol'):
 #            exe_path='/share/PI/suncat/COMSOL/comsol53a/multiphysics/bin/comsol'
 #        else:

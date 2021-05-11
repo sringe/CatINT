@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from catint.plot import Plot
 from catint.transport import Transport
 from glob import glob
-from catint.io import read_all
+from catint.catint_io import read_all
 from itertools import cycle
 import sys
 from units import *
@@ -300,7 +300,7 @@ def plot(prop,color=None):
         xlabel,ylabel=settings(ax,prop,d_sel)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
-        print 'current prop',prop
+        print('current prop',prop)
         if prop in ['concentration','pKw','activity','activity_coefficient']:
             #x: xmesh
             #species
@@ -328,7 +328,7 @@ def plot(prop,color=None):
                         color_species[sp]=ccolor
                     else:
                         ccolor=color_species[sp]
-                    print d_sel_inx,'species',sp,prop
+                    print(d_sel_inx,'species',sp,prop)
                     if prop=='activity':
                         propread='concentration'
                     else:
@@ -369,8 +369,8 @@ def plot(prop,color=None):
                 if propread in tp.alldata[0]['species'][sp]:
                     y=[tp.alldata[i]['species'][sp][propread] for i in range(len(x))]
                 else:
-                    print propread,'not found in all data, current keys = ',tp.alldata[0]['species'][sp].keys()
-                    print 'skipping'
+                    print(propread,'not found in all data, current keys = ',list(tp.alldata[0]['species'][sp].keys()))
+                    print('skipping')
                     continue
                 if args.norm and (prop=='electrode_current_density' or prop=='reaction_rate'):
                     RF=tp.system['RF']
@@ -392,8 +392,8 @@ def plot(prop,color=None):
                     nel=2.
                     nprod=1.
                     j=i*nel*unit_F/nprod/10. #current density in mA/cm^2
-                    print 'slope',dc_dx,j
-                    print 'limiting current = {}'.format(j)
+                    print('slope',dc_dx,j)
+                    print('limiting current = {}'.format(j))
                     ax.axhline(j,color='0.5')
                     func=ax.semilogy
                     if prop=='electrode_current_density':
@@ -417,7 +417,7 @@ def plot(prop,color=None):
                         pass
                 if prop=='surface_concentration':
                     for xx,yy in zip(x,y):
-                        print 'sc',sp,xx,yy
+                        print('sc',sp,xx,yy)
                 #if prop=='electrode_current_density':
                 #    ax=plot_leis_new_data(ax)
             if prop=='Keq_buffer':
@@ -471,7 +471,7 @@ def plot(prop,color=None):
                 data=np.array(sorted([[xx,yy] for xx,yy in zip(x,y)]))
                 x=data[:,0]
                 y=data[:,1]
-                print x,y
+                print(x,y)
                 try:
                     spl=UnivariateSpline(x,y,k=2,s=0)
                     #3) calculate double layer capacitance from derivative
@@ -511,10 +511,10 @@ def plot(prop,color=None):
                 y=[yy*1e-10 for yy in y]
             if not prop=='pH_at_x':
                 ax.plot(x,y,ls+m,color=color)
-
+        ax.set_xlim(-1.25,-0.5)
 
 for iif,f in enumerate(args.file):
-    print 'Working on folder ',f
+    print('Working on folder ',f)
     color=next(colors)
     read_all(tp,f,only=['alldata','species','system','xmesh','descriptors','electrode_reactions'])
     #check how many real datapoints we actually have:
@@ -537,7 +537,7 @@ for iif,f in enumerate(args.file):
     while a!=m_list[-1]:
         a=next(markerstyles)
     for p in args.prop:
-        print('Plotting {}'.format(p))
+        print(('Plotting {}'.format(p)))
         plot(p,color=color)
 for ax in ax_list:
     ax.legend(prop={'size': 6})

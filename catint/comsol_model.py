@@ -33,6 +33,7 @@ class Model():
         self.par_method=comsol_args['par_method']
         self.studies=comsol_args['studies']
         self.results_folder=results_folder
+        self.version=comsol_args['bin_version']
 
         self.js=''
         self.js+='import com.comsol.model.*;\n'
@@ -53,6 +54,7 @@ class Model():
         if self.comsol_args['model_type']=='tp_dilute_species':
             #first make a list of all classes
             classes=[]
+            print('self.tp',self.tp)
             classes.append(self.param(self.tp,comsol_args=self.comsol_args))
             classes.append(self.components())
             classes.append(self.variables(self.tp,index=1,geo='b1',\
@@ -619,6 +621,7 @@ class Model():
             else:
                 self.tp=tp
             self.comsol_args=comsol_args
+            self.version=comsol_args['bin_version']
             self.s=''
             self.s+='/*\n'
             self.s+=' *PHYSICS\n'
@@ -672,6 +675,10 @@ class Model():
                 #self.s+='    model.component("comp1").physics("es").feature("pot2").active(false);\n'
                 #end dirichlet
             self.s+='    model.component("comp1").physics("es").feature("df1").active(false);\n'
+            if self.version>5.31:
+#                self.s+='    model.component("comp1").physics("es").prop("PortSweepSettings").set("PortParamName", "PortName");\n'
+                self.s+='    model.component("comp1").physics("es").feature("ccn1").set("minput_numberdensity", 0);\n'
+                self.s+='    model.component("comp1").physics("es").feature("ccn1").set("minput_temperature_src", "userdef");\n'
         def tds(self):
             """Transport of Dilute Species"""
             self.s+='    model.component("comp1").physics().create("tds", "DilutedSpecies", "geom1");\n'
@@ -682,10 +689,13 @@ class Model():
                 if i != len(self.tp.species)-1:
                     conc_str+=", "
             self.s+='    model.component("comp1").physics("tds").field("concentration").component(new String[]{'+conc_str+'});\n'
+            #if self.version>5.31:
+            #    self.s+='    model.component("comp1").physics("tds").create("fl1", "FluxBoundary", 0);\n'
             self.s+='    model.component("comp1").physics("tds").create("fl1", "Fluxes", 0);\n'
-            self.s+='    model.component("comp1").physics("tds").feature("fl1").selection().set(new int[]{1});\n'
+            self.s+='    model.component("comp1").physics("tds").feature("fl1").selection().set(1);\n'
             self.s+='    model.component("comp1").physics("tds").create("conc1", "Concentration", 0);\n'
-            self.s+='    model.component("comp1").physics("tds").feature("conc1").selection().set(new int[]{2});\n'
+            self.s+='    model.component("comp1").physics("tds").feature("conc1").selection().set(2);\n'
+
 
             #### REACTIONS
 
@@ -701,6 +711,8 @@ class Model():
                 self.s+='    model.component("comp1").physics("tds").prop("TransportMechanism").set("Migration", true);\n'
             else:
                 self.s+='    model.component("comp1").physics("tds").prop("TransportMechanism").set("Migration", false);\n'
+            if self.version>5.31:
+                self.s+='    model.component("comp1").physics("tds").prop("TransportMechanism").set("MassTransferInPorousMedia", false);\n'
 
             #add diffusion coefficients to diffusion model
             self.s+='/*\n'
@@ -714,6 +726,8 @@ class Model():
 
             self.s+='    model.component("comp1").physics("tds").feature("cdm1").set("z", new String[][]{'+charge_str+'});\n'
             self.s+='    model.component("comp1").physics("tds").feature("cdm1").set("minput_temperature", "T");\n'
+            if self.version>5.31:
+                self.s+='    model.component("comp1").physics("tds").feature("cdm1").set("minput_temperature_src", "userdef");\n'
 
             for i in range(len(self.tp.species)):
                 self.s+='    model.component("comp1").physics("tds").feature("cdm1").set("D_cp'+str(i+1)+'", new String[][]{{"D'+str(i+1)+'"}, {"0"}, {"0"}, {"0"}, {"D'+str(i+1)+'"}, {"0"}, {"0"}, {"0"}, {"D'+str(i+1)+'"}});\n'
@@ -750,9 +764,14 @@ class Model():
                 if i != len(self.tp.species)-1:
                     f_str+=", "
 
+            #if self.version>5.31:
+            #    self.s+='    model.component("comp1").physics("tds").feature("fl1").set("J0", new String[][]{'+f_str+'});\n'
+            #else:
             self.s+='    model.component("comp1").physics("tds").feature("fl1").set("N0", new String[][]{'+f_str+'});\n'
             self.s+='    model.component("comp1").physics("tds").feature("conc1").set("species", new int[][]{'+b_str+'});\n'
             self.s+='    model.component("comp1").physics("tds").feature("conc1").set("c0", new String[][]{'+ci_str+'});\n'
+            if self.version>5.31:
+                self.s+='    model.component("comp1").physics("tds").feature("nflx1").set("IncludeConvection", true);\n'
 
             #global constraint
 #            self.s+='    model.component("comp1").physics("tds").create("gconstr1", "GlobalConstraint", -1);\n'
@@ -858,13 +877,27 @@ class Model():
                     self.s+='    model.component("comp1").physics("tds").feature("cdm1").featureInfo("info").set("tds.cflux_cp'+str(index)+'x", new String[]{"cp'+str(index)+'*tds.u'+str(index)+'"});\n'
                 for sp in self.tp.species:
                     index=species_names.index(sp)+1
+                    #if self.version>5.31:
+                    #    self.s+='    model.component("comp1").physics("tds").feature("cdm1").featureInfo("info").set("tds.Res_cp'+str(index)+'", new String[]{"d(-cp'+str(index)+'*tds.z_cp'+str(index)+'*tds.um_cp'+str(index)+'xx*F_const*d(tds.V,x),x)+tds.u'+str(index)+'*cp'+str(index)+'x-tds.R_cp'+str(index)+'"});\n'
+                    #else:
                     self.s+='    model.component("comp1").physics("tds").feature("cdm1").featureInfo("info").set("tds.Res_cp'+str(index)+'", new String[]{"-tds.D_cp'+str(index)+'xx*cp'+str(index)+'xx+d(cp'+str(index)+'*(tds.u'+str(index)+'-tds.z_cp'+str(index)+'*tds.um_cp'+str(index)+'xx*F_const*d(tds.V,x)),x)-tds.R_cp'+str(index)+'"});\n'
                 ii=0
                 for sp in self.tp.species:
                     ii+=1
                     index=species_names.index(sp)+1
                     #$13 ???
-                    self.s+='    model.component("comp1").physics("tds").feature("cdm1").featureInfo("info").set("root.comp1.tds.cdm1.weak$'+str(len(species_names)*2+ii)+'", new String[]{"cp'+str(index)+'*tds.u'+str(index)+'*test(cp'+str(index)+'x)*(isScalingSystemDomain==0)", "4"});\n'
+                    #if self.version>5.31:
+                    #    self.s+='    model.component("comp1").physics("tds").feature("cdm1").featureInfo("info").set("root.comp1.tds.cdm1.weak$'+str(len(species_names)*2+ii)+'", new String[]{"-tds.u'+str(index)+'*cp'+str(index)+'x*test(cp'+str(index)+')*(isScalingSystemDomain==0)", "2"});\n'
+                    #else:
+                    ####
+                    #!!!!!!!!!!!!!!!!!!!!!
+                    #VERY IMPORTANT. In the new version (tested 5.5) the indices of the weak expressions changed! With incorrect indices COMSOL crashes!
+                    if self.version>5.31:
+                        self.s+='    model.component("comp1").physics("tds").feature("cdm1").featureInfo("info").set("root.comp1.tds.cdm1.weak$'+str(len(species_names)*2+ii*2-1)+'", new String[]{"cp'+str(index)+'*tds.u'+str(index)+'*test(cp'+str(index)+'x)*(isScalingSystemDomain==0)", "4"});\n'
+                    else:
+                        self.s+='    model.component("comp1").physics("tds").feature("cdm1").featureInfo("info").set("root.comp1.tds.cdm1.weak$'+str(len(species_names)*2+ii)+'", new String[]{"cp'+str(index)+'*tds.u'+str(index)+'*test(cp'+str(index)+'x)*(isScalingSystemDomain==0)", "4"});\n'
+                    #!!!!!!!!!!!!!!!!!!!!!
+                    ####
             u=''
             if self.tp.use_convection:
                 u+=str(self.tp.system['flow rate'])

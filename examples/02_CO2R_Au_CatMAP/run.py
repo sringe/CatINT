@@ -36,7 +36,8 @@ electrode_reactions={
 species=\
     {
     'K+':               {'bulk_concentration':   'charge_neutrality',
-                         'MPB_radius':           2*3.5e-10},
+                         #'MPB_radius':           2*3.5e-10},
+                         'MPB_radius':           2*4.1e-10},
     'CO2':              {'bulk_concentration':   'Henry'},
     'OH-':              {'bulk_concentration':   10**(pH-14.)*1000.0}, #mol/m^3
     'CO':               {'bulk_concentration':   0.0}
